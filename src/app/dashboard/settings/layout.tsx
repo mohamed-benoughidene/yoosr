@@ -9,6 +9,8 @@ export const metadata: Metadata = {
     description: "Manage your project settings and configuration.",
 }
 
+export const dynamic = "force-dynamic"
+
 interface SettingsLayoutProps {
     children: React.ReactNode
 }

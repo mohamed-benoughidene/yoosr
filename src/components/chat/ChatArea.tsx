@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation"
 import { Database } from "@/types/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
+import { v4 as uuidv4 } from "uuid"
 
 type Message = Database["public"]["Tables"]["messages"]["Row"]
 
@@ -60,7 +61,10 @@ export function ChatArea() {
                 },
                 (payload) => {
                     const newMessage = payload.new as Message
-                    setMessages((prev) => [...prev, newMessage])
+                    setMessages((prev) => {
+                        if (prev.some(m => m.id === newMessage.id)) return prev
+                        return [...prev, newMessage]
+                    })
                 }
             )
             .subscribe()
@@ -80,32 +84,57 @@ export function ChatArea() {
         if (!inputValue.trim() || !conversationId) return
 
         setIsSending(true)
+        const content = inputValue
+        setInputValue("") // Clear immediately
+
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error("User not authenticated")
 
-            const { error } = await supabase.from("messages").insert({
+            const tempId = uuidv4()
+            const optimisticMsg: Message = {
+                id: tempId,
+                content: content,
+                sender_type: "user",
+                sender_id: user.id,
                 conversation_id: conversationId,
-                content: inputValue,
+                created_at: new Date().toISOString(),
+                attachments: null
+            }
+
+            setMessages(prev => [...prev, optimisticMsg])
+            // Scroll
+            setTimeout(() => {
+                if (scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+                }
+            }, 0)
+
+            const { error } = await supabase.from("messages").insert({
+                id: tempId,
+                conversation_id: conversationId,
+                content: content,
                 sender_type: "user",
                 sender_id: user.id
             })
 
-            if (error) throw error
-
-            setInputValue("")
+            if (error) {
+                setMessages(prev => prev.filter(m => m.id !== tempId))
+                throw error
+            }
 
             // Update conversation last_message
             await supabase
                 .from("conversations")
                 .update({
-                    last_message: inputValue,
+                    last_message: content,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", conversationId)
 
         } catch (error) {
             console.error("Error sending message:", error)
+            setInputValue(content) // Restore on error
         } finally {
             setIsSending(false)
         }

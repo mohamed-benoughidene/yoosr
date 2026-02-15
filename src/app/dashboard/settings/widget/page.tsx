@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     Select,
@@ -21,10 +22,11 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Monitor, Languages, Code } from "lucide-react"
+import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock } from "lucide-react"
 import { logActivity } from "@/lib/logging"
 import { cn } from "@/lib/utils"
 
@@ -46,6 +48,10 @@ export default function WidgetSetupPage() {
     const [align, setAlign] = useState<"left" | "right">("right")
     const [logoUrl, setLogoUrl] = useState("")
 
+    // New Config
+    const [welcomeDelay, setWelcomeDelay] = useState(3)
+    const [enableWelcomeNotification, setEnableWelcomeNotification] = useState(true)
+
     // Translations
     const [translations, setTranslations] = useState({
         headerTitle: "Chat Support",
@@ -55,11 +61,13 @@ export default function WidgetSetupPage() {
     })
 
     useEffect(() => {
-        if (activeProject?.widget_config) {
-            const config = activeProject.widget_config as any
+        if ((activeProject as any)?.widget_config) {
+            const config = (activeProject as any).widget_config
             setPrimaryColor(config.primaryColor || "#000000")
             setAlign(config.align || "right")
             setLogoUrl(config.logoUrl || "")
+            setWelcomeDelay(config.welcomeDelay ?? 3)
+            setEnableWelcomeNotification(config.enableWelcomeNotification ?? true)
             setTranslations({
                 headerTitle: config.translations?.headerTitle || "Chat Support",
                 onlineStatus: config.translations?.onlineStatus || "Online",
@@ -78,6 +86,8 @@ export default function WidgetSetupPage() {
             primaryColor,
             align,
             logoUrl,
+            welcomeDelay,
+            enableWelcomeNotification,
             translations
         }
 
@@ -102,18 +112,12 @@ export default function WidgetSetupPage() {
     }
 
     const copyScript = () => {
-        const script = `<script type="text/javascript">
-  window.tiledeskSettings = {
-    projectid: "${activeProject?.id}"
+        const script = `<script>
+  window.yoosrSettings = {
+    projectId: "${activeProject?.id}"
   };
-  (function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://widget.tiledesk.com/v6/launch.js";
-    fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'tiledesk-jssdk'));
-</script>`
+</script>
+<script src="${window.location.origin}/widget.js" async></script>`
         navigator.clipboard.writeText(script)
         toast.success("Script copied to clipboard")
     }
@@ -130,8 +134,8 @@ export default function WidgetSetupPage() {
     }
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1 space-y-6">
+        <div className="flex flex-col lg:flex-row gap-8 relative items-start">
+            <div className="flex-1 min-w-0 space-y-6 pb-20">
                 <div>
                     <h3 className="text-lg font-medium">Widget Configuration</h3>
                     <p className="text-sm text-muted-foreground">
@@ -141,15 +145,18 @@ export default function WidgetSetupPage() {
                 <Separator />
 
                 <Tabs defaultValue="appearance" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="appearance">
                             <Monitor className="mr-2 h-4 w-4" /> Appearance
                         </TabsTrigger>
                         <TabsTrigger value="translations">
-                            <Languages className="mr-2 h-4 w-4" /> Translations
+                            <Languages className="mr-2 h-4 w-4" /> Text
+                        </TabsTrigger>
+                        <TabsTrigger value="behavior">
+                            <Clock className="mr-2 h-4 w-4" /> Behavior
                         </TabsTrigger>
                         <TabsTrigger value="installation">
-                            <Code className="mr-2 h-4 w-4" /> Installation
+                            <Code className="mr-2 h-4 w-4" /> Install
                         </TabsTrigger>
                     </TabsList>
 
@@ -203,21 +210,9 @@ export default function WidgetSetupPage() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Position & Branding</CardTitle>
+                                <CardTitle>Branding</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="align">Alignment</Label>
-                                    <Select value={align} onValueChange={(v: any) => setAlign(v)}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select position" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="left">Bottom Left</SelectItem>
-                                            <SelectItem value="right">Bottom Right</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logo">Logo URL</Label>
                                     <Input
@@ -228,6 +223,51 @@ export default function WidgetSetupPage() {
                                     />
                                     <p className="text-xs text-muted-foreground">URL to your company logo (displayed in header).</p>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* BEHAVIOR TAB */}
+                    <TabsContent value="behavior" className="space-y-4 mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Engagement</CardTitle>
+                                <CardDescription>Control how the widget greets visitors.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="flex items-center justify-between space-x-2">
+                                    <Label htmlFor="auto-open" className="flex flex-col space-y-1">
+                                        <span>Auto-Open / Welcome Notification</span>
+                                        <span className="font-normal text-xs text-muted-foreground">
+                                            Automatically open the widget or show a greeting bubble.
+                                        </span>
+                                    </Label>
+                                    <Switch
+                                        id="auto-open"
+                                        checked={enableWelcomeNotification}
+                                        onCheckedChange={setEnableWelcomeNotification}
+                                    />
+                                </div>
+
+                                {enableWelcomeNotification && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="delay">Delay (seconds)</Label>
+                                        <div className="flex items-center gap-4">
+                                            <Input
+                                                id="delay"
+                                                type="number"
+                                                min="0"
+                                                max="60"
+                                                value={welcomeDelay}
+                                                onChange={(e) => setWelcomeDelay(Number(e.target.value))}
+                                                className="w-24"
+                                            />
+                                            <span className="text-sm text-muted-foreground">
+                                                Seconds before showing the greeting
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -249,22 +289,6 @@ export default function WidgetSetupPage() {
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="t-online">Online Status</Label>
-                                    <Input
-                                        id="t-online"
-                                        value={translations.onlineStatus}
-                                        onChange={(e) => updateTranslation('onlineStatus', e.target.value)}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="t-start">Start Button</Label>
-                                    <Input
-                                        id="t-start"
-                                        value={translations.startChat}
-                                        onChange={(e) => updateTranslation('startChat', e.target.value)}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
                                     <Label htmlFor="t-welcome">Welcome Message</Label>
                                     <Input
                                         id="t-welcome"
@@ -280,37 +304,92 @@ export default function WidgetSetupPage() {
                     <TabsContent value="installation" className="space-y-4 mt-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Installation Script</CardTitle>
+                                <CardTitle>Installation Code</CardTitle>
                                 <CardDescription>
-                                    Paste this code before the closing &lt;/body&gt; tag on every page of your website.
+                                    Choose your platform to get the installation code.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="relative">
-                                    <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
-                                        {`<script type="text/javascript">
-  window.tiledeskSettings = {
-    projectid: "${activeProject?.id}"
+                                <Tabs defaultValue="html">
+                                    <TabsList className="mb-4">
+                                        <TabsTrigger value="html">HTML / Standard</TabsTrigger>
+                                        <TabsTrigger value="nextjs">Next.js</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="html">
+                                        <div className="relative">
+                                            <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
+                                                {`<script>
+  window.yoosrSettings = {
+    projectId: "${activeProject?.id}"
   };
-  (function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://widget.tiledesk.com/v6/launch.js";
-    fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'tiledesk-jssdk'));
-</script>`}
-                                    </pre>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="absolute top-2 right-2"
-                                        onClick={copyScript}
-                                    >
-                                        <Copy className="h-4 w-4 mr-2" />
-                                        Copy
-                                    </Button>
-                                </div>
+</script>
+<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com'}/widget.js" async></script>`}
+                                            </pre>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute top-2 right-2"
+                                                onClick={copyScript}
+                                            >
+                                                <Copy className="h-4 w-4 mr-2" />
+                                                Copy
+                                            </Button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Paste this before the closing <code>&lt;/body&gt;</code> tag.
+                                        </p>
+                                    </TabsContent>
+
+                                    <TabsContent value="nextjs">
+                                        <div className="relative">
+                                            <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
+                                                {`import Script from 'next/script'
+
+// Add to your RootLayout or a high-level component
+
+<>
+  <Script id="yoosr-init" strategy="afterInteractive">
+    {\`
+      window.yoosrSettings = {
+        projectId: "${activeProject?.id}"
+      };
+    \`}
+  </Script>
+  <Script 
+    src="${typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com'}/widget.js"
+    strategy="afterInteractive" 
+  />
+</>`}
+                                            </pre>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute top-2 right-2"
+                                                onClick={() => {
+                                                    const script = `import Script from 'next/script'
+
+// ... in your Layout
+<>
+  <Script id="yoosr-init" strategy="afterInteractive">
+    {\`
+      window.yoosrSettings = {
+        projectId: "${activeProject?.id}"
+      };
+    \`}
+  </Script>
+  <Script src="${window.location.origin}/widget.js" strategy="afterInteractive" />
+</>`
+                                                    navigator.clipboard.writeText(script)
+                                                    toast.success("Next.js snippet copied")
+                                                }}
+                                            >
+                                                <Copy className="h-4 w-4 mr-2" />
+                                                Copy
+                                            </Button>
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -324,8 +403,9 @@ export default function WidgetSetupPage() {
                 </div>
             </div>
 
+
             {/* LIVE PREVIEW */}
-            <div className="lg:w-[380px] shrink-0 sticky top-6">
+            <div className="lg:w-[380px] shrink-0 sticky top-6 hidden lg:block">
                 <Card className="h-[700px] flex flex-col p-0 bg-gray-50 dark:bg-zinc-900 border-2 border-dashed relative overflow-hidden">
                     <div className="absolute top-4 w-full text-center text-sm text-muted-foreground z-10">
                         Live Preview
@@ -335,8 +415,8 @@ export default function WidgetSetupPage() {
                         {/* Mock Widget UI */}
                         <div
                             className={cn(
-                                "w-[320px] bg-background rounded-lg shadow-2xl overflow-hidden border mb-4 transition-all duration-300",
-                                align === 'left' ? "self-start" : "self-end"
+                                "w-[320px] bg-background rounded-lg shadow-2xl overflow-hidden border mb-4 transition-all duration-300 self-end",
+                                "animate-in fade-in slide-in-from-bottom-4 duration-700"
                             )}
                         >
                             {/* Header */}
@@ -361,7 +441,7 @@ export default function WidgetSetupPage() {
                             </div>
 
                             {/* Body */}
-                            <div className="h-[250px] bg-muted/20 flex flex-col gap-3 p-4 overflow-y-auto">
+                            <div className="h-[300px] bg-muted/20 flex flex-col gap-3 p-4 overflow-y-auto">
                                 <div className="flex gap-2 items-end">
                                     <div className="w-6 h-6 rounded-full bg-primary/20 shrink-0 flex items-center justify-center overflow-hidden">
                                         {logoUrl ? (
@@ -378,21 +458,16 @@ export default function WidgetSetupPage() {
 
                             {/* Footer */}
                             <div className="p-3 border-t bg-background">
-                                <Button
-                                    className="w-full"
-                                    style={{ backgroundColor: primaryColor, borderColor: primaryColor }}
-                                >
-                                    {translations.startChat}
-                                </Button>
+                                <div className="flex gap-2">
+                                    <div className="flex-1 h-9 rounded-md bg-muted/50 border border-transparent" />
+                                    <div className="w-9 h-9 rounded-md" style={{ backgroundColor: primaryColor }} />
+                                </div>
                             </div>
                         </div>
 
                         {/* Launcher Button */}
                         <div
-                            className={cn(
-                                "w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer",
-                                align === 'left' ? "self-start" : "self-end"
-                            )}
+                            className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer self-end"
                             style={{ backgroundColor: primaryColor }}
                         >
                             <MessageSquare className="w-7 h-7" />
