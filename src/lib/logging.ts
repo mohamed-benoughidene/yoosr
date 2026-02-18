@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/client";
+// This module is now a no-op since activity logging is handled
+// directly via Convex mutations (api.activityLogs.log).
+// Keeping this file to avoid breaking imports during migration.
+// TODO: Remove this file and update all call sites.
 
 export type ActionType =
     | 'login'
@@ -20,22 +23,7 @@ interface LogActivityParams {
     metadata?: Record<string, any>;
 }
 
-export async function logActivity({ projectId, actionType, description, metadata = {} }: LogActivityParams) {
-    try {
-        const supabase = createClient();
-        const { error } = await supabase
-            .from('activity_logs')
-            .insert({
-                project_id: projectId,
-                action_type: actionType,
-                description,
-                metadata
-            });
-
-        if (error) {
-            console.error("Failed to log activity:", error);
-        }
-    } catch (err) {
-        console.error("Error logging activity:", err);
-    }
+export async function logActivity(_params: LogActivityParams) {
+    // No-op: Use useMutation(api.activityLogs.log) in components instead.
+    console.warn("logActivity() is deprecated. Use Convex mutation api.activityLogs.log instead.");
 }

@@ -2,10 +2,12 @@
 
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { NotificationManager } from "@/components/chat/NotificationManager"
 import { useProject } from "@/context/ProjectContext"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
+import { Id } from "../../../convex/_generated/dataModel"
 
 export default function DashboardLayout({
     children,
@@ -20,8 +22,8 @@ export default function DashboardLayout({
     useEffect(() => {
         if (!isLoading) {
             if (projectId) {
-                if (projectId !== activeProject?.id) {
-                    selectProject(projectId)
+                if (projectId !== activeProject?._id) {
+                    selectProject(projectId as Id<"projects">)
                 }
             } else if (activeProject) {
                 // Ensure URL always has project ID for shareability
@@ -47,6 +49,7 @@ export default function DashboardLayout({
 
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <NotificationManager />
             <DashboardSidebar />
             <div className="flex flex-col">
                 <DashboardHeader />

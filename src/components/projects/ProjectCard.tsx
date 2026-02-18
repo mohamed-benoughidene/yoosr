@@ -3,13 +3,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowRight, Settings, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Database } from "@/types/supabase"
 import { useProject } from "@/context/ProjectContext"
-
-type Project = Database["public"]["Tables"]["projects"]["Row"]
+import { Id } from "../../../convex/_generated/dataModel"
 
 interface ProjectCardProps {
-    project: Project
+    project: {
+        _id: Id<"projects">
+        name: string
+        description?: string
+        status?: string
+    }
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
@@ -17,12 +20,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
     const { selectProject, activeProject } = useProject()
 
     // Derived state
-    const isActive = activeProject?.id === project.id
+    const isActive = activeProject?._id === project._id
     const statusColor = project.status === 'active' ? "bg-green-500 hover:bg-green-600" : "bg-gray-500"
 
     const handleOpen = () => {
-        selectProject(project.id)
-        router.push(`/dashboard?project=${project.id}`)
+        selectProject(project._id)
+        router.push(`/dashboard?project=${project._id}`)
     }
 
     return (
@@ -38,7 +41,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 </div>
                 <CardTitle className="mt-4 text-xl truncate" title={project.name}>{project.name}</CardTitle>
                 <CardDescription className="font-mono text-xs text-gray-400 truncate">
-                    ID: {project.id}
+                    ID: {project._id}
                 </CardDescription>
             </CardHeader>
             <CardContent className="pb-3">

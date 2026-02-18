@@ -6,16 +6,15 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/lib/supabase/client"
-import { useState, useEffect } from "react"
-import { toast } from "sonner"
+import { useState } from "react"
 import {
     Search,
     Lock,
-    ExternalLink,
     Check,
     ArrowRight,
 } from "lucide-react"
+import { useQuery } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
 
 const CATEGORIES = ["All", "AI", "Channels", "Analytics", "CRM", "Productivity"] as const
 
@@ -29,188 +28,38 @@ interface AppItem {
     color: string
     category: Category
     locked: boolean
-    integrationId?: string // links to the integrations provider id
+    integrationId?: string
 }
 
 const APPS: AppItem[] = [
-    // AI
-    {
-        id: "openai",
-        name: "OpenAI",
-        description: "GPT models for AI-powered conversations and auto-replies.",
-        icon: "✦",
-        color: "bg-emerald-100 text-emerald-700",
-        category: "AI",
-        locked: false,
-        integrationId: "openai",
-    },
-    {
-        id: "gemini",
-        name: "Google Gemini",
-        description: "Google's AI models for intelligent, context-aware responses.",
-        icon: "◆",
-        color: "bg-blue-100 text-blue-700",
-        category: "AI",
-        locked: false,
-        integrationId: "gemini",
-    },
-    {
-        id: "anthropic",
-        name: "Anthropic",
-        description: "Claude models for safe, nuanced AI assistance.",
-        icon: "◇",
-        color: "bg-amber-100 text-amber-700",
-        category: "AI",
-        locked: false,
-        integrationId: "anthropic",
-    },
-    {
-        id: "deepseek",
-        name: "DeepSeek",
-        description: "Advanced reasoning models for complex queries.",
-        icon: "🔮",
-        color: "bg-violet-100 text-violet-700",
-        category: "AI",
-        locked: false,
-        integrationId: "deepseek",
-    },
-    {
-        id: "openrouter",
-        name: "OpenRouter",
-        description: "Unified API gateway for 100+ AI models.",
-        icon: "🔀",
-        color: "bg-pink-100 text-pink-700",
-        category: "AI",
-        locked: false,
-        integrationId: "openrouter",
-    },
-    // Channels
-    {
-        id: "telegram",
-        name: "Telegram",
-        description: "Receive and reply to messages from Telegram bots.",
-        icon: "✈",
-        color: "bg-sky-100 text-sky-700",
-        category: "Channels",
-        locked: false,
-        integrationId: "telegram",
-    },
-    {
-        id: "messenger",
-        name: "Messenger",
-        description: "Connect Facebook Messenger to your inbox.",
-        icon: "💬",
-        color: "bg-indigo-100 text-indigo-700",
-        category: "Channels",
-        locked: true,
-        integrationId: "messenger",
-    },
-    {
-        id: "instagram",
-        name: "Instagram",
-        description: "Handle Instagram DMs from your dashboard.",
-        icon: "📸",
-        color: "bg-fuchsia-100 text-fuchsia-700",
-        category: "Channels",
-        locked: true,
-        integrationId: "instagram",
-    },
-    {
-        id: "twilio",
-        name: "Twilio SMS",
-        description: "Send and receive SMS messages via Twilio.",
-        icon: "📞",
-        color: "bg-red-100 text-red-700",
-        category: "Channels",
-        locked: true,
-        integrationId: "twilio",
-    },
-    // Analytics
-    {
-        id: "google-analytics",
-        name: "Google Analytics",
-        description: "Track visitor behavior and chat engagement metrics.",
-        icon: "📊",
-        color: "bg-orange-100 text-orange-700",
-        category: "Analytics",
-        locked: true,
-    },
-    {
-        id: "mixpanel",
-        name: "Mixpanel",
-        description: "Product analytics for user engagement tracking.",
-        icon: "📈",
-        color: "bg-purple-100 text-purple-700",
-        category: "Analytics",
-        locked: true,
-    },
-    // CRM
-    {
-        id: "hubspot",
-        name: "HubSpot",
-        description: "Sync contacts and conversations with HubSpot CRM.",
-        icon: "🔶",
-        color: "bg-orange-100 text-orange-700",
-        category: "CRM",
-        locked: true,
-    },
-    {
-        id: "salesforce",
-        name: "Salesforce",
-        description: "Create leads and cases from conversations.",
-        icon: "☁️",
-        color: "bg-blue-100 text-blue-700",
-        category: "CRM",
-        locked: true,
-    },
-    // Productivity
-    {
-        id: "slack",
-        name: "Slack",
-        description: "Get notifications and reply from Slack channels.",
-        icon: "💼",
-        color: "bg-green-100 text-green-700",
-        category: "Productivity",
-        locked: true,
-    },
-    {
-        id: "zapier",
-        name: "Zapier",
-        description: "Automate workflows with 5,000+ apps.",
-        icon: "⚡",
-        color: "bg-amber-100 text-amber-700",
-        category: "Productivity",
-        locked: true,
-    },
+    { id: "openai", name: "OpenAI", description: "GPT models for AI-powered conversations and auto-replies.", icon: "✦", color: "bg-emerald-100 text-emerald-700", category: "AI", locked: false, integrationId: "openai" },
+    { id: "gemini", name: "Google Gemini", description: "Google's AI models for intelligent, context-aware responses.", icon: "◆", color: "bg-blue-100 text-blue-700", category: "AI", locked: false, integrationId: "gemini" },
+    { id: "anthropic", name: "Anthropic", description: "Claude models for safe, nuanced AI assistance.", icon: "◇", color: "bg-amber-100 text-amber-700", category: "AI", locked: false, integrationId: "anthropic" },
+    { id: "deepseek", name: "DeepSeek", description: "Advanced reasoning models for complex queries.", icon: "🔮", color: "bg-violet-100 text-violet-700", category: "AI", locked: false, integrationId: "deepseek" },
+    { id: "openrouter", name: "OpenRouter", description: "Unified API gateway for 100+ AI models.", icon: "🔀", color: "bg-pink-100 text-pink-700", category: "AI", locked: false, integrationId: "openrouter" },
+    { id: "telegram", name: "Telegram", description: "Receive and reply to messages from Telegram bots.", icon: "✈", color: "bg-sky-100 text-sky-700", category: "Channels", locked: false, integrationId: "telegram" },
+    { id: "messenger", name: "Messenger", description: "Connect Facebook Messenger to your inbox.", icon: "💬", color: "bg-indigo-100 text-indigo-700", category: "Channels", locked: true, integrationId: "messenger" },
+    { id: "instagram", name: "Instagram", description: "Handle Instagram DMs from your dashboard.", icon: "📸", color: "bg-fuchsia-100 text-fuchsia-700", category: "Channels", locked: true, integrationId: "instagram" },
+    { id: "twilio", name: "Twilio SMS", description: "Send and receive SMS messages via Twilio.", icon: "📞", color: "bg-red-100 text-red-700", category: "Channels", locked: true, integrationId: "twilio" },
+    { id: "google-analytics", name: "Google Analytics", description: "Track visitor behavior and chat engagement metrics.", icon: "📊", color: "bg-orange-100 text-orange-700", category: "Analytics", locked: true },
+    { id: "mixpanel", name: "Mixpanel", description: "Product analytics for user engagement tracking.", icon: "📈", color: "bg-purple-100 text-purple-700", category: "Analytics", locked: true },
+    { id: "hubspot", name: "HubSpot", description: "Sync contacts and conversations with HubSpot CRM.", icon: "🔶", color: "bg-orange-100 text-orange-700", category: "CRM", locked: true },
+    { id: "salesforce", name: "Salesforce", description: "Create leads and cases from conversations.", icon: "☁️", color: "bg-blue-100 text-blue-700", category: "CRM", locked: true },
+    { id: "slack", name: "Slack", description: "Get notifications and reply from Slack channels.", icon: "💼", color: "bg-green-100 text-green-700", category: "Productivity", locked: true },
+    { id: "zapier", name: "Zapier", description: "Automate workflows with 5,000+ apps.", icon: "⚡", color: "bg-amber-100 text-amber-700", category: "Productivity", locked: true },
 ]
 
 export default function AppStorePage() {
     const { activeProject } = useProject()
     const [search, setSearch] = useState("")
     const [category, setCategory] = useState<Category>("All")
-    const [installedProviders, setInstalledProviders] = useState<Set<string>>(new Set())
-    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        const fetchInstalled = async () => {
-            if (!activeProject) return
-            const supabase = createClient()
-            const { data } = await supabase
-                .from("integrations")
-                .select("provider, enabled")
-                .eq("project_id", activeProject.id)
+    const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
 
-            if (data) {
-                const set = new Set<string>()
-                data.forEach((row: any) => {
-                    if (row.enabled) set.add(row.provider)
-                })
-                setInstalledProviders(set)
-            }
-            setLoading(false)
-        }
-        fetchInstalled()
-    }, [activeProject])
+    const installedProviders = new Set<string>()
+        ; (integrations ?? []).forEach((row: any) => {
+            if (row.enabled) installedProviders.add(row.provider)
+        })
 
     const filtered = APPS.filter((app) => {
         const matchesCategory = category === "All" || app.category === category
@@ -238,7 +87,6 @@ export default function AppStorePage() {
             </div>
             <Separator />
 
-            {/* Search + Categories */}
             <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -264,8 +112,7 @@ export default function AppStorePage() {
                 </div>
             </div>
 
-            {/* Grid */}
-            {loading ? (
+            {integrations === undefined ? (
                 <div className="text-center py-12 text-muted-foreground">
                     Loading...
                 </div>
@@ -314,7 +161,7 @@ export default function AppStorePage() {
                                             size="sm"
                                             className="w-full h-8 text-xs text-green-700 border-green-200 bg-green-50 hover:bg-green-100"
                                             onClick={() =>
-                                                (window.location.href = `/dashboard/settings/integrations?project=${activeProject?.id}`)
+                                                (window.location.href = `/dashboard/settings/integrations`)
                                             }
                                         >
                                             <Check className="mr-1.5 h-3.5 w-3.5" />
@@ -336,7 +183,7 @@ export default function AppStorePage() {
                                             size="sm"
                                             className="w-full h-8 text-xs"
                                             onClick={() =>
-                                                (window.location.href = `/dashboard/settings/integrations?project=${activeProject?.id}`)
+                                                (window.location.href = `/dashboard/settings/integrations`)
                                             }
                                         >
                                             <ArrowRight className="mr-1.5 h-3.5 w-3.5" />

@@ -1,58 +1,46 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useEffect, useState } from "react";
 import { useProject } from "@/context/ProjectContext";
-import { createClient } from "@/lib/supabase/client";
 import { ActivitiesDataTable } from "@/components/activities/ActivitiesDataTable";
-import { columns, ActivityLog } from "@/components/activities/columns";
+import { columns } from "@/components/activities/columns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { logActivity } from "@/lib/logging";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { toast } from "sonner";
 
 export default function ActivitiesPage() {
     const { activeProject } = useProject();
-    const [logs, setLogs] = useState<ActivityLog[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchLogs = async () => {
-        if (!activeProject) return;
-        setLoading(true);
-        const supabase = createClient();
-
-        const { data, error } = await supabase
-            .from('activity_logs')
-            .select('*')
-            .eq('project_id', activeProject.id)
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-        if (error) {
-            console.error(error);
-        } else {
-            setLogs(data as ActivityLog[]);
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        fetchLogs();
-    }, [activeProject]);
+    const logs = useQuery(api.activityLogs.list, activeProject ? { projectId: activeProject._id } : "skip");
+    const logActivity = useMutation(api.activityLogs.log);
 
     const handleTestLog = async () => {
         if (!activeProject) return;
-        await logActivity({
-            projectId: activeProject.id,
-            actionType: 'other',
-            description: 'Manual test log entry',
-            metadata: { source: 'dashboard_test' }
-        });
-        fetchLogs();
+        try {
+            await logActivity({
+                projectId: activeProject._id,
+                actionType: "other",
+                description: "Manual test log entry",
+                metadata: { source: "dashboard_test" },
+            });
+            toast.success("Test log created");
+        } catch {
+            toast.error("Failed to create test log");
+        }
     };
 
     if (!activeProject) return <div className="p-8">Select a project to view activities.</div>;
+
+    // Map Convex documents to the format expected by the data table columns
+    const mappedLogs = (logs ?? []).map((log: any) => ({
+        id: log._id,
+        action_type: log.actionType,
+        description: log.description ?? "",
+        metadata: log.metadata ?? {},
+        user_id: log.userId ?? null,
+        created_at: log._creationTime ? new Date(log._creationTime).toISOString() : new Date().toISOString(),
+    }));
 
     return (
         <div className="flex flex-col gap-6 p-6">
@@ -76,12 +64,12 @@ export default function ActivitiesPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? (
+                    {logs === undefined ? (
                         <div className="flex h-40 items-center justify-center">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
                     ) : (
-                        <ActivitiesDataTable columns={columns} data={logs} />
+                        <ActivitiesDataTable columns={columns} data={mappedLogs} />
                     )}
                 </CardContent>
             </Card>

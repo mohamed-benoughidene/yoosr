@@ -3,16 +3,9 @@
 import { TrendChart } from "@/components/ui/charts/TrendChart";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, MessageSquare, Clock, ThumbsUp } from "lucide-react";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
-
-interface Stats {
-    totalConversations: number;
-    activeNow: number;
-    avgResponseTime: string;
-    satisfaction: string;
-}
 
 const MOCK_TREND_DATA = [
     { date: "Mon", value: 12 },
@@ -26,41 +19,14 @@ const MOCK_TREND_DATA = [
 
 export function AnalyticsOverview() {
     const { activeProject } = useProject();
-    const [stats, setStats] = useState<Stats>({
-        totalConversations: 0,
-        activeNow: 0,
-        avgResponseTime: "2m",
-        satisfaction: "98%",
-    });
 
-    useEffect(() => {
-        if (!activeProject) return;
+    const convexStats = useQuery(
+        api.analytics.getConversationStats,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    );
 
-        const fetchStats = async () => {
-            const supabase = createClient();
-
-            // Count total conversations
-            const { count: total } = await supabase
-                .from('conversations')
-                .select('*', { count: 'exact', head: true })
-                .eq('project_id', activeProject.id);
-
-            // Active count (status = open or unassigned)
-            const { count: active } = await supabase
-                .from('conversations')
-                .select('*', { count: 'exact', head: true })
-                .eq('project_id', activeProject.id)
-                .neq('status', 'closed'); // Assume 'closed' is the terminal state
-
-            setStats(prev => ({
-                ...prev,
-                totalConversations: total || 0,
-                activeNow: active || 0
-            }))
-        }
-
-        fetchStats();
-    }, [activeProject]);
+    const totalConversations = convexStats?.total ?? 0;
+    const activeNow = convexStats?.open ?? 0;
 
     return (
         <div className="space-y-4">
@@ -73,7 +39,7 @@ export function AnalyticsOverview() {
                         <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalConversations}</div>
+                        <div className="text-2xl font-bold">{totalConversations}</div>
                         <p className="text-xs text-muted-foreground">
                             +20.1% from last month
                         </p>
@@ -87,7 +53,7 @@ export function AnalyticsOverview() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.activeNow}</div>
+                        <div className="text-2xl font-bold">{activeNow}</div>
                         <p className="text-xs text-muted-foreground">
                             Current active chats
                         </p>
@@ -99,7 +65,7 @@ export function AnalyticsOverview() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.avgResponseTime}</div>
+                        <div className="text-2xl font-bold">2m</div>
                         <p className="text-xs text-muted-foreground">
                             +10% faster than average
                         </p>
@@ -111,7 +77,7 @@ export function AnalyticsOverview() {
                         <ThumbsUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.satisfaction}</div>
+                        <div className="text-2xl font-bold">98%</div>
                         <p className="text-xs text-muted-foreground">
                             Based on 12 ratings
                         </p>
@@ -127,7 +93,6 @@ export function AnalyticsOverview() {
                     />
                 </div>
                 <div className="col-span-3">
-                    {/* Placeholder for another chart or deeper stat */}
                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Sources</CardTitle>

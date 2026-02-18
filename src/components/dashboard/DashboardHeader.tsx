@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Id } from "../../../convex/_generated/dataModel"
 import {
     Bell,
     CircleUser,
@@ -37,15 +38,26 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 import { useProject } from "@/context/ProjectContext"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+
+const SOUND_STORAGE_KEY = "yoosr-sound-enabled"
 
 export function DashboardHeader() {
     const { activeProject, projects, selectProject } = useProject()
     const router = useRouter()
-    const [soundEnabled, setSoundEnabled] = useState(true)
+    const [soundEnabled, setSoundEnabled] = useState(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem(SOUND_STORAGE_KEY) !== "false"
+        }
+        return true
+    })
 
-    const handleProjectSwitch = (projectId: string) => {
+    useEffect(() => {
+        localStorage.setItem(SOUND_STORAGE_KEY, String(soundEnabled))
+    }, [soundEnabled])
+
+    const handleProjectSwitch = (projectId: Id<"projects">) => {
         selectProject(projectId)
         router.push(`/dashboard?project=${projectId}`)
     }
@@ -53,7 +65,7 @@ export function DashboardHeader() {
     const handleSimulateVisitor = () => {
         // Open chat in a new window or navigate to chat page
         // For now, let's navigate to the chat page with a flag
-        router.push(`/dashboard/chat?mode=simulate&project=${activeProject?.id}`)
+        router.push(`/dashboard/chat?mode=simulate&project=${activeProject?._id}`)
     }
 
     return (
@@ -104,9 +116,9 @@ export function DashboardHeader() {
                         <DropdownMenuSeparator />
                         {projects.map((project) => (
                             <DropdownMenuItem
-                                key={project.id}
-                                onSelect={() => handleProjectSwitch(project.id)}
-                                className={activeProject?.id === project.id ? "bg-accent" : ""}
+                                key={project._id}
+                                onSelect={() => handleProjectSwitch(project._id)}
+                                className={activeProject?._id === project._id ? "bg-accent" : ""}
                             >
                                 <span className="truncate">{project.name}</span>
                             </DropdownMenuItem>

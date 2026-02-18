@@ -19,13 +19,13 @@ This project enforces the use of the following technologies. All new features an
 - **Icons**: Use `lucide-react` for icons.
 - **Installation**: Install components via CLI: `npx shadcn@latest add <component>`.
 
-## 3. Database & Backend: Supabase
-- **Database**: Use **Supabase** (PostgreSQL) as the primary database.
-- **Auth**: Use Supabase Auth for authentication.
-- **Client**: Use `@supabase/supabase-js` and `@supabase/ssr` for accessing the database.
-- **Security**: Enable Row Level Security (RLS) on all tables and write policies.
-- **Types**: Generate TypeScript types from your database schema:
-  `npx supabase gen types typescript --project-id <your-project-id> > types/supabase.ts`
+## 3. Database & Backend: Convex & Clerk
+- **Database**: Use **Convex** for the primary database and real-time state.
+- **Backend**: Use Convex serverless functions (queries, mutations, and actions) for business logic.
+- **Auth**: Use **Clerk** for authentication, integrated with Convex.
+- **Client**: Use `convex/react` and `convex/react-clerk` to interact with the backend.
+- **Security**: Implement authorization checks within Convex functions using `ctx.auth.getUserIdentity()`.
+- **Types**: Leverage Convex's automatic type generation from the schema.
 
 ## 4. Coding Standards
 - **Strict Mode**: Ensure TypeScript `strict` mode is enabled.

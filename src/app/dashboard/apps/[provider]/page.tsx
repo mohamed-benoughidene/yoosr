@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Check, Loader2, Save, Trash2 } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState, use } from "react"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
+import { useState, use } from "react"
 import { toast } from "sonner"
-import { logActivity } from "@/lib/logging"
 import { Badge } from "@/components/ui/badge"
 
 export default function AppDetailsPage({ params }: { params: Promise<{ provider: string }> }) {
@@ -20,107 +20,64 @@ export default function AppDetailsPage({ params }: { params: Promise<{ provider:
     const router = useRouter()
     const app = AVAILABLE_APPS.find(a => a.id === provider)
 
-    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [config, setConfig] = useState<any>({ enabled: false, credentials: {} })
-    const [isInstalled, setIsInstalled] = useState(false)
-
-    // Form states
     const [credentialValue, setCredentialValue] = useState("")
 
-    useEffect(() => {
-        const fetchConfig = async () => {
-            if (!activeProject) return
-            setLoading(true)
-            const supabase = createClient()
-            const { data } = await supabase
-                .from('integrations')
-                .select('*')
-                .eq('project_id', activeProject.id)
-                .eq('provider', provider)
-                .single()
+    const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
+    const upsertIntegration = useMutation(api.integrations.upsert)
+    const removeIntegration = useMutation(api.integrations.remove)
 
-            if (data) {
-                setIsInstalled(true)
-                setConfig(data)
-                // Populate fields based on provider type if needed
-                // For security, we might mask keys or only show they exist
-                if (data.credentials?.token) setCredentialValue(data.credentials.token)
-                if (data.credentials?.apiKey) setCredentialValue(data.credentials.apiKey)
-            }
-            setLoading(false)
-        }
-        fetchConfig()
-    }, [activeProject, provider])
+    const loading = integrations === undefined
+    const existingIntegration = (integrations ?? []).find((i: any) => i.provider === provider)
+    const isInstalled = !!existingIntegration
+
+    // Populate credential on first load
+    const populatedRef = useState(false)
+    if (existingIntegration && !populatedRef[0]) {
+        const creds = existingIntegration.credentials as any
+        if (creds?.token) setCredentialValue(creds.token)
+        else if (creds?.apiKey) setCredentialValue(creds.apiKey)
+        populatedRef[1](true)
+    }
 
     const handleSave = async () => {
         if (!activeProject) return
         setSaving(true)
-        const supabase = createClient()
+        try {
+            let creds: Record<string, string> = {}
+            if (provider === "telegram") creds = { token: credentialValue }
+            if (provider === "openai") creds = { apiKey: credentialValue }
 
-        // Construct credentials based on provider
-        let creds = {}
-        if (provider === 'telegram') creds = { token: credentialValue }
-        if (provider === 'openai') creds = { apiKey: credentialValue }
-
-        const payload = {
-            project_id: activeProject.id,
-            provider: provider,
-            credentials: creds,
-            enabled: true,
-            updated_at: new Date().toISOString()
-        }
-
-        const { error } = await supabase
-            .from('integrations')
-            .upsert(payload, { onConflict: 'project_id, provider' })
-
-        if (error) {
-            toast.error("Failed to save configuration")
-            console.error(error)
-        } else {
-            toast.success("Configuration saved")
-            setIsInstalled(true)
-            await logActivity({
-                projectId: activeProject.id,
-                actionType: 'other', // Should refine types
-                description: `Configured ${app?.name} integration`,
-                metadata: { provider: provider }
+            await upsertIntegration({
+                projectId: activeProject._id,
+                provider,
+                credentials: creds,
+                enabled: true,
             })
+            toast.success("Configuration saved")
+        } catch {
+            toast.error("Failed to save configuration")
         }
         setSaving(false)
     }
 
     const handleUninstall = async () => {
-        if (!activeProject) return
+        if (!activeProject || !existingIntegration) return
         if (!confirm("Are you sure you want to remove this integration? This may break existing flows.")) return
 
         setSaving(true)
-        const supabase = createClient()
-        const { error } = await supabase
-            .from('integrations')
-            .delete()
-            .eq('project_id', activeProject.id)
-            .eq('provider', provider)
-
-        if (error) {
-            toast.error("Failed to uninstall")
-        } else {
+        try {
+            await removeIntegration({ id: existingIntegration._id })
             toast.success("Uninstalled successfully")
-            await logActivity({
-                projectId: activeProject.id,
-                actionType: 'other',
-                description: `Removed ${app?.name} integration`,
-                metadata: { provider: provider }
-            })
-            router.push('/dashboard/apps')
+            router.push("/dashboard/apps")
+        } catch {
+            toast.error("Failed to uninstall")
         }
         setSaving(false)
     }
 
     if (!app) return <div>App not found</div>
 
-    // Render Logic for different Providers
     const renderConfigForm = () => {
         if (app.isPro) {
             return (
@@ -134,7 +91,7 @@ export default function AppDetailsPage({ params }: { params: Promise<{ provider:
             )
         }
 
-        if (app.id === 'telegram') {
+        if (app.id === "telegram") {
             return (
                 <div className="space-y-4">
                     <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -154,7 +111,7 @@ export default function AppDetailsPage({ params }: { params: Promise<{ provider:
             )
         }
 
-        if (app.id === 'openai') {
+        if (app.id === "openai") {
             return (
                 <div className="space-y-4">
                     <div className="grid w-full max-w-sm items-center gap-1.5">

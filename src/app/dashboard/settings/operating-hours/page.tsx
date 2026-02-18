@@ -6,10 +6,9 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Clock, Plus, Trash2, Save } from "lucide-react"
+import { Plus, Trash2, Save } from "lucide-react"
 import {
     Select,
     SelectContent,
@@ -17,6 +16,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
 
 const DAYS = [
     "sunday",
@@ -83,7 +84,6 @@ const TIMEZONES = [
     "Pacific/Auckland",
 ]
 
-// Generate time options in 30-min increments
 function generateTimeOptions(): string[] {
     const times: string[] = []
     for (let h = 0; h < 24; h++) {
@@ -98,68 +98,41 @@ const TIME_OPTIONS = generateTimeOptions()
 
 export default function OperatingHoursPage() {
     const { activeProject } = useProject()
-    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [enabled, setEnabled] = useState(false)
     const [timezone, setTimezone] = useState("UTC")
     const [schedule, setSchedule] = useState<DaySchedule[]>(defaultSchedule)
-    const [hasRecord, setHasRecord] = useState(false)
 
-    const fetchHours = async () => {
-        if (!activeProject) return
-        const supabase = createClient()
-        const { data } = await supabase
-            .from("operating_hours")
-            .select("*")
-            .eq("project_id", activeProject.id)
-            .single()
+    const existingHours = useQuery(
+        api.settings.getOperatingHours,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    )
 
-        if (data) {
-            setEnabled(data.enabled)
-            setTimezone(data.timezone)
-            setSchedule(data.schedule as DaySchedule[])
-            setHasRecord(true)
-        }
-        setLoading(false)
-    }
+    const upsertHours = useMutation(api.settings.upsertOperatingHours)
 
+    // Sync from Convex query to local state
     useEffect(() => {
-        fetchHours()
-    }, [activeProject])
+        if (existingHours) {
+            setEnabled(existingHours.enabled)
+            setTimezone(existingHours.timezone)
+            setSchedule(existingHours.schedule as DaySchedule[])
+        }
+    }, [existingHours])
 
     const handleSave = async () => {
         if (!activeProject) return
         setSaving(true)
-        const supabase = createClient()
 
-        const payload = {
-            project_id: activeProject.id,
-            enabled,
-            timezone,
-            schedule,
-            updated_at: new Date().toISOString(),
-        }
-
-        let error
-        if (hasRecord) {
-            const result = await supabase
-                .from("operating_hours")
-                .update(payload)
-                .eq("project_id", activeProject.id)
-            error = result.error
-        } else {
-            const result = await supabase
-                .from("operating_hours")
-                .insert(payload)
-            error = result.error
-        }
-
-        if (error) {
-            toast.error("Failed to save operating hours")
-            console.error(error)
-        } else {
+        try {
+            await upsertHours({
+                projectId: activeProject._id,
+                enabled,
+                timezone,
+                schedule,
+            })
             toast.success("Operating hours saved")
-            setHasRecord(true)
+        } catch {
+            toast.error("Failed to save operating hours")
         }
         setSaving(false)
     }
@@ -222,7 +195,7 @@ export default function OperatingHoursPage() {
         })
     }
 
-    if (loading) {
+    if (existingHours === undefined) {
         return (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
                 Loading...
@@ -293,7 +266,6 @@ export default function OperatingHoursPage() {
                         key={day.day}
                         className="flex items-start gap-4 p-4"
                     >
-                        {/* Day name + toggle */}
                         <div className="flex items-center gap-3 w-[160px] pt-1.5">
                             <Switch
                                 checked={day.open}
@@ -304,7 +276,6 @@ export default function OperatingHoursPage() {
                             </span>
                         </div>
 
-                        {/* Status */}
                         <div className="pt-2 w-[70px]">
                             {day.open ? (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
@@ -319,7 +290,6 @@ export default function OperatingHoursPage() {
                             )}
                         </div>
 
-                        {/* Time slots */}
                         <div className="flex-1 space-y-2">
                             {day.open ? (
                                 <>
@@ -331,12 +301,7 @@ export default function OperatingHoursPage() {
                                             <Select
                                                 value={slot.start}
                                                 onValueChange={(v) =>
-                                                    updateSlot(
-                                                        dayIndex,
-                                                        slotIndex,
-                                                        "start",
-                                                        v
-                                                    )
+                                                    updateSlot(dayIndex, slotIndex, "start", v)
                                                 }
                                             >
                                                 <SelectTrigger className="w-[110px] h-8 text-xs">
@@ -344,10 +309,7 @@ export default function OperatingHoursPage() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {TIME_OPTIONS.map((t) => (
-                                                        <SelectItem
-                                                            key={t}
-                                                            value={t}
-                                                        >
+                                                        <SelectItem key={t} value={t}>
                                                             {t}
                                                         </SelectItem>
                                                     ))}
@@ -359,12 +321,7 @@ export default function OperatingHoursPage() {
                                             <Select
                                                 value={slot.end}
                                                 onValueChange={(v) =>
-                                                    updateSlot(
-                                                        dayIndex,
-                                                        slotIndex,
-                                                        "end",
-                                                        v
-                                                    )
+                                                    updateSlot(dayIndex, slotIndex, "end", v)
                                                 }
                                             >
                                                 <SelectTrigger className="w-[110px] h-8 text-xs">
@@ -372,10 +329,7 @@ export default function OperatingHoursPage() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {TIME_OPTIONS.map((t) => (
-                                                        <SelectItem
-                                                            key={t}
-                                                            value={t}
-                                                        >
+                                                        <SelectItem key={t} value={t}>
                                                             {t}
                                                         </SelectItem>
                                                     ))}
@@ -386,12 +340,7 @@ export default function OperatingHoursPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                    onClick={() =>
-                                                        removeSlot(
-                                                            dayIndex,
-                                                            slotIndex
-                                                        )
-                                                    }
+                                                    onClick={() => removeSlot(dayIndex, slotIndex)}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>

@@ -3,7 +3,7 @@
 ## Project Overview
 Building a customer support platform clone of TileDesk using modern stack:
 - **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind CSS
-- **Backend:** Supabase (PostgreSQL, Auth, Realtime, Storage)
+- **Backend:** Convex (PostgreSQL, Auth, Realtime, Storage)
 - **State Management:** React Query (TanStack Query)
 - **UI Components:** shadcn/ui
 

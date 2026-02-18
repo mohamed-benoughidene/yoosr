@@ -9,67 +9,42 @@ import {
     CardContent
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Bot, Zap, LayoutTemplate, MoreHorizontal, Settings2 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Plus, Search, Bot, Zap, LayoutTemplate, MoreHorizontal } from "lucide-react"
+import { useState } from "react"
 import { CreateBotDialog } from "@/components/dashboard/bots/create-bot-dialog"
-import { createClient } from "@/lib/supabase/client"
 import { useProject } from "@/context/ProjectContext"
-import { cn } from "@/lib/utils"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
 
 export default function BotsPage() {
     const { activeProject } = useProject()
-    const supabase = createClient()
-    const [bots, setBots] = useState<any[]>([])
     const [filter, setFilter] = useState<'all' | 'chatbot' | 'automation'>('all')
     const [search, setSearch] = useState("")
 
-    const fetchBots = async () => {
-        if (!activeProject) return
+    const bots = useQuery(
+        api.bots.list,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    ) ?? []
 
-        let query = supabase
-            .from('bots')
-            .select('*')
-            .eq('project_id', activeProject.id)
-            .order('created_at', { ascending: false })
-
-        if (filter !== 'all') {
-            query = query.eq('type', filter)
-        }
-
-        const { data } = await query
-
-        if (data) {
-            setBots(data)
-        }
-    }
-
-    useEffect(() => {
-        fetchBots()
-    }, [activeProject, filter])
+    const createBot = useMutation(api.bots.create)
 
     const handleCreateBot = async (name: string, description: string, type: 'chatbot' | 'automation') => {
         if (!activeProject) return
 
-        const { error } = await supabase
-            .from('bots')
-            .insert({
-                project_id: activeProject.id,
-                name,
-                description,
-                type,
-                status: 'draft',
-                configuration: {}
-            })
-
-        if (!error) {
-            fetchBots()
-        }
+        await createBot({
+            projectId: activeProject._id,
+            name,
+            description,
+            type,
+        })
     }
 
-    const filteredBots = bots.filter(bot =>
-        bot.name.toLowerCase().includes(search.toLowerCase()) ||
-        bot.description?.toLowerCase().includes(search.toLowerCase())
-    )
+    const filteredBots = bots
+        .filter(bot => filter === 'all' || bot.type === filter)
+        .filter(bot =>
+            bot.name.toLowerCase().includes(search.toLowerCase()) ||
+            bot.description?.toLowerCase().includes(search.toLowerCase())
+        )
 
     return (
         <div className="flex h-[calc(100vh-60px)] flex-col md:flex-row">
@@ -139,14 +114,14 @@ export default function BotsPage() {
                         <div className="col-span-full text-center p-12 border border-dashed rounded-lg">
                             <p className="text-muted-foreground mb-4">No flows found.</p>
                             <div className="flex justify-center gap-4">
-                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors onClick={() => handleCreateBot('My New Agent', '', 'chatbot')}">
+                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New Agent', '', 'chatbot')}>
                                     <CardHeader>
                                         <Bot className="h-8 w-8 text-primary mb-2" />
                                         <CardTitle className="text-base">New AI Agent</CardTitle>
                                         <CardDescription>Build an AI-powered assistant.</CardDescription>
                                     </CardHeader>
                                 </Card>
-                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors onClick={() => handleCreateBot('My New automation', '', 'automation')}">
+                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New automation', '', 'automation')}>
                                     <CardHeader>
                                         <Zap className="h-8 w-8 text-orange-500 mb-2" />
                                         <CardTitle className="text-base">New Automation</CardTitle>
@@ -157,7 +132,7 @@ export default function BotsPage() {
                         </div>
                     ) : (
                         filteredBots.map((bot) => (
-                            <Card key={bot.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                            <Card key={bot._id} className="cursor-pointer hover:shadow-md transition-shadow">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <div className={`p-2 rounded-full ${bot.type === 'chatbot' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'}`}>
                                         {bot.type === 'chatbot' ? <Bot className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
@@ -176,7 +151,7 @@ export default function BotsPage() {
                                             <div className={`h-2 w-2 rounded-full ${bot.status === 'active' ? 'bg-green-500' : 'bg-gray-300'}`} />
                                             <span className="capitalize">{bot.status}</span>
                                         </div>
-                                        <span>{new Date(bot.updated_at).toLocaleDateString()}</span>
+                                        <span>{new Date(bot._creationTime).toLocaleDateString()}</span>
                                     </div>
                                 </CardContent>
                             </Card>

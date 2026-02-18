@@ -64,7 +64,7 @@ export function CreateProjectModal() {
             if (newProject) {
                 setOpen(false)
                 form.reset()
-                router.push(`/dashboard?project=${newProject.id}`)
+                router.push(`/dashboard?project=${newProject}`)
             }
         } catch (error) {
             console.error("Failed to create project", error)

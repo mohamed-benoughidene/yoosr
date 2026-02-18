@@ -2,37 +2,19 @@
 
 import { TrendChart } from "@/components/ui/charts/TrendChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
 
 export function VisitorsMetric() {
     const { activeProject } = useProject();
-    const [data, setData] = useState<any[]>([]);
-    const [totalVisitors, setTotalVisitors] = useState(0);
 
-    useEffect(() => {
-        if (!activeProject) return;
+    const visitorStats = useQuery(
+        api.analytics.getVisitorStats,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    );
 
-        const fetchData = async () => {
-            const supabase = createClient();
-            const { data: statsData, error } = await supabase
-                .rpc('get_daily_visitors_stats', {
-                    p_project_id: activeProject.id,
-                });
-
-            if (statsData) {
-                const chartData = statsData.map((d: any) => ({
-                    date: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
-                    value: Number(d.visitor_count)
-                }));
-                setData(chartData);
-                setTotalVisitors(statsData.reduce((acc: number, curr: any) => acc + Number(curr.visitor_count), 0));
-            }
-        };
-
-        fetchData();
-    }, [activeProject]);
+    const totalVisitors = visitorStats?.totalVisitors ?? 0;
 
     return (
         <div className="space-y-4">
@@ -43,7 +25,7 @@ export function VisitorsMetric() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalVisitors}</div>
-                        <p className="text-xs text-muted-foreground">Unique visitors (Last 30 days)</p>
+                        <p className="text-xs text-muted-foreground">Unique visitors (all time)</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -67,8 +49,8 @@ export function VisitorsMetric() {
             </div>
             <TrendChart
                 title="Visitor Traffic"
-                description="Unique visitors over the last 30 days"
-                data={data}
+                description="Unique visitors (daily breakdown coming soon)"
+                data={[]}
                 color="#10b981"
             />
         </div>

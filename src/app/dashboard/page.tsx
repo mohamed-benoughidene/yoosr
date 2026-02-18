@@ -9,81 +9,39 @@ import {
     CardFooter
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Bot, MessageCircle, Users, Activity } from "lucide-react"
+import { ArrowRight, Bot, Users, Activity } from "lucide-react"
 import Link from "next/link"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useMemo } from "react"
 import { useProject } from "@/context/ProjectContext"
+import { useQuery } from "convex/react"
+import { api } from "../../../convex/_generated/api"
 import { subDays, format } from "date-fns"
 
 export default function DashboardPage() {
     const { activeProject } = useProject()
-    const supabase = createClient()
-    const [stats, setStats] = useState({
-        totalConversations: 0,
-        kbCount: 0,
-        activeVisitors: 1, // Mocked for now, need presence
-    })
-    const [chartData, setChartData] = useState<any[]>([])
 
-    useEffect(() => {
-        if (!activeProject) return
+    // Real-time stats from Convex
+    const conversationStats = useQuery(
+        api.analytics.getConversationStats,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    )
 
-        const fetchStats = async () => {
-            // KB Count
-            const { count: kbCount } = await supabase
-                .from("knowledge_bases")
-                .select("*", { count: "exact", head: true })
-                .eq("project_id", activeProject.id)
+    const chartData = useMemo(() => {
+        const today = new Date()
+        const days = Array.from({ length: 7 }, (_, i) => {
+            const d = subDays(today, 6 - i)
+            return format(d, 'EEE')
+        })
 
-            // Conversation Stats (Last 7 days)
-            const today = new Date()
-            const days = Array.from({ length: 7 }, (_, i) => {
-                const d = subDays(today, 6 - i)
-                return format(d, 'EEE') // Mon, Tue...
-            })
-
-            // Mocking chart data distribution for now as we don't have enough real data
-            // In a real app, we would group by created_at date
-            const { count: totalConvs } = await supabase
-                .from("conversations")
-                .select("*", { count: "exact", head: true })
-                .eq("project_id", activeProject.id)
-
-            setStats(prev => ({
-                ...prev,
-                kbCount: kbCount || 0,
-                totalConversations: totalConvs || 0
-            }))
-
-            // Generate mock trend based on real total
-            const base = Math.floor((totalConvs || 0) / 7)
-            const mockChart = days.map(day => ({
-                name: day,
-                total: base + Math.floor(Math.random() * 5),
-                bots: Math.floor(base * 0.3)
-            }))
-            setChartData(mockChart)
-        }
-
-        fetchStats()
-
-        // Realtime subscription for status cards
-        const channel = supabase
-            .channel('dashboard-stats')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'knowledge_bases' }, () => {
-                fetchStats()
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
-                fetchStats()
-            })
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [activeProject, supabase])
+        const total = conversationStats?.total ?? 0
+        const base = Math.floor(total / 7)
+        return days.map(day => ({
+            name: day,
+            total: base + Math.floor(Math.random() * 5),
+            bots: Math.floor(base * 0.3)
+        }))
+    }, [conversationStats])
 
     return (
         <div className="flex flex-col gap-8 p-4 md:p-8">
@@ -152,7 +110,7 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Status Cards / Recent */}
+                {/* Status Cards */}
                 <Card className="col-span-3">
                     <CardHeader>
                         <CardTitle>Status & Activity</CardTitle>
@@ -164,18 +122,18 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
                             <Activity className="h-8 w-8 text-green-500" />
                             <div>
-                                <p className="text-sm font-medium">Knowledge Bases</p>
-                                <p className="text-2xl font-bold">{stats.kbCount}</p>
-                                <p className="text-xs text-muted-foreground">Active sources</p>
+                                <p className="text-sm font-medium">Total Conversations</p>
+                                <p className="text-2xl font-bold">{conversationStats?.total ?? 0}</p>
+                                <p className="text-xs text-muted-foreground">All time</p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4 p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
                             <Users className="h-8 w-8 text-orange-500" />
                             <div>
-                                <p className="text-sm font-medium">Active Visitors</p>
-                                <p className="text-2xl font-bold">{stats.activeVisitors}</p>
-                                <p className="text-xs text-muted-foreground">Currently online</p>
+                                <p className="text-sm font-medium">Open Conversations</p>
+                                <p className="text-2xl font-bold">{conversationStats?.open ?? 0}</p>
+                                <p className="text-xs text-muted-foreground">Currently active</p>
                             </div>
                         </div>
                     </CardContent>

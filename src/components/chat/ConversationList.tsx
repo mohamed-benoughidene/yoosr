@@ -1,94 +1,49 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
-import { Search, Plus } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { useProject } from "@/context/ProjectContext"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Database } from "@/types/supabase"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../convex/_generated/api"
+import { useUser } from "@clerk/nextjs"
+import { useState } from "react"
 
-type Conversation = Database["public"]["Tables"]["conversations"]["Row"]
+type ChatTab = "open" | "resolved" | "unread"
 
 export function ConversationList() {
     const { activeProject } = useProject()
-    const [conversations, setConversations] = useState<Conversation[]>([])
-    const supabase = createClient()
+    const { user } = useUser()
     const searchParams = useSearchParams()
     const router = useRouter()
     const currentConversationId = searchParams.get("conversationId")
+    const [activeTab, setActiveTab] = useState<ChatTab>("open")
+    const [searchQuery, setSearchQuery] = useState("")
 
-    useEffect(() => {
-        if (!activeProject) return
+    // Real-time conversations — only show assigned to me
+    const allConversations = useQuery(
+        api.conversations.list,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    ) ?? []
 
-        const fetchConversations = async () => {
-            const { data, error } = await supabase
-                .from("conversations")
-                .select("*")
-                .eq("project_id", activeProject.id)
-                .order("updated_at", { ascending: false })
+    // Chat only shows conversations assigned to the current agent
+    const conversations = allConversations.filter((c: any) => c.assignedTo === user?.id)
 
-            if (error) {
-                console.error("Error fetching conversations:", error)
-            } else {
-                setConversations(data || [])
-            }
-        }
-
-        fetchConversations()
-
-        const channel = supabase
-            .channel(`project-conversations-${activeProject.id}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "conversations",
-                    filter: `project_id=eq.${activeProject.id}`,
-                },
-                (payload) => {
-                    fetchConversations()
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [activeProject, supabase])
+    const createConversation = useMutation(api.conversations.create)
 
     const handleNewChat = async () => {
-        if (!activeProject) return
+        if (!activeProject || !user) return
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data, error } = await supabase
-                .from("conversations")
-                .insert({
-                    project_id: activeProject.id,
-                    visitor_name: "New Visitor",
-                    last_message: "Started a new conversation",
-                    status: "open",
-                    unread_count: 0,
-                    assigned_to: user.id
-                })
-                .select()
-                .single()
-
-            if (error) throw error
-
-            if (data) {
-                router.push(`/dashboard/chat?conversationId=${data.id}`)
-            }
+            const conversationId = await createConversation({
+                projectId: activeProject._id,
+                visitorName: "New Visitor",
+            })
+            router.push(`/dashboard/chat?conversationId=${conversationId}`)
         } catch (error) {
             console.error("Error creating new chat:", error)
         }
@@ -98,56 +53,110 @@ export function ConversationList() {
         router.push(`/dashboard/chat?conversationId=${id}`)
     }
 
+    // Filter conversations based on active tab and search
+    const filteredConversations = conversations.filter((conv) => {
+        // Search filter
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase()
+            const matchesName = (conv.visitorName || "").toLowerCase().includes(q)
+            const matchesMessage = (conv.lastMessage || "").toLowerCase().includes(q)
+            if (!matchesName && !matchesMessage) return false
+        }
+
+        switch (activeTab) {
+            case "open":
+                return conv.status !== "resolved"
+            case "resolved":
+                return conv.status === "resolved"
+            case "unread":
+                return (conv.unreadCount ?? 0) > 0
+            default:
+                return true
+        }
+    })
+
+    const unreadCount = conversations.filter((c: any) => (c.unreadCount ?? 0) > 0).length
+
+    const tabs: { key: ChatTab; label: string; count?: number }[] = [
+        { key: "open", label: "Open" },
+        { key: "resolved", label: "Resolved" },
+        { key: "unread", label: "Unread", count: unreadCount },
+    ]
+
     return (
         <div className="flex flex-col h-full bg-background border-r">
             <div className="p-4 border-b space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold">Conversations</h2>
-                    <Button variant="ghost" size="icon" onClick={handleNewChat}>
-                        <Plus className="h-5 w-5" />
-                    </Button>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search..." className="pl-8" />
+                    <Input
+                        placeholder="Search..."
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
-                <div className="flex gap-2">
-                    <Badge variant="secondary" className="cursor-pointer hover:bg-muted-foreground/20">Unassigned</Badge>
-                    <Badge variant="outline" className="cursor-pointer hover:bg-muted">Mine</Badge>
-                    <Badge variant="outline" className="cursor-pointer hover:bg-muted">All</Badge>
+                <div className="flex gap-1.5 flex-wrap">
+                    {tabs.map((tab) => (
+                        <Badge
+                            key={tab.key}
+                            variant={activeTab === tab.key ? "secondary" : "outline"}
+                            className={cn(
+                                "cursor-pointer hover:bg-muted transition-colors",
+                                activeTab === tab.key && "bg-muted-foreground/20 font-medium"
+                            )}
+                            onClick={() => setActiveTab(tab.key)}
+                        >
+                            {tab.label}
+                            {tab.count !== undefined && tab.count > 0 && (
+                                <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold">
+                                    {tab.count}
+                                </span>
+                            )}
+                        </Badge>
+                    ))}
                 </div>
             </div>
             <div className="flex-1 overflow-auto">
                 <div className="flex flex-col">
-                    {conversations.map((conv) => (
+                    {filteredConversations.map((conv) => (
                         <div
-                            key={conv.id}
+                            key={conv._id}
                             className={cn(
                                 "flex flex-col gap-2 p-4 hover:bg-muted/50 cursor-pointer transition-colors border-b",
-                                (conv.unread_count ?? 0) > 0 ? "bg-muted/20" : "",
-                                currentConversationId === conv.id ? "bg-muted" : ""
+                                (conv.unreadCount ?? 0) > 0 ? "bg-muted/20" : "",
+                                currentConversationId === conv._id ? "bg-muted" : ""
                             )}
-                            onClick={() => handleSelectConversation(conv.id)}
+                            onClick={() => handleSelectConversation(conv._id)}
                         >
                             <div className="flex w-full flex-col gap-1">
                                 <div className="flex items-center">
                                     <div className="flex items-center gap-2">
-                                        <div className="font-semibold">{conv.visitor_name || "Visitor"}</div>
-                                        {(conv.unread_count ?? 0) > 0 && (
+                                        <div className="font-semibold">{conv.visitorName || "Visitor"}</div>
+                                        {(conv.unreadCount ?? 0) > 0 && (
                                             <span className="flex h-2 w-2 rounded-full bg-blue-600" />
                                         )}
                                     </div>
                                     <div className="ml-auto text-xs text-muted-foreground">
-                                        {conv.updated_at && formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
+                                        {conv.updatedAt && formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
                                     </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground line-clamp-2">
-                                    {conv.last_message || "No messages yet"}
+                                <div className="flex items-center gap-2">
+                                    <div className="text-xs text-muted-foreground line-clamp-2 flex-1">
+                                        {conv.lastMessage || "No messages yet"}
+                                    </div>
+                                    {conv.status === "resolved" && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-green-500/10 text-green-600 border-green-500/20">
+                                            Resolved
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     ))}
-                    {conversations.length === 0 && (
+                    {filteredConversations.length === 0 && (
                         <div className="p-4 text-center text-muted-foreground text-sm">
                             No conversations found.
                         </div>

@@ -1,12 +1,6 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
     Table,
@@ -16,77 +10,84 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, User, MessageSquare, Clock, Filter, Play } from "lucide-react"
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { Search, User, UserCheck, Loader2, CheckCircle } from "lucide-react"
+import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { formatDistanceToNow } from "date-fns"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { Id } from "../../../../convex/_generated/dataModel"
 
-type RequestFilter = 'all' | 'unassigned' | 'mine'
+type RequestFilter = "unassigned" | "mine"
 
 export default function RequestsPage() {
     const { activeProject } = useProject()
-    const supabase = createClient()
-    const [requests, setRequests] = useState<any[]>([])
-    const [filter, setFilter] = useState<RequestFilter>('all')
+    const { user } = useUser()
+    const router = useRouter()
+    const [filter, setFilter] = useState<RequestFilter>("unassigned")
     const [search, setSearch] = useState("")
-    const [loading, setLoading] = useState(true)
-    const [currentUser, setCurrentUser] = useState<any>(null)
+    const [assigningId, setAssigningId] = useState<string | null>(null)
+    const [resolvingId, setResolvingId] = useState<string | null>(null)
 
-    useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            setCurrentUser(user)
-        }
-        getUser()
-    }, [])
+    const updateConversation = useMutation(api.conversations.update)
+    const resolveConversation = useMutation(api.conversations.resolve)
 
-    const fetchRequests = async () => {
-        if (!activeProject) return
-        setLoading(true)
+    // Real-time conversations
+    const allConversations =
+        useQuery(
+            api.conversations.list,
+            activeProject ? { projectId: activeProject._id } : "skip"
+        ) ?? []
 
+    // Filter based on selection
+    const requests = allConversations.filter((req) => {
+        if (filter === "unassigned") return !req.assignedTo
+        if (filter === "mine" && user) return req.assignedTo === user.id
+        return true
+    })
+
+    const filteredRequests = requests.filter(
+        (req) =>
+            req.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
+            req.lastMessage?.toLowerCase().includes(search.toLowerCase())
+    )
+
+    const unassignedCount = allConversations.filter((c) => !c.assignedTo).length
+    const myCount = allConversations.filter((c) => c.assignedTo === user?.id).length
+
+    const handleAssignToMe = async (id: Id<"conversations">) => {
+        if (!user) return
+        setAssigningId(id)
         try {
-            let query = supabase
-                .from('conversations')
-                .select(`
-                    *,
-                    profiles:assigned_to (
-                        full_name,
-                        avatar_url,
-                        email
-                    )
-                `)
-                .eq('project_id', activeProject.id)
-                .order('updated_at', { ascending: false })
-
-            if (filter === 'unassigned') {
-                query = query.is('assigned_to', null)
-            } else if (filter === 'mine' && currentUser) {
-                query = query.eq('assigned_to', currentUser.id)
-            }
-
-            const { data, error } = await query
-
-            if (data) {
-                setRequests(data)
-            }
+            await updateConversation({
+                id,
+                assignedTo: user.id,
+            })
+            // Navigate to chat after assignment
+            router.push(`/dashboard/chat?conversationId=${id}`)
         } catch (error) {
-            console.error("Error fetching requests:", error)
+            console.error("Error assigning conversation:", error)
         } finally {
-            setLoading(false)
+            setAssigningId(null)
         }
     }
 
-    useEffect(() => {
-        fetchRequests()
-    }, [activeProject, filter, currentUser])
+    const handleResolve = async (id: Id<"conversations">) => {
+        setResolvingId(id)
+        try {
+            await resolveConversation({ id })
+        } catch (error) {
+            console.error("Error resolving conversation:", error)
+        } finally {
+            setResolvingId(null)
+        }
+    }
 
-    const filteredRequests = requests.filter(req =>
-        req.visitor_name?.toLowerCase().includes(search.toLowerCase()) ||
-        req.last_message?.toLowerCase().includes(search.toLowerCase())
-    )
+    const isLoading = allConversations === undefined
 
     return (
         <div className="flex h-[calc(100vh-60px)] flex-col md:flex-row">
@@ -96,28 +97,36 @@ export default function RequestsPage() {
                     <h2 className="font-semibold mb-2 px-2">Requests</h2>
                     <div className="space-y-1">
                         <Button
-                            variant={filter === 'all' ? "secondary" : "ghost"}
+                            variant={filter === "unassigned" ? "secondary" : "ghost"}
                             className="w-full justify-start"
-                            onClick={() => setFilter('all')}
-                        >
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            All Requests
-                        </Button>
-                        <Button
-                            variant={filter === 'unassigned' ? "secondary" : "ghost"}
-                            className="w-full justify-start"
-                            onClick={() => setFilter('unassigned')}
+                            onClick={() => setFilter("unassigned")}
                         >
                             <User className="mr-2 h-4 w-4" />
                             Unassigned
+                            {unassignedCount > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-auto h-5 min-w-[20px] px-1.5 bg-blue-600 text-white text-[10px] font-bold"
+                                >
+                                    {unassignedCount}
+                                </Badge>
+                            )}
                         </Button>
                         <Button
-                            variant={filter === 'mine' ? "secondary" : "ghost"}
+                            variant={filter === "mine" ? "secondary" : "ghost"}
                             className="w-full justify-start"
-                            onClick={() => setFilter('mine')}
+                            onClick={() => setFilter("mine")}
                         >
-                            <User className="mr-2 h-4 w-4" />
+                            <UserCheck className="mr-2 h-4 w-4" />
                             Assigned to me
+                            {myCount > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-auto h-5 min-w-[20px] px-1.5 bg-muted-foreground/20 text-foreground text-[10px] font-bold"
+                                >
+                                    {myCount}
+                                </Badge>
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -125,19 +134,11 @@ export default function RequestsPage() {
 
             {/* Main Content */}
             <div className="flex-1 p-6 space-y-6 overflow-auto">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Requests</h1>
-                        <p className="text-muted-foreground">
-                            Manage and respond to customer support tickets.
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => window.open('/dashboard/chat', '_blank')}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Simulate Visitor
-                        </Button>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Requests</h1>
+                    <p className="text-muted-foreground">
+                        Incoming conversations from visitors waiting to be assigned.
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-2 max-w-sm">
@@ -154,68 +155,122 @@ export default function RequestsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>User / Visitor</TableHead>
+                                <TableHead>Visitor</TableHead>
                                 <TableHead>Message</TableHead>
-                                <TableHead>Agent</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Time</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {loading ? (
+                            {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    <TableCell
+                                        colSpan={5}
+                                        className="text-center py-8 text-muted-foreground"
+                                    >
                                         Loading requests...
                                     </TableCell>
                                 </TableRow>
                             ) : filteredRequests.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    <TableCell
+                                        colSpan={5}
+                                        className="text-center py-8 text-muted-foreground"
+                                    >
                                         No requests found.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredRequests.map((req) => (
-                                    <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50">
+                                    <TableRow
+                                        key={req._id}
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={() =>
+                                            router.push(
+                                                `/dashboard/chat?conversationId=${req._id}`
+                                            )
+                                        }
+                                    >
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarFallback>{req.visitor_name?.substring(0, 2).toUpperCase() || "VI"}</AvatarFallback>
+                                                    <AvatarFallback>
+                                                        {req.visitorName
+                                                            ?.substring(0, 2)
+                                                            .toUpperCase() || "VI"}
+                                                    </AvatarFallback>
                                                 </Avatar>
-                                                <div className="font-medium">{req.visitor_name || "Anonymous Visitor"}</div>
+                                                <div className="font-medium">
+                                                    {req.visitorName || "Anonymous Visitor"}
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="truncate max-w-[300px] text-muted-foreground">
-                                                {req.last_message || "No messages yet"}
+                                                {req.lastMessage || "No messages yet"}
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {req.profiles ? (
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={req.profiles.avatar_url} />
-                                                        <AvatarFallback>{req.profiles.full_name?.substring(0, 2).toUpperCase() || "??"}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-sm">{req.profiles.full_name}</span>
-                                                </div>
+                                            {req.status === "resolved" ? (
+                                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                                                    Resolved
+                                                </Badge>
                                             ) : (
-                                                <span className="text-sm text-muted-foreground italic">Unassigned</span>
+                                                <Badge
+                                                    variant={
+                                                        req.assignedTo ? "secondary" : "default"
+                                                    }
+                                                >
+                                                    {req.assignedTo ? "Assigned" : "Unassigned"}
+                                                </Badge>
                                             )}
                                         </TableCell>
-                                        <TableCell>
-                                            <Badge variant={req.status === 'open' ? 'default' : 'secondary'}>
-                                                {req.status}
-                                            </Badge>
-                                        </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">
-                                            {formatDistanceToNow(new Date(req.updated_at), { addSuffix: true })}
+                                            {req.updatedAt &&
+                                                formatDistanceToNow(
+                                                    new Date(req.updatedAt),
+                                                    { addSuffix: true }
+                                                )}
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="sm" onClick={() => window.location.href = `/dashboard/chat?conversationId=${req.id}`}>
-                                                Open
-                                            </Button>
+                                            {!req.assignedTo && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={assigningId === req._id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleAssignToMe(req._id)
+                                                    }}
+                                                >
+                                                    {assigningId === req._id ? (
+                                                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                                                    ) : (
+                                                        <UserCheck className="mr-1.5 h-3 w-3" />
+                                                    )}
+                                                    Assign to me
+                                                </Button>
+                                            )}
+                                            {req.assignedTo === user?.id && req.status !== "resolved" && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={resolvingId === req._id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleResolve(req._id)
+                                                    }}
+                                                    className="text-green-600 border-green-500/30 hover:bg-green-500/10"
+                                                >
+                                                    {resolvingId === req._id ? (
+                                                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                                                    ) : (
+                                                        <CheckCircle className="mr-1.5 h-3 w-3" />
+                                                    )}
+                                                    Resolve
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

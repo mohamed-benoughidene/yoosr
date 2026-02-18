@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils"
 import { Plus, Database } from "lucide-react"
 import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 
 export default function KnowledgeBaseLayout({
@@ -18,29 +18,12 @@ export default function KnowledgeBaseLayout({
     const params = useParams()
     const pathname = usePathname()
     const activeId = params.kbId as string
-    const [knowledgeBases, setKnowledgeBases] = useState<{ id: string; name: string }[]>([])
-    const supabase = createClient()
     const { activeProject } = useProject()
 
-    useEffect(() => {
-        if (!activeProject) return
-
-        const fetchKBs = async () => {
-            const { data, error } = await supabase
-                .from("knowledge_bases")
-                .select("id, name")
-                .eq("project_id", activeProject.id)
-                .order("created_at", { ascending: true })
-
-            if (error) {
-                console.error("Error fetching KBs:", error)
-            } else {
-                setKnowledgeBases(data || [])
-            }
-        }
-
-        fetchKBs()
-    }, [activeProject, supabase])
+    const knowledgeBases = useQuery(
+        api.knowledgeBases.list,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    )
 
     return (
         <div className="flex h-[calc(100vh-60px)] flex-col md:flex-row">
@@ -54,18 +37,18 @@ export default function KnowledgeBaseLayout({
                 </div>
                 <ScrollArea className="flex-1">
                     <div className="p-2 space-y-1">
-                        {knowledgeBases.length === 0 && (
+                        {(knowledgeBases ?? []).length === 0 && (
                             <div className="p-4 text-xs text-muted-foreground text-center">
                                 No knowledge bases found.
                             </div>
                         )}
-                        {knowledgeBases.map((kb) => (
+                        {(knowledgeBases ?? []).map((kb: any) => (
                             <Link
-                                key={kb.id}
-                                href={`/dashboard/kb/${kb.id}`}
+                                key={kb._id}
+                                href={`/dashboard/kb/${kb._id}`}
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent",
-                                    (activeId === kb.id || (!activeId && pathname === '/dashboard/kb' && kb.id === 'default'))
+                                    (activeId === kb._id || (!activeId && pathname === '/dashboard/kb' && kb.isDefault))
                                         ? "bg-accent text-accent-foreground"
                                         : "text-muted-foreground"
                                 )}

@@ -16,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
@@ -31,7 +30,8 @@ import {
     Key,
     Webhook,
 } from "lucide-react"
-import { logActivity } from "@/lib/logging"
+import { useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
 
 export default function GeneralSettingsPage() {
     const { activeProject } = useProject()
@@ -50,53 +50,35 @@ export default function GeneralSettingsPage() {
     const [confirmDelete, setConfirmDelete] = useState("")
     const [deleting, setDeleting] = useState(false)
 
+    const updateProject = useMutation(api.projects.update)
+    const removeProject = useMutation(api.projects.remove)
+
     useEffect(() => {
         if (activeProject) {
             setProjectName(activeProject.name)
             setProjectDesc(activeProject.description || "")
-        }
-    }, [activeProject])
-
-    // Load webhook settings
-    useEffect(() => {
-        const loadWebhook = async () => {
-            if (!activeProject) return
-            const supabase = createClient()
-            const { data } = await supabase
-                .from("projects")
-                .select("webhook_url, webhook_enabled")
-                .eq("id", activeProject.id)
-                .single()
-            if (data) {
-                setWebhookUrl(data.webhook_url || "")
-                setWebhookEnabled(data.webhook_enabled || false)
+            // Load webhook config from widgetConfig if stored there
+            const wc = activeProject.widgetConfig as Record<string, any> | undefined
+            if (wc) {
+                setWebhookUrl(wc.webhookUrl || "")
+                setWebhookEnabled(wc.webhookEnabled || false)
             }
         }
-        loadWebhook()
     }, [activeProject])
 
     const handleSave = async () => {
         if (!activeProject) return
         setLoading(true)
-        const supabase = createClient()
 
-        const { error } = await supabase
-            .from("projects")
-            .update({
+        try {
+            await updateProject({
+                id: activeProject._id,
                 name: projectName,
                 description: projectDesc,
             })
-            .eq("id", activeProject.id)
-
-        if (error) {
-            toast.error("Failed to update project settings")
-        } else {
             toast.success("Project settings updated")
-            await logActivity({
-                projectId: activeProject.id,
-                actionType: "update_project",
-                description: `Updated project settings (Name: ${projectName})`,
-            })
+        } catch {
+            toast.error("Failed to update project settings")
         }
         setLoading(false)
     }
@@ -104,20 +86,21 @@ export default function GeneralSettingsPage() {
     const handleSaveWebhook = async () => {
         if (!activeProject) return
         setWebhookLoading(true)
-        const supabase = createClient()
 
-        const { error } = await supabase
-            .from("projects")
-            .update({
-                webhook_url: webhookUrl,
-                webhook_enabled: webhookEnabled,
+        try {
+            // Store webhook config inside widgetConfig
+            const existingConfig = (activeProject.widgetConfig as Record<string, any>) || {}
+            await updateProject({
+                id: activeProject._id,
+                widgetConfig: {
+                    ...existingConfig,
+                    webhookUrl,
+                    webhookEnabled,
+                },
             })
-            .eq("id", activeProject.id)
-
-        if (error) {
-            toast.error("Failed to save webhook settings")
-        } else {
             toast.success("Webhook settings saved")
+        } catch {
+            toast.error("Failed to save webhook settings")
         }
         setWebhookLoading(false)
     }
@@ -128,11 +111,12 @@ export default function GeneralSettingsPage() {
     }
 
     // Derived keys
+    const projectId = activeProject?._id || ""
     const apiKey = activeProject
-        ? `ys_${btoa(activeProject.id).replace(/=/g, "").slice(0, 24)}`
+        ? `ys_${btoa(projectId).replace(/=/g, "").slice(0, 24)}`
         : ""
     const jwtSecret = activeProject
-        ? `ysjwt_${btoa(activeProject.id + "_secret").replace(/=/g, "").slice(0, 32)}`
+        ? `ysjwt_${btoa(projectId + "_secret").replace(/=/g, "").slice(0, 32)}`
         : ""
 
     const handleDeleteProject = async () => {
@@ -142,17 +126,13 @@ export default function GeneralSettingsPage() {
             return
         }
         setDeleting(true)
-        const supabase = createClient()
-        const { error } = await supabase
-            .from("projects")
-            .delete()
-            .eq("id", activeProject.id)
 
-        if (error) {
-            toast.error("Failed to delete project")
-        } else {
+        try {
+            await removeProject({ id: activeProject._id })
             toast.success("Project deleted")
             window.location.href = "/dashboard"
+        } catch {
+            toast.error("Failed to delete project")
         }
         setDeleting(false)
     }
@@ -211,7 +191,7 @@ export default function GeneralSettingsPage() {
                                 <div className="flex gap-2">
                                     <Input
                                         disabled
-                                        value={activeProject?.id || ""}
+                                        value={projectId}
                                         className="bg-muted font-mono text-xs"
                                     />
                                     <Button
@@ -220,7 +200,7 @@ export default function GeneralSettingsPage() {
                                         className="shrink-0"
                                         onClick={() =>
                                             copyToClipboard(
-                                                activeProject?.id || "",
+                                                projectId,
                                                 "Project ID"
                                             )
                                         }

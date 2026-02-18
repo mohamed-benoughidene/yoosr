@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/lib/supabase/client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Plus, Trash2, Tag } from "lucide-react"
 import {
@@ -24,6 +23,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
+import { useUser } from "@clerk/nextjs"
 
 const colorOptions = [
     { value: "red", label: "Red", bg: "bg-red-500", text: "text-red-700", light: "bg-red-100" },
@@ -40,80 +42,49 @@ function getColorConfig(color: string) {
 
 export default function LabelsPage() {
     const { activeProject } = useProject()
-    const [labels, setLabels] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
+    const { user } = useUser()
     const [newName, setNewName] = useState("")
     const [newColor, setNewColor] = useState("blue")
     const [creating, setCreating] = useState(false)
-    const [currentUserName, setCurrentUserName] = useState<string | null>(null)
 
-    const fetchLabels = async () => {
-        if (!activeProject) return
-        const supabase = createClient()
+    const labels = useQuery(
+        api.settings.listLabels,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    ) ?? []
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", user.id)
-                .single()
-            if (profile) setCurrentUserName(profile.full_name)
-        }
-
-        const { data } = await supabase
-            .from("labels")
-            .select("*")
-            .eq("project_id", activeProject.id)
-            .order("created_at", { ascending: false })
-
-        if (data) setLabels(data)
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        fetchLabels()
-    }, [activeProject])
+    const createLabel = useMutation(api.settings.createLabel)
+    const removeLabel = useMutation(api.settings.removeLabel)
 
     const handleCreate = async () => {
         if (!activeProject || !newName.trim()) return
         setCreating(true)
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
 
-        const { error } = await supabase.from("labels").insert({
-            project_id: activeProject.id,
-            name: newName.trim(),
-            color: newColor,
-            created_by: user?.id || null,
-        })
-
-        if (error) {
-            toast.error("Failed to create label")
-            console.error(error)
-        } else {
+        try {
+            await createLabel({
+                projectId: activeProject._id,
+                name: newName.trim(),
+                color: newColor,
+            })
             toast.success("Label created")
             setNewName("")
             setNewColor("blue")
-            fetchLabels()
+        } catch {
+            toast.error("Failed to create label")
         }
         setCreating(false)
     }
 
-    const handleDelete = async (id: string) => {
-        const supabase = createClient()
-        const { error } = await supabase.from("labels").delete().eq("id", id)
-
-        if (error) {
-            toast.error("Failed to delete label")
-        } else {
+    const handleDelete = async (id: typeof labels[number]["_id"]) => {
+        try {
+            await removeLabel({ id })
             toast.success("Label deleted")
-            fetchLabels()
+        } catch {
+            toast.error("Failed to delete label")
         }
     }
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString("en-US", {
+    const formatDate = (timestamp: number) => {
+        return new Date(timestamp).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric",
@@ -191,13 +162,7 @@ export default function LabelsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center py-8">
-                                    Loading...
-                                </TableCell>
-                            </TableRow>
-                        ) : labels.length === 0 ? (
+                        {labels.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={4} className="text-center py-12">
                                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -215,7 +180,7 @@ export default function LabelsPage() {
                             labels.map((label) => {
                                 const cc = getColorConfig(label.color)
                                 return (
-                                    <TableRow key={label.id}>
+                                    <TableRow key={label._id}>
                                         <TableCell>
                                             <span
                                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${cc.light} ${cc.text}`}
@@ -225,17 +190,17 @@ export default function LabelsPage() {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
-                                            {currentUserName || "You"}
+                                            {user?.fullName || "You"}
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
-                                            {formatDate(label.created_at)}
+                                            {formatDate(label._creationTime)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 className="text-destructive h-8 w-8"
-                                                onClick={() => handleDelete(label.id)}
+                                                onClick={() => handleDelete(label._id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

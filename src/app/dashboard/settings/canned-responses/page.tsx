@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/lib/supabase/client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { toast } from "sonner"
 import {
     Plus,
@@ -44,6 +43,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
+import { useUser } from "@clerk/nextjs"
 
 const placeholders = [
     { label: "User Name", value: "{{user_name}}", icon: User },
@@ -54,81 +56,45 @@ const placeholders = [
 
 export default function CannedResponsesPage() {
     const { activeProject } = useProject()
-    const [responses, setResponses] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
+    const { user } = useUser()
     const [createOpen, setCreateOpen] = useState(false)
     const [newTitle, setNewTitle] = useState("")
     const [newMessage, setNewMessage] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
-    const [currentUserName, setCurrentUserName] = useState<string | null>(null)
     const messageRef = useRef<HTMLTextAreaElement>(null)
 
-    const fetchResponses = async () => {
-        if (!activeProject) return
-        const supabase = createClient()
+    const responses = useQuery(
+        api.settings.listCannedResponses,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    ) ?? []
 
-        const { data: { user } } = await supabase.auth.getUser()
-
-        // Get profile name for display
-        if (user) {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", user.id)
-                .single()
-            if (profile) setCurrentUserName(profile.full_name)
-        }
-
-        const { data } = await supabase
-            .from("canned_responses")
-            .select("*")
-            .eq("project_id", activeProject.id)
-            .order("created_at", { ascending: false })
-
-        if (data) setResponses(data)
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        fetchResponses()
-    }, [activeProject])
+    const createCannedResponse = useMutation(api.settings.createCannedResponse)
+    const removeCannedResponse = useMutation(api.settings.removeCannedResponse)
 
     const handleCreate = async () => {
         if (!activeProject || !newTitle || !newMessage) return
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
 
-        const { error } = await supabase.from("canned_responses").insert({
-            project_id: activeProject.id,
-            trigger: newTitle,
-            message: newMessage,
-            created_by: user?.id || null,
-        })
-
-        if (error) {
-            toast.error("Failed to create canned response")
-            console.error(error)
-        } else {
+        try {
+            await createCannedResponse({
+                projectId: activeProject._id,
+                trigger: newTitle,
+                message: newMessage,
+            })
             toast.success("Canned response created")
             setNewTitle("")
             setNewMessage("")
             setCreateOpen(false)
-            fetchResponses()
+        } catch {
+            toast.error("Failed to create canned response")
         }
     }
 
-    const handleDelete = async (id: string) => {
-        const supabase = createClient()
-        const { error } = await supabase
-            .from("canned_responses")
-            .delete()
-            .eq("id", id)
-
-        if (error) {
-            toast.error("Failed to delete response")
-        } else {
+    const handleDelete = async (id: typeof responses[number]["_id"]) => {
+        try {
+            await removeCannedResponse({ id })
             toast.success("Response deleted")
-            fetchResponses()
+        } catch {
+            toast.error("Failed to delete response")
         }
     }
 
@@ -142,7 +108,6 @@ export default function CannedResponsesPage() {
         const end = textarea.selectionEnd
         const text = newMessage
         setNewMessage(text.substring(0, start) + value + text.substring(end))
-        // Set cursor position after placeholder
         setTimeout(() => {
             textarea.focus()
             textarea.setSelectionRange(start + value.length, start + value.length)
@@ -283,13 +248,7 @@ export default function CannedResponsesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center py-8">
-                                    Loading...
-                                </TableCell>
-                            </TableRow>
-                        ) : filteredResponses.length === 0 ? (
+                        {filteredResponses.length === 0 ? (
                             <TableRow>
                                 <TableCell
                                     colSpan={4}
@@ -314,7 +273,7 @@ export default function CannedResponsesPage() {
                             </TableRow>
                         ) : (
                             filteredResponses.map((res) => (
-                                <TableRow key={res.id}>
+                                <TableRow key={res._id}>
                                     <TableCell>
                                         <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
                                             /{res.trigger}
@@ -327,14 +286,14 @@ export default function CannedResponsesPage() {
                                         {res.message}
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {currentUserName || "You"}
+                                        {user?.fullName || "You"}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             className="text-destructive h-8 w-8"
-                                            onClick={() => handleDelete(res.id)}
+                                            onClick={() => handleDelete(res._id)}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

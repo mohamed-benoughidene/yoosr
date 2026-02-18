@@ -1,340 +1,412 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import { useSearchParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Send, Paperclip, MessageSquare } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { toast } from "sonner"
-import { v4 as uuidv4 } from "uuid"
+import { useState, useEffect, useRef, useCallback } from "react"
 
-// Types
-type Message = {
-    id: string
-    content: string
-    sender_type: "user" | "agent" | "visitor"
-    created_at: string
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
+
+function playBeep() {
+    try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const oscillator = ctx.createOscillator()
+        const gain = ctx.createGain()
+        oscillator.connect(gain)
+        gain.connect(ctx.destination)
+        oscillator.frequency.value = 800
+        oscillator.type = "sine"
+        gain.gain.value = 0.3
+        oscillator.start()
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+        oscillator.stop(ctx.currentTime + 0.3)
+    } catch {
+        /* AudioContext not supported */
+    }
 }
 
-type ProjectConfig = {
-    primaryColor: string
-    translations: {
-        headerTitle: string
-        welcomeMessage: string
-    }
-    logoUrl?: string
-    // Added for new requirements
-    welcomeDelay?: number // in seconds
-    enableWelcomeNotification?: boolean
+interface Message {
+    _id: string
+    content: string
+    senderType: string
+    senderId?: string
+    attachments?: any
+    _creationTime: number
+}
+
+async function apiPost(endpoint: string, body: Record<string, unknown>) {
+    const res = await fetch(`${CONVEX_SITE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    })
+    return res.json()
+}
+
+async function apiGet(endpoint: string, params: Record<string, string>) {
+    const url = new URL(`${CONVEX_SITE_URL}${endpoint}`)
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+    const res = await fetch(url.toString())
+    return res.json()
 }
 
 export default function WidgetPage() {
-    const searchParams = useSearchParams()
-    const projectId = searchParams.get("projectId")
-    const supabase = createClient()
-
-    // State
-    const [messages, setMessages] = useState<Message[]>([])
-    const [inputValue, setInputValue] = useState("")
-    const [isLoading, setIsLoading] = useState(true)
-    const [guestId, setGuestId] = useState<string | null>(null)
+    const [projectId, setProjectId] = useState<string | null>(null)
+    const [visitorId, setVisitorId] = useState<string>("")
     const [conversationId, setConversationId] = useState<string | null>(null)
-    const [projectConfig, setProjectConfig] = useState<ProjectConfig | null>(null)
+    const [messages, setMessages] = useState<Message[]>([])
+    const [input, setInput] = useState("")
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [projectConfig, setProjectConfig] = useState<any>(null)
+    const chatEndRef = useRef<HTMLDivElement>(null)
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const prevMessageCountRef = useRef<number>(0)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const welcomeShownRef = useRef(false)
 
-    // Refs
-    const scrollRef = useRef<HTMLDivElement>(null)
-    const messagesEndRef = useRef<HTMLDivElement>(null)
+    // Create audio element for notifications
+    useEffect(() => {
+        const audio = new Audio("/notification.mp3")
+        audio.volume = 0.5
+        audioRef.current = audio
+        return () => { audioRef.current = null }
+    }, [])
 
-    // 1. Initialize Guest & Config
+    // Extract projectId from search params
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search)
+        const pid = urlParams.get("projectId")
+        if (pid) {
+            setProjectId(pid)
+        } else {
+            setError("No projectId provided")
+            setLoading(false)
+        }
+
+        const stored = localStorage.getItem("yoosr_visitor_id")
+        if (stored) {
+            setVisitorId(stored)
+        } else {
+            const vid = "visitor_" + Math.random().toString(36).slice(2, 11)
+            localStorage.setItem("yoosr_visitor_id", vid)
+            setVisitorId(vid)
+        }
+    }, [])
+
+    // Fetch project config
     useEffect(() => {
         if (!projectId) return
+        apiGet("/widget/project", { projectId }).then((data) => {
+            setProjectConfig(data)
+        }).catch(() => { /* ignore */ })
+    }, [projectId])
 
-        const initWidget = async () => {
-            // A. Get or Create Guest ID
-            let storedGuestId = localStorage.getItem("yoosr_guest_id")
-            if (!storedGuestId) {
-                const newId = uuidv4()
-                localStorage.setItem("yoosr_guest_id", newId)
-                storedGuestId = newId
-            }
-            setGuestId(storedGuestId)
-
-            // B. Fetch Project Config
-            const { data: project, error: projectError } = await supabase
-                .from("projects")
-                .select("widget_config, name")
-                .eq("id", projectId)
-                .single()
-
-            if (project?.widget_config) {
-                setProjectConfig(project.widget_config as ProjectConfig)
-            }
-
-            // C. Find or Create Conversation
-            // Try to find existing active conversation for this guest
-            const { data: conversations } = await supabase
-                .from("conversations")
-                .select("id")
-                .eq("project_id", projectId)
-                .eq("visitor_id", storedGuestId)
-                .order("updated_at", { ascending: false })
-                .limit(1)
-
-            let convId = conversations?.[0]?.id
-
-            if (!convId) {
-                // We'll create conversation on first message or now? 
-                // Let's create it on first message to avoid empty spam, 
-                // BUT for real-time subscription we need an ID or we subscribe to filtering by visitor_id.
-                // Subscribing by visitor_id is safer if no convo exists yet.
-                // Actually, if we want to receive agent messages, the agent needs a conversation to reply TO.
-                // So efficient flow: 
-                // 1. User sees "Welcome".
-                // 2. User types message -> Create Conversation -> Send Message.
-            } else {
-                setConversationId(convId)
-                // Fetch history
-                const { data: msgs } = await supabase
-                    .from("messages")
-                    .select("*")
-                    .eq("conversation_id", convId)
-                    .order("created_at", { ascending: true })
-
-                if (msgs) setMessages(msgs as any)
-            }
-
-            setIsLoading(false)
-        }
-
-        initWidget()
-    }, [projectId, supabase])
-
-    // 2. Real-time Subscription
+    // Welcome message after delay
     useEffect(() => {
-        if (!conversationId) return
+        if (!projectConfig || welcomeShownRef.current) return
 
-        const channel = supabase
-            .channel(`widget-convo-${conversationId}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "messages",
-                    filter: `conversation_id=eq.${conversationId}`
-                },
-                (payload) => {
-                    const newMsg = payload.new as Message
-                    setMessages(prev => {
-                        // Dedup: If we already have this ID (from optimistic update), don't add duplicate
-                        if (prev.some(m => m.id === newMsg.id)) return prev
-                        return [...prev, newMsg]
-                    })
-                    // Scroll to bottom
-                    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
-                }
-            )
-            .subscribe()
+        const config = projectConfig?.widgetConfig
+        const enableWelcome = config?.enableWelcomeNotification ?? true
+        const delay = (config?.welcomeDelay ?? 3) * 1000
+        const welcomeMsg = config?.translations?.welcomeMessage || "Hi there! How can we help you?"
 
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [conversationId, supabase])
-
-    // 3. Handle Auto-Open / Welcome Delay
-    useEffect(() => {
-        if (!projectConfig?.welcomeDelay || !projectConfig?.enableWelcomeNotification) return;
-
-        // If we already have messages, maybe don't auto-open? 
-        // Or if the user has already seen it? 
-        // For now, let's just respect the config.
+        if (!enableWelcome) return
 
         const timer = setTimeout(() => {
-            // Post message to parent to open
-            window.parent.postMessage({ type: 'yoosr:auto_open' }, "*")
-        }, projectConfig.welcomeDelay * 1000)
+            if (!welcomeShownRef.current) {
+                welcomeShownRef.current = true
+                setMessages(prev => {
+                    if (prev.length > 0) return prev
+                    return [{
+                        _id: "welcome_" + Date.now(),
+                        content: welcomeMsg,
+                        senderType: "bot",
+                        _creationTime: Date.now(),
+                    }]
+                })
+                // Notify parent for unread badge
+                try {
+                    window.parent.postMessage({ type: "yoosr:new_message" }, "*")
+                } catch { /* ignore */ }
+            }
+        }, delay)
 
         return () => clearTimeout(timer)
     }, [projectConfig])
 
+    // Find or create conversation
+    useEffect(() => {
+        if (!projectId || !visitorId) return
 
-    // 4. Send Message
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || !projectId || !guestId) return
+        async function init() {
+            try {
+                const existing = await apiGet("/widget/conversations", {
+                    projectId: projectId!,
+                    visitorId,
+                })
 
-        const content = inputValue.trim()
-        setInputValue("")
-
-        // Optimistic UI Update with generated ID
-        const tempId = uuidv4()
-        const optimisticMsg: Message = {
-            id: tempId,
-            content: content,
-            sender_type: "visitor", // Fix: Guest sees their own messages (visitor) on the right
-            created_at: new Date().toISOString()
+                if (existing && existing._id) {
+                    setConversationId(existing._id)
+                } else {
+                    // Don't create conversation until first message
+                }
+            } catch (e) {
+                setError("Failed to connect. Please try again.")
+            }
+            setLoading(false)
         }
-        setMessages(prev => [...prev, optimisticMsg])
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
 
+        init()
+    }, [projectId, visitorId])
+
+    // Poll for messages
+    const fetchMessages = useCallback(async () => {
+        if (!conversationId) return
         try {
-            let targetConversationId = conversationId
-
-            // If no conversation exists, create one
-            if (!targetConversationId) {
-                const { data: newConvo, error: createError } = await supabase
-                    .from("conversations")
-                    .insert({
-                        project_id: projectId,
-                        visitor_id: guestId,
-                        status: "open",
-                        unread_count: 1, // Agent sees 1 unread
-                        last_message: content
-                    })
-                    .select("id")
-                    .single()
-
-                if (createError) throw createError
-                targetConversationId = newConvo.id
-                setConversationId(targetConversationId)
+            const msgs = await apiGet("/widget/messages", { conversationId })
+            if (Array.isArray(msgs)) {
+                const prevCount = prevMessageCountRef.current
+                if (prevCount > 0 && msgs.length > prevCount) {
+                    const newMsgs = msgs.slice(prevCount)
+                    const hasAgentMessage = newMsgs.some((m: Message) => m.senderType === "agent" || m.senderType === "bot")
+                    if (hasAgentMessage) {
+                        // Play notification sound
+                        try {
+                            audioRef.current?.play().catch(() => playBeep())
+                        } catch {
+                            playBeep()
+                        }
+                        // Notify parent (widget.js) for badge
+                        try {
+                            window.parent.postMessage({ type: "yoosr:new_message" }, "*")
+                        } catch { /* ignore */ }
+                    }
+                }
+                prevMessageCountRef.current = msgs.length
+                setMessages(msgs)
+                welcomeShownRef.current = true // Don't show welcome if real messages exist
             }
+        } catch {
+            /* silently fail on poll */
+        }
+    }, [conversationId])
 
-            // Insert Message using the generated ID
-            const { error: msgError } = await supabase
-                .from("messages")
-                .insert({
-                    id: tempId, // Use the same ID as optimistic UI
-                    conversation_id: targetConversationId,
-                    content: content,
-                    sender_type: "visitor", // Fix: Guests send as visitor
-                    sender_id: null
-                })
+    useEffect(() => {
+        if (!conversationId) return
+        fetchMessages()
+        pollRef.current = setInterval(fetchMessages, 2000)
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current)
+        }
+    }, [conversationId, fetchMessages])
 
-            if (msgError) {
-                // Rollback optimistic update on error
-                setMessages(prev => prev.filter(m => m.id !== tempId))
-                throw msgError
-            }
+    // Auto-scroll
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages])
 
-            // Update conversation last_message
-            await supabase
-                .from("conversations")
-                .update({
-                    last_message: content,
-                    updated_at: new Date().toISOString(),
-                    unread_count: 1
-                })
-                .eq("id", targetConversationId)
-
-        } catch (error) {
-            console.error("Failed to send message", error)
-            toast.error("Failed to send message")
-            // Rollback optimistic update on general error
-            setMessages(prev => prev.filter(m => m.id !== tempId))
+    const ensureConversation = async (): Promise<string | null> => {
+        if (conversationId) return conversationId
+        if (!projectId) return null
+        try {
+            const result = await apiPost("/widget/conversations", {
+                projectId,
+                visitorName: "Visitor",
+                visitorId,
+            })
+            const newId = result.conversationId
+            setConversationId(newId)
+            return newId
+        } catch {
+            setError("Failed to create conversation")
+            return null
         }
     }
 
-    if (!projectId) return <div className="p-4 text-center">Missing Project ID</div>
+    const handleSend = async () => {
+        if (!input.trim()) return
+        const text = input.trim()
+        setInput("")
 
-    const primaryColor = projectConfig?.primaryColor || "#000000"
-    const headerTitle = projectConfig?.translations?.headerTitle || "Chat Support"
-    const welcomeMessage = projectConfig?.translations?.welcomeMessage || "How can we help?"
+        // Optimistic update
+        setMessages((prev) => [
+            ...prev,
+            {
+                _id: "temp_" + Date.now(),
+                content: text,
+                senderType: "visitor",
+                senderId: visitorId,
+                _creationTime: Date.now(),
+            },
+        ])
+
+        const convId = await ensureConversation()
+        if (!convId) return
+
+        try {
+            await apiPost("/widget/messages", {
+                conversationId: convId,
+                content: text,
+                visitorId,
+            })
+            fetchMessages()
+        } catch {
+            setError("Failed to send message")
+        }
+    }
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const convId = await ensureConversation()
+        if (!convId) return
+
+        // For now, send file name as message (full upload requires Convex file storage endpoint)
+        const text = `📎 ${file.name}`
+        setMessages((prev) => [
+            ...prev,
+            {
+                _id: "temp_file_" + Date.now(),
+                content: text,
+                senderType: "visitor",
+                senderId: visitorId,
+                _creationTime: Date.now(),
+            },
+        ])
+
+        try {
+            await apiPost("/widget/messages", {
+                conversationId: convId,
+                content: text,
+                visitorId,
+            })
+            fetchMessages()
+        } catch {
+            setError("Failed to send attachment")
+        }
+
+        // Reset file input
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSend()
+        }
+    }
+
+    // Read widget config
+    const widgetConfig = projectConfig?.widgetConfig
+    const widgetColor = widgetConfig?.primaryColor || "#6366f1"
+    const widgetTitle = widgetConfig?.translations?.headerTitle || projectConfig?.name || "Chat with us"
+    const onlineStatus = widgetConfig?.translations?.onlineStatus || "We typically reply within a few minutes"
+    const logoUrl = widgetConfig?.logoUrl || ""
+
+    if (error && !conversationId) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-white">
+                <p className="text-red-500 text-sm">{error}</p>
+            </div>
+        )
+    }
 
     return (
-        <div className="flex flex-col h-screen bg-background border rounded-xl overflow-hidden shadow-xl sm:rounded-none sm:shadow-none">
+        <div className="flex flex-col h-screen bg-white">
             {/* Header */}
             <div
-                className="p-4 text-primary-foreground flex items-center gap-3 shrink-0"
-                style={{ backgroundColor: primaryColor }}
+                style={{ backgroundColor: widgetColor }}
+                className="px-4 py-3 text-white flex items-center gap-3 shadow-sm"
             >
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
-                    {projectConfig?.logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={projectConfig.logoUrl} className="w-full h-full object-cover" alt="Logo" />
-                    ) : (
-                        <MessageSquare className="w-6 h-6" />
-                    )}
-                </div>
-                <div>
-                    <h1 className="font-semibold text-base">{headerTitle}</h1>
-                    <p className="text-xs opacity-90 flex items-center gap-1">
-                        <span className="w-2 h-2 bg-green-400 rounded-full inline-block" />
-                        Online
-                    </p>
+                {logoUrl && (
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                        <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
+                    </div>
+                )}
+                <div className="flex-1">
+                    <h1 className="text-sm font-semibold">{widgetTitle}</h1>
+                    <p className="text-xs opacity-80">{onlineStatus}</p>
                 </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-hidden bg-slate-50 dark:bg-zinc-900 relative">
-                <ScrollArea className="h-full px-4 py-4">
-                    {messages.length === 0 && (
-                        <div className="flex gap-2 items-end mb-4 animate-in fade-in slide-in-from-left-2">
-                            <div className="w-8 h-8 rounded-full bg-muted shrink-0 flex items-center justify-center overflow-hidden">
-                                <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <div className="bg-white dark:bg-zinc-800 p-3 rounded-2xl rounded-bl-none text-sm shadow-sm border max-w-[85%]">
-                                {welcomeMessage}
-                            </div>
-                        </div>
-                    )}
-
-                    {messages.map((msg) => (
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {loading ? (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                        Connecting...
+                    </div>
+                ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                        Send a message to start the conversation!
+                    </div>
+                ) : (
+                    messages.map((msg) => (
                         <div
-                            key={msg.id}
-                            className={cn(
-                                "flex mb-4 w-full",
-                                msg.sender_type === "visitor" ? "justify-end" : "justify-start"
-                            )}
+                            key={msg._id}
+                            className={`flex ${msg.senderType === "bot"
+                                    ? "justify-center"
+                                    : msg.senderType === "visitor"
+                                        ? "justify-end"
+                                        : "justify-start"
+                                }`}
                         >
-                            <div
-                                className={cn(
-                                    "p-3 rounded-2xl text-sm max-w-[85%] shadow-sm",
-                                    msg.sender_type === "visitor"
-                                        ? "rounded-br-none text-white"
-                                        : "bg-white dark:bg-zinc-800 rounded-bl-none border"
-                                )}
-                                style={msg.sender_type === "visitor" ? { backgroundColor: primaryColor } : {}}
-                            >
-                                {msg.content}
-                            </div>
+                            {msg.senderType === "bot" ? (
+                                <div className="max-w-[85%] rounded-lg px-3 py-2 text-center" style={{ backgroundColor: "#f9fafb", border: "1px dashed #d1d5db" }}>
+                                    <span className="text-xs text-gray-500 italic">{msg.content}</span>
+                                </div>
+                            ) : (
+                                <div
+                                    className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
+                                    style={
+                                        msg.senderType === "visitor"
+                                            ? { backgroundColor: widgetColor, color: "#fff" }
+                                            : { backgroundColor: "#f3f4f6", color: "#1f2937" }
+                                    }
+                                >
+                                    {msg.content}
+                                </div>
+                            )}
                         </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </ScrollArea>
+                    ))
+                )}
+                <div ref={chatEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 bg-background border-t shrink-0">
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        handleSendMessage()
-                    }}
-                    className="flex gap-2"
+            {/* Input */}
+            <div className="border-t px-3 py-2 flex gap-2 items-center">
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                />
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                    title="Attach file"
                 >
-                    <Input
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Write a message..."
-                        className="flex-1 bg-muted/50 border-0 focus-visible:ring-1"
-                    />
-                    <Button
-                        type="submit"
-                        size="icon"
-                        disabled={!inputValue.trim()}
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        <Send className="w-4 h-4" />
-                    </Button>
-                </form>
-                <div className="text-center mt-2">
-                    <span className="text-[10px] text-muted-foreground">
-                        Powered by <span className="font-semibold">Yoosr</span>
-                    </span>
-                </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                </button>
+                <input
+                    type="text"
+                    className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
+                    placeholder="Type a message..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={loading}
+                />
+                <button
+                    onClick={handleSend}
+                    disabled={loading || !input.trim()}
+                    style={{ backgroundColor: widgetColor }}
+                    className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    Send
+                </button>
             </div>
         </div>
     )

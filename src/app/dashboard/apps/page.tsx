@@ -6,33 +6,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
 import { Check, Lock, Loader2 } from "lucide-react"
 
 export default function AppsPage() {
     const { activeProject } = useProject()
     const router = useRouter()
-    const [installedApps, setInstalledApps] = useState<string[]>([])
-    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        const fetchIntegrations = async () => {
-            if (!activeProject) return
-            setLoading(true)
-            const supabase = createClient()
-            const { data } = await supabase
-                .from('integrations')
-                .select('provider')
-                .eq('project_id', activeProject.id)
-
-            if (data) {
-                setInstalledApps(data.map(i => i.provider))
-            }
-            setLoading(false)
-        }
-        fetchIntegrations()
-    }, [activeProject])
+    const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
+    const installedApps = (integrations ?? []).map((i: any) => i.provider)
+    const loading = integrations === undefined
 
     return (
         <div className="flex flex-col gap-6 p-6">

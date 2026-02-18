@@ -1,99 +1,40 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Globe, FileText, Plus, Trash2, RefreshCw } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Globe, FileText, Upload, Trash2, RefreshCw } from "lucide-react"
 import { useParams } from "next/navigation"
 import { AddContentDialog } from "@/components/dashboard/kb/add-content-dialog"
-import { createClient } from "@/lib/supabase/client"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
+import { Id } from "../../../../../convex/_generated/dataModel"
 
 export default function KnowledgeBaseDetailsPage() {
     const params = useParams()
     const rawKbId = params.kbId as string
-    const [kbId, setKbId] = useState<string | null>(null)
-    const [contents, setContents] = useState<any[]>([])
     const { activeProject } = useProject()
-    const supabase = createClient()
-    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        if (!activeProject) return
+    // Treat the kbId from the URL as a Convex ID directly
+    const kbId = rawKbId as Id<"knowledge_bases">
+    const sources = useQuery(api.knowledgeBases.listSources, kbId ? { kbId } : "skip")
+    const addSource = useMutation(api.knowledgeBases.addSource)
+    const removeSource = useMutation(api.knowledgeBases.removeSource)
 
-        const resolveKbId = async () => {
-            setLoading(true)
-            let resolvedId = rawKbId
-
-            if (rawKbId === 'default') {
-                // Find or create default KB
-                const { data: existing } = await supabase
-                    .from("knowledge_bases")
-                    .select("id")
-                    .eq("project_id", activeProject.id)
-                    .eq("is_default", true)
-                    .single()
-
-                if (existing) {
-                    resolvedId = existing.id
-                } else {
-                    // Create default
-                    const { data: newKb, error } = await supabase
-                        .from("knowledge_bases")
-                        .insert({
-                            project_id: activeProject.id,
-                            name: "Default Knowledge Base",
-                            description: "Default knowledge base for the project",
-                            is_default: true
-                        })
-                        .select("id")
-                        .single()
-
-                    if (newKb) resolvedId = newKb.id
-                }
-            }
-
-            setKbId(resolvedId)
-
-            if (resolvedId && resolvedId !== 'default') {
-                fetchContents(resolvedId)
-            }
-            setLoading(false)
-        }
-
-        resolveKbId()
-    }, [activeProject, rawKbId, supabase])
-
-    const fetchContents = async (id: string) => {
-        const { data } = await supabase
-            .from("knowledge_base_sources")
-            .select("*")
-            .eq("kb_id", id)
-            .order("created_at", { ascending: false })
-
-        if (data) setContents(data)
-    }
+    const loading = sources === undefined
 
     const handleAddContent = async (type: string, value: string) => {
         if (!kbId) return
+        await addSource({ kbId, type, value })
+    }
 
-        const { error } = await supabase
-            .from("knowledge_base_sources")
-            .insert({
-                kb_id: kbId,
-                type,
-                value,
-                status: "indexing"
-            })
-
-        if (!error) {
-            fetchContents(kbId)
-        }
+    const handleRemove = async (id: Id<"knowledge_base_sources">) => {
+        await removeSource({ id })
     }
 
     if (loading) return <div className="p-6">Loading...</div>
+
+    const contents = sources ?? []
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -149,11 +90,11 @@ export default function KnowledgeBaseDetailsPage() {
                     </div>
                     {contents.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
-                            No content added yet. Click "Add Content" to start indexing.
+                            No content added yet. Click &quot;Add Content&quot; to start indexing.
                         </div>
                     ) : (
-                        contents.map((item) => (
-                            <div key={item.id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm hover:bg-muted/10 transition-colors">
+                        contents.map((item: any) => (
+                            <div key={item._id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm hover:bg-muted/10 transition-colors">
                                 <div className="col-span-1">
                                     {item.type === 'url' && <Globe className="h-4 w-4 text-blue-500" />}
                                     {item.type === 'text' && <FileText className="h-4 w-4 text-orange-500" />}
@@ -162,18 +103,23 @@ export default function KnowledgeBaseDetailsPage() {
                                 <div className="col-span-6 truncate font-medium">{item.value}</div>
                                 <div className="col-span-2">
                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === 'indexed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        item.status === 'indexing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                            'bg-red-100 text-red-700'
+                                            item.status === 'indexing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                'bg-red-100 text-red-700'
                                         }`}>
                                         {item.status === 'indexing' && <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
-                                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                        {(item.status ?? "unknown").charAt(0).toUpperCase() + (item.status ?? "unknown").slice(1)}
                                     </span>
                                 </div>
                                 <div className="col-span-2 text-muted-foreground">
-                                    {new Date(item.created_at).toLocaleDateString()}
+                                    {item._creationTime ? new Date(item._creationTime).toLocaleDateString() : "-"}
                                 </div>
                                 <div className="col-span-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                        onClick={() => handleRemove(item._id)}
+                                    >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>

@@ -8,27 +8,18 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-    CardFooter,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock } from "lucide-react"
-import { logActivity } from "@/lib/logging"
+import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useMutation } from "convex/react"
+import { api } from "../../../../../convex/_generated/api"
 
 // Theme Presets
 const THEMES = {
@@ -51,6 +42,7 @@ export default function WidgetSetupPage() {
     // New Config
     const [welcomeDelay, setWelcomeDelay] = useState(3)
     const [enableWelcomeNotification, setEnableWelcomeNotification] = useState(true)
+    const [autoCloseMinutes, setAutoCloseMinutes] = useState(30)
 
     // Translations
     const [translations, setTranslations] = useState({
@@ -60,14 +52,17 @@ export default function WidgetSetupPage() {
         welcomeMessage: "Hi there! How can we help you?"
     })
 
+    const updateProject = useMutation(api.projects.update)
+
     useEffect(() => {
-        if ((activeProject as any)?.widget_config) {
-            const config = (activeProject as any).widget_config
+        if (activeProject?.widgetConfig) {
+            const config = activeProject.widgetConfig as Record<string, any>
             setPrimaryColor(config.primaryColor || "#000000")
             setAlign(config.align || "right")
             setLogoUrl(config.logoUrl || "")
             setWelcomeDelay(config.welcomeDelay ?? 3)
             setEnableWelcomeNotification(config.enableWelcomeNotification ?? true)
+            setAutoCloseMinutes(config.autoCloseMinutes ?? 30)
             setTranslations({
                 headerTitle: config.translations?.headerTitle || "Chat Support",
                 onlineStatus: config.translations?.onlineStatus || "Online",
@@ -80,7 +75,6 @@ export default function WidgetSetupPage() {
     const handleSave = async () => {
         if (!activeProject) return
         setLoading(true)
-        const supabase = createClient()
 
         const config = {
             primaryColor,
@@ -88,25 +82,18 @@ export default function WidgetSetupPage() {
             logoUrl,
             welcomeDelay,
             enableWelcomeNotification,
+            autoCloseMinutes,
             translations
         }
 
-        const { error } = await supabase
-            .from('projects')
-            .update({
-                widget_config: config
+        try {
+            await updateProject({
+                id: activeProject._id,
+                widgetConfig: config,
             })
-            .eq('id', activeProject.id)
-
-        if (error) {
-            toast.error("Failed to update widget settings")
-        } else {
             toast.success("Widget settings updated")
-            await logActivity({
-                projectId: activeProject.id,
-                actionType: 'update_project',
-                description: `Updated widget appearance`,
-            })
+        } catch {
+            toast.error("Failed to update widget settings")
         }
         setLoading(false)
     }
@@ -114,7 +101,7 @@ export default function WidgetSetupPage() {
     const copyScript = () => {
         const script = `<script>
   window.yoosrSettings = {
-    projectId: "${activeProject?.id}"
+    projectId: "${activeProject?._id}"
   };
 </script>
 <script src="${window.location.origin}/widget.js" async></script>`
@@ -270,6 +257,32 @@ export default function WidgetSetupPage() {
                                 )}
                             </CardContent>
                         </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Auto-Close</CardTitle>
+                                <CardDescription>Automatically close conversations after inactivity.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="auto-close">Close after inactivity (minutes)</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Input
+                                            id="auto-close"
+                                            type="number"
+                                            min="0"
+                                            max="1440"
+                                            value={autoCloseMinutes}
+                                            onChange={(e) => setAutoCloseMinutes(Number(e.target.value))}
+                                            className="w-24"
+                                        />
+                                        <span className="text-sm text-muted-foreground">
+                                            Set to 0 to disable auto-close
+                                        </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     {/* TRANSLATIONS TAB */}
@@ -321,7 +334,7 @@ export default function WidgetSetupPage() {
                                             <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
                                                 {`<script>
   window.yoosrSettings = {
-    projectId: "${activeProject?.id}"
+    projectId: "${activeProject?._id}"
   };
 </script>
 <script src="${typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com'}/widget.js" async></script>`}
@@ -352,7 +365,7 @@ export default function WidgetSetupPage() {
   <Script id="yoosr-init" strategy="afterInteractive">
     {\`
       window.yoosrSettings = {
-        projectId: "${activeProject?.id}"
+        projectId: "${activeProject?._id}"
       };
     \`}
   </Script>
@@ -374,7 +387,7 @@ export default function WidgetSetupPage() {
   <Script id="yoosr-init" strategy="afterInteractive">
     {\`
       window.yoosrSettings = {
-        projectId: "${activeProject?.id}"
+        projectId: "${activeProject?._id}"
       };
     \`}
   </Script>
@@ -395,14 +408,21 @@ export default function WidgetSetupPage() {
                     </TabsContent>
                 </Tabs>
 
-                <div className="pt-4">
-                    <Button onClick={handleSave} disabled={loading} className="w-full md:w-auto">
+                <div className="pt-4 flex gap-4">
+                    <Button onClick={handleSave} disabled={loading} className="flex-1 md:flex-none">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Configuration
                     </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.open(`/test-widget.html?projectId=${activeProject?._id}`, '_blank')}
+                        className="flex-1 md:flex-none"
+                    >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Test Widget
+                    </Button>
                 </div>
             </div>
-
 
             {/* LIVE PREVIEW */}
             <div className="lg:w-[380px] shrink-0 sticky top-6 hidden lg:block">

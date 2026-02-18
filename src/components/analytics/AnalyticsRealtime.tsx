@@ -1,54 +1,26 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface RealtimeEvent {
-    id: string;
-    type: 'message' | 'conversation';
-    content: string;
-    timestamp: string;
-    user_id?: string;
-}
+// With Convex, real-time is built-in — useQuery automatically updates.
+// The messages query is reactive, so new messages will appear automatically.
 
 export function AnalyticsRealtime() {
     const { activeProject } = useProject();
-    const [events, setEvents] = useState<RealtimeEvent[]>([]);
 
-    useEffect(() => {
-        if (!activeProject) return;
-        const supabase = createClient();
+    const convexStats = useQuery(
+        api.analytics.getConversationStats,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    );
 
-        const channel = supabase
-            .channel('analytics-realtime')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
-                    filter: `project_id=eq.${activeProject.id}`,
-                },
-                (payload) => {
-                    const newEvent: RealtimeEvent = {
-                        id: payload.new.id,
-                        type: 'message',
-                        content: (payload.new as any).content || 'New message', // Cast as any if type not fully inferred
-                        timestamp: new Date().toLocaleTimeString(),
-                        user_id: (payload.new as any).sender_id
-                    };
-                    setEvents((prev) => [newEvent, ...prev].slice(0, 10)); // Keep last 10
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [activeProject]);
+    const messageStats = useQuery(
+        api.analytics.getMessageStats,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    );
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -56,35 +28,27 @@ export function AnalyticsRealtime() {
                 <Card className="h-full">
                     <CardHeader>
                         <CardTitle>Live Activity Feed</CardTitle>
-                        <CardDescription>Real-time stream of incoming messages and events</CardDescription>
+                        <CardDescription>Real-time data powered by Convex reactive queries</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {events.length === 0 ? (
-                                <div className="text-sm text-muted-foreground text-center py-4">
-                                    Waiting for live events...
+                            <div className="flex items-center">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src="/avatars/01.png" alt="Avatar" />
+                                    <AvatarFallback>RT</AvatarFallback>
+                                </Avatar>
+                                <div className="ml-4 space-y-1">
+                                    <p className="text-sm font-medium leading-none">
+                                        Total Messages
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {messageStats?.total ?? 0} messages ({messageStats?.visitorMessages ?? 0} visitor, {messageStats?.agentMessages ?? 0} agent)
+                                    </p>
                                 </div>
-                            ) : (
-                                events.map((event) => (
-                                    <div key={event.id} className="flex items-center">
-                                        <Avatar className="h-9 w-9">
-                                            <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                                            <AvatarFallback>OM</AvatarFallback>
-                                        </Avatar>
-                                        <div className="ml-4 space-y-1">
-                                            <p className="text-sm font-medium leading-none">
-                                                {event.type === 'message' ? 'New Message' : 'Event'}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {event.content.substring(0, 50)}...
-                                            </p>
-                                        </div>
-                                        <div className="ml-auto font-medium text-xs text-muted-foreground">
-                                            {event.timestamp}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                            </div>
+                            <div className="text-sm text-muted-foreground text-center py-4">
+                                Reactive queries provide real-time updates automatically.
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -92,26 +56,24 @@ export function AnalyticsRealtime() {
             <div className="col-span-3 space-y-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Active Users</CardTitle>
+                        <CardTitle>Active Conversations</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-green-500">
-                            {/* Mocked for now, would need presence */}
-                            24
+                            {convexStats?.open ?? 0}
                         </div>
-                        <p className="text-xs text-muted-foreground">Users currently online</p>
+                        <p className="text-xs text-muted-foreground">Currently open chats</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Queue Status</CardTitle>
+                        <CardTitle>Closed</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-blue-500">
-                            {/* Mocked */}
-                            3
+                            {convexStats?.closed ?? 0}
                         </div>
-                        <p className="text-xs text-muted-foreground">Conversations waiting for agent</p>
+                        <p className="text-xs text-muted-foreground">Resolved conversations</p>
                     </CardContent>
                 </Card>
             </div>
