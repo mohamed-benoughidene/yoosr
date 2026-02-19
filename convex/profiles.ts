@@ -26,6 +26,13 @@ export const getByUserId = query({
     },
 });
 
+export const list = query({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.db.query("profiles").collect();
+    },
+});
+
 // Update your own profile
 export const updateMe = mutation({
     args: {
@@ -88,6 +95,72 @@ export const upsertFromClerk = internalMutation({
                 fullName: args.fullName,
                 email: args.email,
                 avatarUrl: args.avatarUrl,
+                updatedAt: Date.now(),
+            });
+        }
+    },
+});
+
+// Ensure current user has a profile (called on dashboard load)
+// Also syncs email/name from Clerk in case they changed
+export const ensureCurrent = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const existing = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+            .first();
+
+        if (!existing) {
+            await ctx.db.insert("profiles", {
+                userId: identity.subject,
+                fullName: identity.name || "Agent",
+                email: identity.email,
+                avatarUrl: identity.pictureUrl,
+                updatedAt: Date.now(),
+            });
+        } else {
+            // Sync profile with latest Clerk data
+            const updates: Record<string, unknown> = { updatedAt: Date.now() };
+            if (identity.email && identity.email !== existing.email) {
+                updates.email = identity.email;
+            }
+            if (identity.name && identity.name !== existing.fullName) {
+                updates.fullName = identity.name;
+            }
+            if (identity.pictureUrl && identity.pictureUrl !== existing.avatarUrl) {
+                updates.avatarUrl = identity.pictureUrl;
+            }
+            if (Object.keys(updates).length > 1) {
+                await ctx.db.patch(existing._id, updates);
+            }
+        }
+
+        return null;
+    },
+});
+
+// Internal: seed a profile manually
+export const seedProfile = internalMutation({
+    args: {
+        userId: v.string(),
+        fullName: v.string(),
+        email: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .first();
+
+        if (!existing) {
+            await ctx.db.insert("profiles", {
+                userId: args.userId,
+                fullName: args.fullName,
+                email: args.email,
                 updatedAt: Date.now(),
             });
         }

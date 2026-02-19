@@ -81,24 +81,42 @@ export const sendFromWidget = internalMutation({
         senderId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const conversation = await ctx.db.get(args.conversationId);
+        let conversationId = args.conversationId;
+        const conversation = await ctx.db.get(conversationId);
+
         if (!conversation) throw new Error("Conversation not found");
 
+        // If conversation is resolved, create a new one
+        if (conversation.status === "resolved") {
+            conversationId = await ctx.db.insert("conversations", {
+                projectId: conversation.projectId,
+                visitorName: conversation.visitorName,
+                visitorId: conversation.visitorId,
+                status: "open",
+                lastMessage: "Started a new conversation",
+                unreadCount: 0,
+                updatedAt: Date.now(),
+            });
+
+            // We also need to return this new ID so the client can update
+        }
+
         const messageId = await ctx.db.insert("messages", {
-            conversationId: args.conversationId,
+            conversationId: conversationId,
             projectId: conversation.projectId,
             senderType: "visitor",
             senderId: args.senderId,
             content: args.content,
         });
 
-        await ctx.db.patch(args.conversationId, {
+        await ctx.db.patch(conversationId, {
             lastMessage: args.content,
             updatedAt: Date.now(),
-            unreadCount: (conversation.unreadCount ?? 0) + 1,
+            unreadCount: (conversation.status === "resolved" ? 1 : (conversation.unreadCount ?? 0) + 1),
+            status: "open", // Ensure it's open
         });
 
-        return messageId;
+        return { messageId, conversationId };
     },
 });
 

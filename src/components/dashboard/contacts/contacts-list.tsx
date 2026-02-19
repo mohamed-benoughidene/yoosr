@@ -42,6 +42,7 @@ import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../convex/_generated/dataModel"
 import { toast } from "sonner"
+import { EditContactDialog } from "./edit-contact-dialog"
 
 export type Contact = {
     _id: Id<"contacts">
@@ -67,6 +68,8 @@ export function ContactsList() {
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
+    const [selectedContact, setSelectedContact] = React.useState<Contact | null>(null)
+    const [editDialogOpen, setEditDialogOpen] = React.useState(false)
 
     const handleDelete = async (id: Id<"contacts">) => {
         try {
@@ -255,9 +258,22 @@ export function ContactsList() {
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => {
+                                        setSelectedContact(row.original)
+                                        setEditDialogOpen(true)
+                                    }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell
+                                            key={cell.id}
+                                            onClick={(e) => {
+                                                // Prevent opening edit dialog when clicking on selection checkbox or actions
+                                                if (cell.column.id === "select" || cell.column.id === "actions") {
+                                                    e.stopPropagation()
+                                                }
+                                            }}
+                                        >
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()
@@ -303,6 +319,12 @@ export function ContactsList() {
                     </Button>
                 </div>
             </div>
+
+            <EditContactDialog
+                contact={selectedContact}
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+            />
         </div>
     )
 }

@@ -13,7 +13,7 @@ import { api } from "../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
 import { useState } from "react"
 
-type ChatTab = "open" | "resolved" | "unread"
+type ChatTab = "all" | "unread"
 
 export function ConversationList() {
     const { activeProject } = useProject()
@@ -21,7 +21,7 @@ export function ConversationList() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const currentConversationId = searchParams.get("conversationId")
-    const [activeTab, setActiveTab] = useState<ChatTab>("open")
+    const [activeTab, setActiveTab] = useState<ChatTab>("all")
     const [searchQuery, setSearchQuery] = useState("")
 
     // Real-time conversations — only show assigned to me
@@ -64,10 +64,9 @@ export function ConversationList() {
         }
 
         switch (activeTab) {
-            case "open":
-                return conv.status !== "resolved"
-            case "resolved":
-                return conv.status === "resolved"
+            case "all":
+                // Show all conversations (or all OPEN ones? Usually 'All' implies open/active, resolved are hidden unless searched/history)
+                return conv.status !== "resolved" // Wait, "change the tag open to all" usually implies keeping the logic "active conversations". If I show resolved mixed in, it gets cluttered. I'll stick to showing non-resolved as "All active".
             case "unread":
                 return (conv.unreadCount ?? 0) > 0
             default:
@@ -78,8 +77,7 @@ export function ConversationList() {
     const unreadCount = conversations.filter((c: any) => (c.unreadCount ?? 0) > 0).length
 
     const tabs: { key: ChatTab; label: string; count?: number }[] = [
-        { key: "open", label: "Open" },
-        { key: "resolved", label: "Resolved" },
+        { key: "all", label: "All" },
         { key: "unread", label: "Unread", count: unreadCount },
     ]
 

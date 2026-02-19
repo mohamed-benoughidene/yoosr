@@ -120,6 +120,7 @@ export const resolve = mutation({
             status: "resolved",
             lastMessage: "Conversation resolved",
             updatedAt: Date.now(),
+            resolvedBy: identity.subject,
         });
 
         // Send a system message so visitor knows
@@ -170,6 +171,30 @@ export const markAsRead = mutation({
     },
 });
 
+// Rate a conversation (called from widget)
+export const rate = internalMutation({
+    args: {
+        id: v.id("conversations"),
+        rating: v.number(),
+        feedback: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        // Validation
+        if (args.rating < 1 || args.rating > 5) {
+            throw new Error("Rating must be between 1 and 5");
+        }
+
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) throw new Error("Conversation not found");
+
+        await ctx.db.patch(args.id, {
+            rating: args.rating,
+            feedback: args.feedback,
+            updatedAt: Date.now(),
+        });
+    },
+});
+
 // Internal: auto-close inactive conversations (called by cron)
 export const autoCloseInactive = internalMutation({
     args: {},
@@ -212,5 +237,13 @@ export const autoCloseInactive = internalMutation({
                 });
             }
         }
+    },
+});
+
+// Internal: get conversation by ID (no auth check, for widget API)
+export const getInternal = internalQuery({
+    args: { id: v.id("conversations") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.id);
     },
 });

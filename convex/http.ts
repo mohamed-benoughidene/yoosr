@@ -71,12 +71,12 @@ http.route({
             );
         }
 
-        const messageId = await ctx.runMutation(
+        const { messageId, conversationId: newConversationId } = await ctx.runMutation(
             internal.messages.sendFromWidget,
             { conversationId, content, senderId: visitorId }
         );
 
-        return new Response(JSON.stringify({ messageId }), {
+        return new Response(JSON.stringify({ messageId, conversationId: newConversationId }), {
             status: 200,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
         });
@@ -114,6 +114,24 @@ http.route({
     }),
 });
 
+
+
+http.route({
+    path: "/widget/conversations/get",
+    method: "OPTIONS",
+    handler: httpAction(async () => {
+        return new Response(null, { status: 204, headers: corsHeaders });
+    }),
+});
+
+http.route({
+    path: "/widget/conversations/rate",
+    method: "OPTIONS",
+    handler: httpAction(async () => {
+        return new Response(null, { status: 204, headers: corsHeaders });
+    }),
+});
+
 // GET /widget/project?projectId=xxx — Fetch project config for widget
 http.route({
     path: "/widget/project",
@@ -133,6 +151,70 @@ http.route({
         });
 
         return new Response(JSON.stringify(project ?? {}), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+    }),
+});
+
+// GET /widget/conversations/get?id=xxx — Fetch single conversation public data
+http.route({
+    path: "/widget/conversations/get",
+    method: "GET",
+    handler: httpAction(async (ctx, request) => {
+        const url = new URL(request.url);
+        const id = url.searchParams.get("id");
+
+        if (!id) {
+            return new Response(JSON.stringify({ error: "id required" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+        }
+
+        const conversation = await ctx.runQuery(internal.conversations.getInternal, {
+            id: id as any,
+        });
+
+        // Filter sensitive data
+        if (!conversation) return new Response("null", { status: 200, headers: { ...corsHeaders } });
+
+        const publicData = {
+            _id: conversation._id,
+            status: conversation.status,
+            rating: conversation.rating,
+            projectId: conversation.projectId,
+        };
+
+        return new Response(JSON.stringify(publicData), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+    }),
+});
+
+// POST /widget/conversations/rate - Rate a conversation
+http.route({
+    path: "/widget/conversations/rate",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+        const body = await request.json();
+        const { id, rating, feedback } = body;
+
+        if (!id || !rating) {
+            return new Response(JSON.stringify({ error: "id and rating are required" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+        }
+
+        await ctx.runMutation(internal.conversations.rate, {
+            id: id as any,
+            rating,
+            feedback,
+        });
+
+        return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
         });

@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Bot, Zap, LayoutTemplate, MoreHorizontal } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { CreateBotDialog } from "@/components/dashboard/bots/create-bot-dialog"
 import { useProject } from "@/context/ProjectContext"
 import { useQuery, useMutation } from "convex/react"
@@ -18,6 +19,7 @@ import { api } from "../../../../convex/_generated/api"
 
 export default function BotsPage() {
     const { activeProject } = useProject()
+    const router = useRouter()
     const [filter, setFilter] = useState<'all' | 'chatbot' | 'automation'>('all')
     const [search, setSearch] = useState("")
 
@@ -132,7 +134,7 @@ export default function BotsPage() {
                         </div>
                     ) : (
                         filteredBots.map((bot) => (
-                            <Card key={bot._id} className="cursor-pointer hover:shadow-md transition-shadow">
+                            <Card key={bot._id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`)}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <div className={`p-2 rounded-full ${bot.type === 'chatbot' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'}`}>
                                         {bot.type === 'chatbot' ? <Bot className="h-4 w-4" /> : <Zap className="h-4 w-4" />}

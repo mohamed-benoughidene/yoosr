@@ -12,20 +12,24 @@ import {
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, Download, Calendar as CalendarIcon } from "lucide-react"
+import { Search, Download, Calendar as CalendarIcon, Star } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { formatDistanceToNow, format } from "date-fns"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 
+import { DateRange } from "react-day-picker"
+
 export default function HistoryPage() {
     const { activeProject } = useProject()
     const [search, setSearch] = useState("")
-    const [date, setDate] = useState<Date | undefined>(undefined)
+    const [date, setDate] = useState<DateRange | undefined>(undefined)
+
+    const profiles = useQuery(api.profiles.list) ?? []
 
     // Real-time conversation list
     const allConversations = useQuery(
@@ -33,15 +37,28 @@ export default function HistoryPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    // Filter for closed/archived/solved conversations
-    const conversations = allConversations.filter(c =>
-        ['closed', 'archived', 'solved'].includes(c.status ?? '')
-    )
+    // Filter for resolved conversations
+    const conversations = allConversations.filter(c => c.status === 'resolved')
 
-    const filteredConversations = conversations.filter(convo =>
-        convo.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
-        convo.lastMessage?.toLowerCase().includes(search.toLowerCase())
-    )
+    const filteredConversations = conversations.filter(convo => {
+        const matchesSearch = convo.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
+            convo.lastMessage?.toLowerCase().includes(search.toLowerCase())
+
+        let matchesDate = true
+        if (date?.from && convo.updatedAt) {
+            const convoDate = new Date(convo.updatedAt)
+            // Reset times for accurate date comparison
+            const fromDate = new Date(date.from)
+            fromDate.setHours(0, 0, 0, 0)
+
+            const toDate = date.to ? new Date(date.to) : new Date(date.from)
+            toDate.setHours(23, 59, 59, 999)
+
+            matchesDate = convoDate >= fromDate && convoDate <= toDate
+        }
+
+        return matchesSearch && matchesDate
+    })
 
     const exportToCSV = () => {
         const headers = ["ID", "Visitor", "Last Message", "Status", "Date"]
@@ -101,20 +118,33 @@ export default function HistoryPage() {
                             <Button
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
+                                    "w-[300px] justify-start text-left font-normal",
                                     !date && "text-muted-foreground"
                                 )}
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {date ? format(date, "PPP") : <span>Filter by date</span>}
+                                {date?.from ? (
+                                    date.to ? (
+                                        <>
+                                            {format(date.from, "LLL dd, y")} -{" "}
+                                            {format(date.to, "LLL dd, y")}
+                                        </>
+                                    ) : (
+                                        format(date.from, "LLL dd, y")
+                                    )
+                                ) : (
+                                    <span>Pick a date range</span>
+                                )}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="end">
                             <Calendar
-                                mode="single"
+                                initialFocus
+                                mode="range"
+                                defaultMonth={date?.from}
                                 selected={date}
                                 onSelect={setDate}
-                                initialFocus
+                                numberOfMonths={2}
                             />
                         </PopoverContent>
                     </Popover>
@@ -131,8 +161,8 @@ export default function HistoryPage() {
                     <TableHeader className="sticky top-0 bg-background z-10">
                         <TableRow>
                             <TableHead>Visitor</TableHead>
-                            <TableHead>Last Message</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>Rating</TableHead>
+                            <TableHead>Resolved By</TableHead>
                             <TableHead>Closed At</TableHead>
                             <TableHead></TableHead>
                         </TableRow>
@@ -163,13 +193,66 @@ export default function HistoryPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="truncate max-w-[300px] text-muted-foreground">
-                                            {convo.lastMessage || "No messages"}
+                                            {convo.rating ? (
+                                                <div className="flex flex-col gap-1">
+                                                    {convo.feedback ? (
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <button className="flex items-center gap-0.5 hover:opacity-80 transition-opacity cursor-pointer text-left">
+                                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                                        <Star
+                                                                            key={star}
+                                                                            className={`h-3.5 w-3.5 ${star <= convo.rating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                        />
+                                                                    ))}
+                                                                </button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-80">
+                                                                <div className="space-y-2">
+                                                                    <div className="flex items-center gap-1 mb-2">
+                                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                                            <Star
+                                                                                key={star}
+                                                                                className={`h-4 w-4 ${star <= convo.rating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                            />
+                                                                        ))}
+                                                                        <span className="ml-2 text-sm font-medium">{convo.rating}/5</span>
+                                                                    </div>
+                                                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                                                        {convo.feedback}
+                                                                    </p>
+                                                                </div>
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    ) : (
+                                                        <div className="flex items-center gap-0.5">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <Star
+                                                                    key={star}
+                                                                    className={`h-3.5 w-3.5 ${star <= convo.rating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground text-sm italic">Not rated</span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="secondary">
-                                            {convo.status}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            {convo.resolvedBy ? (() => {
+                                                const profile = profiles.find(p => p.userId === convo.resolvedBy);
+                                                const displayName = profile?.email || profile?.fullName || "Agent";
+                                                return <div className="text-sm">{displayName}</div>;
+                                            })()
+                                                : convo.lastMessage?.includes("auto-closed") ? (
+                                                    <div className="text-sm text-muted-foreground italic">System</div>
+                                                ) : (
+                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground text-sm">
                                         {convo.updatedAt && formatDistanceToNow(new Date(convo.updatedAt), { addSuffix: true })}

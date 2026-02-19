@@ -45,6 +45,9 @@ export default function RequestsPage() {
 
     // Filter based on selection
     const requests = allConversations.filter((req) => {
+        // Exclude resolved/closed conversations
+        if (req.status === "resolved") return false
+
         if (filter === "unassigned") return !req.assignedTo
         if (filter === "mine" && user) return req.assignedTo === user.id
         return true
@@ -56,8 +59,8 @@ export default function RequestsPage() {
             req.lastMessage?.toLowerCase().includes(search.toLowerCase())
     )
 
-    const unassignedCount = allConversations.filter((c) => !c.assignedTo).length
-    const myCount = allConversations.filter((c) => c.assignedTo === user?.id).length
+    const unassignedCount = allConversations.filter((c) => !c.assignedTo && c.status !== "resolved").length
+    const myCount = allConversations.filter((c) => c.assignedTo === user?.id && c.status !== "resolved").length
 
     const handleAssignToMe = async (id: Id<"conversations">) => {
         if (!user) return
@@ -212,18 +215,12 @@ export default function RequestsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {req.status === "resolved" ? (
-                                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                                                    Resolved
+                                            {req.status === "ongoing" || req.assignedTo ? ( // If it passes filter, it's open
+                                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+                                                    Ongoing
                                                 </Badge>
                                             ) : (
-                                                <Badge
-                                                    variant={
-                                                        req.assignedTo ? "secondary" : "default"
-                                                    }
-                                                >
-                                                    {req.assignedTo ? "Assigned" : "Unassigned"}
-                                                </Badge>
+                                                <Badge variant="secondary">Unassigned</Badge>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">

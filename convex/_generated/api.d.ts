@@ -10,6 +10,8 @@
 
 import type * as activityLogs from "../activityLogs.js";
 import type * as analytics from "../analytics.js";
+import type * as botEngine from "../botEngine.js";
+import type * as botFlows from "../botFlows.js";
 import type * as bots from "../bots.js";
 import type * as contacts from "../contacts.js";
 import type * as conversations from "../conversations.js";
@@ -32,6 +34,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   analytics: typeof analytics;
+  botEngine: typeof botEngine;
+  botFlows: typeof botFlows;
   bots: typeof bots;
   contacts: typeof contacts;
   conversations: typeof conversations;

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { RatingComponent } from "./rating-component"
 
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
 
@@ -56,6 +57,8 @@ export default function WidgetPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [projectConfig, setProjectConfig] = useState<any>(null)
+    const [conversationStatus, setConversationStatus] = useState<string>("open")
+    const [showRating, setShowRating] = useState(false)
     const chatEndRef = useRef<HTMLDivElement>(null)
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const prevMessageCountRef = useRef<number>(0)
@@ -146,6 +149,10 @@ export default function WidgetPage() {
 
                 if (existing && existing._id) {
                     setConversationId(existing._id)
+                    setConversationStatus(existing.status || "open")
+                    if (existing.status === "resolved" && !existing.rating) {
+                        setShowRating(true)
+                    }
                 } else {
                     // Don't create conversation until first message
                 }
@@ -162,6 +169,7 @@ export default function WidgetPage() {
     const fetchMessages = useCallback(async () => {
         if (!conversationId) return
         try {
+            // Also check conversation status periodically
             const msgs = await apiGet("/widget/messages", { conversationId })
             if (Array.isArray(msgs)) {
                 const prevCount = prevMessageCountRef.current
@@ -188,6 +196,27 @@ export default function WidgetPage() {
         } catch {
             /* silently fail on poll */
         }
+    }, [conversationId])
+
+    // Poll for conversation status separately
+    useEffect(() => {
+        if (!conversationId) return
+
+        const checkStatus = async () => {
+            try {
+                const convo = await apiGet("/widget/conversations/get", { id: conversationId })
+                if (convo) {
+                    setConversationStatus(convo.status)
+                    if (convo.status === "resolved" && !convo.rating) {
+                        setShowRating(true)
+                    }
+                }
+            } catch { /* ignore */ }
+        }
+
+        checkStatus()
+        const interval = setInterval(checkStatus, 3000)
+        return () => clearInterval(interval)
     }, [conversationId])
 
     useEffect(() => {
@@ -243,12 +272,17 @@ export default function WidgetPage() {
         if (!convId) return
 
         try {
-            await apiPost("/widget/messages", {
+            const res = await apiPost("/widget/messages", {
                 conversationId: convId,
                 content: text,
                 visitorId,
             })
-            fetchMessages()
+
+            if (res.conversationId && res.conversationId !== convId) {
+                setConversationId(res.conversationId)
+            } else {
+                fetchMessages()
+            }
         } catch {
             setError("Failed to send message")
         }
@@ -275,18 +309,39 @@ export default function WidgetPage() {
         ])
 
         try {
-            await apiPost("/widget/messages", {
+            const res = await apiPost("/widget/messages", {
                 conversationId: convId,
                 content: text,
                 visitorId,
             })
-            fetchMessages()
+
+            if (res.conversationId && res.conversationId !== convId) {
+                setConversationId(res.conversationId)
+            } else {
+                fetchMessages()
+            }
         } catch {
             setError("Failed to send attachment")
         }
 
         // Reset file input
         if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
+    const handleRatingSubmit = async (rating: number, feedback: string) => {
+        if (!conversationId) return
+
+        try {
+            await apiPost("/widget/conversations/rate", {
+                id: conversationId,
+                rating,
+                feedback
+            })
+            setShowRating(false)
+        } catch (error) {
+            console.error("Failed to submit rating", error)
+            setError("Failed to submit rating")
+        }
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -344,10 +399,10 @@ export default function WidgetPage() {
                         <div
                             key={msg._id}
                             className={`flex ${msg.senderType === "bot"
-                                    ? "justify-center"
-                                    : msg.senderType === "visitor"
-                                        ? "justify-end"
-                                        : "justify-start"
+                                ? "justify-center"
+                                : msg.senderType === "visitor"
+                                    ? "justify-end"
+                                    : "justify-start"
                                 }`}
                         >
                             {msg.senderType === "bot" ? (
@@ -368,6 +423,14 @@ export default function WidgetPage() {
                             )}
                         </div>
                     ))
+                )}
+                {showRating && (
+                    <div className="mx-4 mb-4">
+                        <RatingComponent
+                            onSubmit={handleRatingSubmit}
+                            primaryColor={widgetColor}
+                        />
+                    </div>
                 )}
                 <div ref={chatEndRef} />
             </div>
@@ -397,11 +460,11 @@ export default function WidgetPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    disabled={loading}
+                    disabled={loading || conversationStatus === "resolved"}
                 />
                 <button
                     onClick={handleSend}
-                    disabled={loading || !input.trim()}
+                    disabled={loading || !input.trim() || conversationStatus === "resolved"}
                     style={{ backgroundColor: widgetColor }}
                     className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

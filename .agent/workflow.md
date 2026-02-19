@@ -1,0 +1,1 @@
+Build the design-studio. Follow AGENT.md rules and reference TILEDESK_REFERENCE.md.

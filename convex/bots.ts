@@ -15,6 +15,17 @@ export const list = query({
     },
 });
 
+// Get a single bot
+export const get = query({
+    args: { id: v.id("bots") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        return await ctx.db.get(args.id);
+    },
+});
+
 // Create a bot
 export const create = mutation({
     args: {

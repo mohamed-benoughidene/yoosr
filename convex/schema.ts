@@ -41,11 +41,14 @@ export default defineSchema({
         assignedTo: v.optional(v.string()), // Clerk user ID of assigned agent
         status: v.optional(v.string()), // "open" | "resolved"
         lastMessage: v.optional(v.string()),
+        resolvedBy: v.optional(v.string()), // Clerk user ID of who resolved it
         visitorEmail: v.optional(v.string()),
         visitorPhone: v.optional(v.string()),
         visitorAddress: v.optional(v.string()),
         visitorNote: v.optional(v.string()),
         unreadCount: v.optional(v.number()),
+        rating: v.optional(v.number()), // 1-5
+        feedback: v.optional(v.string()), // Optional feedback text
         updatedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
@@ -73,6 +76,14 @@ export default defineSchema({
         status: v.optional(v.string()), // "draft" | "active" | "archived"
         configuration: v.optional(v.any()), // JSON flow definition
     }).index("by_projectId", ["projectId"]),
+
+    // Bot flows (Design Studio graph data)
+    bot_flows: defineTable({
+        botId: v.id("bots"),
+        nodes: v.any(), // ReactFlow Node[]
+        edges: v.any(), // ReactFlow Edge[]
+        variables: v.optional(v.any()), // Flow-level variables
+    }).index("by_botId", ["botId"]),
 
     // Activity logs
     activity_logs: defineTable({

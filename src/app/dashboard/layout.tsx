@@ -8,6 +8,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { Id } from "../../../convex/_generated/dataModel"
+import { useMutation } from "convex/react"
+import { api } from "../../../convex/_generated/api"
 
 export default function DashboardLayout({
     children,
@@ -19,8 +21,13 @@ export default function DashboardLayout({
     const router = useRouter()
     const projectId = searchParams.get("project")
 
+    const ensureProfile = useMutation(api.profiles.ensureCurrent)
+
     useEffect(() => {
         if (!isLoading) {
+            // Ensure profile exists
+            ensureProfile()
+
             if (projectId) {
                 if (projectId !== activeProject?._id) {
                     selectProject(projectId as Id<"projects">)
@@ -33,7 +40,7 @@ export default function DashboardLayout({
                 router.push("/projects")
             }
         }
-    }, [projectId, activeProject, isLoading, selectProject, router])
+    }, [projectId, activeProject, isLoading, selectProject, router, ensureProfile])
 
     if (isLoading) {
         return (
