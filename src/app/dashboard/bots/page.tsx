@@ -9,9 +9,17 @@ import {
     CardContent
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Bot, Zap, LayoutTemplate, MoreHorizontal } from "lucide-react"
+import { Plus, Search, Bot, Zap, LayoutTemplate, MoreHorizontal, Copy, Trash, Play, Pause } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { CreateBotDialog } from "@/components/dashboard/bots/create-bot-dialog"
 import { useProject } from "@/context/ProjectContext"
 import { useQuery, useMutation } from "convex/react"
@@ -29,6 +37,8 @@ export default function BotsPage() {
     ) ?? []
 
     const createBot = useMutation(api.bots.create)
+    const updateBot = useMutation(api.bots.update)
+    const removeBot = useMutation(api.bots.remove)
 
     const handleCreateBot = async (name: string, description: string, type: 'chatbot' | 'automation') => {
         if (!activeProject) return
@@ -139,9 +149,64 @@ export default function BotsPage() {
                                     <div className={`p-2 rounded-full ${bot.type === 'chatbot' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'}`}>
                                         {bot.type === 'chatbot' ? <Bot className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
+                                    <DropdownMenu modal={false}>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation();
+                                                router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`);
+                                            }}>
+                                                <LayoutTemplate className="mr-2 h-4 w-4" />
+                                                Open Canvas
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuItem onClick={async (e) => {
+                                                e.stopPropagation();
+                                                await updateBot({
+                                                    id: bot._id,
+                                                    status: bot.status === 'active' ? 'draft' : 'active'
+                                                });
+                                            }}>
+                                                {bot.status === 'active' ? (
+                                                    <>
+                                                        <Pause className="mr-2 h-4 w-4" />
+                                                        Deactivate
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Play className="mr-2 h-4 w-4" />
+                                                        Activate
+                                                    </>
+                                                )}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                Duplicate
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive" onClick={async (e) => {
+                                                e.stopPropagation();
+                                                await removeBot({ id: bot._id });
+                                            }}>
+                                                <Trash className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </CardHeader>
                                 <CardContent className="pt-4">
                                     <CardTitle className="text-base mb-1">{bot.name}</CardTitle>

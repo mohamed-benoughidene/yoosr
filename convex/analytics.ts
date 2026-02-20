@@ -14,8 +14,8 @@ export const getConversationStats = query({
             .collect();
 
         const total = conversations.length;
-        const open = conversations.filter((c) => c.status === "open").length;
-        const closed = conversations.filter((c) => c.status === "closed").length;
+        const open = conversations.filter((c) => c.status === 100 || c.status === 200).length;
+        const closed = conversations.filter((c) => c.status === 1000).length;
 
         return { total, open, closed };
     },

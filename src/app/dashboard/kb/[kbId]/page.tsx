@@ -9,23 +9,49 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../../convex/_generated/dataModel"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function KnowledgeBaseDetailsPage() {
     const params = useParams()
     const rawKbId = params.kbId as string
+    const router = useRouter()
     const { activeProject } = useProject()
+    const [resolvedKbId, setResolvedKbId] = useState<Id<"knowledge_bases"> | null>(null)
 
-    // Treat the kbId from the URL as a Convex ID directly
-    const kbId = rawKbId as Id<"knowledge_bases">
-    const sources = useQuery(api.knowledgeBases.listSources, kbId ? { kbId } : "skip")
+    const getDefaultKb = useMutation(api.knowledgeBases.getOrCreateDefault)
+
+    useEffect(() => {
+        const resolveId = async () => {
+            if (rawKbId === "default") {
+                if (activeProject) {
+                    try {
+                        const kb = await getDefaultKb({ projectId: activeProject._id })
+                        if (kb) {
+                            // Update the URL to the real ID to avoid repeated fetching, or just hold it in state.
+                            // Holding in state is cleaner so the URL stays "default"
+                            setResolvedKbId(kb._id)
+                        }
+                    } catch (e) {
+                        console.error("Failed to get default KB", e)
+                    }
+                }
+            } else {
+                setResolvedKbId(rawKbId as Id<"knowledge_bases">)
+            }
+        }
+        resolveId()
+    }, [rawKbId, activeProject, getDefaultKb])
+
+    const sources = useQuery(api.knowledgeBases.listSources, resolvedKbId ? { kbId: resolvedKbId } : "skip")
     const addSource = useMutation(api.knowledgeBases.addSource)
     const removeSource = useMutation(api.knowledgeBases.removeSource)
 
-    const loading = sources === undefined
+    const loading = !resolvedKbId || sources === undefined
 
     const handleAddContent = async (type: string, value: string) => {
-        if (!kbId) return
-        await addSource({ kbId, type, value })
+        if (!resolvedKbId) return
+        await addSource({ kbId: resolvedKbId, type, value })
     }
 
     const handleRemove = async (id: Id<"knowledge_base_sources">) => {
@@ -103,8 +129,8 @@ export default function KnowledgeBaseDetailsPage() {
                                 <div className="col-span-6 truncate font-medium">{item.value}</div>
                                 <div className="col-span-2">
                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === 'indexed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                            item.status === 'indexing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                'bg-red-100 text-red-700'
+                                        item.status === 'indexing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                            'bg-red-100 text-red-700'
                                         }`}>
                                         {item.status === 'indexing' && <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
                                         {(item.status ?? "unknown").charAt(0).toUpperCase() + (item.status ?? "unknown").slice(1)}

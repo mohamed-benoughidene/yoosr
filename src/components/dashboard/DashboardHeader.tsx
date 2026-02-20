@@ -40,6 +40,10 @@ import { useProject } from "@/context/ProjectContext"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../convex/_generated/api"
 
 const SOUND_STORAGE_KEY = "yoosr-sound-enabled"
 
@@ -52,6 +56,19 @@ export function DashboardHeader() {
         }
         return true
     })
+
+    const currentMember = useQuery(api.members.current, activeProject ? { projectId: activeProject._id } : "skip")
+    const updateMember = useMutation(api.members.update)
+    const isAvailable = currentMember?.status === "available"
+
+    const toggleAvailability = async (checked: boolean) => {
+        if (currentMember) {
+            await updateMember({
+                id: currentMember._id,
+                status: checked ? "available" : "unavailable"
+            })
+        }
+    }
 
     useEffect(() => {
         localStorage.setItem(SOUND_STORAGE_KEY, String(soundEnabled))
@@ -134,7 +151,24 @@ export function DashboardHeader() {
                 </DropdownMenu>
 
                 {/* Quick Actions */}
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-4 ml-4">
+                    {activeProject && currentMember && (
+                        <div className="flex items-center space-x-2 border-r pr-4 mr-2">
+                            <Switch
+                                id="availability-mode"
+                                checked={isAvailable}
+                                onCheckedChange={toggleAvailability}
+                            />
+                            <Label htmlFor="availability-mode" className="text-sm font-medium">
+                                {isAvailable ? (
+                                    <span className="text-green-600 dark:text-green-500">Available</span>
+                                ) : (
+                                    <span className="text-muted-foreground">Unavailable</span>
+                                )}
+                            </Label>
+                        </div>
+                    )}
+
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>

@@ -32,7 +32,7 @@ http.route({
     method: "POST",
     handler: httpAction(async (ctx, request) => {
         const body = await request.json();
-        const { projectId, visitorName, visitorId } = body;
+        const { projectId, visitorName, visitorEmail, visitorPhone, visitorId } = body;
 
         if (!projectId) {
             return new Response(JSON.stringify({ error: "projectId is required" }), {
@@ -43,7 +43,7 @@ http.route({
 
         const conversationId = await ctx.runMutation(
             internal.conversations.createFromWidget,
-            { projectId, visitorName, visitorId }
+            { projectId, visitorName, visitorEmail, visitorPhone, visitorId }
         );
 
         return new Response(JSON.stringify({ conversationId }), {

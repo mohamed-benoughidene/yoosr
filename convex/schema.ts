@@ -39,7 +39,7 @@ export default defineSchema({
         visitorId: v.optional(v.string()),
         visitorName: v.optional(v.string()),
         assignedTo: v.optional(v.string()), // Clerk user ID of assigned agent
-        status: v.optional(v.string()), // "open" | "resolved"
+        status: v.optional(v.union(v.literal(100), v.literal(200), v.literal(1000))), // 100: unassigned, 200: assigned, 1000: closed
         lastMessage: v.optional(v.string()),
         resolvedBy: v.optional(v.string()), // Clerk user ID of who resolved it
         visitorEmail: v.optional(v.string()),
@@ -50,6 +50,13 @@ export default defineSchema({
         rating: v.optional(v.number()), // 1-5
         feedback: v.optional(v.string()), // Optional feedback text
         updatedAt: v.optional(v.number()),
+        // Legacy fields to prevent schema validation errors
+        leadId: v.optional(v.string()),
+        firstText: v.optional(v.string()),
+        participants: v.optional(v.array(v.string())),
+        tags: v.optional(v.array(v.string())),
+        attributes: v.optional(v.any()),
+        typing: v.optional(v.any()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),
@@ -62,6 +69,11 @@ export default defineSchema({
         senderId: v.optional(v.string()),
         content: v.string(),
         attachments: v.optional(v.any()), // JSON array
+        // Legacy fields
+        channel: v.optional(v.string()),
+        senderFullname: v.optional(v.string()),
+        status: v.optional(v.number()),
+        type: v.optional(v.string()),
     })
         .index("by_conversationId", ["conversationId"])
         .index("by_projectId", ["projectId"])

@@ -77,6 +77,17 @@ export const remove = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        // Delete associated bot flows
+        const flows = await ctx.db
+            .query("bot_flows")
+            .withIndex("by_botId", (q) => q.eq("botId", args.id))
+            .collect();
+
+        for (const flow of flows) {
+            await ctx.db.delete(flow._id);
+        }
+
         await ctx.db.delete(args.id);
     },
 });

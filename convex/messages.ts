@@ -1,4 +1,5 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 // List messages for a conversation (real-time by default!)
@@ -87,15 +88,21 @@ export const sendFromWidget = internalMutation({
         if (!conversation) throw new Error("Conversation not found");
 
         // If conversation is resolved, create a new one
-        if (conversation.status === "resolved") {
+        if (conversation.status === 1000) {
             conversationId = await ctx.db.insert("conversations", {
                 projectId: conversation.projectId,
                 visitorName: conversation.visitorName,
                 visitorId: conversation.visitorId,
-                status: "open",
+                status: 100, // unassigned
                 lastMessage: "Started a new conversation",
                 unreadCount: 0,
                 updatedAt: Date.now(),
+            });
+
+            // Trigger routing for newly created conversation
+            await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+                conversationId,
+                projectId: conversation.projectId,
             });
 
             // We also need to return this new ID so the client can update
@@ -112,9 +119,35 @@ export const sendFromWidget = internalMutation({
         await ctx.db.patch(conversationId, {
             lastMessage: args.content,
             updatedAt: Date.now(),
-            unreadCount: (conversation.status === "resolved" ? 1 : (conversation.unreadCount ?? 0) + 1),
-            status: "open", // Ensure it's open
+            unreadCount: (conversation.status === 1000 ? 1 : (conversation.unreadCount ?? 0) + 1),
+            status: 100, // Ensure it's active
         });
+
+        // Smart routing and bot execution hook
+        if (conversation.status === 100) {
+            // Trigger routing if currently in unassigned queue
+            await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+                conversationId,
+                projectId: conversation.projectId,
+            });
+        } else if (conversation.status === 200 && conversation.participants && conversation.participants.length > 0 && !conversation.assignedTo) {
+            // It is assigned, but `assignedTo` (which tracks human Clerk ID) is null.
+            // This means one of the participants is a bot! Let's trigger the execution engine.
+
+            // Note: In a production scenario, we'd verify which participant ID is actually a Bot.
+            // Since bots push their ID to participants, we assume the string is the botId.
+            // We use the first one available for execution.
+            const botIdString = conversation.participants[0];
+
+            await ctx.scheduler.runAfter(0, internal.botEngine.executeStep, {
+                botId: botIdString as any, // Cast to ID format internally
+                conversationId,
+                projectId: conversation.projectId,
+                currentNodeId: conversation.attributes?.currentNode, // pass the pointer if exists
+                userMessage: args.content,
+                attributes: conversation.attributes,
+            });
+        }
 
         return { messageId, conversationId };
     },

@@ -65,8 +65,8 @@ export function ConversationList() {
 
         switch (activeTab) {
             case "all":
-                // Show all conversations (or all OPEN ones? Usually 'All' implies open/active, resolved are hidden unless searched/history)
-                return conv.status !== "resolved" // Wait, "change the tag open to all" usually implies keeping the logic "active conversations". If I show resolved mixed in, it gets cluttered. I'll stick to showing non-resolved as "All active".
+                // Show all conversations including resolved ones in 'All' tab
+                return true
             case "unread":
                 return (conv.unreadCount ?? 0) > 0
             default:
@@ -145,7 +145,7 @@ export function ConversationList() {
                                     <div className="text-xs text-muted-foreground line-clamp-2 flex-1">
                                         {conv.lastMessage || "No messages yet"}
                                     </div>
-                                    {conv.status === "resolved" && (
+                                    {conv.status === 1000 && (
                                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-green-500/10 text-green-600 border-green-500/20">
                                             Resolved
                                         </Badge>

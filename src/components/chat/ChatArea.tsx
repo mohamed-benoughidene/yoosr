@@ -92,7 +92,7 @@ export function ChatArea() {
     }
 
     const isLoading = messages === undefined
-    const isResolved = conversation?.status === "resolved"
+    const isResolved = conversation?.status === 1000
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -147,40 +147,36 @@ export function ChatArea() {
                             key={msg._id}
                             className={cn(
                                 "flex",
-                                msg.senderType === "bot"
-                                    ? "justify-center"
-                                    : msg.senderType === "agent"
-                                        ? "justify-end"
-                                        : "justify-start"
+                                msg.senderType === "agent"
+                                    ? "justify-end"
+                                    : "justify-start"
                             )}
                         >
-                            {msg.senderType === "bot" ? (
-                                <div className="px-4 py-2 rounded-lg max-w-[85%] border border-dashed border-muted-foreground/30 bg-muted/30 text-center">
-                                    <p className="text-xs text-muted-foreground italic">{msg.content}</p>
-                                    <span className="text-[10px] mt-1 block text-muted-foreground/60">
+                            {msg.senderType === "agent" ? (
+                                <div className="p-3 rounded-lg max-w-[70%] bg-primary text-primary-foreground">
+                                    <p className="text-sm">{msg.content}</p>
+                                    <span className="text-[10px] mt-1 block text-primary-foreground/70">
                                         {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
                                     </span>
                                 </div>
                             ) : (
-                                <div
-                                    className={cn(
-                                        "p-3 rounded-lg max-w-[70%]",
-                                        msg.senderType === "agent"
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-muted"
-                                    )}
-                                >
-                                    <p className="text-sm">{msg.content}</p>
-                                    <span
-                                        className={cn(
-                                            "text-[10px] mt-1 block",
-                                            msg.senderType === "agent"
-                                                ? "text-primary-foreground/70"
-                                                : "text-muted-foreground"
-                                        )}
-                                    >
-                                        {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
-                                    </span>
+                                <div className="flex gap-2 max-w-[70%]">
+                                    <Avatar className="h-8 w-8 mt-1">
+                                        <AvatarFallback className={cn("text-xs", msg.senderType === "bot" && "bg-primary/20 text-primary")}>
+                                            {msg.senderType === "bot" ? "AI" : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <span className="text-xs text-muted-foreground ml-1 mb-1 block">
+                                            {msg.senderFullname || (msg.senderType === "bot" ? "AI Assistant" : "Visitor")}
+                                        </span>
+                                        <div className="p-3 rounded-lg bg-muted">
+                                            <p className="text-sm">{msg.content}</p>
+                                            <span className="text-[10px] mt-1 block text-muted-foreground">
+                                                {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>

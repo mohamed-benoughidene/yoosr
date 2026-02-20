@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { RatingComponent } from "./rating-component"
+import { PreChatForm } from "./components/PreChatForm"
 
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
 
@@ -57,7 +58,7 @@ export default function WidgetPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [projectConfig, setProjectConfig] = useState<any>(null)
-    const [conversationStatus, setConversationStatus] = useState<string>("open")
+    const [conversationStatus, setConversationStatus] = useState<number>(100)
     const [showRating, setShowRating] = useState(false)
     const chatEndRef = useRef<HTMLDivElement>(null)
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -65,6 +66,9 @@ export default function WidgetPage() {
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const welcomeShownRef = useRef(false)
+
+    const [showPreChat, setShowPreChat] = useState(false)
+    const [preChatData, setPreChatData] = useState<{ name: string, email?: string, phone?: string } | null>(null)
 
     // Create audio element for notifications
     useEffect(() => {
@@ -138,7 +142,7 @@ export default function WidgetPage() {
 
     // Find or create conversation
     useEffect(() => {
-        if (!projectId || !visitorId) return
+        if (!projectId || !visitorId || !projectConfig) return
 
         async function init() {
             try {
@@ -149,12 +153,17 @@ export default function WidgetPage() {
 
                 if (existing && existing._id) {
                     setConversationId(existing._id)
-                    setConversationStatus(existing.status || "open")
-                    if (existing.status === "resolved" && !existing.rating) {
+                    setConversationStatus(existing.status || 100)
+                    if (existing.status === 1000 && !existing.rating) {
                         setShowRating(true)
                     }
                 } else {
                     // Don't create conversation until first message
+                    // Show Pre-chat form if configured and no data yet
+                    const enablePreChat = projectConfig.widgetConfig?.preChatFormEnabled ?? true
+                    if (!preChatData && enablePreChat) {
+                        setShowPreChat(true)
+                    }
                 }
             } catch (e) {
                 setError("Failed to connect. Please try again.")
@@ -163,7 +172,7 @@ export default function WidgetPage() {
         }
 
         init()
-    }, [projectId, visitorId])
+    }, [projectId, visitorId, projectConfig])
 
     // Poll for messages
     const fetchMessages = useCallback(async () => {
@@ -207,7 +216,7 @@ export default function WidgetPage() {
                 const convo = await apiGet("/widget/conversations/get", { id: conversationId })
                 if (convo) {
                     setConversationStatus(convo.status)
-                    if (convo.status === "resolved" && !convo.rating) {
+                    if (convo.status === 1000 && !convo.rating) {
                         setShowRating(true)
                     }
                 }
@@ -231,7 +240,7 @@ export default function WidgetPage() {
     // Auto-scroll
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [messages])
+    }, [messages, showRating])
 
     const ensureConversation = async (): Promise<string | null> => {
         if (conversationId) return conversationId
@@ -239,7 +248,9 @@ export default function WidgetPage() {
         try {
             const result = await apiPost("/widget/conversations", {
                 projectId,
-                visitorName: "Visitor",
+                visitorName: preChatData?.name || "Visitor",
+                visitorEmail: preChatData?.email,
+                visitorPhone: preChatData?.phone,
                 visitorId,
             })
             const newId = result.conversationId
@@ -366,6 +377,21 @@ export default function WidgetPage() {
         )
     }
 
+    if (showPreChat && !conversationId) {
+        return (
+            <PreChatForm
+                onSubmit={(data) => {
+                    setPreChatData(data)
+                    setShowPreChat(false)
+                }}
+                primaryColor={widgetColor}
+                title={widgetConfig?.translations?.preChatTitle}
+                subtitle={widgetConfig?.translations?.preChatSubtitle}
+                contactMethod={widgetConfig?.contactMethod || "email"}
+            />
+        )
+    }
+
     return (
         <div className="flex flex-col h-screen bg-white">
             {/* Header */}
@@ -395,34 +421,46 @@ export default function WidgetPage() {
                         Send a message to start the conversation!
                     </div>
                 ) : (
-                    messages.map((msg) => (
-                        <div
-                            key={msg._id}
-                            className={`flex ${msg.senderType === "bot"
-                                ? "justify-center"
-                                : msg.senderType === "visitor"
-                                    ? "justify-end"
-                                    : "justify-start"
-                                }`}
-                        >
-                            {msg.senderType === "bot" ? (
-                                <div className="max-w-[85%] rounded-lg px-3 py-2 text-center" style={{ backgroundColor: "#f9fafb", border: "1px dashed #d1d5db" }}>
-                                    <span className="text-xs text-gray-500 italic">{msg.content}</span>
+                    messages.map((msg) => {
+                        const isVisitor = msg.senderType === "visitor";
+                        return (
+                            <div
+                                key={msg._id}
+                                className={`flex ${isVisitor ? "justify-end" : "justify-start"} mb-4`}
+                            >
+                                {!isVisitor && (
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 overflow-hidden mr-2 mt-1">
+                                        {logoUrl ? (
+                                            <img src={logoUrl} className="w-full h-full object-cover" alt="Avatar" />
+                                        ) : (
+                                            <span className="text-xs font-semibold text-gray-500">
+                                                {msg.senderType === "bot" ? "AI" : "A"}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col gap-1 max-w-[80%]">
+                                    {!isVisitor && (
+                                        <span className="text-[10px] text-gray-500 ml-1">
+                                            {msg.senderType === "bot" ? "AI Assistant" : "Support Agent"}
+                                        </span>
+                                    )}
+
+                                    <div
+                                        className="rounded-2xl px-4 py-2 text-sm shadow-sm"
+                                        style={
+                                            isVisitor
+                                                ? { backgroundColor: widgetColor, color: "#fff", borderBottomRightRadius: "4px" }
+                                                : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
+                                        }
+                                    >
+                                        {msg.content}
+                                    </div>
                                 </div>
-                            ) : (
-                                <div
-                                    className="max-w-[80%] rounded-lg px-3 py-2 text-sm"
-                                    style={
-                                        msg.senderType === "visitor"
-                                            ? { backgroundColor: widgetColor, color: "#fff" }
-                                            : { backgroundColor: "#f3f4f6", color: "#1f2937" }
-                                    }
-                                >
-                                    {msg.content}
-                                </div>
-                            )}
-                        </div>
-                    ))
+                            </div>
+                        );
+                    })
                 )}
                 {showRating && (
                     <div className="mx-4 mb-4">
@@ -456,15 +494,15 @@ export default function WidgetPage() {
                 <input
                     type="text"
                     className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
-                    placeholder="Type a message..."
+                    placeholder={conversationStatus === 1000 ? "This conversation is resolved" : "Type a message..."}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    disabled={loading || conversationStatus === "resolved"}
+                    disabled={loading || conversationStatus === 1000}
                 />
                 <button
                     onClick={handleSend}
-                    disabled={loading || !input.trim() || conversationStatus === "resolved"}
+                    disabled={loading || !input.trim() || conversationStatus === 1000}
                     style={{ backgroundColor: widgetColor }}
                     className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

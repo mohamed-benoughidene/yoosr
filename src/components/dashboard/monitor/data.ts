@@ -10,7 +10,7 @@ export const conversations = [
         lastMessage: "Hey, I'm having trouble with my billing.",
         timestamp: "10:30 AM",
         unread: 2,
-        status: "open",
+        status: 100,
         tags: ["billing", "urgent"],
         channel: "whatsapp",
         details: {
@@ -34,7 +34,7 @@ export const conversations = [
         lastMessage: "Can you help me reset my password?",
         timestamp: "Yesterday",
         unread: 0,
-        status: "closed",
+        status: 1000,
         tags: ["support"],
         channel: "web",
         details: {
@@ -58,7 +58,7 @@ export const conversations = [
         lastMessage: "Is there a discount for non-profits?",
         timestamp: "2 days ago",
         unread: 0,
-        status: "open",
+        status: 100,
         tags: ["sales"],
         channel: "facebook",
         details: {

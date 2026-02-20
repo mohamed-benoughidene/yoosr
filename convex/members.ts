@@ -15,6 +15,22 @@ export const list = query({
     },
 });
 
+// Get current user's member profile for a project
+export const current = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const members = await ctx.db
+            .query("project_members")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        return members.find(m => m.userId === identity.subject) || null;
+    }
+});
+
 // Add a member (invite)
 export const invite = mutation({
     args: {

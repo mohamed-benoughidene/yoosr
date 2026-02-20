@@ -1,4 +1,4 @@
-import { action, internalMutation, internalQuery } from "./_generated/server";
+import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -60,8 +60,9 @@ export const updateConversationAttributes = internalMutation({
     },
     handler: async (ctx, args) => {
         // We use the conversation's existing fields + extend via the schema's
-        // flexible approach. For now, store bot state in a status-like field.
+        // flexible approach. For now, store bot state in a attributes field.
         await ctx.db.patch(args.conversationId, {
+            attributes: args.attributes,
             updatedAt: Date.now(),
         });
     },
@@ -98,7 +99,7 @@ interface FlowGraph {
  * 4. Follows the outgoing edge to determine the next node
  * 5. Sends any reply messages
  */
-export const executeStep = action({
+export const executeStep = internalAction({
     args: {
         botId: v.id("bots"),
         conversationId: v.id("conversations"),
@@ -253,12 +254,8 @@ export const executeStep = action({
                     senderFullname: "Bot",
                 });
 
-                // Return special flag so caller knows to trigger routing
-                return {
-                    nextNodeId: null,
-                    action: "hitl_handoff",
-                    context,
-                };
+                nextNodeId = null;
+                break;
             }
 
             case "close": {
@@ -272,11 +269,8 @@ export const executeStep = action({
                     senderFullname: "Bot",
                 });
 
-                return {
-                    nextNodeId: null,
-                    action: "close_conversation",
-                    context,
-                };
+                nextNodeId = null;
+                break;
             }
 
             case "webRequest": {
@@ -308,13 +302,56 @@ export const executeStep = action({
             }
         }
 
+        // 4. Update conversation attributes with the new pointer state
+        await ctx.runMutation(internal.botEngine.updateConversationAttributes, {
+            conversationId: args.conversationId,
+            attributes: { ...context, currentNode: nextNodeId },
+        });
+
+        // 5. Handle special fallback states (like HITL Handoff)
+        if (currentNode.type === "hitlHandoff") {
+            const conversation = await ctx.runQuery(internal.conversations.getInternal, { id: args.conversationId });
+            if (conversation) {
+                // Strip the bot from the participants list so it represents "Unassigned" correctly 
+                // and avoids infinite executeStep loops.
+                const updatedParticipants = (conversation.participants || []).filter((p: string) => p !== args.botId);
+
+                await ctx.runMutation(internal.conversations.updateInternal, {
+                    id: args.conversationId,
+                    status: 100, // Explicitly return to Unassigned pool (100)
+                });
+
+                // Directly patch participants
+                await ctx.runMutation(internal.botEngine.removeBotParticipant, {
+                    conversationId: args.conversationId,
+                    participants: updatedParticipants
+                })
+
+                // Trigger Smart Routing again to find a human!
+                await ctx.runMutation(internal.routing.routeConversation, {
+                    conversationId: args.conversationId,
+                    projectId: args.projectId,
+                });
+            }
+        }
+
         return {
             nextNodeId,
-            action: "continue",
+            action: currentNode.type === "hitlHandoff" ? "hitl_handoff" : currentNode.type === "close" ? "close_conversation" : "continue",
             context,
         };
     },
 });
+
+export const removeBotParticipant = internalMutation({
+    args: {
+        conversationId: v.id("conversations"),
+        participants: v.array(v.string())
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.conversationId, { participants: args.participants })
+    }
+})
 
 /**
  * Replace {{variable}} placeholders with values from context

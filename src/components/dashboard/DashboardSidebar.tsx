@@ -41,7 +41,7 @@ export function DashboardSidebar() {
 
     // Only count unread for conversations assigned to me
     const unreadCount = conversations.filter((c: any) => c.assignedTo === user?.id && (c.unreadCount ?? 0) > 0).length
-    const unassignedCount = conversations.filter((c: any) => !c.assignedTo && c.status !== "resolved").length
+    const unassignedCount = conversations.filter((c: any) => !c.assignedTo && c.status === 100).length
 
     const sidebarItems = [
         {

@@ -1,4 +1,5 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 // List conversations for a project
@@ -39,11 +40,18 @@ export const create = mutation({
             projectId: args.projectId,
             visitorName: args.visitorName ?? "Visitor",
             visitorId: args.visitorId,
-            status: "open",
+            status: 100, // 100: unassigned
             lastMessage: "Started a new conversation",
             unreadCount: 0,
             updatedAt: Date.now(),
         });
+
+        // Trigger smart routing engine
+        await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+            conversationId,
+            projectId: args.projectId,
+        });
+
         return conversationId;
     },
 });
@@ -66,8 +74,41 @@ export const update = mutation({
             if (value !== undefined) cleanUpdates[key] = value;
         }
 
+        // HITL Safeguards: if manually assigning
+        if (args.assignedTo) {
+            cleanUpdates.status = 200;
+            const conversation = await ctx.db.get(args.id);
+            if (conversation) {
+                const participants = conversation.participants || [];
+                if (!participants.includes(args.assignedTo)) {
+                    participants.push(args.assignedTo);
+                }
+                cleanUpdates.participants = participants;
+            }
+        }
+
         await ctx.db.patch(args.id, cleanUpdates);
     },
+});
+
+// Internal update without auth checks
+export const updateInternal = internalMutation({
+    args: {
+        id: v.id("conversations"),
+        status: v.optional(v.number()),
+        assignedTo: v.optional(v.string()),
+        unreadCount: v.optional(v.number()),
+        participants: v.optional(v.array(v.string())),
+    },
+    handler: async (ctx, args) => {
+        const { id, ...updates } = args;
+        const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) cleanUpdates[key] = value;
+        }
+
+        await ctx.db.patch(args.id, cleanUpdates);
+    }
 });
 
 // Internal: create conversation from widget (no auth required)
@@ -75,18 +116,79 @@ export const createFromWidget = internalMutation({
     args: {
         projectId: v.id("projects"),
         visitorName: v.optional(v.string()),
+        visitorEmail: v.optional(v.string()),
+        visitorPhone: v.optional(v.string()),
         visitorId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        return await ctx.db.insert("conversations", {
+        const conversationId = await ctx.db.insert("conversations", {
             projectId: args.projectId,
             visitorName: args.visitorName ?? "Visitor",
+            visitorEmail: args.visitorEmail,
+            visitorPhone: args.visitorPhone,
             visitorId: args.visitorId,
-            status: "open",
+            status: 100, // 100: unassigned
             lastMessage: "Started a new conversation",
             unreadCount: 0,
             updatedAt: Date.now(),
         });
+
+        // Sync to Contacts table if we have contact info
+        if (args.visitorEmail || args.visitorPhone) {
+            // Check if contact exists by email or phone (simple scan for now)
+            // Ideally we'd have an index, but for now we iterate or just create
+            const existingContacts = await ctx.db
+                .query("contacts")
+                .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+                .collect();
+
+            let contactId = existingContacts.find(c =>
+                (args.visitorEmail && c.email === args.visitorEmail) ||
+                (args.visitorPhone && c.phone === args.visitorPhone)
+            )?._id;
+
+            if (contactId) {
+                // Update existing
+                await ctx.db.patch(contactId, {
+                    name: args.visitorName || undefined,
+                    phone: args.visitorPhone || undefined,
+                    email: args.visitorEmail || undefined,
+                    conversationId: conversationId, // Update latest convo link
+                });
+            } else {
+                // Create new
+                await ctx.db.insert("contacts", {
+                    projectId: args.projectId,
+                    name: args.visitorName ?? "Visitor",
+                    email: args.visitorEmail,
+                    phone: args.visitorPhone,
+                    conversationId: conversationId,
+                });
+            }
+        }
+
+        // Read project settings to optionally inject welcome message into history permanently
+        const project = await ctx.db.get(args.projectId);
+        const widgetConfig = (project?.widgetConfig as any) || {};
+        const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
+        const welcomeMsg = widgetConfig.translations?.welcomeMessage || "Hi there! How can we help you?";
+
+        if (enableWelcome) {
+            await ctx.db.insert("messages", {
+                conversationId,
+                projectId: args.projectId,
+                senderType: "bot",
+                content: welcomeMsg,
+            });
+        }
+
+        // Trigger smart routing engine
+        await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+            conversationId,
+            projectId: args.projectId,
+        });
+
+        return conversationId;
     },
 });
 
@@ -102,7 +204,7 @@ export const findByVisitor = internalQuery({
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .collect();
 
-        return conversations.find((c) => c.visitorId === args.visitorId && c.status === "open") ?? null;
+        return conversations.find((c) => c.visitorId === args.visitorId && (c.status === 100 || c.status === 200)) ?? null;
     },
 });
 
@@ -117,7 +219,7 @@ export const resolve = mutation({
         if (!conversation) throw new Error("Conversation not found");
 
         await ctx.db.patch(args.id, {
-            status: "resolved",
+            status: 1000, // 1000: resolved
             lastMessage: "Conversation resolved",
             updatedAt: Date.now(),
             resolvedBy: identity.subject,
@@ -207,7 +309,7 @@ export const autoCloseInactive = internalMutation({
         const now = Date.now();
 
         for (const conv of openConversations) {
-            if (conv.status === "resolved") continue;
+            if (conv.status === 1000) continue;
 
             // Get project config for auto-close timeout
             const project = await ctx.db.get(conv.projectId);
@@ -224,7 +326,7 @@ export const autoCloseInactive = internalMutation({
 
             if (now - lastActivity > timeoutMs) {
                 await ctx.db.patch(conv._id, {
-                    status: "resolved",
+                    status: 1000,
                     lastMessage: "Conversation auto-closed due to inactivity",
                     updatedAt: now,
                 });
@@ -247,3 +349,4 @@ export const getInternal = internalQuery({
         return await ctx.db.get(args.id);
     },
 });
+

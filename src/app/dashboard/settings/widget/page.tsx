@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock, ExternalLink } from "lucide-react"
@@ -43,13 +44,17 @@ export default function WidgetSetupPage() {
     const [welcomeDelay, setWelcomeDelay] = useState(3)
     const [enableWelcomeNotification, setEnableWelcomeNotification] = useState(true)
     const [autoCloseMinutes, setAutoCloseMinutes] = useState(30)
+    const [preChatFormEnabled, setPreChatFormEnabled] = useState(true)
+    const [contactMethod, setContactMethod] = useState<"email" | "phone">("email")
 
     // Translations
     const [translations, setTranslations] = useState({
         headerTitle: "Chat Support",
         onlineStatus: "Online",
         startChat: "Start Conversation",
-        welcomeMessage: "Hi there! How can we help you?"
+        welcomeMessage: "Hi there! How can we help you?",
+        preChatTitle: "Welcome!",
+        preChatSubtitle: "Please fill in your details to start chatting."
     })
 
     const updateProject = useMutation(api.projects.update)
@@ -63,11 +68,15 @@ export default function WidgetSetupPage() {
             setWelcomeDelay(config.welcomeDelay ?? 3)
             setEnableWelcomeNotification(config.enableWelcomeNotification ?? true)
             setAutoCloseMinutes(config.autoCloseMinutes ?? 30)
+            setPreChatFormEnabled(config.preChatFormEnabled ?? true)
+            setContactMethod(config.contactMethod || "email")
             setTranslations({
                 headerTitle: config.translations?.headerTitle || "Chat Support",
                 onlineStatus: config.translations?.onlineStatus || "Online",
                 startChat: config.translations?.startChat || "Start Conversation",
-                welcomeMessage: config.translations?.welcomeMessage || "Hi there! How can we help you?"
+                welcomeMessage: config.translations?.welcomeMessage || "Hi there! How can we help you?",
+                preChatTitle: config.translations?.preChatTitle || "Welcome!",
+                preChatSubtitle: config.translations?.preChatSubtitle || "Please fill in your details to start chatting."
             })
         }
     }, [activeProject])
@@ -83,7 +92,9 @@ export default function WidgetSetupPage() {
             welcomeDelay,
             enableWelcomeNotification,
             autoCloseMinutes,
-            translations
+            preChatFormEnabled,
+            contactMethod,
+            translations,
         }
 
         try {
@@ -236,6 +247,40 @@ export default function WidgetSetupPage() {
                                     />
                                 </div>
 
+                                <div className="flex items-center justify-between space-x-2">
+                                    <Label htmlFor="pre-chat" className="flex flex-col space-y-1">
+                                        <span>Pre-chat Form</span>
+                                        <span className="font-normal text-xs text-muted-foreground">
+                                            require visitors to provide name and email before chatting.
+                                        </span>
+                                    </Label>
+                                    <Switch
+                                        id="pre-chat"
+                                        checked={preChatFormEnabled}
+                                        onCheckedChange={setPreChatFormEnabled}
+                                    />
+                                </div>
+
+                                {preChatFormEnabled && (
+                                    <div className="space-y-3 pt-2">
+                                        <Label>Contact Method</Label>
+                                        <RadioGroup
+                                            value={contactMethod}
+                                            onValueChange={(v) => setContactMethod(v as "email" | "phone")}
+                                            className="flex gap-4"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="email" id="c-email" />
+                                                <Label htmlFor="c-email">Email</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="phone" id="c-phone" />
+                                                <Label htmlFor="c-phone">Phone Number</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                )}
+
                                 {enableWelcomeNotification && (
                                     <div className="space-y-2">
                                         <Label htmlFor="delay">Delay (seconds)</Label>
@@ -307,6 +352,22 @@ export default function WidgetSetupPage() {
                                         id="t-welcome"
                                         value={translations.welcomeMessage}
                                         onChange={(e) => updateTranslation('welcomeMessage', e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="t-pretitle">Pre-chat Title</Label>
+                                    <Input
+                                        id="t-pretitle"
+                                        value={translations.preChatTitle}
+                                        onChange={(e) => updateTranslation('preChatTitle', e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="t-presub">Pre-chat Subtitle</Label>
+                                    <Input
+                                        id="t-presub"
+                                        value={translations.preChatSubtitle}
+                                        onChange={(e) => updateTranslation('preChatSubtitle', e.target.value)}
                                     />
                                 </div>
                             </CardContent>
@@ -462,18 +523,38 @@ export default function WidgetSetupPage() {
 
                             {/* Body */}
                             <div className="h-[300px] bg-muted/20 flex flex-col gap-3 p-4 overflow-y-auto">
-                                <div className="flex gap-2 items-end">
-                                    <div className="w-6 h-6 rounded-full bg-primary/20 shrink-0 flex items-center justify-center overflow-hidden">
-                                        {logoUrl ? (
-                                            <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
-                                        ) : (
-                                            <MessageSquare className="w-3 h-3 text-primary" />
-                                        )}
+                                {preChatFormEnabled ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                                        <div>
+                                            <h4 className="font-bold text-lg">{translations.preChatTitle}</h4>
+                                            <p className="text-xs text-muted-foreground">{translations.preChatSubtitle}</p>
+                                        </div>
+                                        <div className="w-full space-y-2">
+                                            <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Name</div>
+                                            {contactMethod === "email" ? (
+                                                <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Email</div>
+                                            ) : (
+                                                <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Phone Number</div>
+                                            )}
+                                            <div className="h-8 rounded w-full text-white text-xs flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                                                Start Chat
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="bg-white dark:bg-muted p-3 rounded-2xl rounded-bl-none text-sm shadow-sm border max-w-[85%]">
-                                        {translations.welcomeMessage}
+                                ) : (
+                                    <div className="flex gap-2 items-end">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 shrink-0 flex items-center justify-center overflow-hidden">
+                                            {logoUrl ? (
+                                                <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
+                                            ) : (
+                                                <MessageSquare className="w-3 h-3 text-primary" />
+                                            )}
+                                        </div>
+                                        <div className="bg-white dark:bg-muted p-3 rounded-2xl rounded-bl-none text-sm shadow-sm border max-w-[85%]">
+                                            {translations.welcomeMessage}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Footer */}

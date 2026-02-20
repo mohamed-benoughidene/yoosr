@@ -38,9 +38,9 @@ export default function HistoryPage() {
     ) ?? []
 
     // Filter for resolved conversations
-    const conversations = allConversations.filter(c => c.status === 'resolved')
+    const conversations = allConversations.filter((c: any) => c.status === 1000)
 
-    const filteredConversations = conversations.filter(convo => {
+    const filteredConversations = conversations.filter((convo: any) => {
         const matchesSearch = convo.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
             convo.lastMessage?.toLowerCase().includes(search.toLowerCase())
 

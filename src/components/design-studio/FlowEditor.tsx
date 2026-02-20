@@ -157,6 +157,10 @@ export function FlowEditor({
     const handleDeleteNode = useCallback(
         (nodeId: string) => {
             setNodes((nds) => {
+                const nodeToDelete = nds.find(n => n.id === nodeId);
+                if (nodeToDelete?.type === "start") {
+                    return nds; // Prevent deletion of start block
+                }
                 const newNodes = nds.filter((n) => n.id !== nodeId);
                 setEdges((eds) => {
                     const newEdges = eds.filter(
@@ -175,10 +179,18 @@ export function FlowEditor({
     // Track node/edge changes for auto-save
     const handleNodesChange = useCallback(
         (changes: any) => {
-            onNodesChange(changes);
+            // Filter out deletion events for the start node
+            const filteredChanges = changes.filter((change: any) => {
+                if (change.type === 'remove') {
+                    const node = nodes.find(n => n.id === change.id);
+                    return node?.type !== 'start';
+                }
+                return true;
+            });
+            onNodesChange(filteredChanges);
             // Debounced change notification will happen via the parent
         },
-        [onNodesChange]
+        [onNodesChange, nodes]
     );
 
     const handleEdgesChange = useCallback(

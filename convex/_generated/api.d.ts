@@ -16,14 +16,19 @@ import type * as bots from "../bots.js";
 import type * as contacts from "../contacts.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
+import type * as dev from "../dev.js";
+import type * as diagnostic from "../diagnostic.js";
 import type * as http from "../http.js";
 import type * as integrations from "../integrations.js";
 import type * as knowledgeBases from "../knowledgeBases.js";
 import type * as members from "../members.js";
 import type * as messages from "../messages.js";
+import type * as migrations from "../migrations.js";
 import type * as profiles from "../profiles.js";
 import type * as projects from "../projects.js";
+import type * as routing from "../routing.js";
 import type * as settings from "../settings.js";
+import type * as testQuery from "../testQuery.js";
 
 import type {
   ApiFromModules,
@@ -40,14 +45,19 @@ declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   conversations: typeof conversations;
   crons: typeof crons;
+  dev: typeof dev;
+  diagnostic: typeof diagnostic;
   http: typeof http;
   integrations: typeof integrations;
   knowledgeBases: typeof knowledgeBases;
   members: typeof members;
   messages: typeof messages;
+  migrations: typeof migrations;
   profiles: typeof profiles;
   projects: typeof projects;
+  routing: typeof routing;
   settings: typeof settings;
+  testQuery: typeof testQuery;
 }>;
 
 /**
