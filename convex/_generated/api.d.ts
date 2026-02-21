@@ -10,16 +10,19 @@
 
 import type * as activityLogs from "../activityLogs.js";
 import type * as analytics from "../analytics.js";
+import type * as bot from "../bot.js";
 import type * as botEngine from "../botEngine.js";
 import type * as botFlows from "../botFlows.js";
 import type * as bots from "../bots.js";
 import type * as contacts from "../contacts.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
+import type * as debug from "../debug.js";
 import type * as dev from "../dev.js";
 import type * as diagnostic from "../diagnostic.js";
 import type * as http from "../http.js";
 import type * as integrations from "../integrations.js";
+import type * as knowledge from "../knowledge.js";
 import type * as knowledgeBases from "../knowledgeBases.js";
 import type * as members from "../members.js";
 import type * as messages from "../messages.js";
@@ -27,6 +30,7 @@ import type * as migrations from "../migrations.js";
 import type * as profiles from "../profiles.js";
 import type * as projects from "../projects.js";
 import type * as routing from "../routing.js";
+import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as testQuery from "../testQuery.js";
 
@@ -39,16 +43,19 @@ import type {
 declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   analytics: typeof analytics;
+  bot: typeof bot;
   botEngine: typeof botEngine;
   botFlows: typeof botFlows;
   bots: typeof bots;
   contacts: typeof contacts;
   conversations: typeof conversations;
   crons: typeof crons;
+  debug: typeof debug;
   dev: typeof dev;
   diagnostic: typeof diagnostic;
   http: typeof http;
   integrations: typeof integrations;
+  knowledge: typeof knowledge;
   knowledgeBases: typeof knowledgeBases;
   members: typeof members;
   messages: typeof messages;
@@ -56,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   projects: typeof projects;
   routing: typeof routing;
+  seed: typeof seed;
   settings: typeof settings;
   testQuery: typeof testQuery;
 }>;

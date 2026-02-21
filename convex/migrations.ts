@@ -7,7 +7,7 @@ export const migrateStatuses = internalMutation({
         let changed = 0;
         for (const conv of conversations) {
             if (typeof conv.status === "string") {
-                let newStatus = 100;
+                let newStatus: 100 | 200 | 1000 = 100;
                 if (conv.status === "assigned" || conv.status === "open") {
                     newStatus = conv.assignedTo ? 200 : 100;
                 } else if (conv.status === "resolved" || conv.status === "closed") {

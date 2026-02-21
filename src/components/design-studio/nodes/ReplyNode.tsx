@@ -9,8 +9,8 @@ export function ReplyNode({ data, selected }: NodeProps) {
     return (
         <div
             className={`group relative min-w-[220px] max-w-[280px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected
-                    ? "border-blue-500 shadow-md shadow-blue-500/10"
-                    : "border-border hover:border-blue-500/50 hover:shadow-md"
+                ? "border-blue-500 shadow-md shadow-blue-500/10"
+                : "border-border hover:border-blue-500/50 hover:shadow-md"
                 }`}
         >
             <Handle
@@ -31,7 +31,16 @@ export function ReplyNode({ data, selected }: NodeProps) {
 
             {/* Body */}
             <div className="px-4 py-3">
-                {nodeData.text ? (
+                {nodeData.textVariations && nodeData.textVariations.length > 0 ? (
+                    <div className="space-y-1">
+                        <p className="text-[10px] text-muted-foreground/70 uppercase">Random From:</p>
+                        {nodeData.textVariations.map((v: string, i: number) => (
+                            <p key={i} className="text-xs text-muted-foreground line-clamp-2 bg-muted/50 p-1 rounded">
+                                {v}
+                            </p>
+                        ))}
+                    </div>
+                ) : nodeData.text ? (
                     <p className="text-xs text-muted-foreground line-clamp-3">
                         {nodeData.text}
                     </p>

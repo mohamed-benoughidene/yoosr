@@ -112,6 +112,7 @@ export const routeConversation = internalMutation({
 
                 await ctx.db.patch(args.conversationId, {
                     // assignedTo remains undefined as they are not Clerk Users
+                    botId: botIdToAssign, // Set the specific bot owner
                     status: 200, // Bot is now the assigned actor (status 200)
                     participants,
                     updatedAt: Date.now(),
@@ -119,10 +120,9 @@ export const routeConversation = internalMutation({
 
                 // Trigger the Design Studio BotEngine action 
                 // to evaluate the conversational graph nodes (Start Node).
-                await ctx.scheduler.runAfter(0, internal.botEngine.executeStep, {
-                    botId: botIdToAssign as Id<"bots">,
+                await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
                     conversationId: args.conversationId,
-                    projectId: args.projectId,
+                    incomingMessage: "",
                 });
             } else {
                 // If NO bots and NO agents are online, leave it as Unassigned Queue (100)

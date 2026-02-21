@@ -50,6 +50,9 @@ export default defineSchema({
         rating: v.optional(v.number()), // 1-5
         feedback: v.optional(v.string()), // Optional feedback text
         updatedAt: v.optional(v.number()),
+        // Execution engine state
+        currentNodeId: v.optional(v.string()),
+        botId: v.optional(v.string()),
         // Legacy fields to prevent schema validation errors
         leadId: v.optional(v.string()),
         firstText: v.optional(v.string()),
@@ -92,10 +95,15 @@ export default defineSchema({
     // Bot flows (Design Studio graph data)
     bot_flows: defineTable({
         botId: v.id("bots"),
-        nodes: v.any(), // ReactFlow Node[]
-        edges: v.any(), // ReactFlow Edge[]
+        slug: v.optional(v.string()), // target identifier for Replace Bot action
+        version: v.optional(v.string()),
+        nodes: v.array(v.any()), // JSON array of flow nodes
+        edges: v.optional(v.any()), // Legacy ReactFlow Edge[]
+        executionNodes: v.optional(v.array(v.any())), // Compiled engine schema
         variables: v.optional(v.any()), // Flow-level variables
-    }).index("by_botId", ["botId"]),
+    })
+        .index("by_botId", ["botId"])
+        .index("by_slug", ["slug"]),
 
     // Activity logs
     activity_logs: defineTable({
@@ -180,4 +188,16 @@ export default defineSchema({
     })
         .index("by_projectId", ["projectId"])
         .index("by_conversationId", ["conversationId"]),
+
+    // Knowledge base document chunks + embeddings
+    knowledge_base_chunks: defineTable({
+        sourceId: v.id("knowledge_base_sources"),
+        projectId: v.id("projects"),
+        text: v.string(),
+        embedding: v.array(v.number()),
+    }).vectorIndex("by_embedding", {
+        vectorField: "embedding",
+        dimensions: 3072, // Dimensions for text-embedding-3-large
+        filterFields: ["sourceId", "projectId"],
+    }),
 });

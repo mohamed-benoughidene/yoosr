@@ -26,6 +26,16 @@ import { WebRequestNode } from "./nodes/WebRequestNode";
 import { AITaskNode } from "./nodes/AITaskNode";
 import { HITLHandoffNode } from "./nodes/HITLHandoffNode";
 import { CloseNode } from "./nodes/CloseNode";
+
+import { IfOperatingHoursNode } from "./nodes/IfOperatingHoursNode";
+import { IfOnlineAgentNode } from "./nodes/IfOnlineAgentNode";
+import { CaptureUserReplyNode } from "./nodes/CaptureUserReplyNode";
+import { WaitNode } from "./nodes/WaitNode";
+import { AskKnowledgeBaseNode } from "./nodes/AskKnowledgeBaseNode";
+import { ReplaceBotNode } from "./nodes/ReplaceBotNode";
+import { ChangeDepartmentNode } from "./nodes/ChangeDepartmentNode";
+import { CodeActionNode } from "./nodes/CodeActionNode";
+import { ClearTranscriptNode } from "./nodes/ClearTranscriptNode";
 import { BlockPalette } from "./BlockPalette";
 import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
@@ -38,6 +48,15 @@ const nodeTypes: NodeTypes = {
     aiTask: AITaskNode,
     hitlHandoff: HITLHandoffNode,
     close: CloseNode,
+    if_operating_hours: IfOperatingHoursNode,
+    if_online_agent: IfOnlineAgentNode,
+    capture_user_reply: CaptureUserReplyNode,
+    wait: WaitNode,
+    ask_kb: AskKnowledgeBaseNode,
+    replace_bot: ReplaceBotNode,
+    change_department: ChangeDepartmentNode,
+    code_action: CodeActionNode,
+    clear_transcript: ClearTranscriptNode,
 };
 
 const defaultStartNode: Node = {
@@ -278,7 +297,23 @@ export function FlowEditor({
                                 case "hitlHandoff":
                                     return "#f97316";
                                 case "close":
+                                case "clear_transcript":
                                     return "#ef4444";
+                                case "wait":
+                                    return "#64748b";
+                                case "ask_kb":
+                                    return "#6366f1";
+                                case "if_operating_hours":
+                                case "if_online_agent":
+                                    return "#f59e0b";
+                                case "replace_bot":
+                                    return "#ec4899";
+                                case "capture_user_reply":
+                                    return "#a855f7";
+                                case "change_department":
+                                    return "#06b6d4";
+                                case "code_action":
+                                    return "#10b981";
                                 default:
                                     return "#94a3b8";
                             }

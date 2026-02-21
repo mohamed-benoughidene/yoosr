@@ -9,6 +9,15 @@ import {
     Sparkles,
     UserRoundPlus,
     CircleX,
+    Clock,
+    Users,
+    UserCheck,
+    Timer,
+    BookOpen,
+    Repeat,
+    Network,
+    Code2,
+    Eraser,
     type LucideIcon,
 } from "lucide-react";
 import { BLOCK_TYPES } from "@/types/flow";
@@ -22,6 +31,15 @@ const iconMap: Record<string, LucideIcon> = {
     Sparkles,
     UserRoundPlus,
     CircleX,
+    Clock,
+    Users,
+    UserCheck,
+    Timer,
+    BookOpen,
+    Repeat,
+    Network,
+    Code2,
+    Eraser,
 };
 
 interface BlockPaletteProps {

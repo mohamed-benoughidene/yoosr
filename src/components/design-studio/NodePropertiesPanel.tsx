@@ -70,14 +70,43 @@ export function NodePropertiesPanel({
                 {/* Reply node fields */}
                 {node.type === "reply" && (
                     <>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Message text</Label>
-                            <Textarea
-                                value={data.text || ""}
-                                onChange={(e) => update("text", e.target.value)}
-                                className="min-h-[80px] text-sm resize-none"
-                                placeholder="Enter message text... Use {{variable}} for dynamic values"
-                            />
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between pointer-events-auto">
+                                <Label className="text-xs">Message Variations</Label>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                    const textVariations = [...(data.textVariations || (data.text ? [data.text] : [""]))];
+                                    if (!data.textVariations && !data.text) textVariations[0] = "";
+                                    textVariations.push("");
+                                    update("textVariations", textVariations);
+                                }} className="h-6 px-2 text-xs">
+                                    <Plus className="mr-1 h-3 w-3" /> Add Variation
+                                </Button>
+                            </div>
+                            {(data.textVariations || (data.text ? [data.text] : [""])).map((text: string, i: number) => (
+                                <div key={i} className="flex flex-col gap-1 relative border p-2 rounded-md bg-muted/30 pointer-events-auto">
+                                    {((data.textVariations || [data.text]).length > 1) && (
+                                        <Button variant="ghost" size="icon" onClick={() => {
+                                            const textVariations = [...(data.textVariations || [data.text])];
+                                            textVariations.splice(i, 1);
+                                            update("textVariations", textVariations);
+                                            if (i === 0 && textVariations.length > 0) update("text", textVariations[0]);
+                                        }} className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-background border shadow-sm">
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                    <Textarea
+                                        value={text}
+                                        onChange={(e) => {
+                                            const textVariations = [...(data.textVariations || (data.text ? [data.text] : [""]))];
+                                            textVariations[i] = e.target.value;
+                                            update("textVariations", textVariations);
+                                            if (i === 0) update("text", e.target.value);
+                                        }}
+                                        className="min-h-[60px] text-xs resize-none"
+                                        placeholder="Message variation..."
+                                    />
+                                </div>
+                            ))}
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -285,6 +314,106 @@ export function NodePropertiesPanel({
                                 }
                                 className="h-8 text-sm font-mono"
                                 placeholder="e.g., ai_response"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Wait Node fields */}
+                {node.type === "wait" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Delay in Seconds</Label>
+                        <Input
+                            type="number"
+                            value={data.delaySeconds || 1}
+                            onChange={(e) => update("delaySeconds", parseInt(e.target.value) || 1)}
+                            className="h-8 text-sm"
+                        />
+                    </div>
+                )}
+
+                {/* Ask KB Node fields */}
+                {node.type === "ask_kb" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Search Query</Label>
+                            <Input
+                                value={data.query || ""}
+                                onChange={(e) => update("query", e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="e.g. {{user_message}}"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Assign Result To Variable</Label>
+                            <Input
+                                value={data.assignTo || ""}
+                                onChange={(e) => update("assignTo", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="e.g. kb_reply"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Capture Reply Form */}
+                {node.type === "capture_user_reply" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Save reply to attribute</Label>
+                        <Input
+                            value={data.attribute || ""}
+                            onChange={(e) => update("attribute", e.target.value)}
+                            className="h-8 text-sm font-mono"
+                            placeholder="e.g. email_address"
+                        />
+                    </div>
+                )}
+
+                {/* Replace Bot Node */}
+                {node.type === "replace_bot" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Target Bot Slug</Label>
+                        <Input
+                            value={data.slug || ""}
+                            onChange={(e) => update("slug", e.target.value)}
+                            className="h-8 text-sm font-mono"
+                            placeholder="e.g. tech_support_bot"
+                        />
+                    </div>
+                )}
+
+                {/* Change Dept Node */}
+                {node.type === "change_department" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Department ID</Label>
+                        <Input
+                            value={data.departmentId || ""}
+                            onChange={(e) => update("departmentId", e.target.value)}
+                            className="h-8 text-sm font-mono"
+                            placeholder="e.g. js9f8a7s98f7a9s8f7"
+                        />
+                    </div>
+                )}
+
+                {/* Code Action Node */}
+                {node.type === "code_action" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">JS Expression</Label>
+                            <Textarea
+                                value={data.expression || ""}
+                                onChange={(e) => update("expression", e.target.value)}
+                                className="min-h-[80px] text-sm font-mono resize-none"
+                                placeholder="e.g. price * 0.9 + shipping"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Assign output to variable</Label>
+                            <Input
+                                value={data.assignTo || ""}
+                                onChange={(e) => update("assignTo", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="e.g. code_result"
                             />
                         </div>
                     </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -34,6 +34,29 @@ export default function BotEditorPage() {
     const pendingNodesRef = useRef<Node[] | null>(null);
     const pendingEdgesRef = useRef<Edge[] | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Ensure nodes have positions and IDs for ReactFlow
+    const initialNodesWithPositions = useMemo(() => {
+        if (!flow || !flow.nodes) return undefined;
+        return (flow.nodes as any[]).map((node, index) => {
+            const mappedNode = { ...node };
+
+            // Map Convex _id to ReactFlow id if required
+            if (!mappedNode.id && mappedNode._id) {
+                mappedNode.id = mappedNode._id;
+            } else if (!mappedNode.id) {
+                mappedNode.id = `node-${index}`;
+            }
+
+            if (!mappedNode.position) {
+                mappedNode.position = {
+                    x: 250,
+                    y: 100 + (index * 120), // Cascade vertically
+                };
+            }
+            return mappedNode as Node;
+        });
+    }, [flow]);
 
     // Auto-save with debounce
     const handleFlowChange = useCallback(
@@ -138,9 +161,7 @@ export default function BotEditorPage() {
             <div className="flex-1 overflow-hidden">
                 <ReactFlowProvider>
                     <FlowEditor
-                        initialNodes={
-                            flow?.nodes as Node[] | undefined
-                        }
+                        initialNodes={initialNodesWithPositions}
                         initialEdges={
                             flow?.edges as Edge[] | undefined
                         }

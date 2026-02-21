@@ -262,10 +262,8 @@ export default function WidgetPage() {
         }
     }
 
-    const handleSend = async () => {
-        if (!input.trim()) return
-        const text = input.trim()
-        setInput("")
+    const handleSendText = async (text: string) => {
+        if (!text.trim()) return
 
         // Optimistic update
         setMessages((prev) => [
@@ -297,6 +295,13 @@ export default function WidgetPage() {
         } catch {
             setError("Failed to send message")
         }
+    }
+
+    const handleSend = async () => {
+        if (!input.trim()) return
+        const text = input.trim()
+        setInput("")
+        await handleSendText(text)
     }
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -457,6 +462,20 @@ export default function WidgetPage() {
                                     >
                                         {msg.content}
                                     </div>
+                                    {!isVisitor && msg.attachments?.payload?.buttons && (
+                                        <div className="flex flex-col gap-2 mt-2">
+                                            {msg.attachments.payload.buttons.map((btn: any, i: number) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => handleSendText(btn.label)}
+                                                    className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors text-center shadow-sm"
+                                                    disabled={loading || conversationStatus === 1000}
+                                                >
+                                                    {btn.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );

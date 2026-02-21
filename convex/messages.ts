@@ -116,15 +116,23 @@ export const sendFromWidget = internalMutation({
             content: args.content,
         });
 
-        await ctx.db.patch(conversationId, {
+        // Only force status to 100 if it hasn't been assigned yet, to prevent booting agents/bots
+        const currentUnread = conversation.status === 1000 ? 1 : (conversation.unreadCount ?? 0) + 1;
+
+        const patchData: any = {
             lastMessage: args.content,
             updatedAt: Date.now(),
-            unreadCount: (conversation.status === 1000 ? 1 : (conversation.unreadCount ?? 0) + 1),
-            status: 100, // Ensure it's active
-        });
+            unreadCount: currentUnread,
+        };
+
+        if (conversation.status !== 200) {
+            patchData.status = 100;
+        }
+
+        await ctx.db.patch(conversationId, patchData);
 
         // Smart routing and bot execution hook
-        if (conversation.status === 100) {
+        if (conversation.status === 100 || patchData.status === 100) {
             // Trigger routing if currently in unassigned queue
             await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
                 conversationId,
@@ -134,18 +142,11 @@ export const sendFromWidget = internalMutation({
             // It is assigned, but `assignedTo` (which tracks human Clerk ID) is null.
             // This means one of the participants is a bot! Let's trigger the execution engine.
 
-            // Note: In a production scenario, we'd verify which participant ID is actually a Bot.
-            // Since bots push their ID to participants, we assume the string is the botId.
-            // We use the first one available for execution.
-            const botIdString = conversation.participants[0];
+            const botIdString = conversation.botId || conversation.participants[0];
 
-            await ctx.scheduler.runAfter(0, internal.botEngine.executeStep, {
-                botId: botIdString as any, // Cast to ID format internally
+            await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
                 conversationId,
-                projectId: conversation.projectId,
-                currentNodeId: conversation.attributes?.currentNode, // pass the pointer if exists
-                userMessage: args.content,
-                attributes: conversation.attributes,
+                incomingMessage: args.content,
             });
         }
 
