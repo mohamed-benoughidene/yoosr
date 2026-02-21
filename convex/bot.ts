@@ -264,7 +264,7 @@ export const executeNextBlock = internalAction({
         console.log(`[BOT ENGINE] Node actions complete. Next Node ID: ${nextNodeId}`);
 
         // 5. Advance to next node
-        const updatedNodeId = resetNode ? null : nextNodeId;
+        const updatedNodeId = resetNode ? null : (nextNodeId ?? null);
         await ctx.runMutation(internal.bot.updateConversationState, {
             id: args.conversationId,
             currentNodeId: updatedNodeId,

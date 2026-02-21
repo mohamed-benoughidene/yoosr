@@ -119,6 +119,7 @@ export const createFromWidget = internalMutation({
         visitorEmail: v.optional(v.string()),
         visitorPhone: v.optional(v.string()),
         visitorId: v.optional(v.string()),
+        initialMessage: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const conversationId = await ctx.db.insert("conversations", {
@@ -182,10 +183,21 @@ export const createFromWidget = internalMutation({
             });
         }
 
+        if (args.initialMessage) {
+            await ctx.db.insert("messages", {
+                conversationId,
+                projectId: args.projectId,
+                senderType: "visitor",
+                senderId: args.visitorId,
+                content: args.initialMessage,
+            });
+        }
+
         // Trigger smart routing engine
         await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
             conversationId,
             projectId: args.projectId,
+            initialMessage: args.initialMessage,
         });
 
         return conversationId;

@@ -242,7 +242,7 @@ export default function WidgetPage() {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages, showRating])
 
-    const ensureConversation = async (): Promise<string | null> => {
+    const ensureConversation = async (initialMessage?: string): Promise<string | null> => {
         if (conversationId) return conversationId
         if (!projectId) return null
         try {
@@ -252,6 +252,7 @@ export default function WidgetPage() {
                 visitorEmail: preChatData?.email,
                 visitorPhone: preChatData?.phone,
                 visitorId,
+                initialMessage,
             })
             const newId = result.conversationId
             setConversationId(newId)
@@ -266,10 +267,11 @@ export default function WidgetPage() {
         if (!text.trim()) return
 
         // Optimistic update
+        const tempId = "temp_" + Date.now()
         setMessages((prev) => [
             ...prev,
             {
-                _id: "temp_" + Date.now(),
+                _id: tempId,
                 content: text,
                 senderType: "visitor",
                 senderId: visitorId,
@@ -277,8 +279,20 @@ export default function WidgetPage() {
             },
         ])
 
-        const convId = await ensureConversation()
-        if (!convId) return
+        const isNewConversation = !conversationId
+        const convId = await ensureConversation(isNewConversation ? text : undefined)
+        if (!convId) {
+            setMessages(prev => prev.filter(m => m._id !== tempId))
+            return
+        }
+
+        if (isNewConversation) {
+            // First message is pushed atomically during conversation creation.
+            // Fast-forward UI:
+            setConversationId(convId)
+            fetchMessages()
+            return
+        }
 
         try {
             const res = await apiPost("/widget/messages", {
@@ -287,12 +301,15 @@ export default function WidgetPage() {
                 visitorId,
             })
 
+            setMessages(prev => prev.filter(m => m._id !== tempId))
+
             if (res.conversationId && res.conversationId !== convId) {
                 setConversationId(res.conversationId)
             } else {
                 fetchMessages()
             }
         } catch {
+            setMessages(prev => prev.filter(m => m._id !== tempId))
             setError("Failed to send message")
         }
     }

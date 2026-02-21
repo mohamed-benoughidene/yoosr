@@ -9,6 +9,7 @@ export const routeConversation = internalMutation({
         conversationId: v.id("conversations"),
         projectId: v.id("projects"),
         departmentId: v.optional(v.id("departments")),
+        initialMessage: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const conversation = await ctx.db.get(args.conversationId);
@@ -122,7 +123,7 @@ export const routeConversation = internalMutation({
                 // to evaluate the conversational graph nodes (Start Node).
                 await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
                     conversationId: args.conversationId,
-                    incomingMessage: "",
+                    incomingMessage: args.initialMessage ?? "",
                 });
             } else {
                 // If NO bots and NO agents are online, leave it as Unassigned Queue (100)
