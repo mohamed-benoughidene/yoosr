@@ -1,0 +1,55 @@
+# Bot Flow Testing & Setup Guide
+
+This document outlines the steps to verify the newly implemented bot blocks and any manual configuration required to make them fully functional.
+
+## Important Manual Setup
+To ensure all the logic works correctly, please complete the following manual configuration steps:
+
+1. **Add OpenAI API Key**:
+   - The `Ask Knowledge Base` block uses vector search and requires an embedding model.
+   - Go to your Convex dashboard, open the **Settings** > **Environment Variables**.
+   - Add `OPENAI_API_KEY` and set it to a valid OpenAI key. This allows the backend to successfully call `https://api.openai.com/v1/embeddings`.
+
+2. **Add expr-eval Dependency**:
+   - Ensure the server-side environment has `expr-eval` available. Since this package was added for the `Code Action` block, if it isn't listed in your [package.json](file:///home/mohamed/lab/yoosr/package.json), you may need to run:
+     ```bash
+     npm install expr-eval
+     ```
+
+## How to Test the New Blocks
+
+You can verify the functionality by creating a new AI Agent flow in the Design Studio and dragging in the new blocks. Here is a recommended flow pattern to test the full set of new features:
+
+### Test 1: sequential Messaging & Buttons
+1. Create a **Start** node.
+2. Connect it to a **Reply** node.
+   - Add some text: *"Hello! Welcome to our store."*
+3. Connect that to *another* **Reply** node (Verifies the new ability to send back-to-back messages without pausing).
+   - Add text: *"What would you like to do today?"*
+   - Add two **Buttons**: "Support" and "Sales".
+4. Connect this to a **Capture User Reply** node.
+   - Assign to attribute: `user_intent`.
+
+### Test 2: Code Action & Wait State
+1. Connect the previous node to a **Wait** node.
+   - Set delay to `3` seconds.
+2. Connect the Wait node to a **Code Action** node.
+   - Set Expression: `{{user_intent}} == 'Support' ? 1 : 0`
+   - Assign to: `needs_support`.
+3. Connect this to a **Condition** node.
+   - Attribute: `needs_support`
+   - Operator: `equals`
+   - Compare value: `1`
+
+### Test 3: Operating Hours & Routing
+1. On the **True** branch of the Condition node, connect to an **If Operating Hours** node.
+2. On its **True** branch (Store is open), connect to an **If Online Agent** node.
+3. On its **True** branch (Agents are online), connect to a **Change Department** node.
+4. On the **False** branch of the If Online Agent node, connect to an **Ask Knowledge Base** node.
+   - Query: `{{user_intent}}`
+   - Test this by creating a knowledge base source beforehand with some dummy FAQ data.
+
+### Test 4: Replace Bot & Storage Clearing
+1. On the **False** branch of the original Condition node (Sales), connect to a **Replace Bot** node.
+   - Type in the slug of another active bot you have created.
+2. In that *other* bot, add a **Clear Transcript** node to verify that it wipes out the `user_intent` attribute when checked in a later condition.

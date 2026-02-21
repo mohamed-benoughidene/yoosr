@@ -140,10 +140,14 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const parser = new Parser();
             let codeResult = null;
             try {
-                const expr = parser.parse(action.expression || "0");
+                // To avoid string syntax errors (e.g. Support == 'Support' instead of 'Support' == 'Support')
+                // we will use expr-eval's native variable support for {{var}} patterns.
+                // Replace all {{var}} with raw property paths (e.g. user_intent) so expr-eval handles evaluation safely.
+                const expression = (action.expression || "0").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, "$1");
+                const expr = parser.parse(expression);
                 codeResult = expr.evaluate(attributes);
-            } catch (e) {
-                console.error("Code action error", e);
+            } catch (e: any) {
+                console.error("Code action error:", e.message);
             }
             return { newAttributes: { [action.assignTo ?? "code_result"]: codeResult } };
 
@@ -239,7 +243,9 @@ export const executeNextBlock = internalAction({
                 console.log(`[BOT ENGINE] -> Action requested suspend at node: ${currentNode._id}`);
                 await ctx.runMutation(internal.bot.updateConversationState, {
                     id: args.conversationId,
-                    currentNodeId: currentNode._id,
+                    // If we scheduled a future block, advance the pointer now so it doesn't infinite loop.
+                    // Otherwise keep it here (e.g., waiting for user reply).
+                    currentNodeId: result.scheduleNextBlockAfter ? nextNodeId : currentNode._id,
                     attributes,
                     botId: newBotId,
                 });

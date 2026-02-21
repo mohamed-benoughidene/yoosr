@@ -14,6 +14,7 @@ import {
     type Edge,
     MarkerType,
     BackgroundVariant,
+    useReactFlow,
     type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -219,12 +220,14 @@ export function FlowEditor({
         [onEdgesChange]
     );
 
+    const { getNodes } = useReactFlow();
+
     // Sync latest nodes/edges for save
     const handleNodeDragStop = useCallback(
-        (_: React.MouseEvent, __: Node, allNodes: Node[]) => {
-            notifyChange(allNodes, edges);
+        () => {
+            notifyChange(getNodes(), edges);
         },
-        [edges, notifyChange]
+        [edges, notifyChange, getNodes]
     );
 
     const handleEdgesDelete = useCallback(
@@ -232,9 +235,16 @@ export function FlowEditor({
             const remainingEdges = edges.filter(
                 (e) => !deletedEdges.find((de) => de.id === e.id)
             );
-            notifyChange(nodes, remainingEdges);
+            notifyChange(getNodes(), remainingEdges);
         },
-        [nodes, edges, notifyChange]
+        [getNodes, edges, notifyChange]
+    );
+
+    const handleNodesDelete = useCallback(
+        (deletedNodes: Node[]) => {
+            notifyChange(getNodes(), edges);
+        },
+        [getNodes, edges, notifyChange]
     );
 
     return (
@@ -252,6 +262,7 @@ export function FlowEditor({
                     onPaneClick={onPaneClick}
                     onNodeDragStop={handleNodeDragStop}
                     onEdgesDelete={handleEdgesDelete}
+                    onNodesDelete={handleNodesDelete}
                     nodeTypes={nodeTypes}
                     fitView
                     fitViewOptions={{ padding: 0.3 }}
