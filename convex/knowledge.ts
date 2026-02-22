@@ -16,30 +16,30 @@ export const searchSimilarChunks = action({
         query: v.string(),
     },
     handler: async (ctx, args): Promise<any[]> => {
-        if (!process.env.OPENAI_API_KEY) {
-            console.error("Missing OPENAI_API_KEY");
+        if (!process.env.HUGGINGFACE_API_KEY) {
+            console.error("Missing HUGGINGFACE_API_KEY");
             return [];
         }
 
-        const response = await fetch("https://api.openai.com/v1/embeddings", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "text-embedding-3-large",
-                input: args.query,
-            }),
-        });
+        const { HfInference } = await import("@huggingface/inference");
+        const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
-        if (!response.ok) {
-            console.error("OpenAI error", await response.text());
+        let embedding: any;
+        try {
+            const output = await hf.featureExtraction({
+                model: "BAAI/bge-m3",
+                inputs: args.query,
+            });
+            embedding = output;
+        } catch (error: any) {
+            console.error("Hugging Face SDK error", error.message);
             return [];
         }
 
-        const data = await response.json();
-        const embedding = data.data[0].embedding;
+        if (!Array.isArray(embedding)) {
+            console.error("Hugging Face API returned an unrecognized format", embedding);
+            return [];
+        }
 
         const results = await ctx.vectorSearch("knowledge_base_chunks", "by_embedding", {
             vector: embedding,

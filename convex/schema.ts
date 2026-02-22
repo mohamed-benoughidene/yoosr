@@ -197,7 +197,7 @@ export default defineSchema({
         embedding: v.array(v.number()),
     }).vectorIndex("by_embedding", {
         vectorField: "embedding",
-        dimensions: 3072, // Dimensions for text-embedding-3-large
+        dimensions: 1024, // Dimensions for BAAI/bge-m3
         filterFields: ["sourceId", "projectId"],
     }),
 });
