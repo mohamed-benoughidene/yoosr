@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // List knowledge bases for a project
 export const list = query({
@@ -92,12 +93,22 @@ export const addSource = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        return await ctx.db.insert("knowledge_base_sources", {
+        const sourceId = await ctx.db.insert("knowledge_base_sources", {
             kbId: args.kbId,
             type: args.type,
             value: args.value,
             status: "indexing",
         });
+
+        const kb = await ctx.db.get(args.kbId);
+        if (kb) {
+            await ctx.scheduler.runAfter(0, internal.knowledge.indexSource, {
+                sourceId,
+                projectId: kb.projectId,
+            });
+        }
+
+        return sourceId;
     },
 });
 

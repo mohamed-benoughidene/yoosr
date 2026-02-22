@@ -2,6 +2,7 @@ import { internalAction, internalMutation, internalQuery } from "./_generated/se
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
 
 /**
  * Executes a specific block type and returns the state mutation instructions.
@@ -47,32 +48,47 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 nextNodeId: result ? action.truePath : action.falsePath,
             };
 
-        case "chatgpt_task":
-            const prompt = interpolate(action.prompt, attributes);
-            const llmResponse = await callLLMPlaceholder(prompt);
-            const parsed = tryParseJSON(llmResponse);
-            return {
-                newAttributes: parsed
-                    ? parsed
-                    : { [action.assignTo ?? "gpt_reply"]: llmResponse }
-            };
+        case "chatgpt_task": {
+            const systemPrompt = interpolate(action.prompt || action.systemPrompt || "", attributes);
+            const userInput = interpolate(action.userInput || "{{lastUserText}}", attributes);
+            try {
+                const llmResponse = await callAITask(systemPrompt, userInput, action.model);
+                const parsed = tryParseJSON(llmResponse);
+                return {
+                    newAttributes: parsed
+                        ? { ...parsed, [action.assignTo ?? "gpt_reply"]: llmResponse }
+                        : { [action.assignTo ?? "gpt_reply"]: llmResponse }
+                };
+            } catch (e: any) {
+                console.error("[BOT ENGINE] AI Task failed:", e.message);
+                if (action.failurePath) {
+                    return { newAttributes: { ai_error: e.message }, nextNodeId: action.failurePath };
+                }
+                return { newAttributes: { [action.assignTo ?? "gpt_reply"]: "", ai_error: e.message } };
+            }
+        }
 
-        case "ask_kb":
-            const query = interpolate(action.query, attributes);
+        case "ask_kb": {
+            const kbQuery = interpolate(action.query, attributes);
             const kbConversation = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             // @ts-ignore - type may not be generated yet
             const kbResult = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
                 projectId: kbConversation.projectId,
-                query: query,
+                query: kbQuery,
             });
-            let answer = "";
+            let kbAnswer = "";
             if (kbResult.length > 0) {
                 const contextStr = kbResult.map((r: any) => r.text).join("\n");
-                const kbPrompt = `Context:\n${contextStr}\n\nQuestion:${query}\nAnswer based only on context.`;
-                answer = await callLLMPlaceholder(kbPrompt);
+                const kbPrompt = `Context:\n${contextStr}\n\nQuestion: ${kbQuery}\nAnswer based only on context.`;
+                try {
+                    kbAnswer = await callAITask(kbPrompt, kbQuery);
+                } catch (e: any) {
+                    console.error("[BOT ENGINE] KB answer generation failed:", e.message);
+                }
             }
-            if (!answer) return { nextNodeId: action.elsePath };
-            return { newAttributes: { [action.assignTo ?? "kb_reply"]: answer }, nextNodeId: action.truePath };
+            if (!kbAnswer) return { nextNodeId: action.elsePath };
+            return { newAttributes: { [action.assignTo ?? "kb_reply"]: kbAnswer }, nextNodeId: action.truePath };
+        }
 
         case "web_request":
             const url = interpolate(action.url, attributes);
@@ -153,6 +169,68 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
         case "clear_transcript":
             return { newAttributes: {}, clearAttributes: true };
+
+        case "ai_assistant": {
+            const assistantPrompt = interpolate(action.systemPrompt || "", attributes);
+            const maxTurns = action.maxTurns || 3;
+
+            try {
+                // Fetch conversation history from messages table
+                const msgHistory = await ctx.runQuery(internal.messages.listPublic, {
+                    conversationId,
+                });
+
+                // Build chat history for the LLM
+                const chatHistory: ChatMessage[] = (msgHistory || []).map((m: any) => ({
+                    role: m.senderType === "visitor" ? "user" as const : "assistant" as const,
+                    content: m.content || "",
+                }));
+
+                // Multi-turn loop: the LLM can reason across multiple turns
+                let lastReply = "";
+                for (let turn = 0; turn < maxTurns; turn++) {
+                    const reply = await callAIAssistant(assistantPrompt, chatHistory, action.model);
+                    if (!reply) break;
+
+                    lastReply = reply;
+
+                    // Send the reply as a bot message
+                    await ctx.runMutation(internal.bot.createBotMessage, {
+                        conversationId,
+                        content: reply,
+                    });
+
+                    // If it's the last allowed turn, break
+                    if (turn >= maxTurns - 1) break;
+
+                    // Check if the assistant signals completion (ends with a question = keep going)
+                    const endsWithQuestion = reply.trim().endsWith("?");
+                    if (!endsWithQuestion) break;
+
+                    // Add the assistant reply to history for the next turn
+                    chatHistory.push({ role: "assistant", content: reply });
+
+                    // Suspend and wait for user reply before next turn
+                    // Save state and return — the next user message will re-enter the engine
+                    return {
+                        newAttributes: { [action.assignTo ?? "assistant_reply"]: lastReply },
+                        suspend: true,
+                    };
+                }
+
+                // Assistant finished — route to success path
+                return {
+                    newAttributes: { [action.assignTo ?? "assistant_reply"]: lastReply },
+                    nextNodeId: action.successPath,
+                };
+            } catch (e: any) {
+                console.error("[BOT ENGINE] AI Assistant failed:", e.message);
+                return {
+                    newAttributes: { ai_error: e.message },
+                    nextNodeId: action.failurePath,
+                };
+            }
+        }
 
         default:
             console.warn("Unknown bot action type: ", action._type);
@@ -502,7 +580,3 @@ function tryParseJSON(str: string) {
     }
 }
 
-async function callLLMPlaceholder(prompt: string) {
-    // Mock
-    return JSON.stringify({ ai_reply: "I am a bot response" });
-}

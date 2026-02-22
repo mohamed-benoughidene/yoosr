@@ -8,6 +8,8 @@ import {
 import { ConversationList } from "@/components/chat/ConversationList"
 import { ChatArea } from "@/components/chat/ChatArea"
 import { ContactInfo } from "@/components/chat/ContactInfo"
+import { Suspense } from "react"
+import { Loader2 } from "lucide-react"
 
 export default function ChatLayout({
     children,
@@ -18,7 +20,13 @@ export default function ChatLayout({
         <div className="h-[calc(100vh-64px)] w-full border rounded-lg bg-background">
             <ResizablePanelGroup direction="horizontal">
                 <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                    <ConversationList />
+                    <Suspense fallback={
+                        <div className="flex h-full items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    }>
+                        <ConversationList />
+                    </Suspense>
                 </ResizablePanel>
 
                 <ResizableHandle />
@@ -30,7 +38,13 @@ export default function ChatLayout({
                 <ResizableHandle />
 
                 <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                    <ContactInfo />
+                    <Suspense fallback={
+                        <div className="flex h-full items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    }>
+                        <ContactInfo />
+                    </Suspense>
                 </ResizablePanel>
             </ResizablePanelGroup>
         </div>

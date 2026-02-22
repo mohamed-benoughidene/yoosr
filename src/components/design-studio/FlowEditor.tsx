@@ -37,6 +37,7 @@ import { ReplaceBotNode } from "./nodes/ReplaceBotNode";
 import { ChangeDepartmentNode } from "./nodes/ChangeDepartmentNode";
 import { CodeActionNode } from "./nodes/CodeActionNode";
 import { ClearTranscriptNode } from "./nodes/ClearTranscriptNode";
+import { AIAssistantNode } from "./nodes/AIAssistantNode";
 import { BlockPalette } from "./BlockPalette";
 import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
@@ -58,6 +59,7 @@ const nodeTypes: NodeTypes = {
     change_department: ChangeDepartmentNode,
     code_action: CodeActionNode,
     clear_transcript: ClearTranscriptNode,
+    ai_assistant: AIAssistantNode,
 };
 
 const defaultStartNode: Node = {

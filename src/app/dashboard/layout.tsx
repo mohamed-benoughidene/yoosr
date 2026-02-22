@@ -10,12 +10,9 @@ import { Loader2 } from "lucide-react"
 import { Id } from "../../../convex/_generated/dataModel"
 import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
+import { Suspense } from "react"
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+function ProjectSync() {
     const { activeProject, selectProject, isLoading } = useProject()
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -42,6 +39,16 @@ export default function DashboardLayout({
         }
     }, [projectId, activeProject, isLoading, selectProject, router, ensureProfile])
 
+    return null
+}
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
+    const { isLoading } = useProject()
+
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -50,12 +57,11 @@ export default function DashboardLayout({
         )
     }
 
-    if (!activeProject && !projectId) {
-        return null // Will redirect
-    }
-
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <Suspense fallback={null}>
+                <ProjectSync />
+            </Suspense>
             <NotificationManager />
             <DashboardSidebar />
             <div className="flex flex-col">

@@ -14,6 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
 import { useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 
 interface NodePropertiesPanelProps {
     node: Node | null;
@@ -28,6 +32,10 @@ export function NodePropertiesPanel({
     onClose,
     onDeleteNode,
 }: NodePropertiesPanelProps) {
+    const searchParams = useSearchParams();
+    const projectId = searchParams.get("project") as Id<"projects"> | null;
+    const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
+
     if (!node) return null;
 
     const data = node.data as Record<string, any>;
@@ -295,12 +303,33 @@ export function NodePropertiesPanel({
                 {node.type === "aiTask" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Prompt</Label>
+                            <Label className="text-xs">System Prompt</Label>
                             <Textarea
-                                value={data.prompt || ""}
-                                onChange={(e) => update("prompt", e.target.value)}
+                                value={data.prompt || data.systemPrompt || ""}
+                                onChange={(e) => {
+                                    update("prompt", e.target.value);
+                                    update("systemPrompt", e.target.value);
+                                }}
                                 className="min-h-[100px] text-sm resize-none"
-                                placeholder="Enter LLM prompt... Use {{variable}} for context"
+                                placeholder="Enter system prompt... Use {{variable}} for context"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">User Input Variable</Label>
+                            <Input
+                                value={data.userInput || ""}
+                                onChange={(e) => update("userInput", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="{{lastUserText}}"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Model</Label>
+                            <Input
+                                value={data.model || ""}
+                                onChange={(e) => update("model", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="mistralai/mistral-7b-instruct"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -313,9 +342,61 @@ export function NodePropertiesPanel({
                                     update("outputVariable", e.target.value)
                                 }
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., ai_response"
+                                placeholder="e.g., gpt_reply"
                             />
                         </div>
+                        <p className="text-[10px] text-muted-foreground">
+                            If the LLM returns valid JSON, keys are auto-mapped to context attributes.
+                        </p>
+                    </>
+                )}
+
+                {/* AI Assistant Node */}
+                {node.type === "ai_assistant" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">System Prompt</Label>
+                            <Textarea
+                                value={data.systemPrompt || ""}
+                                onChange={(e) => update("systemPrompt", e.target.value)}
+                                className="min-h-[120px] text-sm resize-none"
+                                placeholder="Define your AI assistant persona and guardrails..."
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Model</Label>
+                            <Input
+                                value={data.model || ""}
+                                onChange={(e) => update("model", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="meta-llama/llama-3.1-8b-instruct"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Max Turns</Label>
+                            <Input
+                                type="number"
+                                value={data.maxTurns || 3}
+                                onChange={(e) => update("maxTurns", parseInt(e.target.value) || 3)}
+                                className="h-8 text-sm"
+                                min={1}
+                                max={10}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">
+                                Save final reply to variable
+                            </Label>
+                            <Input
+                                value={data.assignTo || ""}
+                                onChange={(e) => update("assignTo", e.target.value)}
+                                className="h-8 text-sm font-mono"
+                                placeholder="e.g., assistant_reply"
+                            />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                            Suspends flow and gives full control to the LLM for multi-turn reasoning.
+                        </p>
                     </>
                 )}
 
@@ -385,13 +466,28 @@ export function NodePropertiesPanel({
                 {/* Change Dept Node */}
                 {node.type === "change_department" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Department ID</Label>
-                        <Input
+                        <Label className="text-xs">Department</Label>
+                        <Select
                             value={data.departmentId || ""}
-                            onChange={(e) => update("departmentId", e.target.value)}
-                            className="h-8 text-sm font-mono"
-                            placeholder="e.g. js9f8a7s98f7a9s8f7"
-                        />
+                            onValueChange={(val) => update("departmentId", val)}
+                        >
+                            <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.length === 0 ? (
+                                    <SelectItem value="none" disabled>
+                                        No departments found
+                                    </SelectItem>
+                                ) : (
+                                    departments.map((dept: any) => (
+                                        <SelectItem key={dept._id} value={dept._id}>
+                                            {dept.name}
+                                        </SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
                     </div>
                 )}
 

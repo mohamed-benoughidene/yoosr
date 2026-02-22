@@ -10,10 +10,11 @@ import { FlowEditor } from "@/components/design-studio/FlowEditor";
 import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 import { Loader2 } from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
+import { Suspense } from "react";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function BotEditorPage() {
+function BotEditor() {
     const params = useParams();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -170,5 +171,17 @@ export default function BotEditorPage() {
                 </ReactFlowProvider>
             </div>
         </div>
+    );
+}
+
+export default function BotEditorPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <BotEditor />
+        </Suspense>
     );
 }

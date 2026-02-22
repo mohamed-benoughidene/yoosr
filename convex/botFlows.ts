@@ -71,13 +71,35 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                     });
                 }
                 break;
-            case "aiTask":
+            case "aiTask": {
+                const successEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target;
+                const failureEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
                 actions.push({
                     _type: "chatgpt_task",
-                    prompt: data.prompt || "",
-                    assignTo: data.outputVariable || "gpt_reply"
+                    prompt: data.prompt || data.systemPrompt || "",
+                    systemPrompt: data.systemPrompt || data.prompt || "",
+                    userInput: data.userInput || "{{lastUserText}}",
+                    model: data.model || "",
+                    assignTo: data.outputVariable || "gpt_reply",
+                    successPath: successEdge,
+                    failurePath: failureEdge,
                 });
                 break;
+            }
+            case "ai_assistant": {
+                const aiSuccessEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target;
+                const aiFailureEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
+                actions.push({
+                    _type: "ai_assistant",
+                    systemPrompt: data.systemPrompt || "",
+                    model: data.model || "",
+                    maxTurns: data.maxTurns || 3,
+                    assignTo: data.assignTo || "assistant_reply",
+                    successPath: aiSuccessEdge,
+                    failurePath: aiFailureEdge,
+                });
+                break;
+            }
             case "hitlHandoff":
                 actions.push({ _type: "reply", text: data.handoffMessage || "Transferring you to an agent..." });
                 actions.push({ _type: "hitl_handoff" });

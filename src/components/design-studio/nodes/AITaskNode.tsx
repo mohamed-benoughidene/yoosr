@@ -8,9 +8,9 @@ export function AITaskNode({ data, selected }: NodeProps) {
 
     return (
         <div
-            className={`group relative min-w-[200px] max-w-[260px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected
-                    ? "border-pink-500 shadow-md shadow-pink-500/10"
-                    : "border-border hover:border-pink-500/50 hover:shadow-md"
+            className={`group relative min-w-[220px] max-w-[260px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected
+                ? "border-pink-500 shadow-md shadow-pink-500/10"
+                : "border-border hover:border-pink-500/50 hover:shadow-md"
                 }`}
         >
             <Handle
@@ -28,23 +28,27 @@ export function AITaskNode({ data, selected }: NodeProps) {
                 </span>
             </div>
 
-            <div className="px-4 py-3">
-                {nodeData.prompt ? (
-                    <p className="text-xs text-muted-foreground line-clamp-3">
-                        {nodeData.prompt}
+            <div className="px-4 py-2 space-y-0.5">
+                {nodeData.prompt || nodeData.systemPrompt ? (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                        {nodeData.prompt || nodeData.systemPrompt}
                     </p>
                 ) : (
                     <p className="text-xs italic text-muted-foreground/50">
                         Click to add prompt...
                     </p>
                 )}
+                <p className="text-[10px] text-muted-foreground truncate opacity-70">
+                    {nodeData.model || "mistralai/mistral-7b-instruct"}
+                </p>
             </div>
 
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                className="!h-3 !w-3 !rounded-full !border-2 !border-pink-500 !bg-background transition-colors group-hover:!bg-pink-500"
-            />
+            <div className="flex justify-between px-4 py-3 text-[10px] uppercase font-bold text-muted-foreground border-t">
+                <span>Success</span>
+                <span>Failure</span>
+            </div>
+            <Handle id="true" type="source" position={Position.Bottom} style={{ left: "25%" }} className="!h-3 !w-3 !rounded-full !border-2 !border-green-500 !bg-background" />
+            <Handle id="false" type="source" position={Position.Bottom} style={{ left: "75%" }} className="!h-3 !w-3 !rounded-full !border-2 !border-red-500 !bg-background" />
         </div>
     );
 }

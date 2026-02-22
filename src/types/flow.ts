@@ -44,8 +44,19 @@ export interface WebRequestNodeData {
 export interface AITaskNodeData {
     label: string;
     prompt: string;
+    systemPrompt?: string;
+    userInput?: string;
     model?: string;
     outputVariable?: string;
+    [key: string]: unknown;
+}
+
+export interface AIAssistantNodeData {
+    label: string;
+    systemPrompt: string;
+    model?: string;
+    maxTurns?: number;
+    assignTo?: string;
     [key: string]: unknown;
 }
 
@@ -78,6 +89,7 @@ export type FlowNodeData =
     | SetAttributeNodeData
     | WebRequestNodeData
     | AITaskNodeData
+    | AIAssistantNodeData
     | ConditionNodeData
     | HITLHandoffNodeData
     | CloseNodeData;
@@ -152,7 +164,15 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Execute an LLM prompt",
         icon: "Sparkles",
         color: "text-pink-500",
-        defaultData: { label: "AI Task", prompt: "" },
+        defaultData: { label: "AI Task", prompt: "", systemPrompt: "", model: "", outputVariable: "gpt_reply" },
+    },
+    {
+        type: "ai_assistant",
+        label: "AI Assistant",
+        description: "Autonomous multi-turn LLM",
+        icon: "Bot",
+        color: "text-fuchsia-500",
+        defaultData: { label: "AI Assistant", systemPrompt: "", model: "", maxTurns: 3, assignTo: "assistant_reply" },
     },
     {
         type: "hitlHandoff",
