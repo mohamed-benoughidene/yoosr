@@ -249,6 +249,18 @@ export function FlowEditor({
         [getNodes, edges, notifyChange]
     );
 
+    const onEdgeDoubleClick = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.stopPropagation();
+            setEdges((eds) => {
+                const newEdges = eds.filter((e) => e.id !== edge.id);
+                notifyChange(getNodes(), newEdges);
+                return newEdges;
+            });
+        },
+        [setEdges, notifyChange, getNodes]
+    );
+
     return (
         <div className="flex h-full w-full">
             <BlockPalette onAddNode={handleAddNode} />
@@ -263,6 +275,7 @@ export function FlowEditor({
                     onNodeClick={onNodeClick}
                     onPaneClick={onPaneClick}
                     onNodeDragStop={handleNodeDragStop}
+                    onEdgeDoubleClick={onEdgeDoubleClick}
                     onEdgesDelete={handleEdgesDelete}
                     onNodesDelete={handleNodesDelete}
                     nodeTypes={nodeTypes}
