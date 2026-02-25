@@ -208,6 +208,7 @@ http.route({
             });
         }
 
+        // Update conversation record (legacy)
         await ctx.runMutation(internal.conversations.rate, {
             id: id as any,
             rating,

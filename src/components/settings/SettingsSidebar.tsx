@@ -14,6 +14,7 @@ import {
     Clock,
     Plug,
     ShoppingBag,
+    Webhook,
 } from "lucide-react"
 
 const sidebarNavItems = [
@@ -51,6 +52,11 @@ const sidebarNavItems = [
         title: "Operating Hours",
         href: "/dashboard/settings/operating-hours",
         icon: Clock
+    },
+    {
+        title: "Webhooks",
+        href: "/dashboard/settings/webhooks",
+        icon: Webhook
     },
     {
         title: "Integrations",

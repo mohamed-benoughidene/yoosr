@@ -684,4 +684,37 @@ Store each bot's flow as a JSON document in a `botFlows` table. The execution en
 
 ---
 
+## 11. Monitoring & Telemetry
+
+This section translates the legacy Tiledesk monitoring and telemetry architecture into our **Next.js / Convex / Clerk** stack (as defined in `AGENT.md`). The telemetry features provide developers and business users with real-time insight into performance, consumption, and knowledge gaps.
+
+### 1. Usage Tracking (Quotas & Tokens)
+**Purpose:** Audit monthly AI tokens and conversations against tier limits.
+- **Data Model:** A `usage` (or `quotas`) Convex table filtering by `orgId`. It tracks `tokensConsumed` and `conversationsCount` for the current billing cycle.
+- **Backend Implementation:** Run internal Convex mutations updating the tracking document whenever a `botFlow` action invokes the LLM API (Anthropic), or when `message.create` happens.
+- **UI Application:** A Shadcn UI dropdown or modal widget accessible from the top-right Next.js dashboard header. It uses `useQuery` to show progress bars in real time without refreshing.
+
+### 2. Embedded Real-time Debugger
+**Purpose:** Tracing execution flows and diagnosing errors directly in the visual builder.
+- **Data Model:** As the `botFlows` design executes, an execution trace log is pushed to the Conversation's `attributes.executionLog`.
+- **Backend Implementation:** The Convex execution engine updates the pointer for the `currentNode` and broadcasts updates via reactive queries as LLM/tool-calling steps resolve sequentially.
+- **UI Application:** The Design Studio page (Next.js client wrapper around a flow chart library like React Flow) subscribes to the active debug conversation using Convex `useQuery`. It dynamically animates/illuminates graph nodes in a live split-screen editor environment while the test widget is running.
+
+### 3. Unanswered Questions Repository
+**Purpose:** Discover content gaps by tracking queries that the agent's hybrid search vector engine failed to resolve.
+- **Data Model:** An `unansweredQuestions` DB table, filtering by `orgId` and storing the raw user string, timestamp, and status (e.g., `pending_review`).
+- **Backend Implementation:** When the "Ask Knowledge Base" block returns zero confidence hits from the Qdrant hybrid search (RAG engine), a Convex mutation automatically logs the text input to this structure.
+- **UI Application:** A table view located within the Knowledge Base section of the Next.js dashboard. Authorized agents monitor failed phrases and quickly draft and upload new FAQs to close the gaps.
+
+### 4. LLM Tags Analytics (Generative Categorization)
+**Purpose:** Understand qualitative conversation trends automatically using Generative AI metadata.
+- **Backend Implementation:** On `conversation.close` (`status === 1000`), immediately schedule an internal Convex action fetching the full conversation transcript from the `messages` table. Using the Anthropic API (Claude), extract relevant tags/categories based on context and store them in the conversation object's `tags: string[]` field.
+- **UI Application:** An Analytics page in the Next.js app rendering Recharts visuals and tag clouds representing sorted conversational metadata properties over time.
+
+### 5. RestHooks Webhook / Notifications API
+**Purpose:** Broadcasting monitoring events asynchronously to external CRMs, external servers, or notification APIs.
+- **Backend Implementation:** Leverage Convex `fetch` capabilities within actions. Triggered upon state changes evaluated in mutation bodies (for example: upon `message.create` or upon transitioning a request to closure), sending POST requests containing standardized JSON payloads targeting custom RestHook URL endpoints registered by that `orgId`.
+
+---
+
 *This reference was compiled from the full Tiledesk codebase and documentation. All architecture decisions, data models, and API contracts above should be treated as the ground truth for this rebuild.*

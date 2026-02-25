@@ -1,62 +1,95 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
 export type ActivityLog = {
-    id: string;
-    created_at: string;
-    user_id: string | null;
-    action_type: string;
-    description: string;
-    metadata: any;
-    // We might need to join with profiles to get user details, 
-    // but for now let's assume we fetch basic user info or just show ID/System
-    user_email?: string;
+    _id: string;
+    actorName?: string;
+    action?: string;
+    actionType: string;
+    targetType?: string;
+    targetId?: string;
+    createdAt?: number;
+    _creationTime: number;
+};
+
+const ACTION_LABELS: Record<string, string> = {
+    teammate_invited: "Invited teammate",
+    teammate_removed: "Removed teammate",
+    teammate_accepted: "Accepted invitation",
+    teammate_rejected: "Declined invitation",
+    role_changed: "Changed role",
+    status_changed: "Changed status",
+    operating_hours_updated: "Updated operating hours",
+    bot_created: "Created bot",
+    bot_updated: "Updated bot",
+    department_updated: "Updated department",
+    other: "Other action",
+};
+
+const TARGET_COLORS: Record<string, "default" | "secondary" | "outline"> = {
+    teammate: "default",
+    department: "secondary",
+    bot: "outline",
 };
 
 export const columns: ColumnDef<ActivityLog>[] = [
     {
-        accessorKey: "created_at",
+        accessorKey: "createdAt",
         header: "Date",
         cell: ({ row }) => {
-            return <div className="text-sm text-muted-foreground whitespace-nowrap">
-                {format(new Date(row.getValue("created_at")), "MMM d, yyyy HH:mm")}
-            </div>
+            const ts = row.original.createdAt ?? row.original._creationTime;
+            return (
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-sm">{new Date(ts).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(ts), { addSuffix: true })}
+                    </span>
+                </div>
+            );
         },
     },
     {
-        accessorKey: "user_email", // or user_id if email not available yet
+        accessorKey: "actorName",
         header: "Actor",
-        cell: ({ row }) => {
-            const email = row.original.user_email || "System/Unknown";
-            const initial = email[0]?.toUpperCase() || "?";
-            return (
-                <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">{initial}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{email}</span>
-                </div>
-            )
-        }
+        cell: ({ row }) => (
+            <span className="text-sm font-medium">
+                {row.original.actorName ?? "System"}
+            </span>
+        ),
     },
     {
-        accessorKey: "action_type",
+        accessorKey: "action",
         header: "Action",
         cell: ({ row }) => {
-            const action = row.getValue("action_type") as string;
+            const key = row.original.action ?? row.original.actionType;
             return (
-                <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                    {action.replace(/_/g, " ").toUpperCase()}
-                </div>
-            )
-        }
+                <span className="text-sm">
+                    {ACTION_LABELS[key] ?? key}
+                </span>
+            );
+        },
     },
     {
-        accessorKey: "description",
-        header: "Description",
-        cell: ({ row }) => <div className="text-sm max-w-[500px] truncate" title={row.getValue("description")}>{row.getValue("description")}</div>,
+        accessorKey: "targetType",
+        header: "Target",
+        cell: ({ row }) => {
+            const { targetType, targetId } = row.original;
+            if (!targetType) return <span className="text-muted-foreground text-sm">—</span>;
+            return (
+                <div className="flex items-center gap-2">
+                    <Badge variant={TARGET_COLORS[targetType] ?? "secondary"}>
+                        {targetType}
+                    </Badge>
+                    {targetId && (
+                        <span className="text-xs text-muted-foreground truncate max-w-32" title={targetId}>
+                            {targetId}
+                        </span>
+                    )}
+                </div>
+            );
+        },
     },
 ];

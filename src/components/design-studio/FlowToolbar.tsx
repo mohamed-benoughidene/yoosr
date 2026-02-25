@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Save, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -8,9 +8,11 @@ interface FlowToolbarProps {
     botName: string;
     saveState: "idle" | "saving" | "saved" | "error";
     onSave: () => void;
+    isDebuggerOpen?: boolean;
+    onToggleDebugger?: () => void;
 }
 
-export function FlowToolbar({ botName, saveState, onSave }: FlowToolbarProps) {
+export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger }: FlowToolbarProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project");
@@ -61,6 +63,17 @@ export function FlowToolbar({ botName, saveState, onSave }: FlowToolbarProps) {
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                     Save
                 </Button>
+                {onToggleDebugger && (
+                    <Button
+                        size="sm"
+                        variant={isDebuggerOpen ? "secondary" : "outline"}
+                        onClick={onToggleDebugger}
+                        className="ml-2 gap-1.5"
+                    >
+                        <Terminal className="h-4 w-4" />
+                        Debugger
+                    </Button>
+                )}
             </div>
         </div>
     );

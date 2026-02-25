@@ -52,12 +52,22 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const systemPrompt = interpolate(action.prompt || action.systemPrompt || "", attributes);
             const userInput = interpolate(action.userInput || "{{lastUserText}}", attributes);
             try {
-                const llmResponse = await callAITask(systemPrompt, userInput, action.model);
-                const parsed = tryParseJSON(llmResponse);
+                const llmResult = await callAITask(systemPrompt, userInput, action.model);
+                // Log token usage
+                const _aiTaskConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
+                if (_aiTaskConv) {
+                    await ctx.runMutation(internal.analytics.logTokenUsage, {
+                        projectId: _aiTaskConv.projectId,
+                        model: llmResult.model,
+                        tokensUsed: llmResult.tokensUsed,
+                        operation: "ai_task",
+                    });
+                }
+                const parsed = tryParseJSON(llmResult.text);
                 return {
                     newAttributes: parsed
-                        ? { ...parsed, [action.assignTo ?? "gpt_reply"]: llmResponse }
-                        : { [action.assignTo ?? "gpt_reply"]: llmResponse }
+                        ? { ...parsed, [action.assignTo ?? "gpt_reply"]: llmResult.text }
+                        : { [action.assignTo ?? "gpt_reply"]: llmResult.text }
                 };
             } catch (e: any) {
                 console.error("[BOT ENGINE] AI Task failed:", e.message);
@@ -81,9 +91,27 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 const contextStr = kbResult.map((r: any) => r.text).join("\n");
                 const kbPrompt = `Context:\n${contextStr}\n\nQuestion: ${kbQuery}\nAnswer based only on context.`;
                 try {
-                    kbAnswer = await callAITask(kbPrompt, kbQuery);
+                    const kbLlmResult = await callAITask(kbPrompt, kbQuery);
+                    kbAnswer = kbLlmResult.text;
+                    // Log token usage
+                    if (kbConversation) {
+                        await ctx.runMutation(internal.analytics.logTokenUsage, {
+                            projectId: kbConversation.projectId,
+                            model: kbLlmResult.model,
+                            tokensUsed: kbLlmResult.tokensUsed,
+                            operation: "ask_kb",
+                        });
+                    }
                 } catch (e: any) {
                     console.error("[BOT ENGINE] KB answer generation failed:", e.message);
+                }
+            } else {
+                // No KB results — log unanswered query
+                if (kbConversation) {
+                    await ctx.runMutation(internal.analytics.logUnansweredQuery, {
+                        projectId: kbConversation.projectId,
+                        query: kbQuery,
+                    });
                 }
             }
             if (!kbAnswer) return { nextNodeId: action.elsePath };
@@ -186,32 +214,44 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                     content: m.content || "",
                 }));
 
+                // Fetch project ID for token logging
+                const assistantConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
+
                 // Multi-turn loop: the LLM can reason across multiple turns
                 let lastReply = "";
                 for (let turn = 0; turn < maxTurns; turn++) {
-                    const reply = await callAIAssistant(assistantPrompt, chatHistory, action.model);
-                    if (!reply) break;
+                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model);
+                    if (!llmResult.text) break;
 
-                    lastReply = reply;
+                    lastReply = llmResult.text;
+
+                    // Log token usage
+                    if (assistantConv) {
+                        await ctx.runMutation(internal.analytics.logTokenUsage, {
+                            projectId: assistantConv.projectId,
+                            model: llmResult.model,
+                            tokensUsed: llmResult.tokensUsed,
+                            operation: "ai_assistant",
+                        });
+                    }
 
                     // Send the reply as a bot message
                     await ctx.runMutation(internal.bot.createBotMessage, {
                         conversationId,
-                        content: reply,
+                        content: llmResult.text,
                     });
 
                     // If it's the last allowed turn, break
                     if (turn >= maxTurns - 1) break;
 
                     // Check if the assistant signals completion (ends with a question = keep going)
-                    const endsWithQuestion = reply.trim().endsWith("?");
+                    const endsWithQuestion = llmResult.text.trim().endsWith("?");
                     if (!endsWithQuestion) break;
 
                     // Add the assistant reply to history for the next turn
-                    chatHistory.push({ role: "assistant", content: reply });
+                    chatHistory.push({ role: "assistant", content: llmResult.text });
 
                     // Suspend and wait for user reply before next turn
-                    // Save state and return — the next user message will re-enter the engine
                     return {
                         newAttributes: { [action.assignTo ?? "assistant_reply"]: lastReply },
                         suspend: true,
@@ -251,10 +291,18 @@ export const executeNextBlock = internalAction({
             console.log(`[BOT ENGINE] Convo ${args.conversationId} not found`);
             return;
         }
+
+        // HITL Guard: if the conversation was handed off to a human, stop all bot processing.
+        if (conversation.botPaused === true) {
+            console.log(`[BOT ENGINE] Convo ${args.conversationId} is paused for human handoff. Skipping bot execution.`);
+            return;
+        }
+
         if (!conversation.botId) {
             console.log(`[BOT ENGINE] Convo ${args.conversationId} has no assigned botId`);
             return;
         }
+
 
         // 2. Fetch bot flow
         console.log(`[BOT ENGINE] Fetching flow for botId: ${conversation.botId}`);
@@ -348,6 +396,12 @@ export const executeNextBlock = internalAction({
             currentNodeId: updatedNodeId,
             attributes,
             botId: newBotId,
+            executionTrace: {
+                nodeId: currentNode._id || currentNode.id,
+                type: currentNode.name || "node",
+                action: actions.map((a: any) => a._type).join(",") || "continue",
+                timestamp: Date.now(),
+            },
         });
 
         // 6. Continue traversal if next node does not require user input
@@ -410,17 +464,33 @@ export const updateConversationState = internalMutation({
         currentNodeId: v.optional(v.union(v.string(), v.null())),
         attributes: v.any(),
         botId: v.optional(v.union(v.string(), v.id("bots"), v.null())),
+        executionTrace: v.optional(v.object({
+            nodeId: v.string(),
+            type: v.string(),
+            action: v.string(),
+            timestamp: v.number(),
+        })),
     },
     handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) return;
+
         const patch: any = {
             attributes: args.attributes,
         };
         if (args.currentNodeId !== undefined) patch.currentNodeId = args.currentNodeId;
         if (args.botId) patch.botId = args.botId;
 
+        // Append execution trace for the real-time debugger panel
+        if (args.executionTrace) {
+            const currentLog = conversation.executionLog || [];
+            patch.executionLog = [...currentLog, args.executionTrace].slice(-50);
+        }
+
         await ctx.db.patch(args.id, patch);
     }
 });
+
 
 export const createBotMessage = internalMutation({
     args: {
@@ -444,12 +514,17 @@ export const createBotMessage = internalMutation({
 export const assignToHuman = internalMutation({
     args: { conversationId: v.id("conversations"), deptId: v.optional(v.string()) },
     handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) return;
+
         await ctx.db.patch(args.conversationId, {
-            status: 100, // Back to unassigned pool
-            botId: undefined, // Clear bot ID to suspend bot execution
+            status: 100,            // Back to unassigned pool
+            botId: undefined,       // Detach bot so it won't be re-triggered
+            botPaused: true,        // Hard-stop guard — even if botId leaks back
+            handoffSource: "bot",   // Agent UI badge: this came from a bot escalation
+            currentNodeId: null,    // Clear node pointer
+            assignedTo: undefined,  // Ensure no stale agent assignment
         });
-        // We'll call routing action to find an agent if deptId is provided.
-        // If not, it just stays unassigned to be manually picked up.
     }
 });
 

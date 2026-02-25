@@ -57,14 +57,29 @@ export const updateConversationAttributes = internalMutation({
     args: {
         conversationId: v.id("conversations"),
         attributes: v.any(),
+        executionTrace: v.optional(v.object({
+            nodeId: v.string(),
+            type: v.string(),
+            action: v.string(),
+            timestamp: v.number()
+        })),
     },
     handler: async (ctx, args) => {
-        // We use the conversation's existing fields + extend via the schema's
-        // flexible approach. For now, store bot state in a attributes field.
-        await ctx.db.patch(args.conversationId, {
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) return;
+
+        const updates: any = {
             attributes: args.attributes,
             updatedAt: Date.now(),
-        });
+        };
+
+        if (args.executionTrace) {
+            const currentLog = conversation.executionLog || [];
+            // Limit log size to last 50 actions to prevent document from growing infinitely
+            updates.executionLog = [...currentLog, args.executionTrace].slice(-50);
+        }
+
+        await ctx.db.patch(args.conversationId, updates);
     },
 });
 
@@ -303,9 +318,16 @@ export const executeStep = internalAction({
         }
 
         // 4. Update conversation attributes with the new pointer state
+        const actionStr = currentNode.type === "hitlHandoff" ? "hitl_handoff" : currentNode.type === "close" ? "close_conversation" : "continue";
         await ctx.runMutation(internal.botEngine.updateConversationAttributes, {
             conversationId: args.conversationId,
             attributes: { ...context, currentNode: nextNodeId },
+            executionTrace: {
+                nodeId: currentNode.id,
+                type: currentNode.type,
+                action: actionStr,
+                timestamp: Date.now()
+            }
         });
 
         // 5. Handle special fallback states (like HITL Handoff)

@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 // ========================
@@ -29,7 +30,17 @@ export const createDepartment = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
-        return await ctx.db.insert("departments", args);
+        const id = await ctx.db.insert("departments", args);
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "department_updated",
+            targetType: "department",
+            targetId: id,
+            metadata: { name: args.name, change: "created" },
+        });
+        return id;
     },
 });
 
@@ -206,15 +217,27 @@ export const upsertOperatingHours = mutation({
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .first();
 
+        let resultId;
         if (existing) {
             await ctx.db.patch(existing._id, {
                 enabled: args.enabled,
                 timezone: args.timezone,
                 schedule: args.schedule,
             });
-            return existing._id;
+            resultId = existing._id;
         } else {
-            return await ctx.db.insert("operating_hours", args);
+            resultId = await ctx.db.insert("operating_hours", args);
         }
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "operating_hours_updated",
+            targetType: "department",
+            metadata: { enabled: args.enabled, timezone: args.timezone },
+        });
+
+        return resultId;
     },
 });

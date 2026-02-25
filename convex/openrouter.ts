@@ -24,50 +24,66 @@ export interface ChatMessage {
     content: string;
 }
 
+export interface LLMResult {
+    text: string;
+    tokensUsed: number;
+    model: string;
+}
+
 /**
  * Single-shot LLM call for AI Task blocks.
- * Returns the raw assistant reply text.
+ * Returns the raw assistant reply text + token usage.
  */
 export async function callAITask(
     systemPrompt: string,
     userMessage: string,
     model?: string
-): Promise<string> {
+): Promise<LLMResult> {
     const client = getClient();
+    const resolvedModel = model || DEFAULT_AI_TASK_MODEL;
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
     ];
 
     const response = await client.chat.completions.create({
-        model: model || DEFAULT_AI_TASK_MODEL,
+        model: resolvedModel,
         messages,
         temperature: 0.3,
     });
 
-    return response.choices?.[0]?.message?.content?.trim() ?? "";
+    return {
+        text: response.choices?.[0]?.message?.content?.trim() ?? "",
+        tokensUsed: response.usage?.total_tokens ?? 0,
+        model: resolvedModel,
+    };
 }
 
 /**
  * Multi-turn LLM call for AI Assistant blocks.
- * Sends full conversation history and returns the assistant reply.
+ * Sends full conversation history and returns the assistant reply + token usage.
  */
 export async function callAIAssistant(
     systemPrompt: string,
     conversationHistory: ChatMessage[],
     model?: string
-): Promise<string> {
+): Promise<LLMResult> {
     const client = getClient();
+    const resolvedModel = model || DEFAULT_AI_ASSISTANT_MODEL;
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         ...conversationHistory,
     ];
 
     const response = await client.chat.completions.create({
-        model: model || DEFAULT_AI_ASSISTANT_MODEL,
+        model: resolvedModel,
         messages,
         temperature: 0.7,
     });
 
-    return response.choices?.[0]?.message?.content?.trim() ?? "";
+    return {
+        text: response.choices?.[0]?.message?.content?.trim() ?? "",
+        tokensUsed: response.usage?.total_tokens ?? 0,
+        model: resolvedModel,
+    };
 }

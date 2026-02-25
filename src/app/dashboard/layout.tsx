@@ -3,6 +3,7 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { NotificationManager } from "@/components/chat/NotificationManager"
+import { InvitationBanner } from "@/components/dashboard/InvitationBanner"
 import { useProject } from "@/context/ProjectContext"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -66,6 +67,7 @@ export default function DashboardLayout({
             <DashboardSidebar />
             <div className="flex flex-col">
                 <DashboardHeader />
+                <InvitationBanner />
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {children}
                 </main>

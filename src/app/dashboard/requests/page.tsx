@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, User, UserCheck, Loader2, CheckCircle } from "lucide-react"
+import { Bot, Search, User, UserCheck, Loader2, CheckCircle } from "lucide-react"
 import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { formatDistanceToNow } from "date-fns"
@@ -22,7 +22,7 @@ import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Id } from "../../../../convex/_generated/dataModel"
 
-type RequestFilter = "unassigned" | "mine"
+type RequestFilter = "unassigned" | "mine" | "bot_escalated"
 
 export default function RequestsPage() {
     const { activeProject } = useProject()
@@ -48,19 +48,30 @@ export default function RequestsPage() {
         // Exclude resolved/closed conversations
         if (req.status === 1000) return false
 
+        if (filter === "bot_escalated") return (req as any).handoffSource === "bot"
         if (filter === "unassigned") return !req.assignedTo
         if (filter === "mine" && user) return req.assignedTo === user.id
         return true
     })
 
-    const filteredRequests = requests.filter(
-        (req) =>
-            req.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
-            req.lastMessage?.toLowerCase().includes(search.toLowerCase())
-    )
+    // Sort: Bot-escalated surfaced first within any view
+    const filteredRequests = requests
+        .slice()
+        .sort((a, b) => {
+            const aEsc = (a as any).handoffSource === "bot" ? 0 : 1
+            const bEsc = (b as any).handoffSource === "bot" ? 0 : 1
+            if (aEsc !== bEsc) return aEsc - bEsc
+            return 0
+        })
+        .filter(
+            (req) =>
+                req.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
+                req.lastMessage?.toLowerCase().includes(search.toLowerCase())
+        )
 
     const unassignedCount = allConversations.filter((c) => !c.assignedTo && c.status !== 1000).length
     const myCount = allConversations.filter((c) => c.assignedTo === user?.id && c.status !== 1000).length
+    const botEscalatedCount = allConversations.filter((c) => (c as any).handoffSource === "bot" && c.status !== 1000).length
 
     const handleAssignToMe = async (id: Id<"conversations">) => {
         if (!user) return
@@ -128,6 +139,22 @@ export default function RequestsPage() {
                                     className="ml-auto h-5 min-w-[20px] px-1.5 bg-muted-foreground/20 text-foreground text-[10px] font-bold"
                                 >
                                     {myCount}
+                                </Badge>
+                            )}
+                        </Button>
+                        <Button
+                            variant={filter === "bot_escalated" ? "secondary" : "ghost"}
+                            className="w-full justify-start"
+                            onClick={() => setFilter("bot_escalated")}
+                        >
+                            <Bot className="mr-2 h-4 w-4 text-orange-500" />
+                            Bot Escalated
+                            {botEscalatedCount > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-auto h-5 min-w-[20px] px-1.5 bg-orange-500 text-white text-[10px] font-bold animate-pulse"
+                                >
+                                    {botEscalatedCount}
                                 </Badge>
                             )}
                         </Button>
@@ -215,7 +242,11 @@ export default function RequestsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {req.status === 200 || req.assignedTo ? ( // If it passes filter, it's open
+                                            {(req as any).handoffSource === "bot" ? (
+                                                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
+                                                    Bot Escalated
+                                                </Badge>
+                                            ) : req.status === 200 || req.assignedTo ? (
                                                 <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
                                                     Ongoing
                                                 </Badge>

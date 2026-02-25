@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 // List project members
@@ -31,7 +32,89 @@ export const current = query({
     }
 });
 
-// Add a member (invite)
+// List all pending invitations for the current logged-in user (matched by email)
+export const getMyPendingInvites = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity || !identity.email) return [];
+
+        const invites = await ctx.db
+            .query("project_members")
+            .withIndex("by_invitedEmail", (q) => q.eq("invitedEmail", identity.email!))
+            .collect();
+
+        // Only return pending invites that haven't been linked to a user yet
+        const pending = invites.filter(
+            (m) => !m.userId && (m.inviteStatus === "pending" || m.inviteStatus === undefined)
+        );
+
+        // Enrich each invite with project details
+        return await Promise.all(
+            pending.map(async (invite) => {
+                const project = await ctx.db.get(invite.projectId);
+                return {
+                    ...invite,
+                    projectName: project?.name ?? "Unknown Project",
+                };
+            })
+        );
+    },
+});
+
+// Accept an invitation
+export const accept = mutation({
+    args: { inviteId: v.id("project_members") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const invite = await ctx.db.get(args.inviteId);
+        if (!invite) throw new Error("Invitation not found");
+        if (invite.inviteStatus === "rejected") throw new Error("Invitation was rejected");
+
+        await ctx.db.patch(args.inviteId, {
+            userId: identity.subject,
+            inviteStatus: "accepted",
+            status: "available",
+        });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: invite.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "teammate_accepted",
+            targetType: "teammate",
+            targetId: identity.email ?? identity.subject,
+            metadata: { role: invite.role },
+        });
+    },
+});
+
+// Reject an invitation
+export const reject = mutation({
+    args: { inviteId: v.id("project_members") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const invite = await ctx.db.get(args.inviteId);
+        if (!invite) throw new Error("Invitation not found");
+
+        await ctx.db.patch(args.inviteId, {
+            inviteStatus: "rejected",
+        });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: invite.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "teammate_rejected",
+            targetType: "teammate",
+            targetId: identity.email ?? identity.subject,
+        });
+    },
+});
 export const invite = mutation({
     args: {
         projectId: v.id("projects"),
@@ -42,13 +125,25 @@ export const invite = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        return await ctx.db.insert("project_members", {
+        const memberId = await ctx.db.insert("project_members", {
             projectId: args.projectId,
             role: args.role ?? "agent",
             status: "available",
             invitedEmail: args.invitedEmail,
             invitedAt: Date.now(),
         });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "teammate_invited",
+            targetType: "teammate",
+            targetId: args.invitedEmail,
+            metadata: { email: args.invitedEmail, role: args.role ?? "agent" },
+        });
+
+        return memberId;
     },
 });
 
@@ -63,12 +158,27 @@ export const update = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const member = await ctx.db.get(args.id);
+        if (!member) throw new Error("Member not found");
+
         const { id, ...updates } = args;
         const clean: Record<string, any> = {};
         for (const [k, val] of Object.entries(updates)) {
             if (val !== undefined) clean[k] = val;
         }
         await ctx.db.patch(id, clean);
+
+        // Log the specific action performed
+        const action = args.role ? "role_changed" : "status_changed";
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: member.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action,
+            targetType: "teammate",
+            targetId: member.userId ?? member.invitedEmail,
+            metadata: { role: args.role, status: args.status },
+        });
     },
 });
 
@@ -78,6 +188,19 @@ export const remove = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const member = await ctx.db.get(args.id);
+        if (!member) throw new Error("Member not found");
+
         await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: member.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "teammate_removed",
+            targetType: "teammate",
+            targetId: member.userId ?? member.invitedEmail,
+        });
     },
 });

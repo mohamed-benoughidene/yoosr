@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
-// The Smart Assignment Engine for Tiledesk architecture
+// The Smart Assignment Engine for Yoosr architecture
 export const routeConversation = internalMutation({
     args: {
         conversationId: v.id("conversations"),

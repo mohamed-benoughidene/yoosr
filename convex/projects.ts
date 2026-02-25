@@ -11,17 +11,48 @@ export const getPublic = internalQuery({
     },
 });
 
-// List all projects for the current user
+// List all projects for the current user (owned + joined via invitation)
 export const list = query({
     args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        return await ctx.db
+        // 1. Fetch user's member records first (covers all projects they belong to)
+        const memberRecords = await ctx.db
+            .query("project_members")
+            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+            .collect();
+
+        // 2. Projects the user owns
+        const ownedProjects = await ctx.db
             .query("projects")
             .withIndex("by_ownerId", (q) => q.eq("ownerId", identity.subject))
             .collect();
+
+        // Build role map: projectId -> role from member records
+        const roleMap = new Map(memberRecords.map((m) => [m.projectId, m.role]));
+
+        // 3. For owned projects, prefer member record role, fallback to "owner"
+        const ownedWithRole = ownedProjects.map((p) => ({
+            ...p,
+            userRole: roleMap.get(p._id) ?? "owner",
+        }));
+
+        // 4. Joined projects (member but not owner)
+        const ownedIds = new Set(ownedProjects.map((p) => p._id));
+        const joinedMemberRecords = memberRecords.filter((m) => !ownedIds.has(m.projectId));
+        const joinedProjects = await Promise.all(
+            joinedMemberRecords.map(async (m) => {
+                const project = await ctx.db.get(m.projectId);
+                if (!project) return null;
+                return { ...project, userRole: m.role };
+            })
+        );
+
+        const validJoined = joinedProjects.filter((p) => p !== null) as typeof ownedWithRole;
+
+        return [...ownedWithRole, ...validJoined];
     },
 });
 

@@ -70,6 +70,13 @@ export const send = mutation({
 
         await ctx.db.patch(args.conversationId, updateData);
 
+        // Fire outbound RestHook webhook
+        await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+            projectId: conversation.projectId,
+            event: "message.create",
+            payload: { messageId, conversationId: args.conversationId, content: args.content, senderType: args.senderType },
+        });
+
         return messageId;
     },
 });
@@ -149,6 +156,13 @@ export const sendFromWidget = internalMutation({
                 incomingMessage: args.content,
             });
         }
+
+        // Fire outbound RestHook webhook
+        await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+            projectId: conversation.projectId,
+            event: "message.create",
+            payload: { messageId, conversationId: conversationId, content: args.content, senderType: "visitor" },
+        });
 
         return { messageId, conversationId };
     },

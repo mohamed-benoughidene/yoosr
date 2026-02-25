@@ -1,4 +1,4 @@
-# TileDesk Clone - Project Context
+# Yoosr - Project Context
 
 ## Project Overview
 Building a customer support platform clone of TileDesk using modern stack:
@@ -17,7 +17,7 @@ Create a full-featured customer support SaaS with:
 - Real-time messaging
 
 ## Original Reference
-This is a clone/adaptation of TileDesk (open-source project):
+This architecture draws inspiration from TileDesk (open-source project):
 - Original: Angular + Node.js/Express + MongoDB + RabbitMQ/MQTT
 - Our Stack: Next.js + Supabase (PostgreSQL + built-in Realtime)
 - Reference code: `./reference/original-repos/`

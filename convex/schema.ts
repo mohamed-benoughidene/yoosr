@@ -29,9 +29,11 @@ export default defineSchema({
         status: v.string(), // "available" | "unavailable"
         invitedEmail: v.optional(v.string()),
         invitedAt: v.optional(v.number()),
+        inviteStatus: v.optional(v.string()), // "pending" | "accepted" | "rejected"
     })
         .index("by_projectId", ["projectId"])
-        .index("by_userId", ["userId"]),
+        .index("by_userId", ["userId"])
+        .index("by_invitedEmail", ["invitedEmail"]),
 
     // Conversations (chat threads from visitors)
     conversations: defineTable({
@@ -51,7 +53,13 @@ export default defineSchema({
         feedback: v.optional(v.string()), // Optional feedback text
         updatedAt: v.optional(v.number()),
         // Execution engine state
-        currentNodeId: v.optional(v.string()),
+        currentNodeId: v.optional(v.union(v.string(), v.null())),
+        executionLog: v.optional(v.array(v.object({
+            nodeId: v.string(),
+            type: v.string(),
+            action: v.string(),
+            timestamp: v.number()
+        }))),
         botId: v.optional(v.string()),
         // Legacy fields to prevent schema validation errors
         leadId: v.optional(v.string()),
@@ -60,6 +68,9 @@ export default defineSchema({
         tags: v.optional(v.array(v.string())),
         attributes: v.optional(v.any()),
         typing: v.optional(v.any()),
+        // HITL Handoff
+        botPaused: v.optional(v.boolean()), // true = bot will not respond to new messages
+        handoffSource: v.optional(v.string()), // 'bot' = escalated by the bot flow
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),
@@ -113,9 +124,17 @@ export default defineSchema({
         description: v.optional(v.string()),
         metadata: v.optional(v.any()), // JSON
         ipAddress: v.optional(v.string()),
+        // Extended fields for rich activity tracking
+        actorId: v.optional(v.string()),
+        actorName: v.optional(v.string()),
+        action: v.optional(v.string()), // e.g. "teammate_invited", "role_changed"
+        targetType: v.optional(v.string()), // e.g. "teammate", "department", "bot"
+        targetId: v.optional(v.string()),
+        createdAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
-        .index("by_actionType", ["actionType"]),
+        .index("by_actionType", ["actionType"])
+        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
 
     // Integrations (telegram, whatsapp, etc.)
     integrations: defineTable({
@@ -200,4 +219,67 @@ export default defineSchema({
         dimensions: 1024, // Dimensions for BAAI/bge-m3
         filterFields: ["sourceId", "projectId"],
     }),
+
+    // Conversation events (bot vs agent handling tracking)
+    conversation_events: defineTable({
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        handledBy: v.union(v.literal("bot"), v.literal("agent")),
+        closed: v.boolean(),
+        createdAt: v.number(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
+
+    // CSAT ratings (submitted from chat widget)
+    csat_ratings: defineTable({
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        rating: v.number(), // 1–5
+        comment: v.optional(v.string()),
+        createdAt: v.number(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
+
+    // AI token usage (logged after every OpenRouter call)
+    token_usage: defineTable({
+        projectId: v.id("projects"),
+        model: v.string(),
+        tokensUsed: v.number(),
+        operation: v.string(), // "ai_task" | "ai_assistant" | "ask_kb"
+        createdAt: v.number(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
+
+    // Unanswered queries from Ask KB block
+    unanswered_queries: defineTable({
+        projectId: v.id("projects"),
+        query: v.string(),
+        count: v.number(),
+        lastAskedAt: v.number(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_count", ["projectId", "count"]),
+
+    // Monthly usage quotas (AI tokens and messages)
+    project_usage: defineTable({
+        projectId: v.id("projects"),
+        tokensConsumed: v.number(),
+        conversationsCount: v.number(),
+        billingCycleStart: v.number(), // timestamp for start of month
+    })
+        .index("by_projectId", ["projectId"]),
+
+    // RestHooks webhook subscriptions
+    webhook_subscriptions: defineTable({
+        projectId: v.id("projects"),
+        url: v.string(),
+        events: v.array(v.string()), // e.g. ["message.create", "request.close"]
+        secretName: v.optional(v.string()), // Optionally store a secret lookup key 
+        isActive: v.boolean(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_isActive", ["projectId", "isActive"]),
 });

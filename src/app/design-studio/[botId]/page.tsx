@@ -7,6 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { FlowToolbar } from "@/components/design-studio/FlowToolbar";
 import { FlowEditor } from "@/components/design-studio/FlowEditor";
+import { DebuggerPanel } from "@/components/design-studio/DebuggerPanel";
 import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 import { Loader2 } from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
@@ -32,6 +33,9 @@ function BotEditor() {
     const saveFlow = useMutation(api.botFlows.save);
 
     const [saveState, setSaveState] = useState<SaveState>("idle");
+    const [isDebuggerOpen, setIsDebuggerOpen] = useState(false);
+    const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+
     const pendingNodesRef = useRef<Node[] | null>(null);
     const pendingEdgesRef = useRef<Edge[] | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -158,14 +162,23 @@ function BotEditor() {
                 botName={bot.name}
                 saveState={saveState}
                 onSave={handleManualSave}
+                isDebuggerOpen={isDebuggerOpen}
+                onToggleDebugger={() => setIsDebuggerOpen(!isDebuggerOpen)}
             />
-            <div className="flex-1 overflow-hidden">
+            <div className="relative flex-1 overflow-hidden">
+                {isDebuggerOpen && (
+                    <DebuggerPanel
+                        projectId={projectId}
+                        botId={botId}
+                        onActiveNodeChange={setActiveNodeId}
+                        onClose={() => setIsDebuggerOpen(false)}
+                    />
+                )}
                 <ReactFlowProvider>
                     <FlowEditor
                         initialNodes={initialNodesWithPositions}
-                        initialEdges={
-                            flow?.edges as Edge[] | undefined
-                        }
+                        initialEdges={flow?.edges as Edge[] | undefined}
+                        activeNodeId={activeNodeId}
                         onFlowChange={handleFlowChange}
                     />
                 </ReactFlowProvider>

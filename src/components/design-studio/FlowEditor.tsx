@@ -72,12 +72,14 @@ const defaultStartNode: Node = {
 interface FlowEditorProps {
     initialNodes?: Node[];
     initialEdges?: Edge[];
+    activeNodeId?: string | null;
     onFlowChange: (nodes: Node[], edges: Edge[]) => void;
 }
 
 export function FlowEditor({
     initialNodes,
     initialEdges,
+    activeNodeId,
     onFlowChange,
 }: FlowEditorProps) {
     const [nodes, setNodes, onNodesChange] = useNodesState(
@@ -261,13 +263,28 @@ export function FlowEditor({
         [setEdges, notifyChange, getNodes]
     );
 
+    // Apply active node highlighting dynamically
+    const styledNodes = useMemo(() => {
+        return nodes.map(n => {
+            if (activeNodeId && n.id === activeNodeId) {
+                return {
+                    ...n,
+                    className: `${n.className || ""} ring-4 ring-emerald-500 ring-offset-4 ring-offset-background animate-pulse transition-all duration-300 shadow-xl shadow-emerald-500/20`
+                };
+            }
+            // Return base node if not active
+            const { className, ...rest } = n;
+            return rest as Node;
+        });
+    }, [nodes, activeNodeId]);
+
     return (
         <div className="flex h-full w-full">
             <BlockPalette onAddNode={handleAddNode} />
 
             <div className="relative flex-1">
                 <ReactFlow
-                    nodes={nodes}
+                    nodes={styledNodes}
                     edges={edges}
                     onNodesChange={handleNodesChange}
                     onEdgesChange={handleEdgesChange}

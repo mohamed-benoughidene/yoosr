@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 // List bots for a project
@@ -38,7 +39,7 @@ export const create = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        return await ctx.db.insert("bots", {
+        const botId = await ctx.db.insert("bots", {
             projectId: args.projectId,
             name: args.name,
             description: args.description,
@@ -46,6 +47,18 @@ export const create = mutation({
             status: "draft",
             configuration: {},
         });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "bot_created",
+            targetType: "bot",
+            targetId: botId,
+            metadata: { name: args.name, type: args.type },
+        });
+
+        return botId;
     },
 });
 
@@ -78,6 +91,9 @@ export const remove = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const bot = await ctx.db.get(args.id);
+        if (!bot) throw new Error("Bot not found");
+
         // Delete associated bot flows
         const flows = await ctx.db
             .query("bot_flows")
@@ -89,5 +105,15 @@ export const remove = mutation({
         }
 
         await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: bot.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "bot_updated", // "deleted" maps to bot_updated label in UI
+            targetType: "bot",
+            targetId: args.id,
+            metadata: { name: bot.name, change: "deleted" },
+        });
     },
 });

@@ -46,6 +46,20 @@ export const create = mutation({
             updatedAt: Date.now(),
         });
 
+        // Track conversation count for quotas
+        const usageDesc = await ctx.db.query("project_usage")
+            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            .first();
+        if (usageDesc) {
+            await ctx.db.patch(usageDesc._id, { conversationsCount: usageDesc.conversationsCount + 1 });
+        } else {
+            await ctx.db.insert("project_usage", {
+                projectId: args.projectId,
+                tokensConsumed: 0,
+                conversationsCount: 1,
+                billingCycleStart: Date.now()
+            });
+        }
         // Trigger smart routing engine
         await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
             conversationId,
@@ -74,9 +88,10 @@ export const update = mutation({
             if (value !== undefined) cleanUpdates[key] = value;
         }
 
-        // HITL Safeguards: if manually assigning
+        // HITL Safeguards: if manually assigning, status becomes 200 and botPaused is cleared
         if (args.assignedTo) {
             cleanUpdates.status = 200;
+            cleanUpdates.botPaused = false; // Human has taken over — re-enable bot for future if needed
             const conversation = await ctx.db.get(args.id);
             if (conversation) {
                 const participants = conversation.participants || [];
@@ -134,6 +149,20 @@ export const createFromWidget = internalMutation({
             updatedAt: Date.now(),
         });
 
+        // Track conversation count for quotas
+        const usageDesc = await ctx.db.query("project_usage")
+            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            .first();
+        if (usageDesc) {
+            await ctx.db.patch(usageDesc._id, { conversationsCount: usageDesc.conversationsCount + 1 });
+        } else {
+            await ctx.db.insert("project_usage", {
+                projectId: args.projectId,
+                tokensConsumed: 0,
+                conversationsCount: 1,
+                billingCycleStart: Date.now()
+            });
+        }
         // Sync to Contacts table if we have contact info
         if (args.visitorEmail || args.visitorPhone) {
             // Check if contact exists by email or phone (simple scan for now)
@@ -184,12 +213,24 @@ export const createFromWidget = internalMutation({
         }
 
         if (args.initialMessage) {
-            await ctx.db.insert("messages", {
+            const firstMessageId = await ctx.db.insert("messages", {
                 conversationId,
                 projectId: args.projectId,
                 senderType: "visitor",
                 senderId: args.visitorId,
                 content: args.initialMessage,
+            });
+
+            // Fire webhook for the initial visitor message (was previously missed)
+            await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+                projectId: args.projectId,
+                event: "message.create",
+                payload: {
+                    messageId: firstMessageId,
+                    conversationId,
+                    content: args.initialMessage,
+                    senderType: "visitor",
+                },
             });
         }
 
@@ -235,6 +276,12 @@ export const resolve = mutation({
             lastMessage: "Conversation resolved",
             updatedAt: Date.now(),
             resolvedBy: identity.subject,
+        });
+
+        // Trigger generative tags extraction
+        await ctx.scheduler.runAfter(0, internal.tags.extractGenerativeTags, {
+            conversationId: args.id,
+            projectId: conversation.projectId,
         });
 
         // Send a system message so visitor knows
@@ -341,6 +388,12 @@ export const autoCloseInactive = internalMutation({
                     status: 1000,
                     lastMessage: "Conversation auto-closed due to inactivity",
                     updatedAt: now,
+                });
+
+                // Trigger generative tags extraction
+                await ctx.scheduler.runAfter(0, internal.tags.extractGenerativeTags, {
+                    conversationId: conv._id,
+                    projectId: conv.projectId,
                 });
 
                 await ctx.db.insert("messages", {

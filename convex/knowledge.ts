@@ -127,19 +127,33 @@ export const searchSimilarChunks = action({
             return [];
         }
 
+        // Filter by minimum relevance score. Convex returns _score (cosine similarity).
+        // Without this, off-topic chunks still pass the length check and no unanswered query is logged.
+        const MIN_RELEVANCE_SCORE = 0.75;
         const results = await ctx.vectorSearch("knowledge_base_chunks", "by_embedding", {
             vector: embedding,
             filter: (q) => q.eq("projectId", args.projectId),
             limit: 5,
         });
+        const relevantResults = results.filter((r: any) => r._score >= MIN_RELEVANCE_SCORE);
+
 
         const chunks = await Promise.all(
-            results.map(async (result): Promise<any> => {
+            relevantResults.map(async (result: any): Promise<any> => {
                 const chunk = await ctx.runQuery(internal.knowledge.getChunkInternal, { id: result._id as any });
                 return chunk;
             })
         );
 
-        return chunks.filter((c: any) => c !== null);
+        const validChunks = chunks.filter((c: any) => c !== null);
+
+        if (validChunks.length === 0) {
+            await ctx.runMutation(internal.analytics.logUnansweredQuery, {
+                projectId: args.projectId,
+                query: args.query,
+            });
+        }
+
+        return validChunks;
     },
 });
