@@ -8,6 +8,7 @@ import { Id } from "../../../../convex/_generated/dataModel";
 import { FlowToolbar } from "@/components/design-studio/FlowToolbar";
 import { FlowEditor } from "@/components/design-studio/FlowEditor";
 import { DebuggerPanel } from "@/components/design-studio/DebuggerPanel";
+import { AIPromptBar } from "@/components/design-studio/AIPromptBar";
 import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 import { Loader2 } from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
@@ -35,10 +36,69 @@ function BotEditor() {
     const [saveState, setSaveState] = useState<SaveState>("idle");
     const [isDebuggerOpen, setIsDebuggerOpen] = useState(false);
     const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+    const [isAIBarOpen, setIsAIBarOpen] = useState(false);
+    const [flowEditorKey, setFlowEditorKey] = useState(0);
+    const [generatedFlow, setGeneratedFlow] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
 
     const pendingNodesRef = useRef<Node[] | null>(null);
     const pendingEdgesRef = useRef<Edge[] | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Handle AI-generated flow
+    const handleGeneratedFlow = useCallback(
+        (nodes: Node[], edges: Edge[]) => {
+            // Valid registered node types in this Design Studio
+            const VALID_TYPES = new Set([
+                "start", "reply", "setAttribute", "condition", "webRequest",
+                "aiTask", "hitlHandoff", "close", "if_operating_hours",
+                "if_online_agent", "capture_user_reply", "wait", "ask_kb",
+                "replace_bot", "change_department", "code_action",
+                "clear_transcript", "ai_assistant",
+            ]);
+
+            // Common AI mistakes → correct type
+            const TYPE_MAP: Record<string, string> = {
+                greeting: "reply", message: "reply", text: "reply",
+                send_message: "reply", send: "reply",
+                input: "capture_user_reply", capture: "capture_user_reply",
+                collect: "capture_user_reply", user_input: "capture_user_reply",
+                handoff: "hitlHandoff", hand_off: "hitlHandoff",
+                escalate: "hitlHandoff", agent: "hitlHandoff",
+                transfer: "hitlHandoff", live_agent: "hitlHandoff",
+                end: "close", finish: "close", goodbye: "close",
+                if: "condition", branch: "condition", check: "condition",
+                decision: "condition", router: "condition",
+                delay: "wait", pause: "wait",
+                set: "setAttribute", set_attribute: "setAttribute",
+                ai: "aiTask", llm: "aiTask", gpt: "aiTask",
+                knowledge_base: "ask_kb", kb: "ask_kb", search: "ask_kb",
+            };
+
+            const normalizeType = (t: string): string => {
+                if (!t) return "reply";
+                const lower = t.toLowerCase().replace(/-/g, "_");
+                if (VALID_TYPES.has(lower)) return lower;
+                return TYPE_MAP[lower] ?? "reply";
+            };
+
+            // Sanitize: guarantee every node has id, position, data, and a valid type
+            const safeNodes = nodes.map((node, index) => {
+                const n = { ...node } as any;
+                if (!n.id) n.id = `node-${index}`;
+                n.type = normalizeType(n.type);
+                if (!n.position || typeof n.position.x !== "number") {
+                    n.position = { x: 250, y: 50 + index * 180 };
+                }
+                if (!n.data || typeof n.data !== "object") {
+                    n.data = { label: n.type };
+                }
+                return n as Node;
+            });
+            setGeneratedFlow({ nodes: safeNodes, edges });
+            setFlowEditorKey((k) => k + 1);
+        },
+        []
+    );
 
     // Ensure nodes have positions and IDs for ReactFlow
     const initialNodesWithPositions = useMemo(() => {
@@ -156,6 +216,10 @@ function BotEditor() {
         );
     }
 
+    // Derived: which nodes/edges to show (generated overrides persisted)
+    const activeNodes = generatedFlow?.nodes ?? initialNodesWithPositions;
+    const activeEdges = generatedFlow?.edges ?? (flow?.edges as Edge[] | undefined);
+
     return (
         <div className="flex h-screen flex-col">
             <FlowToolbar
@@ -164,6 +228,8 @@ function BotEditor() {
                 onSave={handleManualSave}
                 isDebuggerOpen={isDebuggerOpen}
                 onToggleDebugger={() => setIsDebuggerOpen(!isDebuggerOpen)}
+                isAIBarOpen={isAIBarOpen}
+                onToggleAIBar={() => setIsAIBarOpen((v) => !v)}
             />
             <div className="relative flex-1 overflow-hidden">
                 {isDebuggerOpen && (
@@ -176,12 +242,20 @@ function BotEditor() {
                 )}
                 <ReactFlowProvider>
                     <FlowEditor
-                        initialNodes={initialNodesWithPositions}
-                        initialEdges={flow?.edges as Edge[] | undefined}
+                        key={flowEditorKey}
+                        initialNodes={activeNodes}
+                        initialEdges={activeEdges}
                         activeNodeId={activeNodeId}
                         onFlowChange={handleFlowChange}
                     />
                 </ReactFlowProvider>
+                <AIPromptBar
+                    onGenerate={(nodes, edges) => {
+                        handleGeneratedFlow(nodes, edges);
+                        setIsAIBarOpen(false);
+                    }}
+                    visible={isAIBarOpen}
+                />
             </div>
         </div>
     );

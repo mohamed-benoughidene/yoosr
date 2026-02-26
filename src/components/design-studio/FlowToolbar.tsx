@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2, Save, Terminal } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Save, Sparkles, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -10,9 +10,11 @@ interface FlowToolbarProps {
     onSave: () => void;
     isDebuggerOpen?: boolean;
     onToggleDebugger?: () => void;
+    isAIBarOpen?: boolean;
+    onToggleAIBar?: () => void;
 }
 
-export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger }: FlowToolbarProps) {
+export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger, isAIBarOpen, onToggleAIBar }: FlowToolbarProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project");
@@ -63,6 +65,17 @@ export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onTogg
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                     Save
                 </Button>
+                {onToggleAIBar && (
+                    <Button
+                        size="sm"
+                        variant={isAIBarOpen ? "secondary" : "outline"}
+                        onClick={onToggleAIBar}
+                        className="gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+                    >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Build with AI
+                    </Button>
+                )}
                 {onToggleDebugger && (
                     <Button
                         size="sm"

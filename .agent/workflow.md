@@ -1,10 +1,43 @@
-Here is the updated table with a new column detailing exactly how these monitoring features are represented and interacted with in the User Interface (UI).
+What the Feature Is
 
-| Aspect | Granular & Technical Description | UI / Interface Explanation |
-| :--- | :--- | :--- |
-| **What is it?** | The monitoring and telemetry architecture in Tiledesk is a multi-layered suite of centralized dashboard components built on an Angular frontend and a Node.js backend. It encompasses the **"Usage" tracking module**, the **Embedded Real-time Debugger**, and **AI Analytics**, all of which operate on a real-time, event-driven infrastructure powered by MQTT and RabbitMQ message brokers, utilizing MongoDB for persistent document storage of conversation histories and logs, and Redis for caching real-time states. | Built as an Angular-based web application, the UI consists of a centralized, multi-tenant dashboard. It visually represents system telemetry through a drag-and-drop visual canvas (the Design Studio) for debugging, and dedicated graphical menu sections for Knowledge Base gaps and resource tracking. |
-| **What is the purpose of it?** | Its technical purpose is to ensure system reliability, maintain Service Level Targets (SLTs), and provide developers with a low-latency feedback loop for prompt engineering and logic debugging within an Agentic AI framework. It tracks the consumption of AI tokens to prevent service outages, monitors the exact full-text and semantic vector search hit rates of the RAG engine, and mitigates system failure by identifying unresolvable intents. | The UI's purpose is to translate complex backend telemetry (like MQTT logs, vector search hit rates, and token consumption) into highly accessible visual formats. This allows both developers and non-technical business users to rapidly diagnose AI performance, latency, and routing issues without relying on command-line interfaces or raw log files. |
-| **The info that it provides** | It provides highly specific operational telemetry, including: 1. **Quota Metrics:** The precise consumption of monthly AI tokens and total monthly conversations. 2. **Payload Data:** Access to real-time JSON payloads generated during events (e.g., `message.create`), exposing metadata like `hook` targets, timestamps, and validation signatures. 3. **System Logs:** Backend application logs categorized by severity level: Error < Warn < Info < Debug. | The UI displays clear numerical counters and progress bars representing consumed vs. available AI tokens. During testing, it provides live visual cues—specifically, illuminating or animating the exact conversational nodes executing on the canvas. It also lists exact user phrases in a readable, categorized tabular format within the "Unanswered Questions" list. |
-| **Its functionalities** | The monitoring infrastructure executes several automated processes: <br>- **Real-time Flow Animation:** The MQTT-based debugger visually animates block-by-block execution within the Design Studio in real-time, highlighting exact latency metrics and logic routing errors. <br>- **Generative Categorization:** Uses LLMs to dynamically attach tags to conversations. <br>- **Knowledge Gap Aggregation:** Intercepts queries that the RAG engine fails to resolve, routing them into a dedicated database. <br>- **Event Broadcasting:** Through RestHooks, it broadcasts specific monitoring events to external servers via HTTP POST requests. | Features interactive elements such as a dynamic "Usage" modal, a chat simulator window placed side-by-side with the visual block builder where users can watch the execution path light up in real-time, and sortable tables or clickable tags for analyzing conversation analytics and user feedback. |
-| **The user workflow** | A system administrator or developer logs into the multi-tenant SaaS dashboard to oversee their project sandbox. <br>**Resource Auditing:** They audit their monthly AI token and conversation consumption against their specific subscription tier limits. <br>**Logic Debugging:** A conversation designer triggers a test flow, watching the underlying MQTT protocol animate the conversational nodes to debug native flows directly from the designer interface. <br>**Content Enrichment:** Support staff access the "Unanswered Questions" database, analyze failed queries, and manually author new FAQs to eliminate the data gap. | **For resource tracking:** The user navigates to the top-right corner of the dashboard screen and clicks the "Usage" button to open the token consumption module. <br>**For debugging:** The user hits the "Play/Test" button on the Design Studio interface and interacts with the chat widget simulator while watching the connected visual blocks animate on the canvas. <br>**For content enhancement:** The user clicks the Knowledge Base sidebar menu and opens the "Unanswered Questions" tab to review unresolved user inputs. |
-| **The features in it** | - **"Usage" Tracking Module:** Real-time tracking of AI API token units and conversation constraints.<br>- **Embedded Real-time Debugger:** An advanced MQTT-driven diagnostic tool that traces block-level execution.<br>- **"Unanswered Questions" Repository:** A MongoDB-backed log that automatically populates with user phrases the AI agent could not retrieve answers for.<br>- **LLM Tags Analytics:** Generative AI processes that automatically parse transcripts to apply qualitative metadata labels.<br>- **RestHooks (Webhooks) Notification API:** Programmatic resource for creating external monitoring endpoints. | - **Usage Modal:** A specific drop-down/widget located in the top-right of the global navigation bar.<br>- **Live Debugger UI:** A split-screen view showing the chat testing interface alongside the graphical node map.<br>- **Unanswered Questions View:** A dedicated, manageable list view within the Knowledge Base administration panel.<br>- **Tags Analytics Dashboard:** Visual graphs, ratings sections, and categorized labels representing conversation metadata. |
+Right now, users build flows manually — they drag blocks onto the canvas, connect them one by one, and configure each block. This works but it's slow, especially for non-technical users.
+
+"Build with AI" lets the user describe their flow in plain language and get a ready-made canvas in seconds.
+User Experience (step by step)
+
+    User opens Design Studio
+    Clicks a "Build with AI" button in the toolbar
+    A modal opens with a single textarea
+    They type something like:
+        "Greet the visitor, ask for their name and email, then check if they're an existing customer. If yes, hand off to a support agent. If no, send them a link to our pricing page."
+        Works in Arabic too
+    They click Generate
+    Spinner shows for a few seconds while OpenRouter processes it
+    The canvas populates with connected blocks — Reply node, Capture nodes, Condition node, HITL node, etc. — already wired together
+    User reviews, tweaks individual blocks as needed, and saves
+
+
+1. Convex Action
+
+Takes prompt + orgId + projectId
+Looks up the project's defaultModel (fallback to Mistral 7B)
+Calls OpenRouter with a system prompt that defines your node types and expected JSON shape
+Strips any markdown fences from the response
+Parses and returns { nodes, edges }
+
+2. System Prompt Strategy
+The system prompt must tell the model exactly what node types exist, what each node's data shape looks like, and how to position nodes (top-to-bottom, fixed x/y spacing). This is the critical part — the better this prompt, the better the output. You know your block schemas, so you write this part.
+3. Modal (client side)
+
+Textarea where user describes the flow (set dir="auto" for Arabic support)
+Calls the Convex action on submit
+On success, passes { nodes, edges } up to the parent Design Studio component
+
+4. Design Studio (wiring)
+
+On receiving the generated nodes/edges, call React Flow's setNodes / setEdges
+Then call fitView() so the canvas recenters
+Show a toast so the user knows it worked
+
+5. Defensive parsing
+Always strip fences and wrap JSON.parse in try/catch — Mistral 7B sometimes leaks extra text even with strict instructions.
