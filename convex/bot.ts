@@ -1,5 +1,5 @@
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
@@ -270,6 +270,17 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                     nextNodeId: action.failurePath,
                 };
             }
+        }
+
+        case "applyLabel": {
+            const labelName = interpolate(action.labelName || "", attributes);
+            if (labelName) {
+                await ctx.runMutation(api.tags.assignTagToConversation, {
+                    conversationId,
+                    tagName: labelName
+                });
+            }
+            return { newAttributes: {} };
         }
 
         default:

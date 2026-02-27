@@ -81,6 +81,12 @@ export interface CloseNodeData {
     [key: string]: unknown;
 }
 
+export interface ApplyLabelNodeData {
+    label: string;
+    labelName: string;
+    [key: string]: unknown;
+}
+
 // ─── Union Types ──────────────────────────────────────────────────
 
 export type FlowNodeData =
@@ -92,6 +98,7 @@ export type FlowNodeData =
     | AIAssistantNodeData
     | ConditionNodeData
     | HITLHandoffNodeData
+    | ApplyLabelNodeData
     | CloseNodeData;
 
 export type FlowNode = Node<FlowNodeData>;
@@ -267,5 +274,13 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "Eraser",
         color: "text-red-500",
         defaultData: { label: "Clear Transcript" },
+    },
+    {
+        type: "applyLabel",
+        label: "Apply Label",
+        description: "Tag the conversation",
+        icon: "Tag",
+        color: "text-pink-500",
+        defaultData: { label: "Apply Label", labelName: "" },
     },
 ];

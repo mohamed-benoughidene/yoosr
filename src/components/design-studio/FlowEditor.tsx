@@ -38,6 +38,7 @@ import { ChangeDepartmentNode } from "./nodes/ChangeDepartmentNode";
 import { CodeActionNode } from "./nodes/CodeActionNode";
 import { ClearTranscriptNode } from "./nodes/ClearTranscriptNode";
 import { AIAssistantNode } from "./nodes/AIAssistantNode";
+import { ApplyLabelNode } from "./nodes/ApplyLabelNode";
 import { BlockPalette } from "./BlockPalette";
 import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
@@ -60,6 +61,7 @@ const nodeTypes: NodeTypes = {
     code_action: CodeActionNode,
     clear_transcript: ClearTranscriptNode,
     ai_assistant: AIAssistantNode,
+    applyLabel: ApplyLabelNode,
 };
 
 const defaultStartNode: Node = {
@@ -350,6 +352,8 @@ export function FlowEditor({
                                 case "if_online_agent":
                                     return "#f59e0b";
                                 case "replace_bot":
+                                    return "#ec4899";
+                                case "applyLabel":
                                     return "#ec4899";
                                 case "capture_user_reply":
                                     return "#a855f7";

@@ -166,6 +166,12 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                     _type: "clear_transcript"
                 });
                 break;
+            case "applyLabel":
+                actions.push({
+                    _type: "applyLabel",
+                    labelName: data.labelName || ""
+                });
+                break;
             default:
                 break;
         }

@@ -35,6 +35,7 @@ export function NodePropertiesPanel({
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project") as Id<"projects"> | null;
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
+    const labels = useQuery(api.settings.listLabels, projectId ? { projectId } : "skip") || [];
 
     if (!node) return null;
 
@@ -435,6 +436,40 @@ export function NodePropertiesPanel({
                             />
                         </div>
                     </>
+                )}
+
+                {/* Apply Label Node fields */}
+                {node.type === "applyLabel" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Label Name</Label>
+                        <Select
+                            value={data.labelName || ""}
+                            onValueChange={(val) => update("labelName", val)}
+                        >
+                            <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Select a label" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {labels.length === 0 ? (
+                                    <SelectItem value="none" disabled>
+                                        No labels found
+                                    </SelectItem>
+                                ) : (
+                                    labels.map((lbl: any) => (
+                                        <SelectItem key={lbl._id} value={lbl.name}>
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-2.5 h-2.5 rounded-full"
+                                                    style={{ backgroundColor: lbl.color }}
+                                                />
+                                                {lbl.name}
+                                            </div>
+                                        </SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 )}
 
                 {/* Capture Reply Form */}

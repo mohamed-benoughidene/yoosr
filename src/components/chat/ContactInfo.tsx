@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2 } from "lucide-react"
+import { User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
@@ -13,6 +13,8 @@ import { Id } from "../../../convex/_generated/dataModel"
 import { useState, useEffect, useCallback } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 type EditableField = "visitorName" | "visitorEmail" | "visitorPhone" | "visitorAddress" | "visitorNote"
 
@@ -140,14 +142,20 @@ export function ContactInfo() {
     const updateVisitorInfo = useMutation(api.conversations.updateVisitorInfo)
     const createContact = useMutation(api.contacts.create)
     const updateContact = useMutation(api.contacts.update)
+    const assignTag = useMutation(api.tags.assignTagToConversation)
+    const removeTag = useMutation(api.tags.removeTagFromConversation)
+
     const { activeProject } = useProject()
     const [contactSaving, setContactSaving] = useState(false)
+    const [tagPopoverOpen, setTagPopoverOpen] = useState(false)
 
     // Check if contact already exists for this conversation
     const existingContact = useQuery(
         api.contacts.findByConversation,
         conversationId ? { conversationId } : "skip"
     )
+
+    const labels = useQuery(api.settings.listLabels, activeProject ? { projectId: activeProject._id } : "skip");
 
     const handleSave = useCallback(
         (field: EditableField, value: string) => {
@@ -190,6 +198,27 @@ export function ContactInfo() {
             toast.error("Failed to save contact")
         } finally {
             setContactSaving(false)
+        }
+    }
+
+    const handleAssignTag = async (tagName: string) => {
+        if (!conversationId) return;
+        try {
+            await assignTag({ conversationId, tagName });
+            setTagPopoverOpen(false);
+            toast.success("Tag added");
+        } catch {
+            toast.error("Failed to add tag");
+        }
+    }
+
+    const handleRemoveTag = async (tagName: string) => {
+        if (!conversationId) return;
+        try {
+            await removeTag({ conversationId, tagName });
+            toast.success("Tag removed");
+        } catch {
+            toast.error("Failed to remove tag");
         }
     }
 
@@ -242,6 +271,81 @@ export function ContactInfo() {
                         onSave={(val) => handleSave(field.key, val)}
                     />
                 ))}
+            </div>
+
+            <Separator />
+
+            {/* Tags Section */}
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                        Tags
+                    </h3>
+                    <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-0" align="end">
+                            <div className="p-2 flex flex-col gap-1">
+                                {labels === undefined ? (
+                                    <div className="text-xs text-muted-foreground p-2 text-center">Loading...</div>
+                                ) : labels.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground p-2 text-center">No labels configured</div>
+                                ) : (
+                                    labels.map((label) => {
+                                        // Skip if already applied
+                                        if (conversation.tags?.includes(label.name)) return null;
+                                        return (
+                                            <button
+                                                key={label._id}
+                                                onClick={() => handleAssignTag(label.name)}
+                                                className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-md hover:bg-muted text-left transition-colors"
+                                            >
+                                                <div
+                                                    className="w-2.5 h-2.5 rounded-full"
+                                                    style={{ backgroundColor: label.color }}
+                                                />
+                                                <span className="truncate">{label.name}</span>
+                                            </button>
+                                        )
+                                    })
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                    {!conversation.tags || conversation.tags.length === 0 ? (
+                        <span className="text-xs text-muted-foreground italic">No tags added</span>
+                    ) : (
+                        conversation.tags.map((tag: string) => {
+                            // Find corresponding label to get the color, fallback to default badge style if not found
+                            const labelInfo = labels?.find(l => l.name === tag);
+                            return (
+                                <Badge
+                                    key={tag}
+                                    className="px-2 py-0.5 text-xs font-normal gap-1 rounded-md"
+                                    style={labelInfo ? {
+                                        backgroundColor: `${labelInfo.color}20`, // 20% opacity background
+                                        color: labelInfo.color,
+                                        borderColor: `${labelInfo.color}30`
+                                    } : {}}
+                                >
+                                    {tag}
+                                    <button
+                                        onClick={() => handleRemoveTag(tag)}
+                                        className="hover:bg-black/10 rounded-full p-0.5 flex items-center justify-center transition-colors -mr-0.5"
+                                    >
+                                        <X className="h-2.5 w-2.5" />
+                                    </button>
+                                </Badge>
+                            )
+                        })
+                    )}
+                </div>
             </div>
 
             <Separator />

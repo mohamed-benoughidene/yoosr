@@ -1,4 +1,4 @@
-import { internalAction, internalMutation } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { callAITask } from "./openrouter";
@@ -19,13 +19,31 @@ export const extractGenerativeTags = internalAction({
 
         if (!messages || messages.length === 0) return;
 
+        // Fetch predefined labels
+        const labels = await ctx.runQuery(internal.tags.getProjectLabels, {
+            projectId: args.projectId
+        });
+
+        if (!labels || labels.length === 0) return;
+
+        const validLabelNames = labels.map((l: any) => l.name);
+        const validLabelsMap = new Map(
+            validLabelNames.map((name: string) => [
+                name.toLowerCase().trim().replace(/\s+/g, "_"),
+                name
+            ])
+        );
+
         // Build transcript
         const transcript = messages.map((m: any) => `${m.senderType}: ${m.content}`).join("\n");
 
         const prompt = `
 You are an expert support conversation analyzer.
 Given the following conversation transcript, extract 1 to 3 concise tags (1-2 words each) that categorize the user's intent, the topic, or the outcome.
-Return exactly a JSON array of strings, nothing else. Example: ["billing_issue", "resolved"]
+ONLY return tags that match EXACTLY one of the following predefined labels:
+${validLabelNames.map((n: string) => `- ${n}`).join("\n")}
+
+Return exactly a JSON array of strings containing the matching names, nothing else. Example: ["billing_issue", "resolved"]
 `;
 
         try {
@@ -36,7 +54,8 @@ Return exactly a JSON array of strings, nothing else. Example: ["billing_issue",
             try {
                 const parsed = JSON.parse(result.text);
                 if (Array.isArray(parsed)) {
-                    tags = parsed.map(t => String(t).toLowerCase().trim().replace(/\s+/g, "_")).filter(t => t.length > 0);
+                    const rawTags = parsed.map(t => String(t).toLowerCase().trim().replace(/\s+/g, "_")).filter(t => t.length > 0);
+                    tags = rawTags.filter(t => validLabelsMap.has(t)).map(t => validLabelsMap.get(t)!);
                 }
             } catch (e) {
                 console.error("Failed to parse tags from LLM", result.text);
@@ -77,6 +96,62 @@ export const updateConversationTags = internalMutation({
         const existingTags = conversation.tags || [];
         // merge and deduplicate
         const newTags = Array.from(new Set([...existingTags, ...args.tags]));
+
+        await ctx.db.patch(args.conversationId, {
+            tags: newTags
+        });
+    }
+});
+
+/**
+ * Internal query to fetch all labels for a project
+ */
+export const getProjectLabels = internalQuery({
+    args: {
+        projectId: v.id("projects")
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db.query("labels")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+    }
+});
+
+/**
+ * Assign a tag to a conversation
+ */
+export const assignTagToConversation = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        tagName: v.string()
+    },
+    handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) return;
+
+        const existingTags = conversation.tags || [];
+        if (!existingTags.includes(args.tagName)) {
+            await ctx.db.patch(args.conversationId, {
+                tags: [...existingTags, args.tagName]
+            });
+        }
+    }
+});
+
+/**
+ * Remove a tag from a conversation
+ */
+export const removeTagFromConversation = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        tagName: v.string()
+    },
+    handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) return;
+
+        const existingTags = conversation.tags || [];
+        const newTags = existingTags.filter(t => t !== args.tagName);
 
         await ctx.db.patch(args.conversationId, {
             tags: newTags

@@ -26,6 +26,7 @@ export const createDepartment = mutation({
         isDefault: v.optional(v.boolean()),
         routingMode: v.optional(v.string()),
         botId: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -50,6 +51,7 @@ export const updateDepartment = mutation({
         name: v.optional(v.string()),
         description: v.optional(v.string()),
         isDefault: v.optional(v.boolean()),
+        tags: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();

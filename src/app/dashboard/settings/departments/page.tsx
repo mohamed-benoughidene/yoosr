@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 import { toast } from "sonner"
-import { Plus, Trash2, Building2, Bot } from "lucide-react"
+import { Plus, Trash2, Building2, Bot, Pencil, X } from "lucide-react"
 import {
     Table,
     TableBody,
@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
+import type { Id } from "../../../../../convex/_generated/dataModel"
 
 export default function DepartmentsPage() {
     const { activeProject } = useProject()
@@ -41,6 +42,9 @@ export default function DepartmentsPage() {
     const [newDesc, setNewDesc] = useState("")
     const [routingMode, setRoutingMode] = useState<"assigned" | "pooled">("pooled")
     const [useBot, setUseBot] = useState(false)
+    const [tags, setTags] = useState<string[]>([])
+    const [tagInput, setTagInput] = useState("")
+    const [editingDeptId, setEditingDeptId] = useState<Id<"departments"> | null>(null)
 
     const departments = useQuery(
         api.settings.listDepartments,
@@ -48,22 +52,34 @@ export default function DepartmentsPage() {
     ) ?? []
 
     const createDepartment = useMutation(api.settings.createDepartment)
+    const updateDepartment = useMutation(api.settings.updateDepartment)
     const removeDepartment = useMutation(api.settings.removeDepartment)
 
-    const handleCreate = async () => {
+    const handleSave = async () => {
         if (!activeProject || !newDeptName) return
 
         try {
-            await createDepartment({
-                projectId: activeProject._id,
-                name: newDeptName,
-                description: newDesc || undefined,
-                routingMode,
-            })
-            toast.success("Department created")
+            if (editingDeptId) {
+                await updateDepartment({
+                    id: editingDeptId,
+                    name: newDeptName,
+                    description: newDesc || undefined,
+                    tags: tags.length > 0 ? tags : undefined,
+                })
+                toast.success("Department updated")
+            } else {
+                await createDepartment({
+                    projectId: activeProject._id,
+                    name: newDeptName,
+                    description: newDesc || undefined,
+                    routingMode,
+                    tags: tags.length > 0 ? tags : undefined,
+                })
+                toast.success("Department created")
+            }
             resetForm()
         } catch {
-            toast.error("Failed to create department")
+            toast.error(editingDeptId ? "Failed to update department" : "Failed to create department")
         }
     }
 
@@ -81,7 +97,32 @@ export default function DepartmentsPage() {
         setNewDesc("")
         setRoutingMode("pooled")
         setUseBot(false)
+        setTags([])
+        setTagInput("")
+        setEditingDeptId(null)
         setCreateOpen(false)
+    }
+
+    const handleEdit = (dept: any) => {
+        setEditingDeptId(dept._id)
+        setNewDeptName(dept.name)
+        setNewDesc(dept.description || "")
+        setRoutingMode(dept.routingMode || "pooled")
+        setUseBot(!!dept.botId)
+        setTags(dept.tags || [])
+        setCreateOpen(true)
+    }
+
+    const addTag = () => {
+        const trimmed = tagInput.trim().toLowerCase()
+        if (trimmed && !tags.includes(trimmed)) {
+            setTags([...tags, trimmed])
+        }
+        setTagInput("")
+    }
+
+    const removeTag = (tagToRemove: string) => {
+        setTags(tags.filter(t => t !== tagToRemove))
     }
 
     return (
@@ -105,9 +146,9 @@ export default function DepartmentsPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Create Department</DialogTitle>
+                            <DialogTitle>{editingDeptId ? "Edit Department" : "Create Department"}</DialogTitle>
                             <DialogDescription>
-                                Add a new department to your project.
+                                {editingDeptId ? "Update department details." : "Add a new department to your project."}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-6 py-4">
@@ -162,10 +203,41 @@ export default function DepartmentsPage() {
                                     </div>
                                 </RadioGroup>
                             </div>
+
+                            <Separator />
+
+                            <div className="grid gap-2">
+                                <Label>Tags</Label>
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {tags.map(tag => (
+                                        <Badge key={tag} className="gap-1 pr-1 cursor-default">
+                                            {tag}
+                                            <button onClick={() => removeTag(tag)} className="hover:bg-black/10 rounded-full transition-colors">
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault()
+                                                addTag()
+                                            }
+                                        }}
+                                        placeholder="Add tag (e.g. arabic, support)"
+                                    />
+                                    <Button type="button" variant="secondary" onClick={addTag}>Add</Button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">Press Enter or click Add to save a tag</p>
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-                            <Button onClick={handleCreate}>Create Department</Button>
+                            <Button onClick={handleSave}>{editingDeptId ? "Update Department" : "Create Department"}</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -198,13 +270,25 @@ export default function DepartmentsPage() {
                                         {dept.description && (
                                             <div className="text-xs text-muted-foreground ml-6 mt-1">{dept.description}</div>
                                         )}
+                                        {dept.tags && dept.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 ml-6 mt-2">
+                                                {dept.tags.map(tag => (
+                                                    <Badge key={tag} variant="secondary" className="text-[10px] py-0 px-1.5 font-normal">
+                                                        {tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="capitalize">
                                             {dept.routingMode || 'pooled'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right flex items-center justify-end gap-1">
+                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(dept)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
                                         {!dept.isDefault && (
                                             <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(dept._id)}>
                                                 <Trash2 className="h-4 w-4" />

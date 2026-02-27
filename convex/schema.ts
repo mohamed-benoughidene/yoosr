@@ -152,6 +152,7 @@ export default defineSchema({
         isDefault: v.optional(v.boolean()),
         routingMode: v.optional(v.string()), // "pooled" | "assigned"
         botId: v.optional(v.string()), // Bot ID if AI-assigned
+        tags: v.optional(v.array(v.string())),
     }).index("by_projectId", ["projectId"]),
 
     // Canned responses (quick replies)
