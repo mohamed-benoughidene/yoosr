@@ -18,6 +18,7 @@ import type * as bots from "../bots.js";
 import type * as contacts from "../contacts.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
+import type * as dashboard from "../dashboard.js";
 import type * as debug from "../debug.js";
 import type * as dev from "../dev.js";
 import type * as diagnostic from "../diagnostic.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   conversations: typeof conversations;
   crons: typeof crons;
+  dashboard: typeof dashboard;
   debug: typeof debug;
   dev: typeof dev;
   diagnostic: typeof diagnostic;
