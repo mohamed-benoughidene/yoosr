@@ -126,6 +126,30 @@ export const updateInternal = internalMutation({
     }
 });
 
+// Update conversation status generically with botPaused support
+export const updateConversationStatus = mutation({
+    args: {
+        id: v.id("conversations"),
+        status: v.number(),
+        botPaused: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const updates: any = {
+            status: args.status,
+            updatedAt: Date.now(),
+        };
+
+        if (args.botPaused !== undefined) {
+            updates.botPaused = args.botPaused;
+        }
+
+        await ctx.db.patch(args.id, updates);
+    }
+});
+
 // Internal: create conversation from widget (no auth required)
 export const createFromWidget = internalMutation({
     args: {
@@ -294,6 +318,70 @@ export const resolve = mutation({
     },
 });
 
+// Join a conversation
+export const join = mutation({
+    args: { id: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) throw new Error("Conversation not found");
+
+        const participants = conversation.participants || [];
+        if (!participants.includes(identity.subject)) {
+            participants.push(identity.subject);
+        }
+
+        const updates: Record<string, any> = {
+            participants,
+            updatedAt: Date.now(),
+        };
+
+        // Auto-assign to first joining agent if unassigned
+        if (!conversation.assignedTo) {
+            updates.assignedTo = identity.subject;
+            updates.status = 200; // Assigned
+        }
+
+        await ctx.db.patch(args.id, updates);
+    },
+});
+
+// Leave a conversation
+export const leave = mutation({
+    args: { id: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) throw new Error("Conversation not found");
+
+        const participants = (conversation.participants || []).filter(
+            (id) => id !== identity.subject
+        );
+
+        const updates: Record<string, any> = {
+            participants,
+            updatedAt: Date.now(),
+        };
+
+        // If the agent leaving was the assigned one, clear it out.
+        // The business logic could vary here (e.g. keep them assigned but not participating),
+        // but typically leaving un-assigns you.
+        if (conversation.assignedTo === identity.subject) {
+            updates.assignedTo = undefined;
+            // Optionally set back to 100 if no other agents, but let's keep it simple for now or check participants
+            if (participants.length === 0) {
+                updates.status = 100;
+            }
+        }
+
+        await ctx.db.patch(args.id, updates);
+    },
+});
+
 // Update visitor info (inline editing from contact panel)
 export const updateVisitorInfo = mutation({
     args: {
@@ -356,6 +444,42 @@ export const rate = internalMutation({
     },
 });
 
+// Transfer a conversation to a specific department
+export const transferToDepartment = mutation({
+    args: {
+        id: v.id("conversations"),
+        departmentId: v.id("departments"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) throw new Error("Conversation not found");
+
+        const department = await ctx.db.get(args.departmentId);
+        if (!department) throw new Error("Department not found");
+
+        await ctx.db.patch(args.id, {
+            assignedTo: undefined,
+            status: 100, // 100: unassigned
+            botPaused: false, // Re-enable so a bot can pick it up if the department has one
+            updatedAt: Date.now(),
+            attributes: {
+                ...(conversation.attributes || {}),
+                department: department.name,
+            }
+        });
+
+        // Trigger smart routing engine for the new department
+        await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+            conversationId: args.id,
+            projectId: conversation.projectId,
+            departmentId: args.departmentId,
+        });
+    },
+});
+
 // Internal: auto-close inactive conversations (called by cron)
 export const autoCloseInactive = internalMutation({
     args: {},
@@ -412,6 +536,74 @@ export const getInternal = internalQuery({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
         return await ctx.db.get(args.id);
+    },
+});
+
+// Get conversations for the monitor view
+export const getConversations = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const convos = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .order("desc")
+            .collect();
+
+        return await Promise.all(convos.map(async (c) => {
+            const visitorName = c.visitorName || "Visitor";
+            const initials = visitorName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+
+            let assignedAgent = null;
+            if (c.assignedTo) {
+                const profile = await ctx.db
+                    .query("profiles")
+                    .withIndex("by_userId", (q) => q.eq("userId", c.assignedTo!))
+                    .first();
+                if (profile) {
+                    assignedAgent = {
+                        name: profile.fullName || profile.username || "Unknown",
+                        avatarUrl: profile.avatarUrl,
+                    };
+                }
+            }
+
+            return {
+                id: c._id,
+                status: c.status ?? 100,
+                tags: c.tags ?? [],
+                participants: c.participants ?? [],
+                createdAt: c._creationTime,
+                lastMessage: c.lastMessage ?? "Started a new conversation",
+                timestamp: c.updatedAt ?? c._creationTime,
+                assignedAgent: assignedAgent,
+                assignedTo: c.assignedTo ?? null, // Kept for backwards compatibility in other UI components
+                channel: c.attributes?.channel ?? "web",
+                unread: c.unreadCount ?? 0,
+                user: {
+                    name: visitorName,
+                    email: c.visitorEmail ?? "",
+                    avatar: "",
+                    initials: initials || "V",
+                },
+                details: {
+                    department: c.attributes?.department ?? "General",
+                    location: c.attributes?.location ?? "Unknown",
+                    language: c.attributes?.language ?? "en",
+                    os: c.attributes?.os ?? "Unknown",
+                    browser: c.attributes?.browser ?? "Unknown",
+                    sourcePage: c.attributes?.sourcePage ?? "",
+                    ip: c.attributes?.ip ?? "",
+                },
+            };
+        }));
     },
 });
 

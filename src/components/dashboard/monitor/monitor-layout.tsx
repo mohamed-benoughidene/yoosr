@@ -10,16 +10,32 @@ import { Separator } from "@/components/ui/separator"
 import { ConversationList } from "./conversation-list"
 import { ChatDisplay } from "./chat-display"
 import { ContactInfo } from "./contact-info"
-import { conversations } from "./data"
+import { useQuery, useMutation } from "convex/react"
+import { useProject } from "@/context/ProjectContext"
+import { api } from "../../../../convex/_generated/api"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function MonitorLayout() {
-    const [selectedConversationId, setSelectedConversationId] = React.useState<string | null>(
-        conversations[0].id
+    const { activeProject } = useProject()
+    const projectId = activeProject?._id
+
+    const conversations = useQuery(
+        api.conversations.getConversations,
+        projectId ? { projectId } : "skip"
     )
 
-    const selectedConversation = conversations.find(
+    const [selectedConversationId, setSelectedConversationId] = React.useState<string | null>(null)
+
+    // Select the first conversation by default if none selected and data loaded
+    React.useEffect(() => {
+        if (conversations && conversations.length > 0 && !selectedConversationId) {
+            setSelectedConversationId(conversations[0].id)
+        }
+    }, [conversations, selectedConversationId])
+
+    const selectedConversation = conversations?.find(
         (c) => c.id === selectedConversationId
-    )
+    ) ?? null
 
     return (
         <div className="h-[calc(100vh-5rem)] w-full">
@@ -28,38 +44,53 @@ export default function MonitorLayout() {
                     <h1 className="text-xl font-bold">Monitor</h1>
                 </div>
                 <Separator />
-                <ResizablePanelGroup
-                    direction="horizontal"
-                    className="h-full items-stretch"
-                >
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        <ConversationList
-                            items={conversations}
-                            selectedId={selectedConversationId}
-                            onSelect={setSelectedConversationId}
-                        />
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={50} minSize={30}>
-                        {selectedConversation ? (
-                            <ChatDisplay conversation={selectedConversation} />
-                        ) : (
-                            <div className="flex h-full items-center justify-center">
-                                <span className="text-muted-foreground">Select a conversation</span>
-                            </div>
-                        )}
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        {selectedConversation ? (
-                            <ContactInfo conversation={selectedConversation} />
-                        ) : (
-                            <div className="flex h-full items-center justify-center">
-                                <span className="text-muted-foreground">No contact selected</span>
-                            </div>
-                        )}
-                    </ResizablePanel>
-                </ResizablePanelGroup>
+
+                {conversations === undefined ? (
+                    <div className="flex h-full items-center justify-center p-8">
+                        <div className="flex flex-col gap-4 w-full h-full max-w-md mx-auto">
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                    </div>
+                ) : conversations.length === 0 ? (
+                    <div className="flex h-full items-center justify-center flex-col gap-4">
+                        <span className="text-muted-foreground">No conversations yet</span>
+                    </div>
+                ) : (
+                    <ResizablePanelGroup
+                        direction="horizontal"
+                        className="h-full items-stretch"
+                    >
+                        <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                            <ConversationList
+                                items={conversations}
+                                selectedId={selectedConversationId}
+                                onSelect={setSelectedConversationId}
+                            />
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={50} minSize={30}>
+                            {selectedConversation ? (
+                                <ChatDisplay conversation={selectedConversation} />
+                            ) : (
+                                <div className="flex h-full items-center justify-center">
+                                    <span className="text-muted-foreground">Select a conversation</span>
+                                </div>
+                            )}
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                            {selectedConversation ? (
+                                <ContactInfo conversation={selectedConversation} />
+                            ) : (
+                                <div className="flex h-full items-center justify-center">
+                                    <span className="text-muted-foreground">No contact selected</span>
+                                </div>
+                            )}
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                )}
             </div>
         </div>
     )

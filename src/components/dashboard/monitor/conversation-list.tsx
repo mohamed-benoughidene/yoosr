@@ -1,17 +1,54 @@
-import { ComponentProps } from "react"
+import { ComponentProps, useState } from "react"
 
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Conversation } from "./data"
-import { TeammatesCarousel } from "./teammates-carousel"
+export interface Conversation {
+    id: string;
+    status: number;
+    tags: string[];
+    participants: string[];
+    createdAt: number;
+    lastMessage: string;
+    timestamp: number;
+    assignedTo?: string | null;
+    assignedAgent?: { name: string; avatarUrl?: string } | null;
+    channel: string;
+    unread: number;
+    user: {
+        name: string;
+        email: string;
+        avatar?: string;
+        initials: string;
+    };
+    details: {
+        department?: string;
+        location?: string;
+        language?: string;
+        os?: string;
+        browser?: string;
+        sourcePage?: string;
+        ip?: string;
+    };
+}
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, SlidersHorizontal } from "lucide-react"
+import { Search, Filter, SlidersHorizontal, Tag } from "lucide-react"
 
 import { MessageCircle, Globe, Facebook, Mail } from "lucide-react"
+
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { useProject } from "@/context/ProjectContext"
+import { Id } from "../../../../convex/_generated/dataModel"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface ConversationListProps {
     items: Conversation[]
@@ -33,31 +70,94 @@ export function ConversationList({
     selectedId,
     onSelect,
 }: ConversationListProps) {
+    const { activeProject } = useProject()
+    const projectId = activeProject?._id
+
+    const labels = useQuery(
+        api.labels.listLabels,
+        projectId ? { projectId } : "skip"
+    )
+
+    const [activeLabel, setActiveLabel] = useState<string | null>(null)
+
+    const filteredItems = items.filter((item) => {
+        if (!activeLabel) return true;
+        return item.tags?.includes(activeLabel);
+    });
+
     return (
         <div className="flex h-full flex-col">
-            <TeammatesCarousel />
+
 
             <div className="p-4 pb-2 space-y-3">
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Search conversations..." className="pl-8" />
                 </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant={activeLabel ? "default" : "outline"}
+                                size="sm"
+                                className="h-8 text-xs shrink-0"
+                            >
+                                <Tag className="mr-2 h-3 w-3" />
+                                {activeLabel ? `Label: ${activeLabel}` : "Label"}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-2" align="start">
+                            <div className="flex flex-col gap-1">
+                                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Filter by label</div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="justify-start font-normal h-8"
+                                    onClick={() => setActiveLabel(null)}
+                                >
+                                    All Conversations
+                                </Button>
+                                {labels?.map((label) => (
+                                    <Button
+                                        key={label._id}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-start font-normal h-8 flex items-center gap-2"
+                                        onClick={() => setActiveLabel(activeLabel === label.name ? null : label.name)}
+                                    >
+                                        <div
+                                            className="w-2 h-2 rounded-full shrink-0"
+                                            style={{ backgroundColor: label.color }}
+                                        />
+                                        <span className="truncate">{label.name}</span>
+                                        {activeLabel === label.name && (
+                                            <span className="ml-auto flex h-2 w-2 rounded-full bg-primary" />
+                                        )}
+                                    </Button>
+                                ))}
+                                {labels && labels.length === 0 && (
+                                    <div className="text-xs text-muted-foreground p-2 text-center">
+                                        No labels found
+                                    </div>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
                         <Filter className="mr-2 h-3 w-3" />
                         Dept
                     </Button>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
                         <Filter className="mr-2 h-3 w-3" />
                         Agent
                     </Button>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
                         <SlidersHorizontal className="mr-2 h-3 w-3" />
                         Status
                     </Button>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Active (3)</span>
+                    <span>Active ({filteredItems.length})</span>
                     <div className="flex items-center gap-2">
                         <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Served</span>
                         <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500"></div> Unserved</span>
@@ -67,7 +167,7 @@ export function ConversationList({
 
             <ScrollArea className="flex-1">
                 <div className="flex flex-col gap-2 p-4 pt-0">
-                    {items.map((item) => (
+                    {filteredItems.map((item) => (
                         <button
                             key={item.id}
                             className={cn(
@@ -105,18 +205,20 @@ export function ConversationList({
                                                 : "text-muted-foreground"
                                         )}
                                     >
-                                        {item.timestamp}
+                                        {new Intl.DateTimeFormat("en", {
+                                            timeStyle: "short"
+                                        }).format(new Date(item.timestamp))}
                                     </div>
                                 </div>
-                                <div className="text-xs font-medium ml-11">{item.lastMessage}</div>
+                                <div className="text-xs font-medium ml-11 line-clamp-1">{item.lastMessage}</div>
                             </div>
                             <div className="line-clamp-2 text-xs text-muted-foreground">
                                 {item.lastMessage.substring(0, 300)}
                             </div>
                             {item.tags.length ? (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     {item.tags.map((tag) => (
-                                        <Badge key={tag} variant="secondary">
+                                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 font-normal">
                                             {tag}
                                         </Badge>
                                     ))}
@@ -124,6 +226,11 @@ export function ConversationList({
                             ) : null}
                         </button>
                     ))}
+                    {filteredItems.length === 0 && (
+                        <div className="text-sm text-center text-muted-foreground py-8">
+                            No conversations match this label.
+                        </div>
+                    )}
                 </div>
             </ScrollArea>
         </div>

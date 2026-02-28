@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
@@ -34,9 +35,16 @@ export default function TeammatesPage() {
     const [inviteRole, setInviteRole] = useState("agent")
 
     const members = useQuery(api.members.list, activeProject ? { projectId: activeProject._id } : "skip")
+    const departments = useQuery(api.settings.listDepartments, activeProject ? { projectId: activeProject._id } : "skip")
     const inviteMember = useMutation(api.members.invite)
     const updateMember = useMutation(api.members.update)
     const removeMember = useMutation(api.members.remove)
+    const assignMemberToDepartment = useMutation(api.members.assignMemberToDepartment)
+    const removeMemberFromDepartment = useMutation(api.members.removeMemberFromDepartment)
+
+    const [editDeptsOpen, setEditDeptsOpen] = useState(false)
+    const [selectedMemberId, setSelectedMemberId] = useState<Id<"project_members"> | null>(null)
+    const [selectedDepts, setSelectedDepts] = useState<Set<Id<"departments">>>(new Set())
 
     const handleInvite = async () => {
         if (!activeProject || !inviteEmail) return
@@ -60,6 +68,42 @@ export default function TeammatesPage() {
     const handleRemove = async (id: Id<"project_members">) => {
         try { await removeMember({ id }); toast.success("Member removed") }
         catch { toast.error("Failed to remove member") }
+    }
+
+    const openEditDepts = (member: any) => {
+        setSelectedMemberId(member._id)
+        setSelectedDepts(new Set(member.departmentIds || []))
+        setEditDeptsOpen(true)
+    }
+
+    const handleSaveDepts = async () => {
+        if (!selectedMemberId) return
+
+        const member = members?.find(m => m._id === selectedMemberId)
+        if (!member) return
+
+        const initialDepts = new Set(member.departmentIds || [])
+
+        try {
+            // Find added departments
+            for (const deptId of selectedDepts) {
+                if (!initialDepts.has(deptId)) {
+                    await assignMemberToDepartment({ memberId: selectedMemberId, departmentId: deptId })
+                }
+            }
+
+            // Find removed departments
+            for (const deptId of initialDepts) {
+                if (!selectedDepts.has(deptId)) {
+                    await removeMemberFromDepartment({ memberId: selectedMemberId, departmentId: deptId })
+                }
+            }
+
+            toast.success("Departments updated")
+            setEditDeptsOpen(false)
+        } catch {
+            toast.error("Failed to update departments")
+        }
     }
 
     const getInitials = (name: string | null | undefined) => {
@@ -117,14 +161,15 @@ export default function TeammatesPage() {
                             <TableHead>Member</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Role</TableHead>
+                            <TableHead>Departments</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={4} className="text-center py-8">Loading...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5} className="text-center py-8">Loading...</TableCell></TableRow>
                         ) : (members ?? []).length === 0 ? (
-                            <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No team members yet.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No team members yet.</TableCell></TableRow>
                         ) : (members ?? []).map(member => {
                             const isPending = !member.userId
                             const isOwner = member.role === "owner"
@@ -175,12 +220,35 @@ export default function TeammatesPage() {
                                             </Select>
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        {!isOwner && !isCurrentUser && (
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleRemove(member._id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                    <TableCell>
+                                        {isPending ? <span className="text-xs text-muted-foreground">—</span> : (
+                                            <div className="flex flex-wrap gap-1">
+                                                {member.departmentIds && member.departmentIds.length > 0 ? (
+                                                    member.departmentIds.map((deptId: Id<"departments">) => {
+                                                        const dept = departments?.find(d => d._id === deptId)
+                                                        return dept ? (
+                                                            <Badge key={deptId} variant="secondary" className="text-xs">{dept.name}</Badge>
+                                                        ) : null
+                                                    })
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">No departments</span>
+                                                )}
+                                            </div>
                                         )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            {!isPending && (
+                                                <Button variant="outline" size="sm" onClick={() => openEditDepts(member)}>
+                                                    Edit Departments
+                                                </Button>
+                                            )}
+                                            {!isOwner && !isCurrentUser && (
+                                                <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleRemove(member._id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )
@@ -188,6 +256,52 @@ export default function TeammatesPage() {
                     </TableBody>
                 </Table>
             </Card>
+
+            <Dialog open={editDeptsOpen} onOpenChange={setEditDeptsOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit Departments</DialogTitle>
+                        <DialogDescription>
+                            Assign or remove this teammate from departments.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        {!departments || departments.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No departments exist in this project yet.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {departments.map(dept => (
+                                    <div key={dept._id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`dept-${dept._id}`}
+                                            checked={selectedDepts.has(dept._id)}
+                                            onCheckedChange={(checked) => {
+                                                const newSet = new Set(selectedDepts)
+                                                if (checked) {
+                                                    newSet.add(dept._id)
+                                                } else {
+                                                    newSet.delete(dept._id)
+                                                }
+                                                setSelectedDepts(newSet)
+                                            }}
+                                        />
+                                        <Label
+                                            htmlFor={`dept-${dept._id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            {dept.name}
+                                        </Label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditDeptsOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveDepts}>Save</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

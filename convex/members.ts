@@ -204,3 +204,87 @@ export const remove = mutation({
         });
     },
 });
+
+// Get all project members with their profiles (for transfer functionality)
+export const getProjectMembers = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const members = await ctx.db
+            .query("project_members")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        // Only get active/accepted members who have a set userId
+        const activeMembers = members.filter(
+            (m) => m.userId && (m.inviteStatus === "accepted" || !m.inviteStatus)
+        );
+
+        // Fetch user profiles to enrich member data
+        const enriched = await Promise.all(
+            activeMembers.map(async (m) => {
+                const profile = await ctx.db
+                    .query("profiles")
+                    .withIndex("by_userId", (q) => q.eq("userId", m.userId!))
+                    .first();
+
+                return {
+                    userId: m.userId!,
+                    role: m.role,
+                    profile: profile ? {
+                        fullName: profile.fullName || profile.username || "Unknown",
+                        avatarUrl: profile.avatarUrl,
+                    } : null,
+                };
+            })
+        );
+
+        return enriched;
+    },
+});
+
+// Assign a member to a department
+export const assignMemberToDepartment = mutation({
+    args: {
+        memberId: v.id("project_members"),
+        departmentId: v.id("departments")
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const member = await ctx.db.get(args.memberId);
+        if (!member) throw new Error("Member not found");
+
+        const departmentIds = member.departmentIds || [];
+        if (!departmentIds.includes(args.departmentId)) {
+            await ctx.db.patch(args.memberId, {
+                departmentIds: [...departmentIds, args.departmentId]
+            });
+        }
+    }
+});
+
+// Remove a member from a department
+export const removeMemberFromDepartment = mutation({
+    args: {
+        memberId: v.id("project_members"),
+        departmentId: v.id("departments")
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const member = await ctx.db.get(args.memberId);
+        if (!member) throw new Error("Member not found");
+
+        const departmentIds = member.departmentIds || [];
+        const updatedDepartmentIds = departmentIds.filter(id => id !== args.departmentId);
+
+        await ctx.db.patch(args.memberId, {
+            departmentIds: updatedDepartmentIds
+        });
+    }
+});

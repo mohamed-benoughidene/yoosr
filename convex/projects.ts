@@ -71,6 +71,72 @@ export const get = query({
     },
 });
 
+// Get a project by ownerId (useful when relying on Clerk org IDs)
+export const getByOwnerId = query({
+    args: { ownerId: v.string() },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const project = await ctx.db
+            .query("projects")
+            .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+            .first();
+
+        return project;
+    },
+});
+
+// Create a default project if it doesn't exist for this owner
+export const ensureProject = mutation({
+    args: { ownerId: v.string() },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        let project = await ctx.db
+            .query("projects")
+            .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+            .first();
+
+        if (!project) {
+            const projectId = await ctx.db.insert("projects", {
+                name: "Default Project",
+                description: "Auto-generated project",
+                ownerId: args.ownerId,
+                status: "active",
+            });
+
+            await ctx.db.insert("project_members", {
+                projectId,
+                userId: identity.subject,
+                role: "owner",
+                status: "available",
+            });
+
+            // Add some default labels
+            const defaultLabels = [
+                { name: "Bug", color: "#ef4444" },
+                { name: "Feature Request", color: "#3b82f6" },
+                { name: "Question", color: "#10b981" }
+            ];
+
+            for (const label of defaultLabels) {
+                await ctx.db.insert("labels", {
+                    projectId,
+                    name: label.name,
+                    color: label.color,
+                    createdBy: identity.subject
+                });
+            }
+
+            project = await ctx.db.get(projectId);
+        }
+
+        return project;
+    }
+});
+
 // Create a new project
 export const create = mutation({
     args: {

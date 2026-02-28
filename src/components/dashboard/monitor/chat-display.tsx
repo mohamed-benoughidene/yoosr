@@ -1,16 +1,8 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Conversation } from "./data"
-import { Send, MoreVertical, Phone, Video, Paperclip, Smile, Archive, LogIn } from "lucide-react"
+import { Conversation } from "./conversation-list"
+import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import {
     DropdownMenu,
@@ -18,17 +10,194 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
-
+import { useMutation, useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useProject } from "@/context/ProjectContext"
+import { useUser } from "@clerk/nextjs"
 
 interface ChatDisplayProps {
     conversation: Conversation | null
 }
 
 export function ChatDisplay({ conversation }: ChatDisplayProps) {
+    const { activeProject } = useProject()
+    const projectId = activeProject?._id
+
     const [messageMode, setMessageMode] = useState<"public" | "internal">("public")
+    const [inputValue, setInputValue] = useState("")
+    const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
+    const [agentSearch, setAgentSearch] = useState("")
+    const [isDepartmentTransferDialogOpen, setIsDepartmentTransferDialogOpen] = useState(false)
+    const [departmentSearch, setDepartmentSearch] = useState("")
+    const { user } = useUser()
+
+    const projectMembers = useQuery(
+        api.members.getProjectMembers,
+        projectId ? { projectId: projectId as Id<"projects"> } : "skip"
+    );
+
+    const departments = useQuery(
+        api.settings.listDepartments,
+        projectId ? { projectId: projectId as Id<"projects"> } : "skip"
+    );
+
+    const messages = useQuery(
+        api.messages.getMessages,
+        conversation ? { conversationId: conversation.id as Id<"conversations"> } : "skip"
+    );
+
+    const sendMessage = useMutation(api.messages.sendMessage);
+    const joinConversation = useMutation(api.conversations.join);
+    const leaveConversation = useMutation(api.conversations.leave);
+    const closeConversation = useMutation(api.conversations.resolve);
+    const updateConversationStatus = useMutation(api.conversations.updateConversationStatus);
+    const updateConversation = useMutation(api.conversations.update);
+    const transferToDept = useMutation(api.conversations.transferToDepartment);
+    const sendSystemMessage = useMutation(api.messages.send);
+
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages])
+
+    const handleSend = async () => {
+        if (!inputValue.trim() || !conversation || !projectId) return;
+
+        const content = inputValue;
+        setInputValue(""); // immediately clear to feel responsive
+
+        try {
+            await sendMessage({
+                conversationId: conversation.id as Id<"conversations">,
+                projectId: projectId as Id<"projects">,
+                content,
+                isInternal: messageMode === "internal"
+            });
+        } catch (error) {
+            console.error("Failed to send message:", error);
+            // In a real app, restore input value and show toast
+        }
+    }
+
+    const handleSendAsOpen = async () => {
+        if (!conversation) return;
+        await handleSend();
+        try {
+            await updateConversationStatus({
+                id: conversation.id as Id<"conversations">,
+                status: 100,
+            });
+        } catch (error) {
+            console.error("Failed to send as open:", error);
+        }
+    }
+
+    const handleSendAsPending = async () => {
+        if (!conversation) return;
+        await handleSend();
+        try {
+            await updateConversationStatus({
+                id: conversation.id as Id<"conversations">,
+                status: 100,
+                botPaused: false
+            });
+        } catch (error) {
+            console.error("Failed to set status to pending:", error);
+        }
+    }
+
+    const handleSendAsResolved = async () => {
+        if (!conversation) return;
+        await handleSend();
+        try {
+            // Note: closeConversation uses the dedicated `resolve` endpoint which tracks resolvedBy properly
+            await closeConversation({ id: conversation.id as Id<"conversations"> });
+        } catch (error) {
+            console.error("Failed to resolve conversation:", error);
+        }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    }
+
+    const handleJoinLeave = async () => {
+        if (!conversation || !user) return;
+
+        try {
+            if (isJoined) {
+                await leaveConversation({ id: conversation.id as Id<"conversations"> });
+            } else {
+                await joinConversation({ id: conversation.id as Id<"conversations"> });
+            }
+        } catch (error) {
+            console.error("Failed to toggle join status:", error);
+        }
+    }
+
+    const handleClose = async () => {
+        if (!conversation) return;
+        try {
+            await closeConversation({ id: conversation.id as Id<"conversations"> });
+        } catch (error) {
+            console.error("Failed to close conversation:", error);
+        }
+    }
+
+    const handleTransfer = async (agentUserId: string, agentName: string) => {
+        if (!conversation) return;
+        try {
+            setIsTransferDialogOpen(false);
+            await updateConversation({
+                id: conversation.id as Id<"conversations">,
+                assignedTo: agentUserId,
+            });
+            await sendSystemMessage({
+                conversationId: conversation.id as Id<"conversations">,
+                content: `Conversation transferred to ${agentName}`,
+                senderType: "bot",
+            });
+            setAgentSearch("");
+        } catch (error) {
+            console.error("Failed to transfer conversation:", error);
+        }
+    }
+
+    const handleDepartmentTransfer = async (departmentId: string, departmentName: string) => {
+        if (!conversation) return;
+        try {
+            setIsDepartmentTransferDialogOpen(false);
+            await transferToDept({
+                id: conversation.id as Id<"conversations">,
+                departmentId: departmentId as Id<"departments">,
+            });
+            await sendSystemMessage({
+                conversationId: conversation.id as Id<"conversations">,
+                content: `Conversation transferred to ${departmentName}`,
+                senderType: "bot",
+            });
+            setDepartmentSearch("");
+        } catch (error) {
+            console.error("Failed to transfer to department:", error);
+        }
+    }
 
     if (!conversation) {
         return (
@@ -43,6 +212,8 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
             </div>
         )
     }
+
+    const isJoined = Boolean(user && conversation.participants?.includes(user.id))
 
     return (
         <div className="flex h-full flex-col bg-slate-50/50">
@@ -59,76 +230,223 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="h-9 gap-2">
-                        <LogIn className="h-4 w-4" />
-                        Join
+                    <Button
+                        variant={isJoined ? "secondary" : "outline"}
+                        size="sm"
+                        className="h-9 gap-2"
+                        onClick={handleJoinLeave}
+                    >
+                        {isJoined ? (
+                            <>
+                                <LogOut className="h-4 w-4" />
+                                Leave
+                            </>
+                        ) : (
+                            <>
+                                <LogIn className="h-4 w-4" />
+                                Join
+                            </>
+                        )}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                        <Archive className="h-4 w-4" />
-                    </Button>
-                    <Separator orientation="vertical" className="h-8" />
-                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                        <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => joinConversation({ id: conversation.id as Id<"conversations"> })}
+                                disabled={isJoined || conversation.status === 1000}
+                            >
+                                Assign to me
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => setIsTransferDialogOpen(true)}
+                                disabled={conversation.status === 1000}
+                            >
+                                Transfer to agent
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => setIsDepartmentTransferDialogOpen(true)}
+                                disabled={conversation.status === 1000}
+                            >
+                                Transfer to department
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={handleClose}
+                                disabled={conversation.status === 1000}
+                            >
+                                Resolve conversation
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
+
+            {/* Transfer Dialog */}
+            <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Transfer Conversation</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 py-4">
+                        <Input
+                            placeholder="Search agents..."
+                            value={agentSearch}
+                            onChange={(e) => setAgentSearch(e.target.value)}
+                        />
+                        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
+                            {projectMembers === undefined ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">Loading agents...</div>
+                            ) : projectMembers.length === 0 ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">No agents found.</div>
+                            ) : (
+                                projectMembers
+                                    .filter(m => m.userId !== conversation.assignedTo)
+                                    .filter(m => {
+                                        if (!agentSearch) return true;
+                                        const name = m.profile?.fullName || "";
+                                        return name.toLowerCase().includes(agentSearch.toLowerCase());
+                                    })
+                                    .map(m => (
+                                        <div
+                                            key={m.userId}
+                                            onClick={() => handleTransfer(m.userId, m.profile?.fullName || 'Agent')}
+                                            className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                                        >
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={m.profile?.avatarUrl} />
+                                                <AvatarFallback>{m.profile?.fullName?.charAt(0) || 'A'}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium">{m.profile?.fullName || 'Unknown Agent'}</span>
+                                                <span className="text-xs text-muted-foreground capitalize">{m.role}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Department Transfer Dialog */}
+            <Dialog open={isDepartmentTransferDialogOpen} onOpenChange={setIsDepartmentTransferDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Transfer to Department</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 py-4">
+                        <Input
+                            placeholder="Search departments..."
+                            value={departmentSearch}
+                            onChange={(e) => setDepartmentSearch(e.target.value)}
+                        />
+                        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
+                            {departments === undefined ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">Loading departments...</div>
+                            ) : departments.length === 0 ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">No departments found.</div>
+                            ) : (
+                                departments
+                                    .filter(d => {
+                                        if (!departmentSearch) return true;
+                                        return d.name.toLowerCase().includes(departmentSearch.toLowerCase());
+                                    })
+                                    .map(d => (
+                                        <div
+                                            key={d._id}
+                                            onClick={() => handleDepartmentTransfer(d._id, d.name)}
+                                            className="flex items-center gap-3 p-3 rounded-md hover:bg-muted cursor-pointer transition-colors border"
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium">{d.name} {d.isDefault && <span className="text-xs text-muted-foreground ml-1">(Default)</span>}</span>
+                                                {d.description && <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{d.description}</span>}
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4">
                 <div className="flex flex-col gap-6">
-                    {/* Mock Date Divider */}
-                    <div className="flex items-center justify-center">
-                        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs text-muted-foreground">Today</div>
-                    </div>
-
-                    {/* Customer Message */}
-                    <div className="flex items-end gap-3">
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarImage src={conversation.user.avatar} />
-                            <AvatarFallback>{conversation.user.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="max-w-[75%]">
-                            <div className="rounded-2xl rounded-tl-none bg-white p-3 shadow-sm border border-slate-100 text-sm">
-                                {conversation.lastMessage}
+                    {messages === undefined ? (
+                        <div className="flex flex-col gap-4 max-w-lg">
+                            <Skeleton className="h-12 w-64 rounded-2xl rounded-tl-none" />
+                            <Skeleton className="h-12 w-48 rounded-2xl rounded-tl-none" />
+                            <div className="flex justify-end">
+                                <Skeleton className="h-12 w-56 rounded-2xl rounded-tr-none" />
                             </div>
-                            <span className="mt-1 block text-[10px] text-muted-foreground ml-1">
-                                {conversation.timestamp}
-                            </span>
                         </div>
-                    </div>
-
-                    {/* Internal Note Mock */}
-                    <div className="flex items-end gap-3 flex-row-reverse">
-                        <Avatar className="h-8 w-8 border bg-yellow-100">
-                            <AvatarFallback className="text-yellow-700">ME</AvatarFallback>
-                        </Avatar>
-                        <div className="max-w-[75%]">
-                            <div className="rounded-2xl rounded-tr-none bg-yellow-50 p-3 shadow-sm border border-yellow-100 text-sm">
-                                <span className="mb-1 block text-[10px] font-semibold text-yellow-700 uppercase tracking-wider">Internal Note</span>
-                                This customer is asking about the enterprise plan pricing.
-                            </div>
-                            <span className="mt-1 block text-[10px] text-muted-foreground mr-1 text-right">
-                                10:35 AM
-                            </span>
+                    ) : messages.length === 0 ? (
+                        <div className="flex h-[300px] items-center justify-center">
+                            <span className="text-sm text-muted-foreground">No messages yet. Send a message to start!</span>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {messages.map((msg: any) => {
+                                const isLead = msg.senderType === "visitor";
+                                const isInternal = msg.isInternal;
 
+                                const timeFormat = new Intl.DateTimeFormat("en", {
+                                    timeStyle: "short"
+                                }).format(new Date(msg.createdAt));
 
-                    {/* Agent Message */}
-                    <div className="flex items-end gap-3 flex-row-reverse">
-                        <Avatar className="h-8 w-8 border bg-blue-100">
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                            <AvatarFallback className="text-blue-700">ME</AvatarFallback>
-                        </Avatar>
-                        <div className="max-w-[75%]">
-                            <div className="rounded-2xl rounded-tr-none bg-blue-600 p-3 shadow-sm text-sm text-white">
-                                Hello! How can I help you today?
-                            </div>
-                            <span className="mt-1 block text-[10px] text-muted-foreground mr-1 text-right">
-                                10:32 AM
-                            </span>
-                        </div>
-                    </div>
+                                if (isLead) {
+                                    return (
+                                        <div key={msg.id} className="flex items-end gap-3">
+                                            <Avatar className="h-8 w-8 border">
+                                                <AvatarImage src={conversation.user.avatar} />
+                                                <AvatarFallback>{conversation.user.initials}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="max-w-[75%]">
+                                                <div className="rounded-2xl rounded-tl-none bg-white p-3 shadow-sm border border-slate-100 text-sm whitespace-pre-wrap">
+                                                    {msg.content}
+                                                </div>
+                                                <span className="mt-1 block text-[10px] text-muted-foreground ml-1">
+                                                    {timeFormat}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )
+                                } else {
+                                    // Agent or bot message
+                                    return (
+                                        <div key={msg.id} className="flex items-end gap-3 flex-row-reverse">
+                                            <Avatar className={cn("h-8 w-8 border", isInternal ? "bg-yellow-100" : "bg-blue-100")}>
+                                                <AvatarImage src={msg.senderType === "agent" ? "https://github.com/shadcn.png" : undefined} />
+                                                <AvatarFallback className={isInternal ? "text-yellow-700" : "text-blue-700"}>
+                                                    {msg.senderType === "bot" ? "BOT" : "AG"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="max-w-[75%]">
+                                                <div className={cn(
+                                                    "rounded-2xl rounded-tr-none p-3 shadow-sm text-sm whitespace-pre-wrap",
+                                                    isInternal
+                                                        ? "bg-yellow-50 border border-yellow-100 text-foreground"
+                                                        : "bg-primary text-primary-foreground"
+                                                )}>
+                                                    {isInternal && (
+                                                        <span className="mb-1 block text-[10px] font-semibold text-yellow-700 uppercase tracking-wider">Internal Note</span>
+                                                    )}
+                                                    {msg.content}
+                                                </div>
+                                                <span className="mt-1 block text-[10px] text-muted-foreground mr-1 text-right">
+                                                    {timeFormat}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                            })}
+                            <div ref={messagesEndRef} />
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -148,33 +466,62 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                     messageMode === "internal" ? "bg-yellow-50/50 border-yellow-200 focus-within:ring-yellow-300" : "bg-white focus-within:ring-ring"
                 )}>
                     <Textarea
-                        placeholder={messageMode === "internal" ? "Add an internal note..." : "Type your message..."}
-                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50")}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={conversation.status === 1000}
+                        placeholder={conversation.status === 1000 ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}
+                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", conversation.status === 1000 && "cursor-not-allowed opacity-50")}
                     />
 
                     <div className="flex items-center justify-between p-2">
                         <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === 1000}>
                                 <Paperclip className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === 1000}>
                                 <Smile className="h-4 w-4" />
                             </Button>
                         </div>
                         <div className="flex items-center gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button size="sm" className={cn("gap-2", messageMode === "internal" ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "")}>
-                                        {messageMode === "internal" ? "Save Note" : "Send as Open"}
+                            {messageMode === "internal" ? (
+                                <Button
+                                    size="sm"
+                                    onClick={handleSend}
+                                    disabled={!inputValue.trim() || conversation.status === 1000}
+                                    className="gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+                                >
+                                    Save Note
+                                    <Send className="h-3 w-3" />
+                                </Button>
+                            ) : (
+                                <div className="flex items-center shadow-sm rounded-md">
+                                    <Button
+                                        size="sm"
+                                        onClick={handleSendAsOpen}
+                                        disabled={!inputValue.trim() || conversation.status === 1000}
+                                        className="gap-2 rounded-r-none border-r border-primary-foreground/20"
+                                    >
+                                        Send as Open
                                         <Send className="h-3 w-3" />
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>Send as Open</DropdownMenuItem>
-                                    <DropdownMenuItem>Send as Pending</DropdownMenuItem>
-                                    <DropdownMenuItem>Send as Resolved</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                size="sm"
+                                                disabled={!inputValue.trim() || conversation.status === 1000}
+                                                className="rounded-l-none px-2"
+                                            >
+                                                <ChevronDown className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={handleSendAsResolved}>Send as Resolved</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleSendAsPending}>Send as Pending</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -182,4 +529,4 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
         </div>
     )
 }
-import { MessageCircle } from "lucide-react"
+

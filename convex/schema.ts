@@ -30,6 +30,7 @@ export default defineSchema({
         invitedEmail: v.optional(v.string()),
         invitedAt: v.optional(v.number()),
         inviteStatus: v.optional(v.string()), // "pending" | "accepted" | "rejected"
+        departmentIds: v.optional(v.array(v.id("departments"))),
     })
         .index("by_projectId", ["projectId"])
         .index("by_userId", ["userId"])

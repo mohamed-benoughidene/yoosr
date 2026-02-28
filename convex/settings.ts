@@ -11,10 +11,51 @@ export const listDepartments = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
-        return await ctx.db
+
+        const departments = await ctx.db
             .query("departments")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .collect();
+
+        // Enrich each department with its assigned members and their profiles
+        return await Promise.all(
+            departments.map(async (dept) => {
+                // Find members who have this departmentId in their departmentIds array
+                const members = await ctx.db
+                    .query("project_members")
+                    .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+                    .collect();
+
+                const assignedMembers = members.filter(
+                    (m) => m.departmentIds?.includes(dept._id) && m.userId && (m.inviteStatus === "accepted" || !m.inviteStatus)
+                );
+
+                // Fetch their profiles
+                const enrichedMembers = await Promise.all(
+                    assignedMembers.map(async (m) => {
+                        const profile = await ctx.db
+                            .query("profiles")
+                            .withIndex("by_userId", (q) => q.eq("userId", m.userId!))
+                            .first();
+
+                        return {
+                            _id: m._id,
+                            userId: m.userId!,
+                            role: m.role,
+                            profile: profile ? {
+                                fullName: profile.fullName || profile.username || m.invitedEmail || "Unknown",
+                                avatarUrl: profile.avatarUrl,
+                            } : null,
+                        };
+                    })
+                );
+
+                return {
+                    ...dept,
+                    members: enrichedMembers,
+                };
+            })
+        );
     },
 });
 

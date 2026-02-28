@@ -168,6 +168,105 @@ export const sendFromWidget = internalMutation({
     },
 });
 
+// Get messages for the monitor view (Chat display)
+export const getMessages = query({
+    args: { conversationId: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const messages = await ctx.db
+            .query("messages")
+            .withIndex("by_conversationId", (q) =>
+                q.eq("conversationId", args.conversationId)
+            )
+            .collect();
+
+        // Sort ascending by creation time
+        messages.sort((a, b) => a._creationTime - b._creationTime);
+
+        return messages.map((m) => {
+            const isInternal = m.type === "internal"; // Using 'type' for internal notes, based on schema
+            return {
+                id: m._id,
+                content: m.content,
+                senderType: m.senderType, // "visitor" | "agent" | "bot"
+                createdAt: m._creationTime,
+                isInternal: isInternal,
+            };
+        });
+    },
+});
+
+// Send a message from the monitor (Agent)
+export const sendMessage = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        projectId: v.id("projects"),
+        content: v.string(),
+        isInternal: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) throw new Error("Conversation not found");
+
+        const messageId = await ctx.db.insert("messages", {
+            conversationId: args.conversationId,
+            projectId: args.projectId,
+            senderType: "agent",
+            senderId: identity.subject, // the clerk user id
+            content: args.content,
+            type: args.isInternal ? "internal" : "text",
+        });
+
+        // Update the conversation's last message and timestamp if not internal
+        // Standard practice might update it anyway
+        const updateData: Record<string, any> = {
+            updatedAt: Date.now(),
+        };
+
+        if (!args.isInternal) {
+            updateData.lastMessage = args.content;
+        }
+
+        // Status becomes Assigned (200) since an agent replied
+        if (conversation.status !== 200) {
+            updateData.status = 200;
+        }
+
+        // If an agent replies, we might want to pause the bot to prevent it intercepting
+        updateData.botPaused = true;
+
+        // Add the agent to participants if they aren't already
+        const participants = conversation.participants || [];
+        if (!participants.includes(identity.subject)) {
+            participants.push(identity.subject);
+            updateData.participants = participants;
+        }
+
+        await ctx.db.patch(args.conversationId, updateData);
+
+        // Fire outbound webhook for standard messages
+        if (!args.isInternal) {
+            await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+                projectId: conversation.projectId,
+                event: "message.create",
+                payload: {
+                    messageId,
+                    conversationId: args.conversationId,
+                    content: args.content,
+                    senderType: "agent"
+                },
+            });
+        }
+
+        return messageId;
+    },
+});
+
 // Internal: list messages for widget (no auth required)
 export const listPublic = internalQuery({
     args: { conversationId: v.id("conversations") },
@@ -177,6 +276,7 @@ export const listPublic = internalQuery({
             .withIndex("by_conversationId", (q) =>
                 q.eq("conversationId", args.conversationId)
             )
+            .filter((q) => q.neq(q.field("type"), "internal"))
             .collect();
     },
 });

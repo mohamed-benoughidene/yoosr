@@ -25,9 +25,18 @@ export const routeConversation = internalMutation({
             .collect();
 
         // Filter for available human agents who have joined (userId exists)
-        const availableAgents = members.filter(
+        let availableAgents = members.filter(
             (m) => m.status === "available" && m.userId && (m.role === "agent" || m.role === "administrator" || m.role === "owner")
         );
+
+        if (args.departmentId) {
+            const departmentAgents = availableAgents.filter(
+                (m) => m.departmentIds?.includes(args.departmentId!)
+            );
+            if (departmentAgents.length > 0) {
+                availableAgents = departmentAgents;
+            }
+        }
 
         let chosenAgentId: string | null = null;
 
