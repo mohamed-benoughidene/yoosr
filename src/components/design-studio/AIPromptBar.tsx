@@ -64,7 +64,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
             // Convex wraps errors with "[CONVEX A(...)] Server Error Uncaught Error: ..."
             // Extract just the meaningful message after the last "Error: " prefix
             let raw = err instanceof Error ? err.message : String(err);
-            const match = raw.match(/Uncaught Error:\s*(.+?)(?:\s+at\s|$)/s);
+            const match = raw.match(/Uncaught Error:\s*([\s\S]+?)(?:\s+at\s|$)/);
             if (match) raw = match[1].trim();
 
             // Map known patterns to friendly copy

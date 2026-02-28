@@ -16,25 +16,11 @@ export default defineSchema({
     projects: defineTable({
         name: v.string(),
         description: v.optional(v.string()),
-        ownerId: v.string(), // Clerk user ID
+        orgId: v.string(), // Clerk Organization ID
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
         widgetConfig: v.optional(v.any()), // JSON config for widget appearance
-    }).index("by_ownerId", ["ownerId"]),
+    }).index("by_orgId", ["orgId"]),
 
-    // Project members (team)
-    project_members: defineTable({
-        projectId: v.id("projects"),
-        userId: v.optional(v.string()), // Clerk user ID (null if invited but not joined)
-        role: v.string(), // "owner" | "administrator" | "agent"
-        status: v.string(), // "available" | "unavailable"
-        invitedEmail: v.optional(v.string()),
-        invitedAt: v.optional(v.number()),
-        inviteStatus: v.optional(v.string()), // "pending" | "accepted" | "rejected"
-        departmentIds: v.optional(v.array(v.id("departments"))),
-    })
-        .index("by_projectId", ["projectId"])
-        .index("by_userId", ["userId"])
-        .index("by_invitedEmail", ["invitedEmail"]),
 
     // Conversations (chat threads from visitors)
     conversations: defineTable({

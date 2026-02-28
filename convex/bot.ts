@@ -542,13 +542,9 @@ export const assignToHuman = internalMutation({
 export const getOnlineAgentsInternal = internalQuery({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
-        const members = await ctx.db
-            .query("project_members")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
-        return members.filter(
-            (m) => m.status === "available" && m.userId && (m.role === "agent" || m.role === "administrator" || m.role === "owner")
-        );
+        // TODO: Query online agents from Clerk Organization membership
+        // For now, return an empty array
+        return [];
     }
 });
 

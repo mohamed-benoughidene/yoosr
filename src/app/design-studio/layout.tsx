@@ -7,13 +7,15 @@ import { Loader2 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useOrganization } from "@clerk/nextjs";
 
 export default function DesignStudioLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { activeProject, selectProject, isLoading } = useProject();
+    const { activeProject, isLoading } = useProject();
+    const { organization, isLoaded: isOrgLoaded } = useOrganization();
     const searchParams = useSearchParams();
     const router = useRouter();
     const projectId = searchParams.get("project");
@@ -22,22 +24,16 @@ export default function DesignStudioLayout({
     const ensureProfile = useMutation(api.profiles.ensureCurrent);
 
     useEffect(() => {
-        if (!isLoading) {
+        if (!isLoading && isOrgLoaded) {
             ensureProfile();
 
-            if (projectId) {
-                if (projectId !== activeProject?._id) {
-                    selectProject(projectId as Id<"projects">);
-                }
-            } else if (activeProject) {
-                // Keep project in URL if possible
-                // router.replace(...)
-            } else {
-                // No project => redirect to selection
-                router.push("/projects");
+            if (!organization) {
+                // No project/org => redirect to onboarding
+                router.push("/onboarding");
+                return;
             }
         }
-    }, [projectId, activeProject, isLoading, selectProject, router, ensureProfile]);
+    }, [projectId, activeProject, isLoading, router, ensureProfile, organization, isOrgLoaded]);
 
     if (isLoading) {
         return (

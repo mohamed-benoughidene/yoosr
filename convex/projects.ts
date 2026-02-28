@@ -1,6 +1,14 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
+// Extend the Identity type to include custom claims from Clerk
+type ClerkIdentity = {
+    subject: string;
+    org_id?: string;
+    org_role?: string;
+    [key: string]: any;
+};
+
 // Internal: get project for widget (no auth required)
 export const getPublic = internalQuery({
     args: { id: v.id("projects") },
@@ -11,48 +19,23 @@ export const getPublic = internalQuery({
     },
 });
 
-// List all projects for the current user (owned + joined via invitation)
+// List all projects for the current user's active organization
 export const list = query({
     args: {},
     handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) return [];
 
-        // 1. Fetch user's member records first (covers all projects they belong to)
-        const memberRecords = await ctx.db
-            .query("project_members")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .collect();
-
-        // 2. Projects the user owns
-        const ownedProjects = await ctx.db
+        const orgProjects = await ctx.db
             .query("projects")
-            .withIndex("by_ownerId", (q) => q.eq("ownerId", identity.subject))
+            .withIndex("by_orgId", (q) => q.eq("orgId", identity.org_id!))
             .collect();
 
-        // Build role map: projectId -> role from member records
-        const roleMap = new Map(memberRecords.map((m) => [m.projectId, m.role]));
-
-        // 3. For owned projects, prefer member record role, fallback to "owner"
-        const ownedWithRole = ownedProjects.map((p) => ({
+        // Include the role from the token so the frontend knows their permissions
+        return orgProjects.map(p => ({
             ...p,
-            userRole: roleMap.get(p._id) ?? "owner",
+            userRole: identity.org_role ?? "member"
         }));
-
-        // 4. Joined projects (member but not owner)
-        const ownedIds = new Set(ownedProjects.map((p) => p._id));
-        const joinedMemberRecords = memberRecords.filter((m) => !ownedIds.has(m.projectId));
-        const joinedProjects = await Promise.all(
-            joinedMemberRecords.map(async (m) => {
-                const project = await ctx.db.get(m.projectId);
-                if (!project) return null;
-                return { ...project, userRole: m.role };
-            })
-        );
-
-        const validJoined = joinedProjects.filter((p) => p !== null) as typeof ownedWithRole;
-
-        return [...ownedWithRole, ...validJoined];
     },
 });
 
@@ -60,58 +43,68 @@ export const list = query({
 export const get = query({
     args: { id: v.id("projects") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) return null;
 
         const project = await ctx.db.get(args.id);
-        if (!project || project.ownerId !== identity.subject) {
+        if (!project || project.orgId !== identity.org_id) {
             return null;
         }
-        return project;
+
+        return {
+            ...project,
+            userRole: identity.org_role ?? "member"
+        };
     },
 });
 
-// Get a project by ownerId (useful when relying on Clerk org IDs)
-export const getByOwnerId = query({
-    args: { ownerId: v.string() },
+// Get a project by orgId (useful when relying on Clerk org IDs)
+export const getByOrgId = query({
+    args: { orgId: v.string() },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) return null;
 
         const project = await ctx.db
             .query("projects")
-            .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+            .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
             .first();
 
-        return project;
+        // Since this uses the org ID explicitly, ensure it matches the user's active org
+        // Alternatively, if this is meant to be system-level, the check might differ,
+        // but adding safety for standard multi-tenancy rules:
+        if (!project || project.orgId !== identity.org_id) {
+            return null;
+        }
+
+        return {
+            ...project,
+            userRole: identity.org_role ?? "member"
+        };
     },
 });
 
-// Create a default project if it doesn't exist for this owner
+// Create a default project if it doesn't exist for this active organization
 export const ensureProject = mutation({
-    args: { ownerId: v.string() },
+    args: { orgId: v.string() },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) return null;
+
+        // Security check: they can only ensure a project for their active org
+        if (args.orgId !== identity.org_id) return null;
 
         let project = await ctx.db
             .query("projects")
-            .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+            .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
             .first();
 
         if (!project) {
             const projectId = await ctx.db.insert("projects", {
                 name: "Default Project",
                 description: "Auto-generated project",
-                ownerId: args.ownerId,
+                orgId: args.orgId,
                 status: "active",
-            });
-
-            await ctx.db.insert("project_members", {
-                projectId,
-                userId: identity.subject,
-                role: "owner",
-                status: "available",
             });
 
             // Add some default labels
@@ -133,33 +126,28 @@ export const ensureProject = mutation({
             project = await ctx.db.get(projectId);
         }
 
-        return project;
+        return {
+            ...project!,
+            userRole: identity.org_role ?? "member"
+        };
     }
 });
 
-// Create a new project
+// Create a new project for the active organization
 export const create = mutation({
     args: {
         name: v.string(),
         description: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) throw new Error("Not authenticated or no active organization");
 
         const projectId = await ctx.db.insert("projects", {
             name: args.name,
             description: args.description,
-            ownerId: identity.subject,
+            orgId: identity.org_id,
             status: "active",
-        });
-
-        // Also create the owner as a project member
-        await ctx.db.insert("project_members", {
-            projectId,
-            userId: identity.subject,
-            role: "owner",
-            status: "available",
         });
 
         return projectId;
@@ -176,11 +164,11 @@ export const update = mutation({
         widgetConfig: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) throw new Error("Not authenticated");
 
         const project = await ctx.db.get(args.id);
-        if (!project || project.ownerId !== identity.subject) {
+        if (!project || project.orgId !== identity.org_id) {
             throw new Error("Project not found");
         }
 
@@ -200,11 +188,11 @@ export const update = mutation({
 export const remove = mutation({
     args: { id: v.id("projects") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) throw new Error("Not authenticated");
 
         const project = await ctx.db.get(args.id);
-        if (!project || project.ownerId !== identity.subject) {
+        if (!project || project.orgId !== identity.org_id) {
             throw new Error("Project not found");
         }
 
@@ -233,9 +221,6 @@ export const remove = mutation({
         const records2 = await ctx.db.query("conversations").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
         for (const r of records2) await ctx.db.delete(r._id);
 
-        const records3 = await ctx.db.query("project_members").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
-        for (const r of records3) await ctx.db.delete(r._id);
-
         const records4 = await ctx.db.query("contacts").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
         for (const r of records4) await ctx.db.delete(r._id);
 
@@ -256,6 +241,16 @@ export const remove = mutation({
 
         const records10 = await ctx.db.query("operating_hours").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
         for (const r of records10) await ctx.db.delete(r._id);
+
+        // Also delete usage and unanswered queries and subscriptions if they exist
+        const usage = await ctx.db.query("project_usage").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
+        for (const r of usage) await ctx.db.delete(r._id);
+
+        const unanswered = await ctx.db.query("unanswered_queries").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
+        for (const r of unanswered) await ctx.db.delete(r._id);
+
+        const webhooks = await ctx.db.query("webhook_subscriptions").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
+        for (const r of webhooks) await ctx.db.delete(r._id);
 
         await ctx.db.delete(projectId);
     },

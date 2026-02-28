@@ -31,8 +31,9 @@ export const clearAllProjects = mutation({
             const records2 = await ctx.db.query("conversations").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
             for (const r of records2) await ctx.db.delete(r._id);
 
-            const records3 = await ctx.db.query("project_members").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
-            for (const r of records3) await ctx.db.delete(r._id);
+            // Clerk handles members now, so we skip project_members deletion
+            // const records3 = await ctx.db.query("project_members").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
+            // for (const r of records3) await ctx.db.delete(r._id);
 
             const records4 = await ctx.db.query("contacts").withIndex("by_projectId", (q) => q.eq("projectId", projectId)).collect();
             for (const r of records4) await ctx.db.delete(r._id);

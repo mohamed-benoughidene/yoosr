@@ -18,10 +18,12 @@ It contains the full architecture, data models, API contracts, routing logic, au
 
 ## Core Rules
 
-### 1. Multi-tenancy is mandatory
-Every Convex query and mutation must filter by `orgId` from Clerk. No exceptions.
+### 1. Multi-tenancy is handled via Clerk Organizations
+`orgId` comes from the user's JWT token via `identity.org_id` in Convex. Every project belongs to one org.
+Membership and invitations are managed by Clerk natively. Do not use `project_members` table — it has been removed.
+Every Convex query and mutation must filter by `projectId` linked to the active `orgId`, or directly by `orgId`.
 ```typescript
-.withIndex("by_org", (q) => q.eq("orgId", orgId))
+.withIndex("by_orgId", (q) => q.eq("orgId", orgId))
 ```
 
 ### 2. Use the exact status enums from the reference

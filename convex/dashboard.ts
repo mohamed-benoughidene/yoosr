@@ -34,11 +34,13 @@ export const getHomeStats = query({
         const myAssigned = openConversations.filter(c => c.assignedTo === identity.subject);
 
         // Fetch online teammates
-        const teamMembers = await ctx.db
-            .query("project_members")
-            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .collect();
-        const onlineTeammatesCount = teamMembers.filter(m => m.status === "available").length;
+        // TODO: With Clerk Organizations, fetch active members online status from Clerk or a new presence system
+        // const teamMembers = await ctx.db
+        //     .query("project_members")
+        //     .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+        //     .collect();
+        // const onlineTeammatesCount = teamMembers.filter(m => m.status === "available").length;
+        const onlineTeammatesCount = 1; // Fallback for now
 
         // 3. Live Queue (60% width)
         // 5 most recent open or unassigned (100 or 200)

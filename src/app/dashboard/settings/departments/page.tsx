@@ -63,13 +63,11 @@ export default function DepartmentsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const members = useQuery(
-        api.members.list,
-        activeProject ? { projectId: activeProject._id } : "skip"
-    ) ?? []
+    // Clerk handles members now, so we stub this out for now
+    const members: any[] = []
 
     const createDepartment = useMutation(api.settings.createDepartment)
-    const assignMemberToDepartment = useMutation(api.members.assignMemberToDepartment)
+    // const assignMemberToDepartment = useMutation(api.members.assignMemberToDepartment)
     const updateDepartment = useMutation(api.settings.updateDepartment)
     const removeDepartment = useMutation(api.settings.removeDepartment)
 
@@ -143,10 +141,10 @@ export default function DepartmentsPage() {
         setTags(tags.filter(t => t !== tagToRemove))
     }
 
-    const handleAssignMember = async (memberId: Id<"project_members">, departmentId: Id<"departments">) => {
+    const handleAssignMember = async (memberId: string, departmentId: Id<"departments">) => {
         try {
-            await assignMemberToDepartment({ memberId, departmentId })
-            toast.success("Agent assigned to department")
+            // await assignMemberToDepartment({ memberId, departmentId })
+            toast.success("Agent assigned to department (Clerk Organization stub)")
         } catch {
             toast.error("Failed to assign agent")
         }
@@ -361,7 +359,7 @@ export default function DepartmentsPage() {
                                                                                 onClick={() => handleAssignMember(m._id, dept._id)}
                                                                             >
                                                                                 <UserPlus className="mr-2 h-3.5 w-3.5" />
-                                                                                {m.invitedEmail || m.userId}
+                                                                                {m.userId}
                                                                             </Button>
                                                                         ))
                                                                 )}

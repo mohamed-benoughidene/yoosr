@@ -34,7 +34,7 @@ export default function LoginPage() {
                             },
                         }}
                         routing="hash"
-                        forceRedirectUrl="/projects"
+                        forceRedirectUrl="/onboarding"
                     />
                 </div>
                 <p className="px-8 text-center text-sm text-muted-foreground">

@@ -43,10 +43,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     const [departmentSearch, setDepartmentSearch] = useState("")
     const { user } = useUser()
 
-    const projectMembers = useQuery(
-        api.members.getProjectMembers,
-        projectId ? { projectId: projectId as Id<"projects"> } : "skip"
-    );
+    const projectMembers: Array<{ userId: string; profile?: { fullName?: string; avatarUrl?: string }; role?: string }> = [];
 
     const departments = useQuery(
         api.settings.listDepartments,

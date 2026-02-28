@@ -11,7 +11,7 @@ export const createTestBot = mutation({
             const projectId = await ctx.db.insert("projects", {
                 name: "Test Project",
                 description: "Auto-generated project for bot testing",
-                ownerId: "system", // Dummy Clerk ID
+                orgId: "system", // Dummy Clerk org ID
                 status: "active",
             });
             project = await ctx.db.get(projectId);

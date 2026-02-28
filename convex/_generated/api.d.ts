@@ -27,7 +27,6 @@ import type * as integrations from "../integrations.js";
 import type * as knowledge from "../knowledge.js";
 import type * as knowledgeBases from "../knowledgeBases.js";
 import type * as labels from "../labels.js";
-import type * as members from "../members.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as openrouter from "../openrouter.js";
@@ -66,7 +65,6 @@ declare const fullApi: ApiFromModules<{
   knowledge: typeof knowledge;
   knowledgeBases: typeof knowledgeBases;
   labels: typeof labels;
-  members: typeof members;
   messages: typeof messages;
   migrations: typeof migrations;
   openrouter: typeof openrouter;

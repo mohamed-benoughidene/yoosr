@@ -1,18 +1,20 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import { Id } from "../../convex/_generated/dataModel"
+import { useOrganization } from "@clerk/nextjs"
 
 interface Project {
     _id: Id<"projects">
     _creationTime: number
     name: string
     description?: string
-    ownerId: string
+    orgId: string
     status?: string
     widgetConfig?: any
+    userRole?: string
 }
 
 interface ProjectContextType {
@@ -20,58 +22,32 @@ interface ProjectContextType {
     activeProject: Project | null
     isLoading: boolean
     createProject: (name: string, description?: string) => Promise<Id<"projects"> | null>
-    selectProject: (projectId: Id<"projects">) => void
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-    const [activeProject, setActiveProject] = useState<Project | null>(null)
+    const { isLoaded: isOrgLoaded } = useOrganization()
 
-    // Convex query — automatically reactive, no subscriptions needed!
-    const projects = useQuery(api.projects.list) ?? []
-    const isLoading = projects === undefined
+    // Convex query — automatically reactive and scoped to current org by the backend
+    const projectsResult = useQuery(api.projects.list)
+    const projects = projectsResult ?? []
+
+    // The active project is logically the first one in the current org
+    const activeProject = projects.length > 0 ? projects[0] : null
+
+    // We are loading if Clerk is still resolving org state or Convex hasn't returned projects
+    const isLoading = !isOrgLoaded || projectsResult === undefined
 
     const createProjectMutation = useMutation(api.projects.create)
-
-    // Auto-select the active project when projects load
-    useEffect(() => {
-        if (projects.length > 0 && !activeProject) {
-            const savedProjectId = localStorage.getItem("activeProjectId")
-            const foundProject = projects.find(
-                (p) => p._id === savedProjectId
-            )
-            if (foundProject) {
-                setActiveProject(foundProject)
-            } else {
-                setActiveProject(projects[0])
-            }
-        }
-        // Update activeProject if it changed in the data
-        if (activeProject) {
-            const updated = projects.find((p) => p._id === activeProject._id)
-            if (updated && JSON.stringify(updated) !== JSON.stringify(activeProject)) {
-                setActiveProject(updated)
-            }
-        }
-    }, [projects, activeProject])
 
     const createProject = async (name: string, description?: string) => {
         try {
             const projectId = await createProjectMutation({ name, description })
-            localStorage.setItem("activeProjectId", projectId)
             return projectId
         } catch (error) {
             console.error("Error creating project:", error)
             return null
-        }
-    }
-
-    const selectProject = (projectId: Id<"projects">) => {
-        const project = projects.find((p) => p._id === projectId)
-        if (project) {
-            setActiveProject(project)
-            localStorage.setItem("activeProjectId", projectId)
         }
     }
 
@@ -82,7 +58,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
                 activeProject,
                 isLoading,
                 createProject,
-                selectProject,
             }}
         >
             {children}

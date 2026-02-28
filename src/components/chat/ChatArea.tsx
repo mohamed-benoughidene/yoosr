@@ -49,10 +49,7 @@ export function ChatArea() {
         conversationId ? { id: conversationId } : "skip"
     )
 
-    const projectMembers = useQuery(
-        api.members.getProjectMembers,
-        conversation?.projectId ? { projectId: conversation.projectId } : "skip"
-    );
+    const projectMembers: Array<{ userId: string; profile?: { fullName?: string; avatarUrl?: string }; role?: string }> = [];
 
     const departments = useQuery(
         api.settings.listDepartments,

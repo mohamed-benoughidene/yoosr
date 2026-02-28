@@ -19,24 +19,9 @@ export const routeConversation = internalMutation({
         if (conversation.status === 1000) return;
 
         // 1. Get all members for this project
-        const members = await ctx.db
-            .query("project_members")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
-
-        // Filter for available human agents who have joined (userId exists)
-        let availableAgents = members.filter(
-            (m) => m.status === "available" && m.userId && (m.role === "agent" || m.role === "administrator" || m.role === "owner")
-        );
-
-        if (args.departmentId) {
-            const departmentAgents = availableAgents.filter(
-                (m) => m.departmentIds?.includes(args.departmentId!)
-            );
-            if (departmentAgents.length > 0) {
-                availableAgents = departmentAgents;
-            }
-        }
+        // TODO: Query available agents from Clerk Organization membership
+        // For now, fall back to bot assignment only
+        let availableAgents: any[] = [];
 
         let chosenAgentId: string | null = null;
 

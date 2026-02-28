@@ -48,7 +48,7 @@ import { api } from "../../../convex/_generated/api"
 const SOUND_STORAGE_KEY = "yoosr-sound-enabled"
 
 export function DashboardHeader() {
-    const { activeProject, projects, selectProject } = useProject()
+    const { activeProject } = useProject()
     const router = useRouter()
     const [soundEnabled, setSoundEnabled] = useState(() => {
         if (typeof window !== "undefined") {
@@ -57,27 +57,20 @@ export function DashboardHeader() {
         return true
     })
 
-    const currentMember = useQuery(api.members.current, activeProject ? { projectId: activeProject._id } : "skip")
-    const updateMember = useMutation(api.members.update)
-    const isAvailable = currentMember?.status === "available"
+    // const currentMember = useQuery(api.members.current, activeProject ? { projectId: activeProject._id } : "skip")
+    // const updateMember = useMutation(api.members.update)
+    const currentMember = { status: "available" } // Stub for Clerk Organizations
+    const isAvailable = currentMember.status === "available" // TODO: Use real presence system
 
     const toggleAvailability = async (checked: boolean) => {
-        if (currentMember) {
-            await updateMember({
-                id: currentMember._id,
-                status: checked ? "available" : "unavailable"
-            })
-        }
+        console.log("Toggle availability: ", checked)
     }
 
     useEffect(() => {
         localStorage.setItem(SOUND_STORAGE_KEY, String(soundEnabled))
     }, [soundEnabled])
 
-    const handleProjectSwitch = (projectId: Id<"projects">) => {
-        selectProject(projectId)
-        router.push(`/dashboard?project=${projectId}`)
-    }
+
 
     const handleSimulateVisitor = () => {
         // Open chat in a new window or navigate to chat page
@@ -101,7 +94,7 @@ export function DashboardHeader() {
                 <SheetContent side="left" className="flex flex-col">
                     <nav className="grid gap-2 text-lg font-medium">
                         <Link
-                            href="/projects"
+                            href="/dashboard"
                             className="flex items-center gap-2 text-lg font-semibold"
                         >
                             <Package2 className="h-6 w-6" />
@@ -112,43 +105,18 @@ export function DashboardHeader() {
                 </SheetContent>
             </Sheet>
             <div className="w-full flex-1 flex items-center gap-4">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-[200px] justify-between truncate">
-                            {activeProject ? (
-                                <span className="truncate flex items-center gap-2">
-                                    <div className="h-5 w-5 rounded bg-blue-600 text-white flex items-center justify-center text-[10px] uppercase font-bold">
-                                        {activeProject.name.charAt(0)}
-                                    </div>
-                                    {activeProject.name}
-                                </span>
-                            ) : (
-                                "Select Project"
-                            )}
-                            <Package className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px]">
-                        <DropdownMenuLabel>Switch Project</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {projects.map((project) => (
-                            <DropdownMenuItem
-                                key={project._id}
-                                onSelect={() => handleProjectSwitch(project._id)}
-                                className={activeProject?._id === project._id ? "bg-accent" : ""}
-                            >
-                                <span className="truncate">{project.name}</span>
-                            </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/projects" className="flex items-center cursor-pointer">
-                                <Home className="mr-2 h-4 w-4" />
-                                All Projects
-                            </Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center w-[200px] justify-between truncate border px-4 py-2 rounded-md bg-transparent">
+                    {activeProject ? (
+                        <span className="truncate flex items-center gap-2">
+                            <div className="h-5 w-5 rounded bg-blue-600 text-white flex items-center justify-center text-[10px] uppercase font-bold">
+                                {activeProject.name.charAt(0)}
+                            </div>
+                            {activeProject.name}
+                        </span>
+                    ) : (
+                        <span className="text-muted-foreground text-sm">Workspace Loading...</span>
+                    )}
+                </div>
 
                 {/* Quick Actions */}
                 <div className="flex items-center gap-4 ml-4">
