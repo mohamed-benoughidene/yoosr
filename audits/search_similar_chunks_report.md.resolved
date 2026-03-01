@@ -1,0 +1,19 @@
+# Report: `searchSimilarChunks` and `knowledge_base_chunks` Schema
+
+## 1. [convex/knowledge.ts](file:///home/mohamed/lab/yoosr/convex/knowledge.ts) - `searchSimilarChunks`
+1. **Definition Type**: It is now defined as an `internalAction`.
+2. **Current `MIN_RELEVANCE_SCORE` value**: `0.60`
+3. **Index name used in the `vectorSearch` call**: `"by_embedding"`
+
+## 2. [convex/schema.ts](file:///home/mohamed/lab/yoosr/convex/schema.ts) - `knowledge_base_chunks` table
+1. **Exact name of the vector index definition**:
+```typescript
+    }).vectorIndex("by_embedding", {
+        vectorField: "embedding",
+        dimensions: 1024, // Dimensions for BAAI/bge-m3
+        filterFields: ["sourceId", "projectId"],
+    }),
+```
+2. **Fields in the index**:
+- **Vector Field**: `"embedding"`
+- **Filter Fields**: `["sourceId", "projectId"]`

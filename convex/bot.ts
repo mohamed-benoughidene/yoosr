@@ -83,13 +83,19 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const kbQuery = interpolate(action.query, attributes);
             const kbConversation = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             // @ts-ignore - type may not be generated yet
-            const kbResult = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
-                projectId: kbConversation.projectId,
-                query: kbQuery,
-            });
+            let kbResult: any[] = [];
+            try {
+                kbResult = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
+                    projectId: kbConversation.projectId,
+                    query: kbQuery,
+                });
+            } catch (e: any) {
+                console.error("[BOT ENGINE] searchSimilarChunks failed:", e.message);
+                // kbResult stays [] → block will route to elsePath
+            }
             let kbAnswer = "";
             if (kbResult.length > 0) {
-                const contextStr = kbResult.map((r: any) => r.text).join("\n");
+                const contextStr = kbResult.map((r: any) => r.text).join("\n").slice(0, 3000);
                 const kbPrompt = `Context:\n${contextStr}\n\nQuestion: ${kbQuery}\nAnswer based only on context.`;
                 try {
                     const kbLlmResult = await callAITask(kbPrompt, kbQuery);

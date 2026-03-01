@@ -37,7 +37,7 @@ export const triggerTestExecute = action({
 
         await ctx.runAction(internal.bot.executeNextBlock, {
             conversationId: convId as Id<"conversations">,
-            incomingMessage: "test message",
+            incomingMessage: "How can I contact the sales team?",
         });
         return `Assigned bot ${botId} and triggered execution for ${convId}`;
     }

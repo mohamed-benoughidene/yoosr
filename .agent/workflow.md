@@ -1,5 +1,10 @@
-Read AGENT.md first. In the extractGenerativeTags action in tags.ts, make this one change:
+kb nood is not showing any response
+i did create a flow :
+capture user reply -> ask kb -> reply
 
-Before calling the LLM, fetch the predefined labels for the project from the labels table. Pass their names to the LLM prompt as a list, instructing it to ONLY return tags that match names from that list. After getting the response, validate each returned tag against the predefined list and silently discard any that don't match.
+fore reply i did Save reply to attribute {{user_input}}
+for ask kb i did use the attribute {{user_input}} as a query Assign Result To Variable {{kb_reply}}
+ for reply i did use the attribute {{kb_reply}} as a reply 
 
-Do not touch anything else.
+ no reply were shown in the chat
+

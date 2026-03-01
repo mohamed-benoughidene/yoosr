@@ -205,7 +205,7 @@ export default defineSchema({
         embedding: v.array(v.number()),
     }).vectorIndex("by_embedding", {
         vectorField: "embedding",
-        dimensions: 1024, // Dimensions for BAAI/bge-m3
+        dimensions: 2048, // Dimensions for nvidia/llama-nemotron-embed-vl-1b-v2
         filterFields: ["sourceId", "projectId"],
     }),
 

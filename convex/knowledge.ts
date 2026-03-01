@@ -1,6 +1,7 @@
 import { action, internalAction, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 export const getChunkInternal = internalQuery({
     args: { id: v.id("knowledge_base_chunks") },
@@ -38,6 +39,97 @@ export const updateSourceStatusInternal = internalMutation({
     },
 });
 
+function splitIntoChunks(text: string, maxLen = 500): string[] {
+    const chunks: string[] = [];
+    let start = 0;
+    while (start < text.length) {
+        let end = start + maxLen;
+        if (end >= text.length) {
+            chunks.push(text.slice(start).trim());
+            break;
+        }
+        // try to cut at last ". "
+        const periodIdx = text.lastIndexOf(". ", end);
+        if (periodIdx > start) {
+            end = periodIdx + 1;
+        } else {
+            // try last space
+            const spaceIdx = text.lastIndexOf(" ", end);
+            if (spaceIdx > start) end = spaceIdx;
+        }
+        chunks.push(text.slice(start, end).trim());
+        start = end;
+    }
+    return chunks.filter(c => c.length >= 30);
+}
+
+async function processAndStoreChunks(
+    ctx: any,
+    args: { sourceId: Id<"knowledge_base_sources">; projectId: Id<"projects"> },
+    chunks: string[]
+) {
+    if (chunks.length > 200) {
+        console.warn("Source too large, indexing first 200 chunks only.");
+        chunks = chunks.slice(0, 200);
+    }
+
+    if (!process.env.OPENROUTER_API_KEY) {
+        console.error("Missing OPENROUTER_API_KEY");
+        await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
+        return;
+    }
+
+    let hasErrors = false;
+    const batchSize = 20;
+
+    for (let i = 0; i < chunks.length; i += batchSize) {
+        const batch = chunks.slice(i, i + batchSize);
+        try {
+            const response = await fetch("https://openrouter.ai/api/v1/embeddings", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+                    input: batch,
+                }),
+            });
+            const data = await response.json();
+            const output = data.data ? data.data.map((d: any) => d.embedding) : [];
+
+            const is1D = Array.isArray(output) && output.length > 0 && typeof output[0] === 'number';
+            const embeddings = is1D ? [output] : output;
+
+            if (Array.isArray(embeddings) && embeddings.length === batch.length) {
+                await Promise.all(
+                    batch.map(async (chunk, idx) => {
+                        const embedding = embeddings[idx] as number[];
+                        await ctx.runMutation(internal.knowledge.insertChunkInternal, {
+                            sourceId: args.sourceId,
+                            projectId: args.projectId,
+                            text: chunk,
+                            embedding: embedding,
+                        });
+                    })
+                );
+            } else {
+                console.error("Unexpected embedding format from OpenRouter", data);
+                hasErrors = true;
+            }
+        } catch (e: any) {
+            console.error("Failed to embed chunk batch", e.message);
+            hasErrors = true;
+        }
+    }
+
+    await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, {
+        id: args.sourceId,
+        status: hasErrors ? "failed" : "indexed"
+    });
+}
+
 export const indexSource = internalAction({
     args: { sourceId: v.id("knowledge_base_sources"), projectId: v.id("projects") },
     handler: async (ctx, args) => {
@@ -46,47 +138,57 @@ export const indexSource = internalAction({
 
         if (source.type === "text") {
             const rawText = source.value;
-            // Simple chunking by double newline
-            const chunks = rawText.split('\n\n').filter((c: string) => c.trim().length > 0);
+            const chunks = splitIntoChunks(rawText);
+            await processAndStoreChunks(ctx, args, chunks);
+        } else if (source.type === "url") {
+            try {
+                const response = await fetch(source.value, {
+                    headers: { "User-Agent": "Mozilla/5.0 (compatible; YoosrBot/1.0)" },
+                    signal: AbortSignal.timeout(10000)
+                });
 
-            if (!process.env.HUGGINGFACE_API_KEY) {
-                console.error("Missing HUGGINGFACE_API_KEY");
-                await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
-                return;
-            }
+                const htmlText = await response.text();
 
-            const { HfInference } = await import("@huggingface/inference");
-            const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+                let cleanedText = htmlText.replace(/<[^>]*>/g, " ");
+                cleanedText = cleanedText.replace(/\s+/g, " ");
+                cleanedText = cleanedText
+                    .replace(/&amp;/g, "&")
+                    .replace(/&lt;/g, "<")
+                    .replace(/&gt;/g, ">")
+                    .replace(/&nbsp;/g, " ")
+                    .replace(/&quot;/g, '"');
+                cleanedText = cleanedText.trim();
 
-            let hasErrors = false;
-            for (const chunk of chunks) {
-                try {
-                    const output = await hf.featureExtraction({
-                        model: "BAAI/bge-m3",
-                        inputs: chunk.trim(),
-                    });
-
-                    if (Array.isArray(output)) {
-                        await ctx.runMutation(internal.knowledge.insertChunkInternal, {
-                            sourceId: args.sourceId,
-                            projectId: args.projectId,
-                            text: chunk.trim(),
-                            embedding: output as number[]
-                        });
-                    } else {
-                        hasErrors = true;
-                    }
-                } catch (e: any) {
-                    console.error("Failed to embed chunk", e.message);
-                    hasErrors = true;
+                if (!cleanedText) {
+                    throw new Error("Text is empty after stripping HTML");
                 }
-            }
 
-            // Mark as indexed if all good, otherwise failed
-            await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, {
-                id: args.sourceId,
-                status: hasErrors && chunks.length > 0 ? "failed" : "indexed"
-            });
+                const chunks = splitIntoChunks(cleanedText);
+                await processAndStoreChunks(ctx, args, chunks);
+            } catch (e: any) {
+                console.error("Failed to process URL source:", e.message);
+                await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
+            }
+        } else if (source.type === "file") {
+            try {
+                const blob = await ctx.storage.get(source.value as Id<"_storage">);
+                if (!blob) {
+                    throw new Error("File blob not found");
+                }
+
+                const fileText = await blob.text();
+                const cleanedText = fileText.trim();
+
+                if (!cleanedText) {
+                    throw new Error("Content is empty after trimming");
+                }
+
+                const chunks = splitIntoChunks(cleanedText);
+                await processAndStoreChunks(ctx, args, chunks);
+            } catch (e: any) {
+                console.error("Failed to process file source:", e.message);
+                await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
+            }
         } else {
             // For MVP, URL/File types can just fail gracefully or skip
             await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
@@ -96,42 +198,50 @@ export const indexSource = internalAction({
 });
 
 
-export const searchSimilarChunks = action({
+export const searchSimilarChunks = internalAction({
     args: {
         projectId: v.id("projects"),
         query: v.string(),
     },
     handler: async (ctx, args): Promise<any[]> => {
-        if (!process.env.HUGGINGFACE_API_KEY) {
-            console.error("Missing HUGGINGFACE_API_KEY");
+        if (!process.env.OPENROUTER_API_KEY) {
+            console.error("Missing OPENROUTER_API_KEY");
             return [];
         }
-
-        const { HfInference } = await import("@huggingface/inference");
-        const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
         let embedding: any;
         try {
-            const output = await hf.featureExtraction({
-                model: "BAAI/bge-m3",
-                inputs: args.query,
+            const response = await fetch("https://openrouter.ai/api/v1/embeddings", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+                    input: args.query,
+                }),
             });
-            embedding = output;
+            const data = await response.json();
+            embedding = data.data?.[0]?.embedding ?? data.data;
         } catch (error: any) {
-            console.error("Hugging Face SDK error", error.message);
+            console.error("OpenRouter API error", error.message);
             return [];
         }
 
-        if (!Array.isArray(embedding)) {
-            console.error("Hugging Face API returned an unrecognized format", embedding);
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+            console.error("OpenRouter API returned an unrecognized format", embedding);
             return [];
         }
+
+        const is1D = Array.isArray(embedding) && embedding.length > 0 && typeof embedding[0] === 'number';
+        const flatEmbedding = is1D ? embedding : (embedding as number[][])[0];
 
         // Filter by minimum relevance score. Convex returns _score (cosine similarity).
         // Without this, off-topic chunks still pass the length check and no unanswered query is logged.
-        const MIN_RELEVANCE_SCORE = 0.75;
+        const MIN_RELEVANCE_SCORE = 0.25;
         const results = await ctx.vectorSearch("knowledge_base_chunks", "by_embedding", {
-            vector: embedding,
+            vector: flatEmbedding,
             filter: (q) => q.eq("projectId", args.projectId),
             limit: 5,
         });

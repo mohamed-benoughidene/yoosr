@@ -22,6 +22,7 @@ import type * as dashboard from "../dashboard.js";
 import type * as debug from "../debug.js";
 import type * as dev from "../dev.js";
 import type * as diagnostic from "../diagnostic.js";
+import type * as getAny from "../getAny.js";
 import type * as http from "../http.js";
 import type * as integrations from "../integrations.js";
 import type * as knowledge from "../knowledge.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   debug: typeof debug;
   dev: typeof dev;
   diagnostic: typeof diagnostic;
+  getAny: typeof getAny;
   http: typeof http;
   integrations: typeof integrations;
   knowledge: typeof knowledge;

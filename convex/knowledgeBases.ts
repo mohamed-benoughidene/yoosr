@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -120,5 +120,16 @@ export const removeSource = mutation({
         if (!identity) throw new Error("Not authenticated");
 
         await ctx.db.delete(args.id);
+    },
+});
+
+// Generate upload URL for knowledge base files
+export const generateKbUploadUrl = action({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        return await ctx.storage.generateUploadUrl();
     },
 });

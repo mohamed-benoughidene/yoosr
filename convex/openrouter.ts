@@ -5,7 +5,7 @@
 
 import OpenAI from "openai";
 
-const DEFAULT_AI_TASK_MODEL = "mistralai/mistral-7b-instruct";
+const DEFAULT_AI_TASK_MODEL = "meta-llama/llama-3.1-8b-instruct";
 const DEFAULT_AI_ASSISTANT_MODEL = "meta-llama/llama-3.1-8b-instruct";
 
 function getClient(): OpenAI {
