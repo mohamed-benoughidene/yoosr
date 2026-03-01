@@ -67,7 +67,8 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 return {
                     newAttributes: parsed
                         ? { ...parsed, [action.assignTo ?? "gpt_reply"]: llmResult.text }
-                        : { [action.assignTo ?? "gpt_reply"]: llmResult.text }
+                        : { [action.assignTo ?? "gpt_reply"]: llmResult.text },
+                    nextNodeId: action.successPath ?? null,
                 };
             } catch (e: any) {
                 console.error("[BOT ENGINE] AI Task failed:", e.message);
@@ -283,6 +284,13 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             return { newAttributes: {} };
         }
 
+        case "resolve_conversation":
+            await ctx.runMutation(internal.conversations.updateInternal, {
+                id: conversationId,
+                status: 1000,
+            });
+            return { newAttributes: {}, nextNodeId: null };
+
         default:
             console.warn("Unknown bot action type: ", action._type);
             return { newAttributes: {} };
@@ -302,6 +310,14 @@ export const executeNextBlock = internalAction({
             console.log(`[BOT ENGINE] Convo ${args.conversationId} not found`);
             return;
         }
+
+        // Infinite Loop Guard
+        const currentStepCount = conversation.botStepCount || 0;
+        if (currentStepCount > 50) {
+            console.warn(`[BOT ENGINE] Step limit reached for convo ${args.conversationId}, stopping to prevent infinite loop.`);
+            return;
+        }
+        const nextStepCount = currentStepCount + 1;
 
         // HITL Guard: if the conversation was handed off to a human, stop all bot processing.
         if (conversation.botPaused === true) {
@@ -385,6 +401,7 @@ export const executeNextBlock = internalAction({
                     currentNodeId: result.scheduleNextBlockAfter ? nextNodeId : currentNode._id,
                     attributes,
                     botId: newBotId,
+                    botStepCount: result.scheduleNextBlockAfter ? nextStepCount : 0,
                 });
 
                 if (result.scheduleNextBlockAfter) {
@@ -407,6 +424,7 @@ export const executeNextBlock = internalAction({
             currentNodeId: updatedNodeId,
             attributes,
             botId: newBotId,
+            botStepCount: nextStepCount,
             executionTrace: {
                 nodeId: currentNode._id || currentNode.id,
                 type: currentNode.name || "node",
@@ -475,6 +493,7 @@ export const updateConversationState = internalMutation({
         currentNodeId: v.optional(v.union(v.string(), v.null())),
         attributes: v.any(),
         botId: v.optional(v.union(v.string(), v.id("bots"), v.null())),
+        botStepCount: v.optional(v.number()),
         executionTrace: v.optional(v.object({
             nodeId: v.string(),
             type: v.string(),
@@ -491,6 +510,7 @@ export const updateConversationState = internalMutation({
         };
         if (args.currentNodeId !== undefined) patch.currentNodeId = args.currentNodeId;
         if (args.botId) patch.botId = args.botId;
+        if (args.botStepCount !== undefined) patch.botStepCount = args.botStepCount;
 
         // Append execution trace for the real-time debugger panel
         if (args.executionTrace) {

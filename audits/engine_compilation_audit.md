@@ -1,20 +1,11 @@
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+# Deep Audit: Bot Execution Engine & Compilation Logic
 
-// Get flow for a bot
-export const get = query({
-    args: { botId: v.id("bots") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+This report provides a detailed analysis of the transformation from frontend React Flow nodes to backend execution actions, and how these actions are processed by the bot engine.
 
-        return await ctx.db
-            .query("bot_flows")
-            .withIndex("by_botId", (q) => q.eq("botId", args.botId))
-            .first();
-    },
-});
+## 1. The `compileToExecutionNodes` Function
+This function in `convex/botFlows.ts` is responsible for "compiling" the UI-friendly React Flow nodes into a flattened structure that the execution engine can process efficiently.
 
+```typescript
 function compileToExecutionNodes(nodes: any[], edges: any[]) {
     if (!Array.isArray(nodes)) return [];
     const safeEdges = Array.isArray(edges) ? edges : [];
@@ -106,7 +97,6 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 break;
             case "close":
                 actions.push({ _type: "reply", text: data.closingMessage || "Conversation ended." });
-                actions.push({ _type: "resolve_conversation" });
                 break;
             case "if_operating_hours":
                 actions.push({
@@ -187,43 +177,129 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
         };
     });
 }
+```
 
-// Save (upsert) flow for a bot
-export const save = mutation({
-    args: {
-        botId: v.id("bots"),
-        nodes: v.any(),
-        edges: v.any(),
-        variables: v.optional(v.any()),
-    },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        // if (!identity) throw new Error("Not authenticated");
+## 2. Node Type Mappings in Compilation
 
-        const executionNodes = compileToExecutionNodes(args.nodes, args.edges);
+| Frontend Node Type | Produced `_type` Mapping(s) |
+|--------------------|-----------------------------|
+| `start`            | (None - sets `nextBlock`) |
+| `reply`            | `reply` |
+| `setAttribute`     | `set_attribute` |
+| `condition`        | `condition` |
+| `webRequest`       | `web_request` (and optionally `set_attribute` for results) |
+| `aiTask`           | `chatgpt_task` |
+| `ai_assistant`     | `ai_assistant` |
+| `hitlHandoff`      | `reply` THEN `hitl_handoff` |
+| `close`            | `reply` (only) |
+| `if_operating_hours`| `if_operating_hours` |
+| `if_online_agent`  | `if_online_agent` |
+| `ask_kb`           | `ask_kb` |
+| `capture_user_reply`| `capture_user_reply` |
+| `wait`             | `wait` |
+| `replace_bot`      | `replace_bot` |
+| `change_department`| `change_department` |
+| `code_action`      | `code_action` |
+| `clear_transcript` | `clear_transcript` |
+| `applyLabel`       | `applyLabel` |
 
-        // Check if flow already exists for this bot
-        const existing = await ctx.db
-            .query("bot_flows")
-            .withIndex("by_botId", (q) => q.eq("botId", args.botId))
-            .first();
+## 3. Handling of Specific Nodes
 
-        if (existing) {
-            await ctx.db.patch(existing._id, {
-                nodes: args.nodes,
-                edges: args.edges,
-                executionNodes,
-                variables: args.variables,
-            });
-            return existing._id;
-        } else {
-            return await ctx.db.insert("bot_flows", {
-                botId: args.botId,
-                nodes: args.nodes,
-                edges: args.edges,
-                executionNodes,
-                variables: args.variables,
-            });
+### `close` Node
+The `close` node is handled by producing a **`reply`** action with the closing message.
+> [!WARNING]
+> The compilation logic for `close` does NOT produce a specific termination action or clear the `nextBlock`. If a user connects an edge *out* of a `close` node, the bot will continue execution after sending the message. Furthermore, there is no "close" case in the backend execution engine's action dispatcher.
+
+### `applyLabel` Node
+The `applyLabel` node is handled correctly, producing an action with **`_type: "applyLabel"`**.
+
+## 4. Behavior for Unknown/Unrecognized Node Types
+When the compiler encounters a node type that is not in its `switch` statement:
+- It **skips** adding any actions to the `actions` array (the array remains empty).
+- It **still processes edges** starting from that node, meaning it will still set the `nextBlock` if an edge exists.
+- The execution engine will treat this as a "no-op" node and immediately advance to the `nextBlock`.
+
+## 5. Execution Dispatch Logic (`bot.ts`)
+The execution engine in `convex/bot.ts` dispatches actions based on the mapped `_type` field.
+
+```typescript
+async function executeAction(ctx: any, action: any, attributes: any, incomingMessage: string, conversationId: any) {
+    switch (action._type) {
+        case "reply":
+            // ... logic ...
+            return { newAttributes: {} };
+
+        case "capture_user_reply":
+            // ... logic ...
+
+        case "set_attribute":
+            // ... logic ...
+
+        case "condition":
+            // ... logic ...
+
+        case "chatgpt_task": {
+            // ... logic ...
         }
-    },
-});
+
+        case "ask_kb": {
+            // ... logic ...
+        }
+
+        case "web_request":
+            // ... logic ...
+
+        case "replace_bot":
+            // ... logic ...
+
+        case "hitl_handoff":
+            // ... logic ...
+
+        case "mcp_tool_call":
+            // ... logic ...
+
+        case "wait":
+            // ... logic ...
+
+        case "if_operating_hours":
+            // ... logic ...
+
+        case "if_online_agent":
+            // ... logic ...
+
+        case "change_department":
+            // ... logic ...
+
+        case "code_action":
+            // ... logic ...
+
+        case "clear_transcript":
+            // ... logic ...
+
+        case "ai_assistant": {
+            // ... logic ...
+        }
+
+        case "applyLabel": {
+            // ... logic ...
+        }
+
+        default:
+            console.warn("Unknown bot action type: ", action._type);
+            return { newAttributes: {} };
+    }
+}
+```
+
+## 6. Error Handling & Silent Failures
+
+### SILENT FAILURES
+1. **`web_request`**: If a web request fails (network error or non-200 response), the code catches the error or checks `!response.ok` and returns the `failurePath`. However, it **does not log anything** to the console or the execution log. If no `failurePath` is wired in the UI, the bot simply stops or continues to the next block without any indication of what went wrong.
+2. **Unknown Node Types**: As noted above, unknown node types result in an empty action list. The engine will log the node entry but perform no actions, silently skipping the node's intended logic.
+
+### LOGGED ERRORS
+1. **`chatgpt_task`**: Logs with `console.error("[BOT ENGINE] AI Task failed:", e.message);`.
+2. **`ask_kb`**: Logs with `console.error("[BOT ENGINE] KB answer generation failed:", e.message);`.
+3. **`code_action`**: Logs with `console.error("Code action error:", e.message);`.
+4. **`ai_assistant`**: Logs with `console.error("[BOT ENGINE] AI Assistant failed:", e.message);`.
+5. **Unknown Actions**: The `default` case in the action switcher logs `console.warn("Unknown bot action type: ", action._type);`.

@@ -41,6 +41,7 @@ export default defineSchema({
         updatedAt: v.optional(v.number()),
         // Execution engine state
         currentNodeId: v.optional(v.union(v.string(), v.null())),
+        botStepCount: v.optional(v.number()),
         executionLog: v.optional(v.array(v.object({
             nodeId: v.string(),
             type: v.string(),
