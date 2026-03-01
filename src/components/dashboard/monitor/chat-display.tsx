@@ -26,6 +26,7 @@ import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useProject } from "@/context/ProjectContext"
 import { useUser } from "@clerk/nextjs"
+import { CannedResponsePicker } from "./canned-response-picker"
 
 interface ChatDisplayProps {
     conversation: Conversation | null
@@ -42,6 +43,8 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     const [isDepartmentTransferDialogOpen, setIsDepartmentTransferDialogOpen] = useState(false)
     const [departmentSearch, setDepartmentSearch] = useState("")
     const { user } = useUser()
+    const [showPicker, setShowPicker] = useState(false)
+    const [pickerQuery, setPickerQuery] = useState("")
 
     const projectMembers: Array<{ userId: string; profile?: { fullName?: string; avatarUrl?: string }; role?: string }> = [];
 
@@ -53,6 +56,11 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     const messages = useQuery(
         api.messages.getMessages,
         conversation ? { conversationId: conversation.id as Id<"conversations"> } : "skip"
+    );
+
+    const cannedResponses = useQuery(
+        api.settings.listCannedResponses,
+        projectId ? { projectId: projectId as Id<"projects"> } : "skip"
     );
 
     const sendMessage = useMutation(api.messages.sendMessage);
@@ -129,10 +137,61 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (showPicker && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Enter" || e.key === "Escape")) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+            return;
+        }
+
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setInputValue(val);
+
+        if (messageMode !== "public") {
+            setShowPicker(false);
+            return;
+        }
+
+        const lastSlashIndex = val.lastIndexOf("/");
+        if (lastSlashIndex !== -1 && (lastSlashIndex === 0 || val[lastSlashIndex - 1] === " " || val[lastSlashIndex - 1] === "\n")) {
+            const query = val.slice(lastSlashIndex + 1);
+            setPickerQuery(query);
+            setShowPicker(true);
+        } else {
+            setShowPicker(false);
+        }
+    }
+
+    const handlePickerSelect = (message: string) => {
+        if (!conversation) return;
+
+        let processedMessage = message;
+
+        const visitorName = conversation.user?.name || "Visitor";
+        const agentName = user?.fullName || "Agent";
+        const projectName = activeProject?.name || "";
+
+        processedMessage = processedMessage.replace(/{{visitor_name}}/g, visitorName);
+        processedMessage = processedMessage.replace(/{{agent_name}}/g, agentName);
+        processedMessage = processedMessage.replace(/{{project_name}}/g, projectName);
+
+        const lastSlashIndex = inputValue.lastIndexOf("/");
+        if (lastSlashIndex !== -1 && (lastSlashIndex === 0 || inputValue[lastSlashIndex - 1] === " " || inputValue[lastSlashIndex - 1] === "\n")) {
+            const newValue = inputValue.substring(0, lastSlashIndex) + processedMessage;
+            setInputValue(newValue);
+        } else {
+            setInputValue(inputValue + processedMessage);
+        }
+
+        setShowPicker(false);
+        setPickerQuery("");
     }
 
     const handleJoinLeave = async () => {
@@ -462,9 +521,17 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                     "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
                     messageMode === "internal" ? "bg-yellow-50/50 border-yellow-200 focus-within:ring-yellow-300" : "bg-white focus-within:ring-ring"
                 )}>
+                    {showPicker && cannedResponses && (
+                        <CannedResponsePicker
+                            responses={cannedResponses}
+                            query={pickerQuery}
+                            onSelect={handlePickerSelect}
+                            onClose={() => setShowPicker(false)}
+                        />
+                    )}
                     <Textarea
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         disabled={conversation.status === 1000}
                         placeholder={conversation.status === 1000 ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}

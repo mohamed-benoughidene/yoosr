@@ -19,6 +19,7 @@ import {
     Hash,
     Mail,
     Building2,
+    Pencil,
 } from "lucide-react"
 import {
     Table,
@@ -63,12 +64,18 @@ export default function CannedResponsesPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const messageRef = useRef<HTMLTextAreaElement>(null)
 
+    const [editingId, setEditingId] = useState<typeof responses[number]["_id"] | null>(null)
+    const [editTitle, setEditTitle] = useState("")
+    const [editMessage, setEditMessage] = useState("")
+    const editMessageRef = useRef<HTMLTextAreaElement>(null)
+
     const responses = useQuery(
         api.settings.listCannedResponses,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
     const createCannedResponse = useMutation(api.settings.createCannedResponse)
+    const updateCannedResponse = useMutation(api.settings.updateCannedResponse)
     const removeCannedResponse = useMutation(api.settings.removeCannedResponse)
 
     const handleCreate = async () => {
@@ -98,6 +105,22 @@ export default function CannedResponsesPage() {
         }
     }
 
+    const handleEditSubmit = async () => {
+        if (!editingId || !editTitle || !editMessage) return
+
+        try {
+            await updateCannedResponse({
+                id: editingId,
+                trigger: editTitle,
+                message: editMessage,
+            })
+            toast.success("Canned response updated")
+            setEditingId(null)
+        } catch {
+            toast.error("Failed to update canned response")
+        }
+    }
+
     const insertPlaceholder = (value: string) => {
         const textarea = messageRef.current
         if (!textarea) {
@@ -108,6 +131,22 @@ export default function CannedResponsesPage() {
         const end = textarea.selectionEnd
         const text = newMessage
         setNewMessage(text.substring(0, start) + value + text.substring(end))
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start + value.length, start + value.length)
+        }, 0)
+    }
+
+    const insertEditPlaceholder = (value: string) => {
+        const textarea = editMessageRef.current
+        if (!textarea) {
+            setEditMessage((prev) => prev + value)
+            return
+        }
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const text = editMessage
+        setEditMessage(text.substring(0, start) + value + text.substring(end))
         setTimeout(() => {
             textarea.focus()
             textarea.setSelectionRange(start + value.length, start + value.length)
@@ -292,6 +331,18 @@ export default function CannedResponsesPage() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
+                                            className="h-8 w-8 text-muted-foreground mr-1"
+                                            onClick={() => {
+                                                setEditingId(res._id)
+                                                setEditTitle(res.trigger)
+                                                setEditMessage(res.message)
+                                            }}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
                                             className="text-destructive h-8 w-8"
                                             onClick={() => handleDelete(res._id)}
                                         >
@@ -304,6 +355,98 @@ export default function CannedResponsesPage() {
                     </TableBody>
                 </Table>
             </Card>
+
+            {/* Edit Dialog */}
+            <Dialog
+                open={!!editingId}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditingId(null)
+                        setEditTitle("")
+                        setEditMessage("")
+                    }
+                }}
+            >
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Edit Canned Response</DialogTitle>
+                        <DialogDescription>
+                            Update the title and message for this response.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-5 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-title">Title</Label>
+                            <Input
+                                id="edit-title"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                placeholder="e.g., greeting, closing, refund-policy"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Internal shortcut name. Use <code className="bg-muted px-1 rounded">/title</code> to access in chat.
+                            </p>
+                        </div>
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-message">Message</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 gap-1 text-xs"
+                                        >
+                                            <Zap className="h-3 w-3" />
+                                            Personalize
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {placeholders.map((p) => (
+                                            <DropdownMenuItem
+                                                key={p.value}
+                                                onClick={() => insertEditPlaceholder(p.value)}
+                                            >
+                                                <p.icon className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                                                {p.label}
+                                                <span className="ml-auto text-xs text-muted-foreground font-mono">
+                                                    {p.value}
+                                                </span>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <Textarea
+                                ref={editMessageRef}
+                                id="edit-message"
+                                value={editMessage}
+                                onChange={(e) => setEditMessage(e.target.value)}
+                                placeholder="Hello {{user_name}}, thanks for reaching out! How can I help you today?"
+                                rows={4}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setEditingId(null)
+                                setEditTitle("")
+                                setEditMessage("")
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleEditSubmit}
+                            disabled={!editTitle || !editMessage}
+                        >
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

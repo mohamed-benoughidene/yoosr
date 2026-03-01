@@ -27,6 +27,8 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { Id } from "../../../convex/_generated/dataModel"
 import { useUser } from "@clerk/nextjs"
+import { useProject } from "@/context/ProjectContext"
+import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picker"
 
 export function ChatArea() {
     const searchParams = useSearchParams()
@@ -39,6 +41,9 @@ export function ChatArea() {
     const [agentSearch, setAgentSearch] = useState("")
     const [isDepartmentTransferDialogOpen, setIsDepartmentTransferDialogOpen] = useState(false)
     const [departmentSearch, setDepartmentSearch] = useState("")
+    const { activeProject } = useProject()
+    const [showPicker, setShowPicker] = useState(false)
+    const [pickerQuery, setPickerQuery] = useState("")
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,6 +66,11 @@ export function ChatArea() {
         api.messages.list,
         conversationId ? { conversationId } : "skip"
     )
+
+    const cannedResponses = useQuery(
+        api.settings.listCannedResponses,
+        conversation?.projectId ? { projectId: conversation.projectId } : "skip"
+    );
 
     const sendMessage = useMutation(api.messages.sendMessage)
     const resolveConversation = useMutation(api.conversations.resolve)
@@ -166,6 +176,64 @@ export function ChatArea() {
         } catch (error) {
             console.error("Failed to transfer to department:", error);
         }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (showPicker && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Enter" || e.key === "Escape")) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+            return;
+        }
+
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSendMessage()
+        }
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setInputValue(val);
+
+        if (messageMode !== "public") {
+            setShowPicker(false);
+            return;
+        }
+
+        const lastSlashIndex = val.lastIndexOf("/");
+        if (lastSlashIndex !== -1 && (lastSlashIndex === 0 || val[lastSlashIndex - 1] === " " || val[lastSlashIndex - 1] === "\n")) {
+            const query = val.slice(lastSlashIndex + 1);
+            setPickerQuery(query);
+            setShowPicker(true);
+        } else {
+            setShowPicker(false);
+        }
+    }
+
+    const handlePickerSelect = (message: string) => {
+        if (!conversation) return;
+
+        let processedMessage = message;
+
+        const visitorName = conversation.visitorName || "Visitor";
+        const agentName = user?.fullName || "Agent";
+        const projectName = activeProject?.name || "";
+
+        processedMessage = processedMessage.replace(/{{visitor_name}}/g, visitorName);
+        processedMessage = processedMessage.replace(/{{agent_name}}/g, agentName);
+        processedMessage = processedMessage.replace(/{{project_name}}/g, projectName);
+
+        const lastSlashIndex = inputValue.lastIndexOf("/");
+        if (lastSlashIndex !== -1 && (lastSlashIndex === 0 || inputValue[lastSlashIndex - 1] === " " || inputValue[lastSlashIndex - 1] === "\n")) {
+            const newValue = inputValue.substring(0, lastSlashIndex) + processedMessage;
+            setInputValue(newValue);
+        } else {
+            setInputValue(inputValue + processedMessage);
+        }
+
+        setShowPicker(false);
+        setPickerQuery("");
     }
 
     if (!conversationId) {
@@ -410,15 +478,18 @@ export function ChatArea() {
                     "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
                     messageMode === "internal" ? "bg-yellow-50/50 border-yellow-200 focus-within:ring-yellow-300" : "bg-white focus-within:ring-ring"
                 )}>
+                    {showPicker && cannedResponses && (
+                        <CannedResponsePicker
+                            responses={cannedResponses}
+                            query={pickerQuery}
+                            onSelect={handlePickerSelect}
+                            onClose={() => setShowPicker(false)}
+                        />
+                    )}
                     <Textarea
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault()
-                                handleSendMessage()
-                            }
-                        }}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
                         disabled={isResolved}
                         placeholder={isResolved ? "This conversation is resolved" : (messageMode === "internal" ? "Leave an internal note..." : "Type your message...")}
                         className={cn("min-h-[100px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", isResolved && "cursor-not-allowed opacity-50")}
