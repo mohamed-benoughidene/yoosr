@@ -78,7 +78,7 @@ export function SettingsSidebar({ className, ...props }: SettingsSidebarProps) {
     return (
         <nav
             className={cn(
-                "flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1",
+                "flex flex-col space-y-1 w-full",
                 className
             )}
             {...props}
@@ -90,7 +90,7 @@ export function SettingsSidebar({ className, ...props }: SettingsSidebarProps) {
                     className={cn(
                         buttonVariants({ variant: "ghost" }),
                         pathname === item.href
-                            ? "bg-muted hover:bg-muted"
+                            ? "bg-muted hover:bg-muted font-medium"
                             : "hover:bg-transparent hover:underline",
                         "justify-start"
                     )}
