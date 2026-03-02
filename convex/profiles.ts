@@ -166,3 +166,28 @@ export const seedProfile = internalMutation({
         }
     },
 });
+
+// Update agent availability
+export const setAvailability = mutation({
+    args: {
+        isAvailable: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const existing = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+            .first();
+
+        if (!existing) {
+            throw new Error("Profile not found");
+        }
+
+        await ctx.db.patch(existing._id, {
+            isAvailable: args.isAvailable,
+            updatedAt: Date.now(),
+        });
+    },
+});

@@ -34,13 +34,25 @@ export const getHomeStats = query({
         const myAssigned = openConversations.filter(c => c.assignedTo === identity.subject);
 
         // Fetch online teammates
-        // TODO: With Clerk Organizations, fetch active members online status from Clerk or a new presence system
-        // const teamMembers = await ctx.db
-        //     .query("project_members")
-        //     .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-        //     .collect();
-        // const onlineTeammatesCount = teamMembers.filter(m => m.status === "available").length;
-        const onlineTeammatesCount = 1; // Fallback for now
+        // Derive org members from profiles of agents who have been assigned to
+        // conversations in this project — this is the available agent pool in Convex.
+        // Cross-reference with isAvailable (undefined === true by default convention).
+        const assignedUserIds = new Set(
+            allConversations
+                .map(c => c.assignedTo)
+                .filter((id): id is string => !!id)
+        );
+
+        let onlineTeammatesCount = 0;
+        for (const userId of assignedUserIds) {
+            const profile = await ctx.db
+                .query("profiles")
+                .withIndex("by_userId", q => q.eq("userId", userId))
+                .first();
+            if (profile && (profile.isAvailable === true || profile.isAvailable === undefined)) {
+                onlineTeammatesCount++;
+            }
+        }
 
         // 3. Live Queue (60% width)
         // 5 most recent open or unassigned (100 or 200)

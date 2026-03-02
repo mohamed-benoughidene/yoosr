@@ -9,6 +9,7 @@ export default defineSchema({
         avatarUrl: v.optional(v.string()),
         username: v.optional(v.string()),
         email: v.optional(v.string()),
+        isAvailable: v.optional(v.boolean()),
         updatedAt: v.optional(v.number()),
     }).index("by_userId", ["userId"]),
 

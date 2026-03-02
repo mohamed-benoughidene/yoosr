@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Switch } from "@/components/ui/switch"
 import { SignedIn } from "@clerk/nextjs"
 import { NotificationBell } from "@/components/dashboard/NotificationBell"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../convex/_generated/api"
 
 const PAGE_LABELS: Record<string, string> = {
     "/dashboard": "Home",
@@ -32,8 +34,34 @@ function getPageLabel(pathname: string): string {
 
 export function SiteHeader() {
     const pathname = usePathname()
-    const [isAvailable, setIsAvailable] = useState(true)
     const pageLabel = getPageLabel(pathname ?? "")
+
+    const profile = useQuery(api.profiles.getMe)
+    const setAvailability = useMutation(api.profiles.setAvailability)
+
+    const [isAvailable, setIsAvailable] = useState(true)
+
+    useEffect(() => {
+        if (profile) {
+            setIsAvailable(profile.isAvailable ?? true)
+        }
+    }, [profile])
+
+
+    const handleCheckedChange = async (val: boolean) => {
+        setIsAvailable(val)
+        try {
+            await setAvailability({ isAvailable: val })
+        } catch (error) {
+            console.error("Failed to update availability:", error)
+            // Revert state on failure if needed
+            if (profile) {
+                setIsAvailable(profile.isAvailable ?? true)
+            }
+        }
+    }
+
+
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
             <div className="flex items-center gap-2">
@@ -49,7 +77,8 @@ export function SiteHeader() {
                     <Switch
                         id="availability"
                         checked={isAvailable}
-                        onCheckedChange={(val) => { setIsAvailable(val); console.log("availability:", val) }}
+                        onCheckedChange={handleCheckedChange}
+                        disabled={profile === undefined}
                     />
                     <label htmlFor="availability" className={`cursor-pointer select-none text-sm font-medium ${isAvailable ? "text-green-600" : "text-muted-foreground"}`}>
                         Available
