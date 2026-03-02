@@ -7,9 +7,26 @@ import {
 } from "@/components/ui/resizable"
 import { ConversationList } from "@/components/chat/ConversationList"
 import { ChatArea } from "@/components/chat/ChatArea"
-import { ContactInfo } from "@/components/chat/ContactInfo"
+import { VisitorPanel } from "@/components/dashboard/shared/VisitorPanel"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Id } from "../../../../convex/_generated/dataModel"
+
+function VisitorPanelWrapper() {
+    const searchParams = useSearchParams()
+    const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null
+
+    if (!conversationId) {
+        return (
+            <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+                Select a conversation to view details
+            </div>
+        )
+    }
+
+    return <VisitorPanel conversationId={conversationId} />
+}
 
 export default function ChatLayout({
     children,
@@ -43,7 +60,7 @@ export default function ChatLayout({
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
                     }>
-                        <ContactInfo />
+                        <VisitorPanelWrapper />
                     </Suspense>
                 </ResizablePanel>
             </ResizablePanelGroup>

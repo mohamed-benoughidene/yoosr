@@ -9,10 +9,11 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { ConversationList } from "./conversation-list"
 import { ChatDisplay } from "./chat-display"
-import { ContactInfo } from "./contact-info"
+import { VisitorPanel } from "@/components/dashboard/shared/VisitorPanel"
 import { useQuery, useMutation } from "convex/react"
 import { useProject } from "@/context/ProjectContext"
 import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function MonitorLayout() {
@@ -82,10 +83,10 @@ export default function MonitorLayout() {
                         <ResizableHandle withHandle />
                         <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
                             {selectedConversation ? (
-                                <ContactInfo conversation={selectedConversation} />
+                                <VisitorPanel conversationId={selectedConversation.id as Id<"conversations">} />
                             ) : (
-                                <div className="flex h-full items-center justify-center">
-                                    <span className="text-muted-foreground">No contact selected</span>
+                                <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+                                    Select a conversation to view details
                                 </div>
                             )}
                         </ResizablePanel>

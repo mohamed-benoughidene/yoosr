@@ -587,6 +587,11 @@ export const getConversations = query({
                 assignedTo: c.assignedTo ?? null, // Kept for backwards compatibility in other UI components
                 channel: c.attributes?.channel ?? "web",
                 unread: c.unreadCount ?? 0,
+                visitorName: visitorName,
+                visitorEmail: c.visitorEmail ?? "",
+                visitorPhone: c.visitorPhone ?? "",
+                visitorAddress: c.visitorAddress ?? "",
+                visitorNote: c.visitorNote ?? "",
                 user: {
                     name: visitorName,
                     email: c.visitorEmail ?? "",

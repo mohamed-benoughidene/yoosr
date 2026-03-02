@@ -143,17 +143,7 @@ export const removeCannedResponse = mutation({
 // LABELS
 // ========================
 
-export const listLabels = query({
-    args: { projectId: v.id("projects") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
-        return await ctx.db
-            .query("labels")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
-    },
-});
+
 
 export const createLabel = mutation({
     args: {
