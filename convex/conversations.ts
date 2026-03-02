@@ -91,7 +91,7 @@ export const update = mutation({
         // HITL Safeguards: if manually assigning, status becomes 200 and botPaused is cleared
         if (args.assignedTo) {
             cleanUpdates.status = 200;
-            cleanUpdates.botPaused = false; // Human has taken over — re-enable bot for future if needed
+            cleanUpdates.botPaused = true; // Human has taken over — pause the bot to prevent it from interfering.
             const conversation = await ctx.db.get(args.id);
             if (conversation) {
                 const participants = conversation.participants || [];
@@ -376,7 +376,10 @@ export const join = mutation({
         const updates: Record<string, any> = {
             participants,
             updatedAt: Date.now(),
+            botPaused: true,
         };
+
+        const wasUnassigned = !conversation.assignedTo;
 
         // Auto-assign to first joining agent if unassigned
         if (!conversation.assignedTo) {
@@ -385,6 +388,16 @@ export const join = mutation({
         }
 
         await ctx.db.patch(args.id, updates);
+
+        if (wasUnassigned) {
+            await ctx.db.insert("messages", {
+                conversationId: args.id,
+                projectId: conversation.projectId,
+                senderType: "bot",
+                content: "You are now connected with an agent.",
+                type: "text",
+            });
+        }
     },
 });
 

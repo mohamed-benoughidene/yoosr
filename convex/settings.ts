@@ -17,13 +17,9 @@ export const listDepartments = query({
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .collect();
 
-        // Enrich each department with its assigned members and their profiles
-        // TODO: Query members from Clerk Organization membership
-        const enrichedMembers: any[] = [];
-
         return departments.map(dept => ({
             ...dept,
-            members: enrichedMembers,
+            memberIds: dept.memberIds ?? [],
         }));
     },
 });
@@ -79,6 +75,58 @@ export const removeDepartment = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
         await ctx.db.delete(args.id);
+    },
+});
+
+export const addMemberToDepartment = mutation({
+    args: {
+        departmentId: v.id("departments"),
+        clerkUserId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const identity = (await ctx.auth.getUserIdentity()) as any;
+        if (!identity || !identity.org_id) throw new Error("Not authenticated or missing org_id");
+
+        const department = await ctx.db.get(args.departmentId);
+        if (!department) throw new Error("Department not found");
+
+        const project = await ctx.db.get(department.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new Error("Unauthorized to modify this department");
+        }
+
+        const memberIds = department.memberIds ?? [];
+        if (!memberIds.includes(args.clerkUserId)) {
+            await ctx.db.patch(args.departmentId, {
+                memberIds: [...memberIds, args.clerkUserId],
+            });
+        }
+    },
+});
+
+export const removeMemberFromDepartment = mutation({
+    args: {
+        departmentId: v.id("departments"),
+        clerkUserId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const identity = (await ctx.auth.getUserIdentity()) as any;
+        if (!identity || !identity.org_id) throw new Error("Not authenticated or missing org_id");
+
+        const department = await ctx.db.get(args.departmentId);
+        if (!department) throw new Error("Department not found");
+
+        const project = await ctx.db.get(department.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new Error("Unauthorized to modify this department");
+        }
+
+        const memberIds = department.memberIds ?? [];
+        if (memberIds.includes(args.clerkUserId)) {
+            await ctx.db.patch(args.departmentId, {
+                memberIds: memberIds.filter(id => id !== args.clerkUserId),
+            });
+        }
     },
 });
 

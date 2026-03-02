@@ -25,7 +25,7 @@ import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useProject } from "@/context/ProjectContext"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useOrganization } from "@clerk/nextjs"
 import { CannedResponsePicker } from "./canned-response-picker"
 
 interface ChatDisplayProps {
@@ -46,7 +46,16 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     const [showPicker, setShowPicker] = useState(false)
     const [pickerQuery, setPickerQuery] = useState("")
 
-    const projectMembers: Array<{ userId: string; profile?: { fullName?: string; avatarUrl?: string }; role?: string }> = [];
+    const { memberships } = useOrganization({ memberships: { infinite: true, pageSize: 50 } })
+
+    const projectMembers = (memberships?.data ?? []).map(m => ({
+        userId: m.publicUserData?.userId ?? "",
+        profile: {
+            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || 'Agent',
+            avatarUrl: m.publicUserData?.imageUrl,
+        },
+        role: m.role,
+    }))
 
     const departments = useQuery(
         api.settings.listDepartments,

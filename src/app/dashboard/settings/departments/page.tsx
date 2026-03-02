@@ -44,6 +44,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import type { Id } from "../../../../../convex/_generated/dataModel"
+import { useOrganization } from "@clerk/nextjs"
 
 export default function DepartmentsPage() {
     const { activeProject } = useProject()
@@ -63,11 +64,17 @@ export default function DepartmentsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    // Clerk handles members now, so we stub this out for now
-    const members: any[] = []
+    const { memberships } = useOrganization({ memberships: { infinite: true, pageSize: 50 } })
+    const members = (memberships?.data ?? []).map(m => ({
+        userId: m.publicUserData?.userId ?? "",
+        fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || "",
+        imageUrl: m.publicUserData?.imageUrl ?? "",
+        role: m.role,
+    }))
 
     const createDepartment = useMutation(api.settings.createDepartment)
-    // const assignMemberToDepartment = useMutation(api.members.assignMemberToDepartment)
+    const addMemberToDepartment = useMutation(api.settings.addMemberToDepartment)
+    const removeMemberFromDepartment = useMutation(api.settings.removeMemberFromDepartment)
     const updateDepartment = useMutation(api.settings.updateDepartment)
     const removeDepartment = useMutation(api.settings.removeDepartment)
 
@@ -141,12 +148,21 @@ export default function DepartmentsPage() {
         setTags(tags.filter(t => t !== tagToRemove))
     }
 
-    const handleAssignMember = async (memberId: string, departmentId: Id<"departments">) => {
+    const handleAssignMember = async (clerkUserId: string, departmentId: Id<"departments">) => {
         try {
-            // await assignMemberToDepartment({ memberId, departmentId })
-            toast.success("Agent assigned to department (Clerk Organization stub)")
+            await addMemberToDepartment({ clerkUserId, departmentId })
+            toast.success("Agent assigned to department")
         } catch {
             toast.error("Failed to assign agent")
+        }
+    }
+
+    const handleRemoveMember = async (clerkUserId: string, departmentId: Id<"departments">) => {
+        try {
+            await removeMemberFromDepartment({ clerkUserId, departmentId })
+            toast.success("Agent removed from department")
+        } catch {
+            toast.error("Failed to remove agent")
         }
     }
 
@@ -314,52 +330,66 @@ export default function DepartmentsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                {(!dept.members || dept.members.length === 0) ? (
+                                                {(!dept.memberIds || dept.memberIds.length === 0) ? (
                                                     <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                                                         <Users className="h-3.5 w-3.5" /> No agents assigned
                                                     </span>
                                                 ) : (
-                                                    <div className="flex -space-x-2 mr-2">
-                                                        {dept.members.map((m: any) => (
-                                                            <Tooltip key={m._id}>
-                                                                <TooltipTrigger asChild>
-                                                                    <Avatar className="h-7 w-7 border-2 border-background">
-                                                                        <AvatarImage src={m.profile?.avatarUrl} />
-                                                                        <AvatarFallback className="text-[10px]">{getInitials(m.profile?.fullName)}</AvatarFallback>
+                                                    <div className="flex flex-wrap gap-1.5 mr-2">
+                                                        {dept.memberIds.map((memberId: string) => {
+                                                            const memberDetails = members.find(m => m.userId === memberId);
+                                                            if (!memberDetails) return null;
+                                                            return (
+                                                                <Badge key={memberId} variant="secondary" className="pl-1 pr-1.5 py-1 gap-1.5 flex items-center font-normal">
+                                                                    <Avatar className="h-4 w-4 border border-background">
+                                                                        <AvatarImage src={memberDetails.imageUrl} />
+                                                                        <AvatarFallback className="text-[8px]">{getInitials(memberDetails.fullName)}</AvatarFallback>
                                                                     </Avatar>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    <p className="text-xs">{m.profile?.fullName}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        ))}
+                                                                    <span className="text-xs">{memberDetails.fullName}</span>
+                                                                    <button
+                                                                        onClick={() => handleRemoveMember(memberId, dept._id)}
+                                                                        className="ml-0.5 rounded-full hover:bg-black/10 transition-colors"
+                                                                        title="Remove member"
+                                                                    >
+                                                                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                                                    </button>
+                                                                </Badge>
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
 
                                                 <Popover>
                                                     <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
-                                                            <Plus className="h-3.5 w-3.5" />
+                                                        <Button variant="outline" size="icon" className="h-7 w-7 rounded-full shrink-0 border-dashed">
+                                                            <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                                                         </Button>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-60 p-2" align="start">
+                                                    <PopoverContent className="w-64 p-2" align="start">
                                                         <div className="space-y-2">
                                                             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">Add Member</h4>
                                                             <div className="space-y-1">
-                                                                {members.filter(m => m.userId && !dept.members?.find((dm: any) => dm.userId === m.userId)).length === 0 ? (
-                                                                    <p className="text-xs text-center text-muted-foreground py-2">All members are in this department.</p>
+                                                                {members.filter(m => m.userId && !dept.memberIds?.includes(m.userId)).length === 0 ? (
+                                                                    <p className="text-xs text-center text-muted-foreground py-3">All members are in this department.</p>
                                                                 ) : (
                                                                     members
-                                                                        .filter(m => m.userId && !dept.members?.find((dm: any) => dm.userId === m.userId))
+                                                                        .filter(m => m.userId && !dept.memberIds?.includes(m.userId))
                                                                         .map(m => (
                                                                             <Button
-                                                                                key={m._id}
+                                                                                key={m.userId}
                                                                                 variant="ghost"
-                                                                                className="w-full justify-start text-xs h-8"
-                                                                                onClick={() => handleAssignMember(m._id, dept._id)}
+                                                                                className="w-full justify-start text-xs h-9"
+                                                                                onClick={(e) => {
+                                                                                    // The popover trigger automatically handles state, we just dispatch the action
+                                                                                    handleAssignMember(m.userId, dept._id)
+                                                                                    // Clicking a portal item will close it if not intercepted
+                                                                                }}
                                                                             >
-                                                                                <UserPlus className="mr-2 h-3.5 w-3.5" />
-                                                                                {m.userId}
+                                                                                <Avatar className="h-5 w-5 mr-2">
+                                                                                    <AvatarImage src={m.imageUrl} />
+                                                                                    <AvatarFallback>{getInitials(m.fullName)}</AvatarFallback>
+                                                                                </Avatar>
+                                                                                <span className="truncate">{m.fullName}</span>
                                                                             </Button>
                                                                         ))
                                                                 )}

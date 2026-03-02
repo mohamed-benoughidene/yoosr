@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { Id } from "../../../convex/_generated/dataModel"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useOrganization } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picker"
 
@@ -54,7 +54,16 @@ export function ChatArea() {
         conversationId ? { id: conversationId } : "skip"
     )
 
-    const projectMembers: Array<{ userId: string; profile?: { fullName?: string; avatarUrl?: string }; role?: string }> = [];
+    const { memberships } = useOrganization({ memberships: { infinite: true, pageSize: 50 } })
+
+    const projectMembers = (memberships?.data ?? []).map(m => ({
+        userId: m.publicUserData?.userId ?? "",
+        profile: {
+            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || 'Agent',
+            avatarUrl: m.publicUserData?.imageUrl,
+        },
+        role: m.role,
+    }))
 
     const departments = useQuery(
         api.settings.listDepartments,
