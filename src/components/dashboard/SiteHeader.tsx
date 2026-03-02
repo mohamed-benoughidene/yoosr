@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Switch } from "@/components/ui/switch"
+import { SignedIn } from "@clerk/nextjs"
+import { NotificationBell } from "@/components/dashboard/NotificationBell"
 
 const PAGE_LABELS: Record<string, string> = {
     "/dashboard": "Home",
@@ -40,6 +42,9 @@ export function SiteHeader() {
                 <span className="text-sm font-medium">{pageLabel}</span>
             </div>
             <div className="ml-auto flex items-center gap-3">
+                <SignedIn>
+                    <NotificationBell />
+                </SignedIn>
                 <div className="flex items-center gap-2">
                     <Switch
                         id="availability"

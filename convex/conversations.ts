@@ -102,7 +102,36 @@ export const update = mutation({
             }
         }
 
+        const conversation = await ctx.db.get(args.id);
+
         await ctx.db.patch(args.id, cleanUpdates);
+
+        if (conversation) {
+            // Check for assignment changes
+            if (args.assignedTo && args.assignedTo !== conversation.assignedTo) {
+                await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                    projectId: conversation.projectId,
+                    recipientId: args.assignedTo,
+                    type: "assigned",
+                    conversationId: args.id,
+                    title: "Conversation assigned to you",
+                    body: conversation.visitorName || args.id,
+                });
+            }
+
+            // Check for resolution
+            if (Number(args.status) === 1000 && conversation.status !== 1000) {
+                if (conversation.assignedTo && conversation.assignedTo !== identity.subject) {
+                    await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                        projectId: conversation.projectId,
+                        recipientId: conversation.assignedTo,
+                        type: "resolved",
+                        conversationId: args.id,
+                        title: "Conversation resolved",
+                    });
+                }
+            }
+        }
     },
 });
 
@@ -301,6 +330,17 @@ export const resolve = mutation({
             updatedAt: Date.now(),
             resolvedBy: identity.subject,
         });
+
+        // Notify assigned agent if someone else resolved it
+        if (conversation.assignedTo && conversation.assignedTo !== identity.subject) {
+            await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                projectId: conversation.projectId,
+                recipientId: conversation.assignedTo,
+                type: "resolved",
+                conversationId: args.id,
+                title: "Conversation resolved",
+            });
+        }
 
         // Trigger generative tags extraction
         await ctx.scheduler.runAfter(0, internal.tags.extractGenerativeTags, {

@@ -1,7 +1,6 @@
 import Link from "next/link"
-import { Id } from "../../../convex/_generated/dataModel"
+
 import {
-    Bell,
     CircleUser,
     Home,
     LineChart,
@@ -42,8 +41,7 @@ import { useState, useEffect } from "react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "../../../convex/_generated/api"
+
 
 const SOUND_STORAGE_KEY = "yoosr-sound-enabled"
 
@@ -57,8 +55,6 @@ export function DashboardHeader() {
         return true
     })
 
-    // const currentMember = useQuery(api.members.current, activeProject ? { projectId: activeProject._id } : "skip")
-    // const updateMember = useMutation(api.members.update)
     const currentMember = { status: "available" } // Stub for Clerk Organizations
     const isAvailable = currentMember.status === "available" // TODO: Use real presence system
 

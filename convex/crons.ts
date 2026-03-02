@@ -10,4 +10,11 @@ crons.interval(
     internal.conversations.autoCloseInactive,
 );
 
+// Cleanup notifications older than 7 days
+crons.interval(
+    "cleanup old notifications",
+    { hours: 24 },
+    internal.notifications.cleanupOldNotifications,
+);
+
 export default crons;

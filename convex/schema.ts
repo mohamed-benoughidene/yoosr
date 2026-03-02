@@ -271,4 +271,23 @@ export default defineSchema({
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_isActive", ["projectId", "isActive"]),
+
+    // Notifications for agents
+    notifications: defineTable({
+        projectId: v.id("projects"),
+        recipientId: v.string(), // Clerk user ID of the agent who should see this
+        type: v.union(
+            v.literal("new_message"),
+            v.literal("assigned"),
+            v.literal("escalation"),
+            v.literal("resolved")
+        ),
+        conversationId: v.id("conversations"),
+        title: v.string(),
+        body: v.optional(v.string()),
+        read: v.boolean(),
+        createdAt: v.number(),
+    })
+        .index("by_recipient", ["recipientId", "createdAt"])
+        .index("by_project_recipient", ["projectId", "recipientId"]),
 });

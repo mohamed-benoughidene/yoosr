@@ -150,10 +150,23 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             return { newAttributes: {} };
 
         case "hitl_handoff":
+            const convState = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             await ctx.runMutation(internal.bot.assignToHuman, {
                 conversationId,
                 deptId: action.deptId,
             });
+
+            if (convState?.assignedTo) {
+                await ctx.runMutation(internal.notifications.createNotification, {
+                    projectId: convState.projectId,
+                    recipientId: convState.assignedTo,
+                    type: "escalation",
+                    conversationId: conversationId,
+                    title: "Bot handed off to you",
+                    body: incomingMessage ? incomingMessage.substring(0, 80) : "A bot has handed off a conversation to you.",
+                });
+            }
+
             return { newAttributes: {}, suspend: true };
 
         case "mcp_tool_call":

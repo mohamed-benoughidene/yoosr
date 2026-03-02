@@ -66,6 +66,17 @@ export const send = mutation({
         // If it's a visitor message, increment unread count
         if (args.senderType === "visitor") {
             updateData.unreadCount = (conversation.unreadCount ?? 0) + 1;
+
+            if (conversation.assignedTo) {
+                await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                    projectId: conversation.projectId,
+                    recipientId: conversation.assignedTo,
+                    type: "new_message",
+                    conversationId: args.conversationId,
+                    title: "New message",
+                    body: args.content.substring(0, 80),
+                });
+            }
         }
 
         await ctx.db.patch(args.conversationId, updateData);
@@ -137,6 +148,17 @@ export const sendFromWidget = internalMutation({
         }
 
         await ctx.db.patch(conversationId, patchData);
+
+        if (conversation.assignedTo) {
+            await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                projectId: conversation.projectId,
+                recipientId: conversation.assignedTo,
+                type: "new_message",
+                conversationId: conversationId,
+                title: "New message",
+                body: args.content.substring(0, 80),
+            });
+        }
 
         // Smart routing and bot execution hook
         if (conversation.status === 100 || patchData.status === 100) {

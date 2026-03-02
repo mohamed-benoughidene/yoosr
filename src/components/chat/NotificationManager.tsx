@@ -6,6 +6,7 @@ import { playNotificationSound, showBrowserNotification } from "@/lib/notificati
 import { toast } from "sonner"
 import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
+import { Doc } from "../../../convex/_generated/dataModel"
 
 const SOUND_STORAGE_KEY = "yoosr-sound-enabled"
 
@@ -17,7 +18,7 @@ function isSoundEnabled(): boolean {
 export function NotificationManager() {
     const { activeProject } = useProject()
     const originalTitle = useRef<string>("")
-    const prevMessagesRef = useRef<any[]>([])
+    const prevMessagesRef = useRef<Doc<"messages">[]>([])
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
