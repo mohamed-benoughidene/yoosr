@@ -174,13 +174,18 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
 
         let processedMessage = message;
 
-        const visitorName = conversation.user?.name || "Visitor";
+        const visitorName = conversation.user?.name || "there";
         const agentName = user?.fullName || "Agent";
         const projectName = activeProject?.name || "";
+        const visitorEmail = conversation.user?.email || "";
+        const ticketId = conversation.id || "";
 
-        processedMessage = processedMessage.replace(/{{visitor_name}}/g, visitorName);
-        processedMessage = processedMessage.replace(/{{agent_name}}/g, agentName);
-        processedMessage = processedMessage.replace(/{{project_name}}/g, projectName);
+        processedMessage = processedMessage.replace(/{{visitor_name}}/gi, visitorName);
+        processedMessage = processedMessage.replace(/{{user_name}}/gi, visitorName);
+        processedMessage = processedMessage.replace(/{{agent_name}}/gi, agentName);
+        processedMessage = processedMessage.replace(/{{project_name}}/gi, projectName);
+        processedMessage = processedMessage.replace(/{{user_email}}/gi, visitorEmail);
+        processedMessage = processedMessage.replace(/{{ticket_id}}/gi, ticketId);
 
         const lastSlashIndex = inputValue.lastIndexOf("/");
         if (lastSlashIndex !== -1 && (lastSlashIndex === 0 || inputValue[lastSlashIndex - 1] === " " || inputValue[lastSlashIndex - 1] === "\n")) {

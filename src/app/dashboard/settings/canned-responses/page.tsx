@@ -53,6 +53,7 @@ const placeholders = [
     { label: "User Email", value: "{{user_email}}", icon: Mail },
     { label: "Project Name", value: "{{project_name}}", icon: Building2 },
     { label: "Ticket ID", value: "{{ticket_id}}", icon: Hash },
+    { label: "Agent Name", value: "{{agent_name}}", icon: User },
 ]
 
 export default function CannedResponsesPage() {
