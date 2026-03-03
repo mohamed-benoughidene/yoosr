@@ -15,6 +15,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
 import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import { useProject } from "@/context/ProjectContext";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -40,6 +41,8 @@ export function NodePropertiesPanel({
     if (!node) return null;
 
     const data = node.data as Record<string, any>;
+    const { activeProject } = useProject();
+    const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     const update = useCallback(
         (key: string, value: unknown) => {
@@ -330,7 +333,7 @@ export function NodePropertiesPanel({
                                 value={data.model || ""}
                                 onChange={(e) => update("model", e.target.value)}
                                 className="h-8 text-sm font-mono"
-                                placeholder="mistralai/mistral-7b-instruct"
+                                placeholder={fallbackModel}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -370,7 +373,7 @@ export function NodePropertiesPanel({
                                 value={data.model || ""}
                                 onChange={(e) => update("model", e.target.value)}
                                 className="h-8 text-sm font-mono"
-                                placeholder="meta-llama/llama-3.1-8b-instruct"
+                                placeholder={fallbackModel}
                             />
                         </div>
                         <div className="space-y-1.5">

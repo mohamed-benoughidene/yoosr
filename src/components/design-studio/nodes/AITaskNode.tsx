@@ -2,9 +2,12 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Sparkles } from "lucide-react";
+import { useProject } from "@/context/ProjectContext";
 
 export function AITaskNode({ data, selected }: NodeProps) {
     const nodeData = data as Record<string, any>;
+    const { activeProject } = useProject();
+    const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     return (
         <div
@@ -39,7 +42,7 @@ export function AITaskNode({ data, selected }: NodeProps) {
                     </p>
                 )}
                 <p className="text-[10px] text-muted-foreground truncate opacity-70">
-                    {nodeData.model || "mistralai/mistral-7b-instruct"}
+                    {nodeData.model || fallbackModel}
                 </p>
             </div>
 

@@ -94,7 +94,12 @@ export function FlowEditor({
     );
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const nodeCountRef = useRef(
-        initialNodes ? initialNodes.length : 1
+        initialNodes && initialNodes.length > 0
+            ? Math.max(...initialNodes.map((n) => {
+                const m = n.id.match(/\d+$/);
+                return m ? parseInt(m[0], 10) : 0;
+            }))
+            : 1
     );
 
     // Notify parent of changes

@@ -16,6 +16,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
@@ -33,11 +42,19 @@ import {
 import { useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 
+const AVAILABLE_MODELS = [
+    { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", provider: "Mistral", description: "Reliable, balanced performance" },
+    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", provider: "Meta", description: "Strong Arabic support, enterprise-grade" },
+    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", provider: "Mistral", description: "Lightweight, fast responses" },
+    { id: "openrouter/free", name: "Auto (OpenRouter)", provider: "OpenRouter", description: "Automatically picks best available free model" },
+]
+
 export default function GeneralSettingsPage() {
     const { activeProject } = useProject()
     const [loading, setLoading] = useState(false)
     const [projectName, setProjectName] = useState("")
     const [projectDesc, setProjectDesc] = useState("")
+    const [defaultModel, setDefaultModel] = useState("mistralai/mistral-small-3.1-24b-instruct:free")
 
     // Developer settings state
     const [showApiKey, setShowApiKey] = useState(false)
@@ -57,6 +74,7 @@ export default function GeneralSettingsPage() {
         if (activeProject) {
             setProjectName(activeProject.name)
             setProjectDesc(activeProject.description || "")
+            setDefaultModel(activeProject.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
             // Load webhook config from widgetConfig if stored there
             const wc = activeProject.widgetConfig as Record<string, any> | undefined
             if (wc) {
@@ -75,6 +93,7 @@ export default function GeneralSettingsPage() {
                 id: activeProject._id,
                 name: projectName,
                 description: projectDesc,
+                defaultModel,
             })
             toast.success("Project settings updated")
         } catch {
@@ -185,6 +204,27 @@ export default function GeneralSettingsPage() {
                                         setProjectDesc(e.target.value)
                                     }
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="model-select">Default AI Model</Label>
+                                <Select value={defaultModel} onValueChange={setDefaultModel}>
+                                    <SelectTrigger id="model-select" className="w-full">
+                                        <SelectValue placeholder="Select a model" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Available Models</SelectLabel>
+                                            {AVAILABLE_MODELS.map((m) => (
+                                                <SelectItem key={m.id} value={m.id} className="cursor-pointer">
+                                                    {m.name} <span className="text-muted-foreground font-mono text-xs ml-1">({m.provider})</span>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    {AVAILABLE_MODELS.find(m => m.id === defaultModel)?.description || "Select a model to use by default."}
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label>Project ID</Label>

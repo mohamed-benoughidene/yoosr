@@ -22,6 +22,7 @@ export default defineSchema({
         orgId: v.string(), // Clerk Organization ID
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
         widgetConfig: v.optional(v.any()), // JSON config for widget appearance
+        defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
     }).index("by_orgId", ["orgId"]),
 
 

@@ -1,9 +1,12 @@
 "use client";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Bot } from "lucide-react";
+import { useProject } from "@/context/ProjectContext";
 
 export function AIAssistantNode({ data, selected }: NodeProps) {
     const nodeData = data as Record<string, any>;
+    const { activeProject } = useProject();
+    const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
     return (
         <div className={`group relative min-w-[220px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected ? "border-fuchsia-500 shadow-fuchsia-500/10" : "border-border hover:border-fuchsia-500/50"}`}>
             <Handle type="target" position={Position.Top} className="!h-3 !w-3 !rounded-full !border-2 !border-fuchsia-500 !bg-background transition-colors group-hover:!bg-fuchsia-500" />
@@ -15,7 +18,7 @@ export function AIAssistantNode({ data, selected }: NodeProps) {
             </div>
             <div className="px-4 py-2 space-y-0.5">
                 <p className="text-[10px] text-muted-foreground truncate opacity-70">
-                    {nodeData.model || "meta-llama/llama-3.1-8b-instruct"}
+                    {nodeData.model || fallbackModel}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate opacity-70">
                     Max turns: {nodeData.maxTurns || 3}

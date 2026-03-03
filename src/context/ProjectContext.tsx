@@ -13,6 +13,7 @@ interface Project {
     description?: string
     orgId: string
     status?: string
+    defaultModel?: string
     widgetConfig?: any
     userRole?: string
 }

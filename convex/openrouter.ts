@@ -5,8 +5,6 @@
 
 import OpenAI from "openai";
 
-const DEFAULT_AI_TASK_MODEL = "meta-llama/llama-3.1-8b-instruct";
-const DEFAULT_AI_ASSISTANT_MODEL = "meta-llama/llama-3.1-8b-instruct";
 
 function getClient(): OpenAI {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -37,10 +35,11 @@ export interface LLMResult {
 export async function callAITask(
     systemPrompt: string,
     userMessage: string,
-    model?: string
+    model?: string,
+    projectDefaultModel?: string
 ): Promise<LLMResult> {
     const client = getClient();
-    const resolvedModel = model || DEFAULT_AI_TASK_MODEL;
+    const resolvedModel = model || projectDefaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
@@ -66,10 +65,11 @@ export async function callAITask(
 export async function callAIAssistant(
     systemPrompt: string,
     conversationHistory: ChatMessage[],
-    model?: string
+    model?: string,
+    projectDefaultModel?: string
 ): Promise<LLMResult> {
     const client = getClient();
-    const resolvedModel = model || DEFAULT_AI_ASSISTANT_MODEL;
+    const resolvedModel = model || projectDefaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         ...conversationHistory,

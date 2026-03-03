@@ -52,16 +52,21 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const systemPrompt = interpolate(action.prompt || action.systemPrompt || "", attributes);
             const userInput = interpolate(action.userInput || "{{lastUserText}}", attributes);
             try {
-                const llmResult = await callAITask(systemPrompt, userInput, action.model);
-                // Log token usage
                 const _aiTaskConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
+                const projectDefaultModel = _aiTaskConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: _aiTaskConv.projectId }) : undefined;
+                const llmResult = await callAITask(systemPrompt, userInput, action.model, projectDefaultModel);
+                // Log token usage
                 if (_aiTaskConv) {
-                    await ctx.runMutation(internal.analytics.logTokenUsage, {
-                        projectId: _aiTaskConv.projectId,
-                        model: llmResult.model,
-                        tokensUsed: llmResult.tokensUsed,
-                        operation: "ai_task",
-                    });
+                    try {
+                        await ctx.runMutation(internal.analytics.logTokenUsage, {
+                            projectId: _aiTaskConv.projectId,
+                            model: llmResult.model,
+                            tokensUsed: llmResult.tokensUsed,
+                            operation: "ai_task",
+                        });
+                    } catch (e: any) {
+                        console.warn("[BOT ENGINE] Failed to log token usage:", e.message);
+                    }
                 }
                 const parsed = tryParseJSON(llmResult.text);
                 return {
@@ -243,23 +248,26 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
                 // Fetch project ID for token logging
                 const assistantConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-
-                // Multi-turn loop: the LLM can reason across multiple turns
+                const projectDefaultModel = assistantConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: assistantConv.projectId }) : undefined;
                 let lastReply = "";
                 for (let turn = 0; turn < maxTurns; turn++) {
-                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model);
+                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model, projectDefaultModel);
                     if (!llmResult.text) break;
 
                     lastReply = llmResult.text;
 
                     // Log token usage
                     if (assistantConv) {
-                        await ctx.runMutation(internal.analytics.logTokenUsage, {
-                            projectId: assistantConv.projectId,
-                            model: llmResult.model,
-                            tokensUsed: llmResult.tokensUsed,
-                            operation: "ai_assistant",
-                        });
+                        try {
+                            await ctx.runMutation(internal.analytics.logTokenUsage, {
+                                projectId: assistantConv.projectId,
+                                model: llmResult.model,
+                                tokensUsed: llmResult.tokensUsed,
+                                operation: "ai_assistant",
+                            });
+                        } catch (e: any) {
+                            console.warn("[BOT ENGINE] Failed to log token usage:", e.message);
+                        }
                     }
 
                     // Send the reply as a bot message
@@ -645,6 +653,14 @@ export const getOperatingHoursInternal = internalQuery({
             .query("operating_hours")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .first();
+    }
+});
+
+export const getProjectDefaultModel = internalQuery({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const project = await ctx.db.get(args.projectId);
+        return project?.defaultModel;
     }
 });
 
