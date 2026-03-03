@@ -16,7 +16,7 @@ export const list = query({
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .order("desc")
-            .collect();
+            .take(100);
 
         if (args.departmentId) {
             return conversations.filter((c) => c.departmentId === args.departmentId || c.departmentId === undefined);
@@ -624,13 +624,29 @@ export const getConversations = query({
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .order("desc")
-            .collect();
+            .take(100);
 
         if (args.departmentId) {
             convos = convos.filter((c) => c.departmentId === args.departmentId || c.departmentId === undefined);
         }
 
-        return await Promise.all(convos.map(async (c) => {
+        // Bulk-fetch profiles for all unique assignedTo userIds (eliminates N+1)
+        const uniqueAgentIds = [...new Set(
+            convos.map((c) => c.assignedTo).filter((id): id is string => !!id)
+        )];
+        const profiles = await Promise.all(
+            uniqueAgentIds.map((userId) =>
+                ctx.db
+                    .query("profiles")
+                    .withIndex("by_userId", (q) => q.eq("userId", userId))
+                    .first()
+            )
+        );
+        const profileMap = new Map(
+            uniqueAgentIds.map((userId, i) => [userId, profiles[i]] as const)
+        );
+
+        return convos.map((c) => {
             const visitorName = c.visitorName || "Visitor";
             const initials = visitorName
                 .split(" ")
@@ -641,10 +657,7 @@ export const getConversations = query({
 
             let assignedAgent = null;
             if (c.assignedTo) {
-                const profile = await ctx.db
-                    .query("profiles")
-                    .withIndex("by_userId", (q) => q.eq("userId", c.assignedTo!))
-                    .first();
+                const profile = profileMap.get(c.assignedTo);
                 if (profile) {
                     assignedAgent = {
                         name: profile.fullName || profile.username || "Unknown",
@@ -686,7 +699,25 @@ export const getConversations = query({
                     ip: c.attributes?.ip ?? "",
                 },
             };
-        }));
+        });
     },
 });
 
+// List resolved conversations for the History page
+export const listResolved = query({
+    args: {
+        projectId: v.id("projects"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId_status", (q) =>
+                q.eq("projectId", args.projectId).eq("status", 1000)
+            )
+            .order("desc")
+            .take(200);
+    },
+});

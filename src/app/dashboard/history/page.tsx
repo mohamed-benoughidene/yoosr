@@ -31,14 +31,13 @@ export default function HistoryPage() {
 
     const profiles = useQuery(api.profiles.list) ?? []
 
-    // Real-time conversation list
+    // Real-time resolved conversations for history
     const allConversations = useQuery(
-        api.conversations.list,
+        api.conversations.listResolved,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    // Filter for resolved conversations
-    const conversations = allConversations.filter((c: any) => c.status === 1000)
+    const conversations = allConversations
 
     const filteredConversations = conversations.filter((convo: any) => {
         const matchesSearch = convo.visitorName?.toLowerCase().includes(search.toLowerCase()) ||

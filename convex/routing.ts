@@ -31,14 +31,14 @@ export const routeConversation = internalMutation({
 
             // Fallback to project's active bot
             if (!botIdToAssign) {
-                const bots = await ctx.db
+                const activeBot = await ctx.db
                     .query("bots")
                     .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-                    .collect();
+                    .filter(q => q.eq(q.field("status"), "active"))
+                    .first();
 
-                const activeBots = bots.filter(b => b.status === "active");
-                if (activeBots.length > 0) {
-                    botIdToAssign = activeBots[0]._id;
+                if (activeBot) {
+                    botIdToAssign = activeBot._id;
                 }
             }
 

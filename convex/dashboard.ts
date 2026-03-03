@@ -19,13 +19,14 @@ export const getHomeStats = query({
         const bots = await ctx.db
             .query("bots")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .collect();
+            .take(1);
         const botsCount = bots.length;
 
-        // 2. Fetch active and recent conversations
+        // 2. Fetch active and recent conversations (exclude resolved)
         const allConversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            .filter(q => q.neq(q.field("status"), 1000))
             .collect();
 
         // Live Stats Row
@@ -33,26 +34,16 @@ export const getHomeStats = query({
         const waitingConversations = allConversations.filter(c => c.status === 100);
         const myAssigned = openConversations.filter(c => c.assignedTo === identity.subject);
 
-        // Fetch online teammates
-        // Derive org members from profiles of agents who have been assigned to
-        // conversations in this project — this is the available agent pool in Convex.
-        // Cross-reference with isAvailable (undefined === true by default convention).
-        const assignedUserIds = new Set(
-            allConversations
-                .map(c => c.assignedTo)
-                .filter((id): id is string => !!id)
-        );
+        // Fetch online teammates — query profiles directly by org
+        const project = await ctx.db.get(args.projectId);
+        const orgProfiles = project ? await ctx.db
+            .query("profiles")
+            .withIndex("by_orgId", q => q.eq("orgId", project.orgId))
+            .collect() : [];
 
-        let onlineTeammatesCount = 0;
-        for (const userId of assignedUserIds) {
-            const profile = await ctx.db
-                .query("profiles")
-                .withIndex("by_userId", q => q.eq("userId", userId))
-                .first();
-            if (profile && (profile.isAvailable === true || profile.isAvailable === undefined)) {
-                onlineTeammatesCount++;
-            }
-        }
+        const onlineTeammatesCount = orgProfiles.filter(
+            p => p.isAvailable === true
+        ).length;
 
         // 3. Live Queue (60% width)
         // 5 most recent open or unassigned (100 or 200)
@@ -88,9 +79,15 @@ export const getHomeStats = query({
             .order("desc")
             .take(10);
 
-        // 5. Today's Snapshot
-        const conversationsToday = allConversations.filter(c => (c._creationTime ?? 0) >= startOfTodayMs);
-        const conversationsYesterday = allConversations.filter(c =>
+        // 5. Today's Snapshot (needs ALL conversations including resolved)
+        const snapshotConversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            .filter(q => q.gte(q.field("_creationTime"), startOfYesterdayMs))
+            .collect();
+
+        const conversationsToday = snapshotConversations.filter(c => (c._creationTime ?? 0) >= startOfTodayMs);
+        const conversationsYesterday = snapshotConversations.filter(c =>
             (c._creationTime ?? 0) >= startOfYesterdayMs && (c._creationTime ?? 0) < startOfTodayMs
         );
         const todayCount = conversationsToday.length;
@@ -103,6 +100,7 @@ export const getHomeStats = query({
                 q.eq("projectId", args.projectId)
                     .gte("createdAt", startOfTodayMs)
             )
+            .filter(q => q.gte(q.field("createdAt"), startOfTodayMs))
             .collect();
 
         const botResolvedToday = todayEvents.filter(e => e.handledBy === "bot" && e.closed).length;
