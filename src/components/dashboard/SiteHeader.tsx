@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Switch } from "@/components/ui/switch"
-import { SignedIn, useUser } from "@clerk/nextjs"
+import { SignedIn } from "@clerk/nextjs"
 import { NotificationBell } from "@/components/dashboard/NotificationBell"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
@@ -35,7 +35,6 @@ function getPageLabel(pathname: string): string {
 export function SiteHeader() {
     const pathname = usePathname()
     const pageLabel = getPageLabel(pathname ?? "")
-    const { user } = useUser()
 
     const profile = useQuery(api.profiles.getMe)
     const setAvailability = useMutation(api.profiles.setAvailability)
@@ -48,32 +47,6 @@ export function SiteHeader() {
         }
     }, [profile])
 
-    // Auto-offline on tab close: beforeunload shows confirmation, unload sends beacon
-    useEffect(() => {
-        if (!user?.id || !isAvailable) return
-
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-        if (!convexUrl) return
-
-        const offlineUrl = convexUrl.replace(/\.convex\.cloud$/, ".convex.site") + "/presence/offline"
-
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            e.preventDefault()
-        }
-
-        const handleUnload = () => {
-            const payload = JSON.stringify({ userId: user.id })
-            navigator.sendBeacon(offlineUrl, new Blob([payload], { type: "application/json" }))
-        }
-
-        window.addEventListener("beforeunload", handleBeforeUnload)
-        window.addEventListener("unload", handleUnload)
-
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload)
-            window.removeEventListener("unload", handleUnload)
-        }
-    }, [user?.id, isAvailable])
 
     const handleCheckedChange = async (val: boolean) => {
         setIsAvailable(val)

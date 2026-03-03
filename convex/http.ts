@@ -276,23 +276,6 @@ http.route({
     }),
 });
 
-// Agent presence offline (Beacon API endpoint)
-http.route({
-    path: "/presence/offline",
-    method: "POST",
-    handler: httpAction(async (ctx, request) => {
-        try {
-            const body = await request.json();
-            const { userId } = body;
-            if (userId) {
-                await ctx.runMutation(internal.profiles.setOffline, { userId });
-            }
-            return new Response("OK", { status: 200, headers: corsHeaders });
-        } catch (e) {
-            return new Response("Error", { status: 400, headers: corsHeaders });
-        }
-    }),
-});
 
 export default http;
 

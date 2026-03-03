@@ -124,6 +124,8 @@ export const ensureCurrent = mutation({
                 avatarUrl: identity.pictureUrl,
                 orgId: (identity as any).org_id,
                 updatedAt: Date.now(),
+                isAvailable: false,
+                lastSeenAt: Date.now(),
             });
         } else {
             // Sync profile with latest Clerk data
@@ -193,6 +195,7 @@ export const setAvailability = mutation({
                 isAvailable: args.isAvailable,
                 orgId: (identity as any).org_id,
                 updatedAt: Date.now(),
+                lastSeenAt: Date.now(),
             });
         } else {
             await ctx.db.insert("profiles", {
@@ -200,6 +203,7 @@ export const setAvailability = mutation({
                 isAvailable: args.isAvailable,
                 orgId: (identity as any).org_id,
                 updatedAt: Date.now(),
+                lastSeenAt: Date.now(),
             });
         }
     },
@@ -223,3 +227,23 @@ export const setOffline = internalMutation({
     },
 });
 
+// Internal: mark stale agents as offline
+export const cleanupStalePresence = internalMutation({
+    args: {},
+    handler: async (ctx) => {
+        const threshold = Date.now() - 90000;
+        const onlineProfiles = await ctx.db
+            .query("profiles")
+            .filter((q) => q.eq(q.field("isAvailable"), true))
+            .collect();
+
+        for (const profile of onlineProfiles) {
+            if (profile.lastSeenAt && profile.lastSeenAt < threshold) {
+                await ctx.db.patch(profile._id, {
+                    isAvailable: false,
+                    updatedAt: Date.now(),
+                });
+            }
+        }
+    },
+});

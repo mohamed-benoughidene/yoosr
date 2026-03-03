@@ -10,6 +10,7 @@ export default defineSchema({
         username: v.optional(v.string()),
         email: v.optional(v.string()),
         isAvailable: v.optional(v.boolean()),
+        lastSeenAt: v.optional(v.number()),
         orgId: v.optional(v.string()), // Added for multi-tenancy support
         updatedAt: v.optional(v.number()),
     }).index("by_userId", ["userId"])

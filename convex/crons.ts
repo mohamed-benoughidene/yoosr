@@ -16,5 +16,11 @@ crons.interval(
     { hours: 24 },
     internal.notifications.cleanupOldNotifications,
 );
+// Cleanup stale agent presence
+crons.interval(
+    "cleanup stale presence",
+    { seconds: 60 },
+    internal.profiles.cleanupStalePresence,
+);
 
 export default crons;

@@ -15,6 +15,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
 import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useProject } from "@/context/ProjectContext";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -414,6 +415,33 @@ export function NodePropertiesPanel({
                             onChange={(e) => update("delaySeconds", parseInt(e.target.value) || 1)}
                             className="h-8 text-sm"
                         />
+                    </div>
+                )}
+
+                {/* Operating Hours Node */}
+                {node.type === "if_operating_hours" && (
+                    <div className="space-y-4">
+                        <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+                            This block checks your project's operating hours schedule at runtime.
+                        </div>
+
+                        <Button variant="outline" size="sm" asChild className="w-full shadow-sm h-8 mt-1">
+                            <Link href="/dashboard/settings/operating-hours">
+                                Configure Operating Hours &rarr;
+                            </Link>
+                        </Button>
+
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Output Paths</Label>
+                            <div className="flex flex-col gap-2 pt-1">
+                                <div className="inline-flex items-center rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    TRUE — Within operating hours
+                                </div>
+                                <div className="inline-flex items-center rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                                    FALSE — Outside operating hours or disabled
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
