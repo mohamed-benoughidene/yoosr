@@ -10,8 +10,10 @@ export default defineSchema({
         username: v.optional(v.string()),
         email: v.optional(v.string()),
         isAvailable: v.optional(v.boolean()),
+        orgId: v.optional(v.string()), // Added for multi-tenancy support
         updatedAt: v.optional(v.number()),
-    }).index("by_userId", ["userId"]),
+    }).index("by_userId", ["userId"])
+        .index("by_orgId", ["orgId"]),
 
     // Projects
     projects: defineTable({
@@ -60,6 +62,7 @@ export default defineSchema({
         // HITL Handoff
         botPaused: v.optional(v.boolean()), // true = bot will not respond to new messages
         handoffSource: v.optional(v.string()), // 'bot' = escalated by the bot flow
+        departmentId: v.optional(v.id("departments")),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),

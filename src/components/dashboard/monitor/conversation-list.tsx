@@ -49,6 +49,14 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ConversationListProps {
     items: Conversation[]
@@ -78,11 +86,18 @@ export function ConversationList({
         projectId ? { projectId } : "skip"
     )
 
+    const departments = useQuery(
+        api.settings.listDepartments,
+        projectId ? { projectId } : "skip"
+    )
+
     const [activeLabel, setActiveLabel] = useState<string | null>(null)
+    const [activeDept, setActiveDept] = useState<string | null>(null)
 
     const filteredItems = items.filter((item) => {
-        if (!activeLabel) return true;
-        return item.tags?.includes(activeLabel);
+        const matchesLabel = activeLabel ? item.tags?.includes(activeLabel) : true;
+        const matchesDept = activeDept ? item.details?.department === activeDept : true;
+        return matchesLabel && matchesDept;
     });
 
     return (
@@ -143,10 +158,44 @@ export function ConversationList({
                             </div>
                         </PopoverContent>
                     </Popover>
-                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
-                        <Filter className="mr-2 h-3 w-3" />
-                        Dept
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={activeDept ? "default" : "outline"}
+                                size="sm"
+                                className="h-8 text-xs shrink-0"
+                            >
+                                <Filter className="mr-2 h-3 w-3" />
+                                {activeDept ? `Dept: ${activeDept}` : "Dept"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[200px]" align="start">
+                            <DropdownMenuLabel className="text-xs font-medium">Filter by department</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setActiveDept(null)} className="text-xs">
+                                All Departments
+                            </DropdownMenuItem>
+                            {departments?.map((dept) => (
+                                <DropdownMenuItem
+                                    key={dept._id}
+                                    onClick={() => setActiveDept(dept.name)}
+                                    className="text-xs"
+                                >
+                                    <div className="flex items-center justify-between w-full">
+                                        <span className="truncate">{dept.name}</span>
+                                        {activeDept === dept.name && (
+                                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                        )}
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                            {departments && departments.length === 0 && (
+                                <div className="text-[10px] text-muted-foreground p-2 text-center italic">
+                                    No departments configured
+                                </div>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
                         <Filter className="mr-2 h-3 w-3" />
                         Agent

@@ -109,6 +109,8 @@ export const ensureCurrent = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
+        console.log("identity.org_id:", (identity as any).org_id);
+
         const existing = await ctx.db
             .query("profiles")
             .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
@@ -120,6 +122,7 @@ export const ensureCurrent = mutation({
                 fullName: identity.name || "Agent",
                 email: identity.email,
                 avatarUrl: identity.pictureUrl,
+                orgId: (identity as any).org_id,
                 updatedAt: Date.now(),
             });
         } else {
@@ -133,6 +136,10 @@ export const ensureCurrent = mutation({
             }
             if (identity.pictureUrl && identity.pictureUrl !== existing.avatarUrl) {
                 updates.avatarUrl = identity.pictureUrl;
+            }
+            const identityOrgId = (identity as any).org_id;
+            if (identityOrgId && identityOrgId !== existing.orgId) {
+                updates.orgId = identityOrgId;
             }
             if (Object.keys(updates).length > 1) {
                 await ctx.db.patch(existing._id, updates);
@@ -181,13 +188,38 @@ export const setAvailability = mutation({
             .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
             .first();
 
-        if (!existing) {
-            throw new Error("Profile not found");
+        if (existing) {
+            await ctx.db.patch(existing._id, {
+                isAvailable: args.isAvailable,
+                orgId: (identity as any).org_id,
+                updatedAt: Date.now(),
+            });
+        } else {
+            await ctx.db.insert("profiles", {
+                userId: identity.subject,
+                isAvailable: args.isAvailable,
+                orgId: (identity as any).org_id,
+                updatedAt: Date.now(),
+            });
         }
-
-        await ctx.db.patch(existing._id, {
-            isAvailable: args.isAvailable,
-            updatedAt: Date.now(),
-        });
     },
 });
+
+// Internal: mark agent as offline (used by sendBeacon)
+export const setOffline = internalMutation({
+    args: { userId: v.string() },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .first();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, {
+                isAvailable: false,
+                updatedAt: Date.now(),
+            });
+        }
+    },
+});
+

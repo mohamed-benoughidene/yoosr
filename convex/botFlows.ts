@@ -46,9 +46,13 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 const falseEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
 
                 let expr = "";
-                if (data.operator === "equals") expr = `{{${data.attributeKey}}} == '${data.compareValue}'`;
-                else if (data.operator === "contains") expr = `contains({{${data.attributeKey}}}, '${data.compareValue}')`;
-                // Add more complex parsing if needed, but this covers basics
+                const rawKey = (data.attributeKey || "").replace(/^\{\{|\}\}$/g, "").trim();
+
+                if (data.operator === "equals") expr = `{{${rawKey}}} == '${data.compareValue}'`;
+                else if (data.operator === "notEquals") expr = `{{${rawKey}}} != '${data.compareValue}'`;
+                else if (data.operator === "contains") expr = `{{${rawKey}}} contains '${data.compareValue}'`;
+                else if (data.operator === "greaterThan") expr = `{{${rawKey}}} > '${data.compareValue}'`;
+                else if (data.operator === "lessThan") expr = `{{${rawKey}}} < '${data.compareValue}'`;
 
                 actions.push({
                     _type: "condition",

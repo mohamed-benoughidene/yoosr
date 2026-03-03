@@ -36,11 +36,19 @@ export default function RequestsPage() {
     const updateConversation = useMutation(api.conversations.update)
     const resolveConversation = useMutation(api.conversations.resolve)
 
+    const myDepartments = useQuery(
+        api.settings.getMyDepartments,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    )
+
     // Real-time conversations
     const allConversations =
         useQuery(
             api.conversations.list,
-            activeProject ? { projectId: activeProject._id } : "skip"
+            activeProject ? {
+                projectId: activeProject._id,
+                departmentId: myDepartments && myDepartments.length > 0 ? myDepartments[0]._id : undefined
+            } : "skip"
         ) ?? []
 
     // Filter based on selection

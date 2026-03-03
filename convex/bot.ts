@@ -192,10 +192,17 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
         case "change_department":
             const c3 = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-            await ctx.runMutation(internal.routing.routeConversation, {
+            await ctx.runMutation(internal.conversations.updateInternal, {
+                id: conversationId,
+                departmentId: action.departmentId,
+                botPaused: true,
+                clearBotId: true,
+            });
+            await ctx.scheduler.runAfter(2000, internal.routing.routeConversation, {
                 conversationId: conversationId,
                 projectId: c3.projectId,
                 departmentId: action.departmentId,
+                skipBot: true,
             });
             return { suspend: true };
 

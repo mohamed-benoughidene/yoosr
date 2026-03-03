@@ -4,16 +4,25 @@ import { v } from "convex/values";
 
 // List conversations for a project
 export const list = query({
-    args: { projectId: v.id("projects") },
+    args: {
+        projectId: v.id("projects"),
+        departmentId: v.optional(v.id("departments")),
+    },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        return await ctx.db
+        const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .order("desc")
             .collect();
+
+        if (args.departmentId) {
+            return conversations.filter((c) => c.departmentId === args.departmentId || c.departmentId === undefined);
+        }
+
+        return conversations;
     },
 });
 
@@ -143,12 +152,20 @@ export const updateInternal = internalMutation({
         assignedTo: v.optional(v.string()),
         unreadCount: v.optional(v.number()),
         participants: v.optional(v.array(v.string())),
+        departmentId: v.optional(v.id("departments")),
+        botPaused: v.optional(v.boolean()),
+        botId: v.optional(v.string()),
+        clearBotId: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
-        const { id, ...updates } = args;
+        const { id, clearBotId, ...updates } = args;
         const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
+        }
+
+        if (clearBotId) {
+            cleanUpdates["botId"] = undefined;
         }
 
         await ctx.db.patch(args.id, cleanUpdates);
@@ -517,6 +534,7 @@ export const transferToDepartment = mutation({
             assignedTo: undefined,
             status: 100, // 100: unassigned
             botPaused: false, // Re-enable so a bot can pick it up if the department has one
+            departmentId: args.departmentId,
             updatedAt: Date.now(),
             attributes: {
                 ...(conversation.attributes || {}),
@@ -594,16 +612,23 @@ export const getInternal = internalQuery({
 
 // Get conversations for the monitor view
 export const getConversations = query({
-    args: { projectId: v.id("projects") },
+    args: {
+        projectId: v.id("projects"),
+        departmentId: v.optional(v.id("departments")),
+    },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const convos = await ctx.db
+        let convos = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .order("desc")
             .collect();
+
+        if (args.departmentId) {
+            convos = convos.filter((c) => c.departmentId === args.departmentId || c.departmentId === undefined);
+        }
 
         return await Promise.all(convos.map(async (c) => {
             const visitorName = c.visitorName || "Visitor";

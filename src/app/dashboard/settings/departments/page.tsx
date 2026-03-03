@@ -41,6 +41,13 @@ import {
 } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import type { Id } from "../../../../../convex/_generated/dataModel"
@@ -55,12 +62,18 @@ export default function DepartmentsPage() {
     const [newDesc, setNewDesc] = useState("")
     const [routingMode, setRoutingMode] = useState<"assigned" | "pooled">("pooled")
     const [useBot, setUseBot] = useState(false)
+    const [botId, setBotId] = useState<string | undefined>()
     const [tags, setTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
     const [editingDeptId, setEditingDeptId] = useState<Id<"departments"> | null>(null)
 
     const departments = useQuery(
         api.settings.listDepartments,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    ) ?? []
+
+    const bots = useQuery(
+        api.bots.list,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
@@ -87,6 +100,7 @@ export default function DepartmentsPage() {
                     id: editingDeptId,
                     name: newDeptName,
                     description: newDesc || undefined,
+                    botId: useBot ? botId : undefined,
                     tags: tags.length > 0 ? tags : undefined,
                 })
                 toast.success("Department updated")
@@ -96,6 +110,7 @@ export default function DepartmentsPage() {
                     name: newDeptName,
                     description: newDesc || undefined,
                     routingMode,
+                    botId: useBot ? botId : undefined,
                     tags: tags.length > 0 ? tags : undefined,
                 })
                 toast.success("Department created")
@@ -120,6 +135,7 @@ export default function DepartmentsPage() {
         setNewDesc("")
         setRoutingMode("pooled")
         setUseBot(false)
+        setBotId(undefined)
         setTags([])
         setTagInput("")
         setEditingDeptId(null)
@@ -132,6 +148,7 @@ export default function DepartmentsPage() {
         setNewDesc(dept.description || "")
         setRoutingMode(dept.routingMode || "pooled")
         setUseBot(!!dept.botId)
+        setBotId(dept.botId)
         setTags(dept.tags || [])
         setCreateOpen(true)
     }
@@ -233,6 +250,31 @@ export default function DepartmentsPage() {
                                             onCheckedChange={setUseBot}
                                         />
                                     </div>
+
+                                    {useBot && (
+                                        <div className="grid gap-2 pl-2">
+                                            <Label htmlFor="bot-select" className="text-xs">Selected Bot</Label>
+                                            <Select value={botId} onValueChange={setBotId}>
+                                                <SelectTrigger id="bot-select">
+                                                    <SelectValue placeholder="Choose a bot" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {bots.filter(b => b.status === "active").length === 0 ? (
+                                                        <SelectItem value="none" disabled>No active bots found</SelectItem>
+                                                    ) : (
+                                                        bots.filter(b => b.status === "active").map((bot) => (
+                                                            <SelectItem key={bot._id} value={bot._id}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Bot className="h-4 w-4" />
+                                                                    {bot.name}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <Separator />

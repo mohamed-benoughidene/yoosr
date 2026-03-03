@@ -24,6 +24,23 @@ export const listDepartments = query({
     },
 });
 
+export const getMyDepartments = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        const userId = identity.subject.split("|")[0];
+
+        const departments = await ctx.db
+            .query("departments")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        return departments.filter(d => d.memberIds?.includes(userId));
+    },
+});
+
 export const createDepartment = mutation({
     args: {
         projectId: v.id("projects"),
@@ -57,6 +74,7 @@ export const updateDepartment = mutation({
         name: v.optional(v.string()),
         description: v.optional(v.string()),
         isDefault: v.optional(v.boolean()),
+        botId: v.optional(v.string()),
         tags: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
@@ -191,7 +209,17 @@ export const removeCannedResponse = mutation({
 // LABELS
 // ========================
 
-
+export const listLabels = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+        return await ctx.db
+            .query("labels")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+    },
+});
 
 export const createLabel = mutation({
     args: {
