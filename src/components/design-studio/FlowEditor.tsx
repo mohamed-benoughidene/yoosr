@@ -93,14 +93,7 @@ export function FlowEditor({
         initialEdges || []
     );
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-    const nodeCountRef = useRef(
-        initialNodes && initialNodes.length > 0
-            ? Math.max(...initialNodes.map((n) => {
-                const m = n.id.match(/\d+$/);
-                return m ? parseInt(m[0], 10) : 0;
-            }))
-            : 1
-    );
+    // nodeCountRef removed to prevent duplicate ID bugs. Nodes use crypto.randomUUID() now.
 
     // Notify parent of changes
     const notifyChange = useCallback(
@@ -149,17 +142,17 @@ export function FlowEditor({
     // Add a new node from the palette
     const handleAddNode = useCallback(
         (type: string, data: Record<string, unknown>) => {
-            nodeCountRef.current += 1;
-            const newNode: Node = {
-                id: `${type}-${nodeCountRef.current}`,
-                type,
-                position: {
-                    x: 250 + Math.random() * 100 - 50,
-                    y: 100 + nodeCountRef.current * 120,
-                },
-                data,
-            };
             setNodes((nds) => {
+                const nextY = 100 + (nds.length * 120);
+                const newNode: Node = {
+                    id: `${type}-${crypto.randomUUID().split('-')[0]}`,
+                    type,
+                    position: {
+                        x: 250 + Math.random() * 100 - 50,
+                        y: nextY,
+                    },
+                    data,
+                };
                 const newNodes = [...nds, newNode];
                 notifyChange(newNodes, edges);
                 return newNodes;

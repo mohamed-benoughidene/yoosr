@@ -82,9 +82,16 @@ function BotEditor() {
             };
 
             // Sanitize: guarantee every node has id, position, data, and a valid type
+            const seenIds = new Set<string>();
             const safeNodes = nodes.map((node, index) => {
                 const n = { ...node } as any;
                 if (!n.id) n.id = `node-${index}`;
+
+                if (seenIds.has(n.id)) {
+                    n.id = `${n.id}-${crypto.randomUUID().split('-')[0]}`;
+                }
+                seenIds.add(n.id);
+
                 n.type = normalizeType(n.type);
                 if (!n.position || typeof n.position.x !== "number") {
                     n.position = { x: 250, y: 50 + index * 180 };
@@ -103,6 +110,7 @@ function BotEditor() {
     // Ensure nodes have positions and IDs for ReactFlow
     const initialNodesWithPositions = useMemo(() => {
         if (!flow || !flow.nodes) return undefined;
+        const seenIds = new Set<string>();
         return (flow.nodes as any[]).map((node, index) => {
             const mappedNode = { ...node };
 
@@ -112,6 +120,12 @@ function BotEditor() {
             } else if (!mappedNode.id) {
                 mappedNode.id = `node-${index}`;
             }
+
+            // Force unique ID for legacy duplicated nodes
+            if (seenIds.has(mappedNode.id)) {
+                mappedNode.id = `${mappedNode.id}-${crypto.randomUUID().split('-')[0]}`;
+            }
+            seenIds.add(mappedNode.id);
 
             if (!mappedNode.position) {
                 mappedNode.position = {

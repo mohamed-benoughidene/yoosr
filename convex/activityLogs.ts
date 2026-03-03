@@ -1,18 +1,16 @@
 import { query, mutation, internalMutation } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
 // Paginated activity log query — sorted newest first
 export const getActivityLog = query({
     args: {
         projectId: v.id("projects"),
-        paginationOpts: v.object({
-            numItems: v.number(),
-            cursor: v.union(v.string(), v.null()),
-        }),
+        paginationOpts: paginationOptsValidator,
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return { page: [], isDone: true, continueCursor: null };
+        if (!identity) return { page: [], isDone: true, continueCursor: "" };
 
         const result = await ctx.db
             .query("activity_logs")

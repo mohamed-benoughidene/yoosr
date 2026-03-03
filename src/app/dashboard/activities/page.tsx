@@ -5,8 +5,9 @@ import { useProject } from "@/context/ProjectContext";
 import { ActivitiesDataTable } from "@/components/activities/ActivitiesDataTable";
 import { columns, type ActivityLog } from "@/components/activities/columns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Loader2, Activity } from "lucide-react";
-import { useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
 const PAGE_SIZE = 25;
@@ -14,9 +15,10 @@ const PAGE_SIZE = 25;
 export default function ActivitiesPage() {
     const { activeProject } = useProject();
 
-    const logs = useQuery(
-        api.activityLogs.list,
-        activeProject ? { projectId: activeProject._id } : "skip"
+    const { results: logs, status, loadMore } = usePaginatedQuery(
+        api.activityLogs.getActivityLog,
+        activeProject ? { projectId: activeProject._id } : "skip",
+        { initialNumItems: PAGE_SIZE }
     );
 
     if (!activeProject) {
@@ -51,10 +53,10 @@ export default function ActivitiesPage() {
                         Recent Activity
                     </CardTitle>
                     <CardDescription>
-                        Showing the last {(logs ?? []).length} events, newest first.
+                        Audit log of actions taken in this project, sorted by newest first.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col gap-4">
                     {logs === undefined ? (
                         <div className="flex h-40 items-center justify-center">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -64,7 +66,28 @@ export default function ActivitiesPage() {
                             No activity yet. Actions taken by admin users will appear here.
                         </div>
                     ) : (
-                        <ActivitiesDataTable columns={columns} data={mappedLogs} />
+                        <>
+                            <ActivitiesDataTable columns={columns} data={mappedLogs} />
+                            {status !== "Exhausted" && (
+                                <div className="flex justify-center mt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => loadMore(PAGE_SIZE)}
+                                        disabled={status === "LoadingMore"}
+                                    >
+                                        {status === "LoadingMore" ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Loading...
+                                            </>
+                                        ) : (
+                                            "Load More"
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>
