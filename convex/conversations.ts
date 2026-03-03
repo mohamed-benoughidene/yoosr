@@ -37,6 +37,20 @@ export const get = query({
     },
 });
 
+// Get the real-time bot state for the design studio debugger
+export const getBotState = query({
+    args: { conversationId: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        return await ctx.db
+            .query("conversation_bot_state")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .first();
+    },
+});
+
 // Create a new conversation (used by widget — public, or by agents)
 export const create = mutation({
     args: {
@@ -473,6 +487,29 @@ export const updateVisitorInfo = mutation({
         }
 
         await ctx.db.patch(id, cleanUpdates);
+    },
+});
+
+// Internal: deferred conversation metadata update (used by sendFromWidget to avoid OCC conflicts)
+export const updateMetadataInternal = internalMutation({
+    args: {
+        id: v.id("conversations"),
+        lastMessage: v.string(),
+        unreadCount: v.number(),
+        setStatusUnassigned: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        const patch: Record<string, any> = {
+            lastMessage: args.lastMessage,
+            updatedAt: Date.now(),
+            unreadCount: args.unreadCount,
+        };
+
+        if (args.setStatusUnassigned) {
+            patch.status = 100;
+        }
+
+        await ctx.db.patch(args.id, patch);
     },
 });
 

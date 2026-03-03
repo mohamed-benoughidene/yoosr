@@ -23,9 +23,18 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
         projectId ? { projectId: projectId as Id<"projects"> } : "skip"
     );
 
-    // Finding a recent conversation that has an executionLog
-    const activeConv = recentConversations?.find((c: any) => c.executionLog && c.executionLog.length > 0);
-    const executionLog = activeConv?.executionLog || [];
+    // Find the most recent conversation involving this bot
+    const activeConv = recentConversations?.find((c: any) =>
+        c.botId === botId || (c.participants && c.participants.includes(botId))
+    );
+
+    // Fetch the real-time execution log from the dedicated bot state table
+    const botState = useQuery(
+        api.conversations.getBotState,
+        activeConv ? { conversationId: activeConv._id } : "skip"
+    );
+
+    const executionLog = botState?.executionLog || [];
 
     // Auto-update highlight to the latest block executed
     useEffect(() => {

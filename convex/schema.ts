@@ -67,6 +67,20 @@ export default defineSchema({
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),
 
+    // Bot execution state — separated from conversations to avoid OCC write conflicts
+    conversation_bot_state: defineTable({
+        conversationId: v.id("conversations"),
+        currentNodeId: v.optional(v.union(v.string(), v.null())),
+        botStepCount: v.optional(v.number()),
+        executionLog: v.optional(v.array(v.object({
+            nodeId: v.string(),
+            type: v.string(),
+            action: v.string(),
+            timestamp: v.number(),
+        }))),
+        attributes: v.optional(v.any()),
+    }).index("by_conversationId", ["conversationId"]),
+
     // Messages within conversations
     messages: defineTable({
         conversationId: v.id("conversations"),

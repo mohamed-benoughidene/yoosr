@@ -136,18 +136,15 @@ export const sendFromWidget = internalMutation({
 
         // Only force status to 100 if it hasn't been assigned yet, to prevent booting agents/bots
         const currentUnread = conversation.status === 1000 ? 1 : (conversation.unreadCount ?? 0) + 1;
+        const setStatusUnassigned = conversation.status !== 200;
 
-        const patchData: any = {
+        // Defer the conversation metadata update to avoid OCC conflicts with routing/bot engine
+        await ctx.scheduler.runAfter(0, internal.conversations.updateMetadataInternal, {
+            id: conversationId,
             lastMessage: args.content,
-            updatedAt: Date.now(),
             unreadCount: currentUnread,
-        };
-
-        if (conversation.status !== 200) {
-            patchData.status = 100;
-        }
-
-        await ctx.db.patch(conversationId, patchData);
+            setStatusUnassigned,
+        });
 
         if (conversation.assignedTo) {
             await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
@@ -161,7 +158,7 @@ export const sendFromWidget = internalMutation({
         }
 
         // Smart routing and bot execution hook
-        if (conversation.status === 100 || patchData.status === 100) {
+        if (conversation.status === 100 || setStatusUnassigned) {
             // Trigger routing if currently in unassigned queue
             await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
                 conversationId,

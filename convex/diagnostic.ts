@@ -12,8 +12,19 @@ export const getConvoPointer = internalQuery({
     args: {},
     handler: async (ctx) => {
         const convos = await ctx.db.query("conversations").order("desc").take(5);
-        return convos.map(c => ({ id: c._id, attributes: c.attributes, status: c.status, participants: c.participants }));
-    }
+        return await Promise.all(convos.map(async (c) => {
+            const botState = await ctx.db
+                .query("conversation_bot_state")
+                .withIndex("by_conversationId", (q) => q.eq("conversationId", c._id))
+                .first();
+            return {
+                id: c._id,
+                attributes: botState?.attributes ?? c.attributes,
+                status: c.status,
+                participants: c.participants,
+            };
+        }));
+    },
 });
 
 export const getBotFlow = internalQuery({

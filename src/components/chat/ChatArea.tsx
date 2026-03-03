@@ -88,12 +88,16 @@ export function ChatArea() {
     const transferToDept = useMutation(api.conversations.transferToDepartment)
     const sendSystemMessage = useMutation(api.messages.send)
 
-    // Mark conversation as read when opened
+    // Mark conversation as read when opened (debounced to avoid OCC conflicts with bot engine)
     useEffect(() => {
-        if (conversationId && conversation && (conversation.unreadCount ?? 0) > 0) {
+        if (!conversationId || !conversation || (conversation.unreadCount ?? 0) === 0) return
+
+        const timer = setTimeout(() => {
             markAsRead({ id: conversationId })
-        }
-    }, [conversationId, conversation, markAsRead])
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [conversationId, conversation?.unreadCount, markAsRead])
 
     useEffect(() => {
         if (scrollRef.current) {

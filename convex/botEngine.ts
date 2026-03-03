@@ -65,21 +65,35 @@ export const updateConversationAttributes = internalMutation({
         })),
     },
     handler: async (ctx, args) => {
-        const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) return;
-
         const updates: any = {
             attributes: args.attributes,
-            updatedAt: Date.now(),
         };
 
         if (args.executionTrace) {
-            const currentLog = conversation.executionLog || [];
+            // Read current log from the dedicated bot state table
+            const existing = await ctx.db
+                .query("conversation_bot_state")
+                .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+                .first();
+            const currentLog = existing?.executionLog || [];
             // Limit log size to last 50 actions to prevent document from growing infinitely
             updates.executionLog = [...currentLog, args.executionTrace].slice(-50);
         }
 
-        await ctx.db.patch(args.conversationId, updates);
+        // Upsert into conversation_bot_state — not conversations — to avoid OCC conflicts
+        const existing = await ctx.db
+            .query("conversation_bot_state")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .first();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, updates);
+        } else {
+            await ctx.db.insert("conversation_bot_state", {
+                conversationId: args.conversationId,
+                ...updates,
+            });
+        }
     },
 });
 

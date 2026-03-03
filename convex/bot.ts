@@ -490,7 +490,22 @@ export const executeNextBlock = internalAction({
 export const getConversationState = internalQuery({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        return await ctx.db.get(args.id);
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) return null;
+
+        // Read bot execution state from the dedicated table to avoid OCC conflicts
+        const botState = await ctx.db
+            .query("conversation_bot_state")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.id))
+            .first();
+
+        return {
+            ...conversation,
+            currentNodeId: botState?.currentNodeId ?? conversation.currentNodeId,
+            botStepCount: botState?.botStepCount ?? conversation.botStepCount,
+            executionLog: botState?.executionLog ?? conversation.executionLog,
+            attributes: botState?.attributes ?? conversation.attributes,
+        };
     }
 });
 
@@ -531,20 +546,40 @@ export const updateConversationState = internalMutation({
         const conversation = await ctx.db.get(args.id);
         if (!conversation) return;
 
-        const patch: any = {
-            attributes: args.attributes,
-        };
-        if (args.currentNodeId !== undefined) patch.currentNodeId = args.currentNodeId;
-        if (args.botId) patch.botId = args.botId;
-        if (args.botStepCount !== undefined) patch.botStepCount = args.botStepCount;
-
-        // Append execution trace for the real-time debugger panel
-        if (args.executionTrace) {
-            const currentLog = conversation.executionLog || [];
-            patch.executionLog = [...currentLog, args.executionTrace].slice(-50);
+        // botId stays on conversations (it's a routing field, not bot execution state)
+        if (args.botId) {
+            await ctx.db.patch(args.id, { botId: args.botId });
         }
 
-        await ctx.db.patch(args.id, patch);
+        // Upsert bot execution state into the dedicated table
+        const botStatePatch: any = {
+            attributes: args.attributes,
+        };
+        if (args.currentNodeId !== undefined) botStatePatch.currentNodeId = args.currentNodeId;
+        if (args.botStepCount !== undefined) botStatePatch.botStepCount = args.botStepCount;
+
+        if (args.executionTrace) {
+            const existing = await ctx.db
+                .query("conversation_bot_state")
+                .withIndex("by_conversationId", (q) => q.eq("conversationId", args.id))
+                .first();
+            const currentLog = existing?.executionLog || [];
+            botStatePatch.executionLog = [...currentLog, args.executionTrace].slice(-50);
+        }
+
+        const existing = await ctx.db
+            .query("conversation_bot_state")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.id))
+            .first();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, botStatePatch);
+        } else {
+            await ctx.db.insert("conversation_bot_state", {
+                conversationId: args.id,
+                ...botStatePatch,
+            });
+        }
     }
 });
 
@@ -579,9 +614,18 @@ export const assignToHuman = internalMutation({
             botId: undefined,       // Detach bot so it won't be re-triggered
             botPaused: true,        // Hard-stop guard — even if botId leaks back
             handoffSource: "bot",   // Agent UI badge: this came from a bot escalation
-            currentNodeId: null,    // Clear node pointer
             assignedTo: undefined,  // Ensure no stale agent assignment
         });
+
+        // Also clear the bot node pointer in the dedicated state table
+        const botState = await ctx.db
+            .query("conversation_bot_state")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .first();
+
+        if (botState) {
+            await ctx.db.patch(botState._id, { currentNodeId: null });
+        }
     }
 });
 
