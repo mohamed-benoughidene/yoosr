@@ -69,6 +69,13 @@ export const create = mutation({
             updatedAt: Date.now(),
         });
 
+        const project = await ctx.db.get(args.projectId);
+        if (project && project.slaHours) {
+            await ctx.db.patch(conversationId, {
+                slaDeadline: Date.now() + (project.slaHours * 60 * 60 * 1000)
+            });
+        }
+
         // Track conversation count for quotas
         const usageDesc = await ctx.db.query("project_usage")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
@@ -245,6 +252,13 @@ export const createFromWidget = internalMutation({
             updatedAt: Date.now(),
         });
 
+        const project = await ctx.db.get(args.projectId);
+        if (project && project.slaHours) {
+            await ctx.db.patch(conversationId, {
+                slaDeadline: Date.now() + (project.slaHours * 60 * 60 * 1000)
+            });
+        }
+
         // Track conversation count for quotas
         const usageDesc = await ctx.db.query("project_usage")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
@@ -294,7 +308,6 @@ export const createFromWidget = internalMutation({
         }
 
         // Read project settings to optionally inject welcome message into history permanently
-        const project = await ctx.db.get(args.projectId);
         const widgetConfig = (project?.widgetConfig as any) || {};
         const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
         const welcomeMsg = widgetConfig.translations?.welcomeMessage || "Hi there! How can we help you?";
@@ -767,6 +780,8 @@ export const getConversations = query({
                     ip: c.attributes?.ip ?? "",
                 },
                 priority: c.priority,
+                firstResponseAt: c.firstResponseAt,
+                slaDeadline: c.slaDeadline,
             };
         });
     },

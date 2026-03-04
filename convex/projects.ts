@@ -163,6 +163,7 @@ export const update = mutation({
         status: v.optional(v.string()),
         widgetConfig: v.optional(v.any()),
         defaultModel: v.optional(v.string()),
+        slaHours: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;

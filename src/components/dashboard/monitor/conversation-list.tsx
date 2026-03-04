@@ -33,6 +33,8 @@ export interface Conversation {
         ip?: string;
     };
     priority?: "low" | "normal" | "high" | "urgent";
+    firstResponseAt?: number;
+    slaDeadline?: number;
 }
 
 import { Button } from "@/components/ui/button"
@@ -284,6 +286,23 @@ export function ConversationList({
                                                 {item.priority === "low" && (
                                                     <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase font-bold">Low</Badge>
                                                 )}
+                                                {item.slaDeadline && !item.firstResponseAt && (() => {
+                                                    const timeRemaining = item.slaDeadline - Date.now();
+                                                    if (timeRemaining <= 0) {
+                                                        return <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">Overdue</Badge>;
+                                                    }
+
+                                                    const isAmber = timeRemaining <= 30 * 60 * 1000;
+                                                    const hours = Math.floor(timeRemaining / 3600000);
+                                                    const minutes = Math.floor((timeRemaining % 3600000) / 60000);
+                                                    const label = hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`;
+
+                                                    if (isAmber) {
+                                                        return <Badge className="h-4 px-1 text-[9px] bg-amber-500 hover:bg-amber-500 text-white border-none uppercase font-bold">{label}</Badge>;
+                                                    }
+
+                                                    return <Badge className="h-4 px-1 text-[9px] bg-emerald-500 hover:bg-emerald-500 text-white border-none uppercase font-bold">{label}</Badge>;
+                                                })()}
                                             </div>
                                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                 {getChannelIcon(item.channel)}

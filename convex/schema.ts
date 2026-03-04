@@ -24,6 +24,7 @@ export default defineSchema({
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
         widgetConfig: v.optional(v.any()), // JSON config for widget appearance
         defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
+        slaHours: v.optional(v.number()),
     }).index("by_orgId", ["orgId"]),
 
 
@@ -66,6 +67,8 @@ export default defineSchema({
         handoffSource: v.optional(v.string()), // 'bot' = escalated by the bot flow
         departmentId: v.optional(v.id("departments")),
         priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
+        firstResponseAt: v.optional(v.number()),
+        slaDeadline: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),

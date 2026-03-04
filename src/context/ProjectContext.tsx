@@ -16,6 +16,7 @@ interface Project {
     defaultModel?: string
     widgetConfig?: any
     userRole?: string
+    slaHours?: number
 }
 
 interface ProjectContextType {

@@ -251,6 +251,10 @@ export const sendMessage = mutation({
             updateData.lastMessage = args.content;
         }
 
+        if (conversation.firstResponseAt === undefined) {
+            updateData.firstResponseAt = Date.now();
+        }
+
         // Status becomes Assigned (200) since an agent replied
         if (conversation.status !== 200) {
             updateData.status = 200;

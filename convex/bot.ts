@@ -641,6 +641,14 @@ export const assignToHuman = internalMutation({
         if (botState) {
             await ctx.db.patch(botState._id, { currentNodeId: null });
         }
+
+        const project = await ctx.db.get(conversation.projectId);
+        if (project && project.slaHours) {
+            await ctx.db.patch(args.conversationId, {
+                slaDeadline: Date.now() + (project.slaHours * 60 * 60 * 1000),
+                firstResponseAt: undefined,
+            });
+        }
     }
 });
 

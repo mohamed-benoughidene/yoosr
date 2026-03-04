@@ -55,6 +55,7 @@ export default function GeneralSettingsPage() {
     const [projectName, setProjectName] = useState("")
     const [projectDesc, setProjectDesc] = useState("")
     const [defaultModel, setDefaultModel] = useState("mistralai/mistral-small-3.1-24b-instruct:free")
+    const [slaHours, setSlaHours] = useState("")
 
     // Developer settings state
     const [showApiKey, setShowApiKey] = useState(false)
@@ -75,6 +76,7 @@ export default function GeneralSettingsPage() {
             setProjectName(activeProject.name)
             setProjectDesc(activeProject.description || "")
             setDefaultModel(activeProject.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
+            setSlaHours(activeProject.slaHours ? String(activeProject.slaHours) : "")
             // Load webhook config from widgetConfig if stored there
             const wc = activeProject.widgetConfig as Record<string, any> | undefined
             if (wc) {
@@ -100,6 +102,21 @@ export default function GeneralSettingsPage() {
             toast.error("Failed to update project settings")
         }
         setLoading(false)
+    }
+
+    const handleSlaBlur = async () => {
+        if (!activeProject) return
+
+        try {
+            const parsed = slaHours ? parseFloat(slaHours) : undefined
+            await updateProject({
+                id: activeProject._id,
+                slaHours: parsed,
+            })
+            toast.success("SLA setting saved")
+        } catch {
+            toast.error("Failed to save SLA setting")
+        }
     }
 
     const handleSaveWebhook = async () => {
@@ -226,6 +243,30 @@ export default function GeneralSettingsPage() {
                                     {AVAILABLE_MODELS.find(m => m.id === defaultModel)?.description || "Select a model to use by default."}
                                 </p>
                             </div>
+
+                            <Separator />
+
+                            <div className="space-y-2">
+                                <Label htmlFor="sla-hours">First Response SLA</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="sla-hours"
+                                        type="number"
+                                        placeholder="e.g. 4"
+                                        value={slaHours}
+                                        onChange={(e) => setSlaHours(e.target.value)}
+                                        onBlur={handleSlaBlur}
+                                        className="w-32"
+                                        min="0"
+                                        step="0.5"
+                                    />
+                                    <span className="text-sm text-muted-foreground">hours</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Agents must send the first reply within this window or the conversation is flagged as overdue.
+                                </p>
+                            </div>
+
                             <div className="space-y-2">
                                 <Label>Project ID</Label>
                                 <div className="flex gap-2">
