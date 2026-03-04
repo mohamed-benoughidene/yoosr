@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
     );
     const unansweredData = useQuery(
         api.analytics.getUnansweredQueries,
-        activeProject ? { projectId: activeProject._id, limit: 20 } : "skip"
+        activeProject ? { projectId: activeProject._id, limit: 20, from, to } : "skip"
     );
     const usageData = useQuery(
         api.analytics.getProjectUsage,

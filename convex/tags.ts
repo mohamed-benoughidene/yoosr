@@ -49,6 +49,15 @@ Return exactly a JSON array of strings containing the matching names, nothing el
         try {
             const result = await callAITask(prompt, transcript, "meta-llama/llama-3.1-8b-instruct");
 
+            // Log token usage unconditionally — the LLM call was made regardless
+            // of whether any recognized tags are extracted from the response.
+            await ctx.runMutation(internal.analytics.logTokenUsage, {
+                projectId: args.projectId,
+                model: result.model,
+                tokensUsed: result.tokensUsed,
+                operation: "ai_tags_extraction",
+            });
+
             // Parse LLM response
             let tags: string[] = [];
             try {
@@ -65,14 +74,6 @@ Return exactly a JSON array of strings containing the matching names, nothing el
                 await ctx.runMutation(internal.tags.updateConversationTags, {
                     conversationId: args.conversationId,
                     tags,
-                });
-
-                // Log tokens
-                await ctx.runMutation(internal.analytics.logTokenUsage, {
-                    projectId: args.projectId,
-                    model: result.model,
-                    tokensUsed: result.tokensUsed,
-                    operation: "ai_tags_extraction"
                 });
             }
         } catch (error) {

@@ -169,16 +169,24 @@ export const getUnansweredQueries = query({
     args: {
         projectId: v.id("projects"),
         limit: v.optional(v.number()),
+        from: v.optional(v.number()),
+        to: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        return await ctx.db
+        let results = await ctx.db
             .query("unanswered_queries")
             .withIndex("by_projectId_count", (q) => q.eq("projectId", args.projectId))
             .order("desc")
-            .take(args.limit ?? 20);
+            .collect();
+
+        if (args.from !== undefined && args.to !== undefined) {
+            results = results.filter(row => row.lastAskedAt >= args.from! && row.lastAskedAt <= args.to!);
+        }
+
+        return results.slice(0, args.limit ?? 20);
     },
 });
 
@@ -392,6 +400,13 @@ export const submitCSATInternal = internalMutation({
             rating,
             comment: args.comment,
             createdAt: Date.now(),
+        });
+
+        // Keep conversations.rating in sync so getCSATSummary (which reads
+        // from conversations) reflects ratings submitted via the HTTP endpoint.
+        await ctx.db.patch(args.conversationId, {
+            rating,
+            feedback: args.comment,
         });
     },
 });
