@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { useMutation, useQuery } from "convex/react"
+import { useMutation, useQuery, usePaginatedQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -62,9 +62,10 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
         projectId ? { projectId: projectId as Id<"projects"> } : "skip"
     );
 
-    const messages = useQuery(
+    const { results, status, loadMore } = usePaginatedQuery(
         api.messages.getMessages,
-        conversation ? { conversationId: conversation.id as Id<"conversations"> } : "skip"
+        conversation ? { conversationId: conversation.id as Id<"conversations"> } : "skip",
+        { initialNumItems: 30 }
     );
 
     const cannedResponses = useQuery(
@@ -83,10 +84,10 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    // Scroll to bottom when messages change
+    // Scroll to bottom when opening the conversation
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [messages])
+    }, [conversation?.id])
 
     const handleSend = async () => {
         if (!inputValue.trim() || !conversation || !projectId) return;
@@ -445,7 +446,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4">
                 <div className="flex flex-col gap-6">
-                    {messages === undefined ? (
+                    {status === "LoadingFirstPage" ? (
                         <div className="flex flex-col gap-4 max-w-lg">
                             <Skeleton className="h-12 w-64 rounded-2xl rounded-tl-none" />
                             <Skeleton className="h-12 w-48 rounded-2xl rounded-tl-none" />
@@ -453,13 +454,21 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                                 <Skeleton className="h-12 w-56 rounded-2xl rounded-tr-none" />
                             </div>
                         </div>
-                    ) : messages.length === 0 ? (
+                    ) : results.length === 0 ? (
                         <div className="flex h-[300px] items-center justify-center">
                             <span className="text-sm text-muted-foreground">No messages yet. Send a message to start!</span>
                         </div>
                     ) : (
                         <>
-                            {messages.map((msg: any) => {
+                            {status !== "Exhausted" && (
+                                <button
+                                    onClick={() => loadMore(30)}
+                                    className="mx-auto block w-fit text-xs text-muted-foreground hover:underline my-2"
+                                >
+                                    Load older messages
+                                </button>
+                            )}
+                            {[...results].reverse().map((msg: any) => {
                                 const isLead = msg.senderType === "visitor";
                                 const isInternal = msg.isInternal;
 

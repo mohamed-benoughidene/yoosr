@@ -1,6 +1,7 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 // List conversations for a project
 export const list = query({
@@ -15,6 +16,7 @@ export const list = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.neq(q.field("status"), 1000))
             .order("desc")
             .take(100);
 
@@ -704,6 +706,7 @@ export const getConversations = query({
         let convos = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.neq(q.field("status"), 1000))
             .order("desc")
             .take(100);
 
@@ -791,10 +794,11 @@ export const getConversations = query({
 export const listResolved = query({
     args: {
         projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        if (!identity) return { page: [], isDone: true, continueCursor: "" };
 
         return await ctx.db
             .query("conversations")
@@ -802,6 +806,6 @@ export const listResolved = query({
                 q.eq("projectId", args.projectId).eq("status", 1000)
             )
             .order("desc")
-            .take(200);
+            .paginate(args.paginationOpts);
     },
 });

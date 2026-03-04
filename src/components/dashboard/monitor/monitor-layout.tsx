@@ -59,10 +59,6 @@ export default function MonitorLayout() {
                             <Skeleton className="h-20 w-full" />
                         </div>
                     </div>
-                ) : conversations.length === 0 ? (
-                    <div className="flex h-full items-center justify-center flex-col gap-4">
-                        <span className="text-muted-foreground">No conversations yet</span>
-                    </div>
                 ) : (
                     <ResizablePanelGroup
                         direction="horizontal"
@@ -81,9 +77,13 @@ export default function MonitorLayout() {
                         <ResizablePanel defaultSize={50} minSize={30}>
                             {selectedConversation ? (
                                 <ChatDisplay conversation={selectedConversation} />
+                            ) : conversations.length === 0 ? (
+                                <div className="flex h-full items-center justify-center flex-col gap-4">
+                                    <span className="text-muted-foreground">No conversations yet</span>
+                                </div>
                             ) : (
-                                <div className="flex h-full items-center justify-center">
-                                    <span className="text-muted-foreground">Select a conversation</span>
+                                <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
+                                    Select a conversation to start chatting
                                 </div>
                             )}
                         </ResizablePanel>

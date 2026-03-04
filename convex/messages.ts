@@ -1,19 +1,24 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 // List messages for a conversation (real-time by default!)
 export const list = query({
-    args: { conversationId: v.id("conversations") },
+    args: {
+        conversationId: v.id("conversations"),
+        paginationOpts: paginationOptsValidator,
+    },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        if (!identity) return { page: [], isDone: true, continueCursor: "" };
         return await ctx.db
             .query("messages")
             .withIndex("by_conversationId", (q) =>
                 q.eq("conversationId", args.conversationId)
             )
-            .collect();
+            .order("desc")
+            .paginate(args.paginationOpts);
     },
 });
 
@@ -189,31 +194,35 @@ export const sendFromWidget = internalMutation({
 
 // Get messages for the monitor view (Chat display)
 export const getMessages = query({
-    args: { conversationId: v.id("conversations") },
+    args: {
+        conversationId: v.id("conversations"),
+        paginationOpts: paginationOptsValidator,
+    },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const messages = await ctx.db
+        const result = await ctx.db
             .query("messages")
             .withIndex("by_conversationId", (q) =>
                 q.eq("conversationId", args.conversationId)
             )
-            .collect();
+            .order("desc")
+            .paginate(args.paginationOpts);
 
-        // Sort ascending by creation time
-        messages.sort((a, b) => a._creationTime - b._creationTime);
-
-        return messages.map((m) => {
-            const isInternal = m.type === "internal"; // Using 'type' for internal notes, based on schema
-            return {
-                id: m._id,
-                content: m.content,
-                senderType: m.senderType, // "visitor" | "agent" | "bot"
-                createdAt: m._creationTime,
-                isInternal: isInternal,
-            };
-        });
+        return {
+            ...result,
+            page: result.page.map((m) => {
+                const isInternal = m.type === "internal"; // Using 'type' for internal notes, based on schema
+                return {
+                    id: m._id,
+                    content: m.content,
+                    senderType: m.senderType, // "visitor" | "agent" | "bot"
+                    createdAt: m._creationTime,
+                    isInternal: isInternal,
+                };
+            })
+        };
     },
 });
 

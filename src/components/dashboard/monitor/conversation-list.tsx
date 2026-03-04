@@ -345,8 +345,7 @@ export function ConversationList({
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
                                 {activeStatus === 100 ? "Status: Open" :
-                                    activeStatus === 200 ? "Status: Assigned" :
-                                        activeStatus === 1000 ? "Status: Resolved" : "Status"}
+                                    activeStatus === 200 ? "Status: Assigned" : "Status"}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[160px]" align="start">
@@ -365,12 +364,6 @@ export function ConversationList({
                                 <div className="flex items-center justify-between w-full">
                                     <span>Assigned</span>
                                     {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setActiveStatus(1000)} className="text-xs">
-                                <div className="flex items-center justify-between w-full">
-                                    <span>Resolved</span>
-                                    {activeStatus === 1000 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
                         </DropdownMenuContent>

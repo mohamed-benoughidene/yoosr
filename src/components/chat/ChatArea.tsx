@@ -23,7 +23,7 @@ import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
-import { useQuery, useMutation } from "convex/react"
+import { useQuery, useMutation, usePaginatedQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { Id } from "../../../convex/_generated/dataModel"
 import { useUser, useOrganization } from "@clerk/nextjs"
@@ -71,9 +71,10 @@ export function ChatArea() {
     );
 
     // Real-time messages — no subscriptions needed!
-    const messages = useQuery(
+    const { results: messages, status, loadMore } = usePaginatedQuery(
         api.messages.list,
-        conversationId ? { conversationId } : "skip"
+        conversationId ? { conversationId } : "skip",
+        { initialNumItems: 30 }
     )
 
     const cannedResponses = useQuery(
@@ -103,7 +104,7 @@ export function ChatArea() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
-    }, [messages])
+    }, [conversationId])
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || !conversationId || !user || !conversation) return
@@ -419,7 +420,7 @@ export function ChatArea() {
 
             {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto space-y-4" ref={scrollRef}>
-                {isLoading ? (
+                {status === "LoadingFirstPage" ? (
                     <div className="flex justify-center p-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
@@ -428,57 +429,67 @@ export function ChatArea() {
                         No messages yet. Say hello!
                     </div>
                 ) : (
-                    (messages ?? []).map((msg) => (
-                        <div
-                            key={msg._id}
-                            className={cn(
-                                "flex",
-                                msg.senderType === "agent"
-                                    ? "justify-end"
-                                    : "justify-start"
-                            )}
-                        >
-                            {msg.senderType === "agent" ? (
-                                msg.type === "internal" ? (
-                                    <div className="p-3 rounded-lg max-w-[70%] bg-yellow-50/80 border border-yellow-200 text-yellow-900">
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">Internal Note</span>
-                                        </div>
-                                        <p className="text-sm">{msg.content}</p>
-                                        <span className="text-[10px] mt-1 block text-yellow-700/70">
-                                            {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="p-3 rounded-lg max-w-[70%] bg-primary text-primary-foreground">
-                                        <p className="text-sm">{msg.content}</p>
-                                        <span className="text-[10px] mt-1 block text-primary-foreground/70">
-                                            {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
-                                        </span>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="flex gap-2 max-w-[70%]">
-                                    <Avatar className="h-8 w-8 mt-1">
-                                        <AvatarFallback className={cn("text-xs", msg.senderType === "bot" && "bg-primary/20 text-primary")}>
-                                            {msg.senderType === "bot" ? "AI" : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <span className="text-xs text-muted-foreground ml-1 mb-1 block">
-                                            {msg.senderFullname || (msg.senderType === "bot" ? "AI Assistant" : "Visitor")}
-                                        </span>
-                                        <div className="p-3 rounded-lg bg-muted">
+                    <>
+                        {status !== "Exhausted" && (
+                            <button
+                                onClick={() => loadMore(30)}
+                                className="mx-auto block w-fit text-xs text-muted-foreground hover:underline my-2"
+                            >
+                                Load older messages
+                            </button>
+                        )}
+                        {[...messages].reverse().map((msg) => (
+                            <div
+                                key={msg._id}
+                                className={cn(
+                                    "flex",
+                                    msg.senderType === "agent"
+                                        ? "justify-end"
+                                        : "justify-start"
+                                )}
+                            >
+                                {msg.senderType === "agent" ? (
+                                    msg.type === "internal" ? (
+                                        <div className="p-3 rounded-lg max-w-[70%] bg-yellow-50/80 border border-yellow-200 text-yellow-900">
+                                            <div className="flex items-center gap-1 mb-1">
+                                                <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">Internal Note</span>
+                                            </div>
                                             <p className="text-sm">{msg.content}</p>
-                                            <span className="text-[10px] mt-1 block text-muted-foreground">
+                                            <span className="text-[10px] mt-1 block text-yellow-700/70">
                                                 {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
                                             </span>
                                         </div>
+                                    ) : (
+                                        <div className="p-3 rounded-lg max-w-[70%] bg-primary text-primary-foreground">
+                                            <p className="text-sm">{msg.content}</p>
+                                            <span className="text-[10px] mt-1 block text-primary-foreground/70">
+                                                {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
+                                            </span>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="flex gap-2 max-w-[70%]">
+                                        <Avatar className="h-8 w-8 mt-1">
+                                            <AvatarFallback className={cn("text-xs", msg.senderType === "bot" && "bg-primary/20 text-primary")}>
+                                                {msg.senderType === "bot" ? "AI" : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <span className="text-xs text-muted-foreground ml-1 mb-1 block">
+                                                {msg.senderFullname || (msg.senderType === "bot" ? "AI Assistant" : "Visitor")}
+                                            </span>
+                                            <div className="p-3 rounded-lg bg-muted">
+                                                <p className="text-sm">{msg.content}</p>
+                                                <span className="text-[10px] mt-1 block text-muted-foreground">
+                                                    {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ))
+                                )}
+                            </div>
+                        ))}
+                    </>
                 )}
             </div>
 

@@ -19,7 +19,7 @@ import { useProject } from "@/context/ProjectContext"
 import { formatDistanceToNow, format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-import { useQuery } from "convex/react"
+import { useQuery, usePaginatedQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 
 import { DateRange } from "react-day-picker"
@@ -32,10 +32,11 @@ export default function HistoryPage() {
     const profiles = useQuery(api.profiles.list) ?? []
 
     // Real-time resolved conversations for history
-    const allConversations = useQuery(
+    const { results: allConversations, status, loadMore } = usePaginatedQuery(
         api.conversations.listResolved,
-        activeProject ? { projectId: activeProject._id } : "skip"
-    ) ?? []
+        activeProject ? { projectId: activeProject._id } : "skip",
+        { initialNumItems: 50 }
+    )
 
     const conversations = allConversations
 
@@ -83,7 +84,7 @@ export default function HistoryPage() {
         document.body.removeChild(a)
     }
 
-    const isLoading = allConversations === undefined
+    const isLoading = status === "LoadingFirstPage"
 
     return (
         <div className="flex flex-col gap-6 p-6 h-[calc(100vh-60px)] overflow-hidden">
@@ -266,6 +267,25 @@ export default function HistoryPage() {
                         )}
                     </TableBody>
                 </Table>
+                {status !== "Exhausted" && !isLoading && (
+                    <div className="flex justify-center p-4 border-t">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => loadMore(50)}
+                            disabled={status === "LoadingMore"}
+                        >
+                            {status === "LoadingMore" ? (
+                                <span className="flex items-center gap-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+                                    Loading...
+                                </span>
+                            ) : (
+                                "Load more"
+                            )}
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     )
