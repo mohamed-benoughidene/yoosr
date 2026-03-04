@@ -1,4 +1,5 @@
 import { ComponentProps, useState } from "react"
+import { useOrganization } from "@clerk/nextjs"
 
 
 import { cn } from "@/lib/utils"
@@ -61,10 +62,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-interface ConversationListProps {
+export interface ConversationListProps {
     items: Conversation[]
     selectedId: string | null
     onSelect: (id: string) => void
+    activeDeptId: Id<"departments"> | null
+    onDeptChange: (id: Id<"departments"> | null) => void
 }
 
 const getChannelIcon = (channel: string) => {
@@ -80,6 +83,8 @@ export function ConversationList({
     items,
     selectedId,
     onSelect,
+    activeDeptId,
+    onDeptChange,
 }: ConversationListProps) {
     const { activeProject } = useProject()
     const projectId = activeProject?._id
@@ -95,16 +100,40 @@ export function ConversationList({
     )
 
     const [activeLabel, setActiveLabel] = useState<string | null>(null)
-    const [activeDept, setActiveDept] = useState<string | null>(null)
-    const [sortBy, setSortBy] = useState<"timestamp" | "priority">("timestamp")
+    const [activeStatus, setActiveStatus] = useState<number | null>(null)
+    const [activeAgent, setActiveAgent] = useState<string | null>(null)
+    const [sortBy, setSortBy] = useState<"timestamp" | "priority" | "sla">("timestamp")
+    const [searchQuery, setSearchQuery] = useState("")
+
+    const { memberships, isLoaded: membersLoaded } = useOrganization({
+        memberships: {
+            infinite: true,
+            keepPreviousData: true,
+        },
+    });
+
+    const agents = (memberships?.data ?? []).map((m) => ({
+        id: m.publicUserData?.userId ?? "",
+        name: `${m.publicUserData?.firstName ?? ""} ${m.publicUserData?.lastName ?? ""}`.trim() || m.publicUserData?.identifier || "Agent",
+    })).filter(a => a.id !== "");
+
+    const activeAgentName = agents?.find(a => a.id === activeAgent)?.name;
+    const activeDeptName = departments?.find(d => d._id === activeDeptId)?.name;
 
     const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
 
     const filteredItems = items
         .filter((item) => {
+            const query = searchQuery.toLowerCase().trim();
+            const matchesSearch = query
+                ? item.user.name.toLowerCase().includes(query) ||
+                item.user.email.toLowerCase().includes(query) ||
+                item.lastMessage.toLowerCase().includes(query)
+                : true;
             const matchesLabel = activeLabel ? item.tags?.includes(activeLabel) : true;
-            const matchesDept = activeDept ? item.details?.department === activeDept : true;
-            return matchesLabel && matchesDept;
+            const matchesStatus = activeStatus !== null ? item.status === activeStatus : true;
+            const matchesAgent = activeAgent ? item.assignedTo === activeAgent : true;
+            return matchesSearch && matchesLabel && matchesStatus && matchesAgent;
         })
         .sort((a, b) => {
             if (sortBy === "priority") {
@@ -113,6 +142,31 @@ export function ConversationList({
                 if (priorityOrder[priorityA] !== priorityOrder[priorityB]) {
                     return priorityOrder[priorityA] - priorityOrder[priorityB];
                 }
+            }
+            if (sortBy === "sla") {
+                const isRespondedA = !!a.firstResponseAt;
+                const isRespondedB = !!b.firstResponseAt;
+
+                // 1. Responded go to bottom
+                if (isRespondedA !== isRespondedB) {
+                    return isRespondedA ? 1 : -1;
+                }
+
+                // 2. No deadline go after those with one
+                const hasSlaA = !!a.slaDeadline;
+                const hasSlaB = !!b.slaDeadline;
+
+                if (hasSlaA !== hasSlaB) {
+                    return hasSlaA ? -1 : 1;
+                }
+
+                // 3. Deadline ascending
+                if (hasSlaA && hasSlaB && a.slaDeadline !== b.slaDeadline) {
+                    return (a.slaDeadline!) - (b.slaDeadline!);
+                }
+
+                // 4. Default fallback to timestamp
+                return b.timestamp - a.timestamp;
             }
             return b.timestamp - a.timestamp;
         });
@@ -124,7 +178,12 @@ export function ConversationList({
             <div className="p-4 pb-2 space-y-3">
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search conversations..." className="pl-8" />
+                    <Input
+                        placeholder="Search conversations..."
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                     <Popover>
@@ -178,29 +237,29 @@ export function ConversationList({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant={activeDept ? "default" : "outline"}
+                                variant={activeDeptId ? "default" : "outline"}
                                 size="sm"
                                 className="h-8 text-xs shrink-0"
                             >
                                 <Filter className="mr-2 h-3 w-3" />
-                                {activeDept ? `Dept: ${activeDept}` : "Dept"}
+                                {activeDeptId ? `Dept: ${activeDeptName}` : "Dept"}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[200px]" align="start">
                             <DropdownMenuLabel className="text-xs font-medium">Filter by department</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setActiveDept(null)} className="text-xs">
+                            <DropdownMenuItem onClick={() => onDeptChange(null)} className="text-xs">
                                 All Departments
                             </DropdownMenuItem>
                             {departments?.map((dept) => (
                                 <DropdownMenuItem
                                     key={dept._id}
-                                    onClick={() => setActiveDept(dept.name)}
+                                    onClick={() => onDeptChange(dept._id)}
                                     className="text-xs"
                                 >
                                     <div className="flex items-center justify-between w-full">
                                         <span className="truncate">{dept.name}</span>
-                                        {activeDept === dept.name && (
+                                        {activeDeptId === dept._id && (
                                             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                                         )}
                                     </div>
@@ -213,19 +272,54 @@ export function ConversationList({
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
-                        <Filter className="mr-2 h-3 w-3" />
-                        Agent
-                    </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant={sortBy === "priority" ? "default" : "outline"}
+                                variant={activeAgent ? "default" : "outline"}
+                                size="sm"
+                                className="h-8 text-xs shrink-0"
+                            >
+                                <Filter className="mr-2 h-3 w-3" />
+                                {activeAgent ? `Agent: ${activeAgentName}` : "Agent"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[200px]" align="start">
+                            <DropdownMenuLabel className="text-xs font-medium">Filter by agent</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setActiveAgent(null)} className="text-xs">
+                                All Agents
+                            </DropdownMenuItem>
+                            {agents?.map((agent) => (
+                                <DropdownMenuItem
+                                    key={agent.id}
+                                    onClick={() => setActiveAgent(agent.id)}
+                                    className="text-xs"
+                                >
+                                    <div className="flex items-center justify-between w-full">
+                                        <span className="truncate">{agent.name}</span>
+                                        {activeAgent === agent.id && (
+                                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                        )}
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                            {!membersLoaded && (
+                                <div className="text-[10px] text-muted-foreground p-2 text-center italic">
+                                    Loading members...
+                                </div>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={sortBy !== "timestamp" ? "default" : "outline"}
                                 size="sm"
                                 className="h-8 text-xs shrink-0"
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
-                                {sortBy === "priority" ? "Sort: Priority" : "Sort: Recent"}
+                                {sortBy === "priority" ? "Sort: Priority" :
+                                    sortBy === "sla" ? "Sort: SLA" : "Sort: Recent"}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-[150px]">
@@ -237,12 +331,50 @@ export function ConversationList({
                             <DropdownMenuItem onClick={() => setSortBy("priority")} className="text-xs">
                                 Priority
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSortBy("sla")} className="text-xs">
+                                SLA Deadline
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
-                        <SlidersHorizontal className="mr-2 h-3 w-3" />
-                        Status
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={activeStatus !== null ? "default" : "outline"}
+                                size="sm"
+                                className="h-8 text-xs shrink-0"
+                            >
+                                <SlidersHorizontal className="mr-2 h-3 w-3" />
+                                {activeStatus === 100 ? "Status: Open" :
+                                    activeStatus === 200 ? "Status: Assigned" :
+                                        activeStatus === 1000 ? "Status: Resolved" : "Status"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[160px]" align="start">
+                            <DropdownMenuLabel className="text-xs font-medium">Filter by status</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setActiveStatus(null)} className="text-xs">
+                                All Statuses
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setActiveStatus(100)} className="text-xs">
+                                <div className="flex items-center justify-between w-full">
+                                    <span>Open</span>
+                                    {activeStatus === 100 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setActiveStatus(200)} className="text-xs">
+                                <div className="flex items-center justify-between w-full">
+                                    <span>Assigned</span>
+                                    {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setActiveStatus(1000)} className="text-xs">
+                                <div className="flex items-center justify-between w-full">
+                                    <span>Resolved</span>
+                                    {activeStatus === 1000 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Active ({filteredItems.length})</span>
@@ -344,7 +476,7 @@ export function ConversationList({
                     ))}
                     {filteredItems.length === 0 && (
                         <div className="text-sm text-center text-muted-foreground py-8">
-                            No conversations match this label.
+                            {searchQuery ? "No conversations match your search." : "No conversations found."}
                         </div>
                     )}
                 </div>

@@ -708,7 +708,7 @@ export const getConversations = query({
             .take(100);
 
         if (args.departmentId) {
-            convos = convos.filter((c) => c.departmentId === args.departmentId || c.departmentId === undefined);
+            convos = convos.filter((c) => c.departmentId === args.departmentId);
         }
 
         // Bulk-fetch profiles for all unique assignedTo userIds (eliminates N+1)

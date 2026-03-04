@@ -20,9 +20,14 @@ export default function MonitorLayout() {
     const { activeProject } = useProject()
     const projectId = activeProject?._id
 
+    const [activeDeptId, setActiveDeptId] = React.useState<Id<"departments"> | null>(null)
+
     const conversations = useQuery(
         api.conversations.getConversations,
-        projectId ? { projectId } : "skip"
+        projectId ? {
+            projectId,
+            departmentId: activeDeptId ?? undefined
+        } : "skip"
     )
 
     const [selectedConversationId, setSelectedConversationId] = React.useState<string | null>(null)
@@ -68,6 +73,8 @@ export default function MonitorLayout() {
                                 items={conversations}
                                 selectedId={selectedConversationId}
                                 onSelect={setSelectedConversationId}
+                                activeDeptId={activeDeptId}
+                                onDeptChange={setActiveDeptId}
                             />
                         </ResizablePanel>
                         <ResizableHandle withHandle />
