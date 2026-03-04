@@ -209,10 +209,10 @@ http.route({
         }
 
         // Update conversation record (legacy)
-        await ctx.runMutation(internal.conversations.rate, {
-            id: id as any,
+        await ctx.runMutation(internal.analytics.submitCSATInternal, {
+            conversationId: id as any,
             rating,
-            feedback,
+            comment: feedback,
         });
 
         return new Response(JSON.stringify({ success: true }), {
