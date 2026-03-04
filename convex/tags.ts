@@ -126,6 +126,8 @@ export const assignTagToConversation = mutation({
         tagName: v.string()
     },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+
         const conversation = await ctx.db.get(args.conversationId);
         if (!conversation) return;
 
@@ -133,6 +135,18 @@ export const assignTagToConversation = mutation({
         if (!existingTags.includes(args.tagName)) {
             await ctx.db.patch(args.conversationId, {
                 tags: [...existingTags, args.tagName]
+            });
+        }
+
+        if (identity) {
+            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+                projectId: conversation.projectId,
+                actorId: identity.subject,
+                actorName: identity.name ?? identity.email ?? "Unknown",
+                action: "label_applied",
+                targetType: "conversation",
+                targetId: args.conversationId,
+                metadata: { labelId: args.tagName },
             });
         }
     }
@@ -147,6 +161,8 @@ export const removeTagFromConversation = mutation({
         tagName: v.string()
     },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+
         const conversation = await ctx.db.get(args.conversationId);
         if (!conversation) return;
 
@@ -156,5 +172,17 @@ export const removeTagFromConversation = mutation({
         await ctx.db.patch(args.conversationId, {
             tags: newTags
         });
+
+        if (identity) {
+            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+                projectId: conversation.projectId,
+                actorId: identity.subject,
+                actorName: identity.name ?? identity.email ?? "Unknown",
+                action: "label_removed",
+                targetType: "conversation",
+                targetId: args.conversationId,
+                metadata: { labelId: args.tagName },
+            });
+        }
     }
 });

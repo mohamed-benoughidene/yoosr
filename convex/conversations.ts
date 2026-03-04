@@ -141,6 +141,16 @@ export const update = mutation({
                     title: "Conversation assigned to you",
                     body: conversation.visitorName || args.id,
                 });
+
+                await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+                    projectId: conversation.projectId,
+                    actorId: identity.subject,
+                    actorName: identity.name ?? identity.email ?? "Unknown",
+                    action: "conversation_assigned",
+                    targetType: "conversation",
+                    targetId: args.id,
+                    metadata: { assignedTo: args.assignedTo },
+                });
             }
 
             // Check for resolution
@@ -388,6 +398,15 @@ export const resolve = mutation({
             senderType: "bot",
             content: "This conversation has been resolved. Thank you!",
         });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: conversation.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "conversation_resolved",
+            targetType: "conversation",
+            targetId: args.id,
+        });
     },
 });
 
@@ -586,6 +605,16 @@ export const transferToDepartment = mutation({
             conversationId: args.id,
             projectId: conversation.projectId,
             departmentId: args.departmentId,
+        });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: conversation.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "conversation_department_changed",
+            targetType: "conversation",
+            targetId: args.id,
+            metadata: { departmentId: args.departmentId },
         });
     },
 });

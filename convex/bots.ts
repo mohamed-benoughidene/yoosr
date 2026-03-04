@@ -75,12 +75,25 @@ export const update = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const bot = await ctx.db.get(args.id);
+        if (!bot) throw new Error("Bot not found");
+
         const { id, ...updates } = args;
         const cleanUpdates: Record<string, any> = {};
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
         await ctx.db.patch(args.id, cleanUpdates);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: bot.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "bot_updated",
+            targetType: "bot",
+            targetId: args.id,
+            metadata: { name: bot.name },
+        });
     },
 });
 
@@ -110,10 +123,10 @@ export const remove = mutation({
             projectId: bot.projectId,
             actorId: identity.subject,
             actorName: identity.name ?? identity.email ?? "Unknown",
-            action: "bot_updated", // "deleted" maps to bot_updated label in UI
+            action: "bot_deleted",
             targetType: "bot",
             targetId: args.id,
-            metadata: { name: bot.name, change: "deleted" },
+            metadata: { name: bot.name },
         });
     },
 });

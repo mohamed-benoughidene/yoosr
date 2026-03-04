@@ -59,10 +59,10 @@ export const createDepartment = mutation({
             projectId: args.projectId,
             actorId: identity.subject,
             actorName: identity.name ?? identity.email ?? "Unknown",
-            action: "department_updated",
+            action: "department_created",
             targetType: "department",
             targetId: id,
-            metadata: { name: args.name, change: "created" },
+            metadata: { name: args.name },
         });
         return id;
     },
@@ -81,9 +81,23 @@ export const updateDepartment = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
+
+        const department = await ctx.db.get(id);
+        if (!department) throw new Error("Department not found");
+
         const clean: Record<string, any> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: department.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "department_updated",
+            targetType: "department",
+            targetId: id,
+            metadata: { ...(args.name && { name: args.name }) },
+        });
     },
 });
 
@@ -92,7 +106,21 @@ export const removeDepartment = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const department = await ctx.db.get(args.id);
+        if (!department) throw new Error("Department not found");
+
         await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: department.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "department_deleted",
+            targetType: "department",
+            targetId: args.id,
+            metadata: { name: department.name },
+        });
     },
 });
 
@@ -119,6 +147,16 @@ export const addMemberToDepartment = mutation({
                 memberIds: [...memberIds, args.clerkUserId],
             });
         }
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: department.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "department_member_added",
+            targetType: "department",
+            targetId: args.departmentId,
+            metadata: { memberId: args.clerkUserId },
+        });
     },
 });
 
@@ -145,6 +183,16 @@ export const removeMemberFromDepartment = mutation({
                 memberIds: memberIds.filter(id => id !== args.clerkUserId),
             });
         }
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: department.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "department_member_removed",
+            targetType: "department",
+            targetId: args.departmentId,
+            metadata: { memberId: args.clerkUserId },
+        });
     },
 });
 
@@ -173,10 +221,22 @@ export const createCannedResponse = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
-        return await ctx.db.insert("canned_responses", {
+        const id = await ctx.db.insert("canned_responses", {
             ...args,
             createdBy: identity.subject,
         });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "canned_response_created",
+            targetType: "canned_response",
+            targetId: id,
+            metadata: { trigger: args.trigger },
+        });
+
+        return id;
     },
 });
 
@@ -193,6 +253,18 @@ export const updateCannedResponse = mutation({
         const clean: Record<string, any> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
+
+        const cannedResponse = await ctx.db.get(id);
+        if (cannedResponse) {
+            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+                projectId: cannedResponse.projectId,
+                actorId: identity.subject,
+                actorName: identity.name ?? identity.email ?? "Unknown",
+                action: "canned_response_updated",
+                targetType: "canned_response",
+                targetId: id,
+            });
+        }
     },
 });
 
@@ -201,7 +273,20 @@ export const removeCannedResponse = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const cannedResponse = await ctx.db.get(args.id);
+        if (!cannedResponse) throw new Error("Canned response not found");
+
         await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: cannedResponse.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "canned_response_deleted",
+            targetType: "canned_response",
+            targetId: args.id,
+        });
     },
 });
 
@@ -230,10 +315,22 @@ export const createLabel = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
-        return await ctx.db.insert("labels", {
+        const id = await ctx.db.insert("labels", {
             ...args,
             createdBy: identity.subject,
         });
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "label_created",
+            targetType: "label",
+            targetId: id,
+            metadata: { name: args.name, color: args.color },
+        });
+
+        return id;
     },
 });
 
@@ -250,6 +347,19 @@ export const updateLabel = mutation({
         const clean: Record<string, any> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
+
+        const label = await ctx.db.get(id);
+        if (label) {
+            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+                projectId: label.projectId,
+                actorId: identity.subject,
+                actorName: identity.name ?? identity.email ?? "Unknown",
+                action: "label_updated",
+                targetType: "label",
+                targetId: id,
+                metadata: { ...(args.name && { name: args.name }) },
+            });
+        }
     },
 });
 
@@ -258,7 +368,21 @@ export const removeLabel = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const label = await ctx.db.get(args.id);
+        if (!label) throw new Error("Label not found");
+
         await ctx.db.delete(args.id);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: label.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "label_deleted",
+            targetType: "label",
+            targetId: args.id,
+            metadata: { name: label.name },
+        });
     },
 });
 
