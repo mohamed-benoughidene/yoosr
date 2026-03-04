@@ -20,6 +20,7 @@ import {
     Star,
     Zap,
     CalendarRange,
+    Clock,
 } from "lucide-react";
 
 function toMs(dateStr: string): number {
@@ -77,6 +78,11 @@ export default function AnalyticsPage() {
         activeProject ? { projectId: activeProject._id, from, to } : "skip"
     );
 
+    const slaData = useQuery(
+        api.analytics.getSLABreachRate,
+        activeProject ? { projectId: activeProject._id, from, to } : "skip"
+    );
+
     if (!activeProject) {
         return <div className="p-8 text-muted-foreground">Select a project to view analytics.</div>;
     }
@@ -119,6 +125,19 @@ export default function AnalyticsPage() {
                 : "—",
             icon: Zap,
             sub: "AI tokens consumed",
+        },
+        {
+            label: "SLA Breach Rate",
+            value: slaData ? (slaData.slaTracked > 0 ? `${slaData.breachRate}%` : "No SLA data") : "—",
+            icon: Clock,
+            sub: slaData ? (slaData.slaTracked > 0 ? `${slaData.breached} of ${slaData.slaTracked} tracked` : "—") : "—",
+            valueClassName: slaData && slaData.slaTracked > 0
+                ? slaData.breachRate > 20
+                    ? "text-destructive"
+                    : slaData.breachRate > 10
+                        ? "text-amber-500"
+                        : "text-green-500"
+                : "",
         },
     ];
 
@@ -165,15 +184,15 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Stats row */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                {statsCards.map(({ label, value, icon: Icon, sub }) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                {statsCards.map(({ label, value, icon: Icon, sub, valueClassName }) => (
                     <Card key={label}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">{label}</CardTitle>
                             <Icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{String(value)}</div>
+                            <div className={`text-2xl font-bold ${valueClassName || ""}`.trim()}>{String(value)}</div>
                             <p className="text-xs text-muted-foreground">{sub}</p>
                         </CardContent>
                     </Card>

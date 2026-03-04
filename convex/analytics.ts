@@ -442,3 +442,49 @@ export const submitCSAT = mutation({
         });
     },
 });
+
+/**
+ * Calculates the SLA breach rate for conversations within a date range.
+ */
+export const getSLABreachRate = query({
+    args: {
+        projectId: v.id("projects"),
+        from: v.number(),
+        to: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return { total: 0, slaTracked: 0, breached: 0, breachRate: 0 };
+
+        const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        const inRange = conversations.filter(c =>
+            c._creationTime >= args.from && c._creationTime <= args.to
+        );
+
+        let slaTracked = 0;
+        let breached = 0;
+
+        for (const c of inRange) {
+            if (c.slaDeadline !== undefined && c.firstResponseAt !== undefined) {
+                slaTracked++;
+                if (c.firstResponseAt > c.slaDeadline) {
+                    breached++;
+                }
+            }
+        }
+
+        const breachRateRaw = slaTracked > 0 ? (breached / slaTracked) * 100 : 0;
+        const breachRate = Math.round(breachRateRaw * 10) / 10;
+
+        return {
+            total: inRange.length,
+            slaTracked,
+            breached,
+            breachRate,
+        };
+    },
+});
