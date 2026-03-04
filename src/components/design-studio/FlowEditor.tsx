@@ -39,6 +39,7 @@ import { CodeActionNode } from "./nodes/CodeActionNode";
 import { ClearTranscriptNode } from "./nodes/ClearTranscriptNode";
 import { AIAssistantNode } from "./nodes/AIAssistantNode";
 import { ApplyLabelNode } from "./nodes/ApplyLabelNode";
+import { SetPriorityNode } from "./nodes/SetPriorityNode";
 import { BlockPalette } from "./BlockPalette";
 import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
@@ -62,6 +63,7 @@ const nodeTypes: NodeTypes = {
     clear_transcript: ClearTranscriptNode,
     ai_assistant: AIAssistantNode,
     applyLabel: ApplyLabelNode,
+    setPriority: SetPriorityNode,
 };
 
 const defaultStartNode: Node = {
@@ -359,6 +361,8 @@ export function FlowEditor({
                                     return "#06b6d4";
                                 case "code_action":
                                     return "#10b981";
+                                case "setPriority":
+                                    return "#ea580c";
                                 default:
                                     return "#94a3b8";
                             }

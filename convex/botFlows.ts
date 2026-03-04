@@ -177,7 +177,11 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                     labelName: data.labelName || ""
                 });
                 break;
-            default:
+            case "setPriority":
+                actions.push({
+                    _type: "set_priority",
+                    priority: data.priority || "normal"
+                });
                 break;
         }
 

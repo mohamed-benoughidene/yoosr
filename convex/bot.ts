@@ -318,6 +318,13 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             return { newAttributes: {} };
         }
 
+        case "set_priority":
+            await ctx.runMutation(internal.conversations.updateInternal, {
+                id: conversationId,
+                priority: action.priority
+            });
+            return { newAttributes: {} };
+
         case "resolve_conversation":
             await ctx.runMutation(internal.conversations.updateInternal, {
                 id: conversationId,

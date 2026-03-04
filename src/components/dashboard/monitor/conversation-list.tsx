@@ -32,6 +32,7 @@ export interface Conversation {
         sourcePage?: string;
         ip?: string;
     };
+    priority?: "low" | "normal" | "high" | "urgent";
 }
 
 import { Button } from "@/components/ui/button"
@@ -93,12 +94,26 @@ export function ConversationList({
 
     const [activeLabel, setActiveLabel] = useState<string | null>(null)
     const [activeDept, setActiveDept] = useState<string | null>(null)
+    const [sortBy, setSortBy] = useState<"timestamp" | "priority">("timestamp")
 
-    const filteredItems = items.filter((item) => {
-        const matchesLabel = activeLabel ? item.tags?.includes(activeLabel) : true;
-        const matchesDept = activeDept ? item.details?.department === activeDept : true;
-        return matchesLabel && matchesDept;
-    });
+    const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+
+    const filteredItems = items
+        .filter((item) => {
+            const matchesLabel = activeLabel ? item.tags?.includes(activeLabel) : true;
+            const matchesDept = activeDept ? item.details?.department === activeDept : true;
+            return matchesLabel && matchesDept;
+        })
+        .sort((a, b) => {
+            if (sortBy === "priority") {
+                const priorityA = a.priority || "normal";
+                const priorityB = b.priority || "normal";
+                if (priorityOrder[priorityA] !== priorityOrder[priorityB]) {
+                    return priorityOrder[priorityA] - priorityOrder[priorityB];
+                }
+            }
+            return b.timestamp - a.timestamp;
+        });
 
     return (
         <div className="flex h-full flex-col">
@@ -200,6 +215,28 @@ export function ConversationList({
                         <Filter className="mr-2 h-3 w-3" />
                         Agent
                     </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={sortBy === "priority" ? "default" : "outline"}
+                                size="sm"
+                                className="h-8 text-xs shrink-0"
+                            >
+                                <SlidersHorizontal className="mr-2 h-3 w-3" />
+                                {sortBy === "priority" ? "Sort: Priority" : "Sort: Recent"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[150px]">
+                            <DropdownMenuLabel className="text-xs font-medium">Sort by</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setSortBy("timestamp")} className="text-xs">
+                                Recent
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSortBy("priority")} className="text-xs">
+                                Priority
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
                         <SlidersHorizontal className="mr-2 h-3 w-3" />
                         Status
@@ -236,7 +273,18 @@ export function ConversationList({
                                             {/* Status indicator could go here */}
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-semibold">{item.user.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold">{item.user.name}</span>
+                                                {item.priority === "urgent" && (
+                                                    <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">Urgent</Badge>
+                                                )}
+                                                {item.priority === "high" && (
+                                                    <Badge className="h-4 px-1 text-[9px] bg-orange-500 hover:bg-orange-500 text-white border-none uppercase font-bold">High</Badge>
+                                                )}
+                                                {item.priority === "low" && (
+                                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase font-bold">Low</Badge>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                 {getChannelIcon(item.channel)}
                                                 <span className="capitalize">{item.channel}</span>

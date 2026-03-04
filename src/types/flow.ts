@@ -87,6 +87,12 @@ export interface ApplyLabelNodeData {
     [key: string]: unknown;
 }
 
+export interface SetPriorityNodeData {
+    label: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    [key: string]: unknown;
+}
+
 // ─── Union Types ──────────────────────────────────────────────────
 
 export type FlowNodeData =
@@ -99,6 +105,7 @@ export type FlowNodeData =
     | ConditionNodeData
     | HITLHandoffNodeData
     | ApplyLabelNodeData
+    | SetPriorityNodeData
     | CloseNodeData;
 
 export type FlowNode = Node<FlowNodeData>;
@@ -282,5 +289,13 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "Tag",
         color: "text-pink-500",
         defaultData: { label: "Apply Label", labelName: "" },
+    },
+    {
+        type: "setPriority",
+        label: "Set Priority",
+        description: "Set conversation urgency",
+        icon: "AlertCircle",
+        color: "text-orange-600",
+        defaultData: { label: "Set Priority", priority: "normal" },
     },
 ];

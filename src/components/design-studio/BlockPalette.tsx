@@ -20,6 +20,7 @@ import {
     Eraser,
     Bot,
     Tag,
+    AlertCircle,
     type LucideIcon,
 } from "lucide-react";
 import { BLOCK_TYPES } from "@/types/flow";
@@ -44,6 +45,7 @@ const iconMap: Record<string, LucideIcon> = {
     Eraser,
     Bot,
     Tag,
+    AlertCircle,
 };
 
 interface BlockPaletteProps {

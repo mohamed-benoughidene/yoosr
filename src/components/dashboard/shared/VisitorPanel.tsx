@@ -9,8 +9,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
-    User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus, Globe, Clock, Laptop, ExternalLink, MessageCircle, Facebook, CircleDot, Building, Hash, Tag
+    User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus, Globe, Clock, Laptop, ExternalLink, MessageCircle, Facebook, CircleDot, Building, Hash, Tag, AlertCircle
 } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
@@ -165,6 +172,7 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
     )
 
     const updateVisitorInfo = useMutation(api.conversations.updateVisitorInfo)
+    const updateConversation = useMutation(api.conversations.update)
     const createContact = useMutation(api.contacts.create)
     const updateContact = useMutation(api.contacts.update)
     const assignTag = useMutation(api.tags.assignTagToConversation)
@@ -324,6 +332,42 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                             <div className="flex items-center gap-3">
                                 <Building className="h-4 w-4 text-muted-foreground shrink-0" />
                                 <span>{attributes.department || "General"}</span>
+                            </div>
+                            <div className="flex items-center gap-3 group">
+                                <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-muted-foreground min-w-[60px]">Priority: </span>
+                                <Select
+                                    value={conversation.priority || "normal"}
+                                    onValueChange={(val: any) => {
+                                        updateConversation({
+                                            id: conversationId,
+                                            priority: val
+                                        }).catch(() => toast.error("Failed to update priority"))
+                                    }}
+                                >
+                                    <SelectTrigger className="h-7 w-auto border-none p-0 focus:ring-0 shadow-none bg-transparent hover:bg-muted/50 rounded-md px-1 transition-colors">
+                                        <div className="flex items-center gap-2">
+                                            {conversation.priority === "urgent" && (
+                                                <Badge className="bg-red-600 hover:bg-red-600 border-none uppercase text-[10px] font-bold">Urgent</Badge>
+                                            )}
+                                            {conversation.priority === "high" && (
+                                                <Badge className="bg-orange-500 hover:bg-orange-500 border-none uppercase text-[10px] font-bold">High</Badge>
+                                            )}
+                                            {conversation.priority === "low" && (
+                                                <Badge variant="secondary" className="bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase text-[10px] font-bold">Low</Badge>
+                                            )}
+                                            {(!conversation.priority || conversation.priority === "normal") && (
+                                                <Badge variant="secondary" className="bg-gray-200 text-gray-700 hover:bg-gray-200 border-none uppercase text-[10px] font-bold">Normal</Badge>
+                                            )}
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="normal">Normal</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="flex items-center gap-3">
                                 <User className="h-4 w-4 text-muted-foreground shrink-0" />

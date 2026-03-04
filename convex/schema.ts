@@ -65,6 +65,7 @@ export default defineSchema({
         botPaused: v.optional(v.boolean()), // true = bot will not respond to new messages
         handoffSource: v.optional(v.string()), // 'bot' = escalated by the bot flow
         departmentId: v.optional(v.id("departments")),
+        priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),

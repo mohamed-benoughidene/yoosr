@@ -610,6 +610,30 @@ export function NodePropertiesPanel({
                         />
                     </div>
                 )}
+
+                {/* Set Priority Node fields */}
+                {node.type === "setPriority" && (
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Conversation Priority</Label>
+                        <Select
+                            value={data.priority || "normal"}
+                            onValueChange={(val) => update("priority", val)}
+                        >
+                            <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground pt-1 italic">
+                            Automatically updates the conversation urgency level.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Footer — delete */}

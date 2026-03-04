@@ -100,6 +100,7 @@ export const update = mutation({
         status: v.optional(v.string()),
         assignedTo: v.optional(v.string()),
         unreadCount: v.optional(v.number()),
+        priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -170,6 +171,7 @@ export const updateInternal = internalMutation({
         botPaused: v.optional(v.boolean()),
         botId: v.optional(v.string()),
         clearBotId: v.optional(v.boolean()),
+        priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
     },
     handler: async (ctx, args) => {
         const { id, clearBotId, ...updates } = args;
@@ -735,6 +737,7 @@ export const getConversations = query({
                     sourcePage: c.attributes?.sourcePage ?? "",
                     ip: c.attributes?.ip ?? "",
                 },
+                priority: c.priority,
             };
         });
     },
