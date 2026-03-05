@@ -61,6 +61,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export interface ConversationListProps {
     items: Conversation[]
@@ -402,6 +408,30 @@ export function ConversationList({
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold">{item.user.name}</span>
+                                                {item.channel === "messenger" && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <div className="inline-flex items-center ml-1 shrink-0">
+                                                                    <MessageCircle className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500/10" />
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="right">Messenger</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                                {item.channel === "instagram" && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <div className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-fuchsia-600 text-[8px] font-bold text-white ml-1 shrink-0">
+                                                                    IG
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="right">Instagram</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
                                                 {item.priority === "urgent" && (
                                                     <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">Urgent</Badge>
                                                 )}

@@ -3,7 +3,7 @@
 import {
   Activity, BarChart3, BookOpen, Bot, ChevronsUpDown,
   History, LayoutDashboard, LogOut, MessageSquare,
-  MonitorPlay, Settings, Ticket, Users,
+  MonitorPlay, Settings, Ticket, Users, ShoppingBag
 } from "lucide-react"
 import * as React from "react"
 import Link from "next/link"
@@ -29,6 +29,7 @@ const navGroups = [
       { label: "Monitor", icon: MonitorPlay, href: "/dashboard/monitor" },
       { label: "Chat", icon: MessageSquare, href: "/dashboard/chat" },
       { label: "Requests", icon: Ticket, href: "/dashboard/requests" },
+      { label: "Orders", icon: ShoppingBag, href: "/dashboard/orders" },
     ],
   },
   {

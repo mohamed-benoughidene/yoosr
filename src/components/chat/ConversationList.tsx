@@ -4,8 +4,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
-import { Search } from "lucide-react"
+import { Search, MessageCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useProject } from "@/context/ProjectContext"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
@@ -133,6 +139,30 @@ export function ConversationList() {
                                 <div className="flex items-center">
                                     <div className="flex items-center gap-2">
                                         <div className="font-semibold">{conv.visitorName || "Visitor"}</div>
+                                        {conv.channel === "messenger" && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="inline-flex items-center shrink-0">
+                                                            <MessageCircle className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500/10" />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right">Messenger</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                        {conv.channel === "instagram" && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-fuchsia-600 text-[8px] font-bold text-white shrink-0">
+                                                            IG
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right">Instagram</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
                                         {(conv.unreadCount ?? 0) > 0 && (
                                             <span className="flex h-2 w-2 rounded-full bg-blue-600" />
                                         )}

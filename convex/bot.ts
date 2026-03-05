@@ -608,13 +608,24 @@ export const createBotMessage = internalMutation({
     handler: async (ctx, args) => {
         const conversation = await ctx.db.get(args.conversationId);
         if (!conversation) return null;
-        return await ctx.db.insert("messages", {
+
+        const messageId = await ctx.db.insert("messages", {
             conversationId: args.conversationId,
             projectId: conversation.projectId,
             senderType: "bot",
             content: args.content,
             attachments: args.attachments,
         });
+
+        // Relay bot reply to Meta if conversation is on a Meta channel
+        if (conversation.channel === "messenger" || conversation.channel === "instagram") {
+            await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
+                conversationId: args.conversationId,
+                content: args.content,
+            });
+        }
+
+        return messageId;
     }
 });
 

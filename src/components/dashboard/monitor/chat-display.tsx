@@ -74,6 +74,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
     );
 
     const sendMessage = useMutation(api.messages.sendMessage);
+    const sendMetaMsg = useMutation(api.conversations.relayToMeta);
     const joinConversation = useMutation(api.conversations.join);
     const leaveConversation = useMutation(api.conversations.leave);
     const closeConversation = useMutation(api.conversations.resolve);
@@ -102,6 +103,21 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                 content,
                 isInternal: messageMode === "internal"
             });
+
+            // If this is a Meta channel and it's a public message, relay to Meta
+            if (
+                messageMode !== "internal" &&
+                (conversation.channel === "messenger" || conversation.channel === "instagram")
+            ) {
+                try {
+                    await sendMetaMsg({
+                        conversationId: conversation.id as Id<"conversations">,
+                        content,
+                    });
+                } catch (metaErr) {
+                    console.error("Failed to relay to Meta:", metaErr);
+                }
+            }
         } catch (error) {
             console.error("Failed to send message:", error);
             // In a real app, restore input value and show toast

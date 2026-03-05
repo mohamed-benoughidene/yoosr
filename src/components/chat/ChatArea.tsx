@@ -83,6 +83,7 @@ export function ChatArea() {
     );
 
     const sendMessage = useMutation(api.messages.sendMessage)
+    const sendMetaMsg = useMutation(api.conversations.relayToMeta)
     const resolveConversation = useMutation(api.conversations.resolve)
     const markAsRead = useMutation(api.conversations.markAsRead)
     const updateConversation = useMutation(api.conversations.update)
@@ -120,6 +121,21 @@ export function ChatArea() {
                 content,
                 isInternal: messageMode === "internal",
             })
+
+            // If this is a Meta channel and it's a public message, relay to Meta
+            if (
+                messageMode !== "internal" &&
+                (conversation.channel === "messenger" || conversation.channel === "instagram")
+            ) {
+                try {
+                    await sendMetaMsg({
+                        conversationId,
+                        content,
+                    });
+                } catch (metaErr) {
+                    console.error("Failed to relay to Meta:", metaErr);
+                }
+            }
         } catch (error) {
             console.error("Error sending message:", error)
             setInputValue(content) // Restore on error

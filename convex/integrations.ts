@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 // List integrations for a project
@@ -58,5 +58,15 @@ export const remove = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
         await ctx.db.delete(args.id);
+    },
+});
+// Internal: list integrations for a project (no auth required — for use in internal actions)
+export const listForProject = internalQuery({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("integrations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
     },
 });

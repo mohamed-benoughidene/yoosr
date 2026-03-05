@@ -1,4 +1,4 @@
-import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
@@ -760,7 +760,7 @@ export const getConversations = query({
                 timestamp: c.updatedAt ?? c._creationTime,
                 assignedAgent: assignedAgent,
                 assignedTo: c.assignedTo ?? null, // Kept for backwards compatibility in other UI components
-                channel: c.attributes?.channel ?? "web",
+                channel: c.channel ?? c.attributes?.channel ?? "web",
                 unread: c.unreadCount ?? 0,
                 visitorName: visitorName,
                 visitorEmail: c.visitorEmail ?? "",
@@ -807,5 +807,195 @@ export const listResolved = query({
             )
             .order("desc")
             .paginate(args.paginationOpts);
+    },
+});
+
+// Create or update conversation from Meta (Messenger / Instagram)
+export const createOrUpdateFromMeta = internalMutation({
+    args: {
+        pageId: v.string(),
+        senderId: v.string(),
+        messageText: v.optional(v.string()),
+        messageId: v.string(),
+        channel: v.union(v.literal("messenger"), v.literal("instagram"))
+    },
+    handler: async (ctx, args) => {
+        // 1. Deduplicate
+        const existingMessages = await ctx.db
+            .query("messages")
+            .filter(q => q.eq(q.field("channelMessageId"), args.messageId))
+            .collect();
+
+        if (existingMessages.length > 0) {
+            return;
+        }
+
+        // 2. Find the project integration
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) => q.eq(q.field("provider"), args.channel))
+            .filter((q) => q.eq(q.field("enabled"), true))
+            .collect();
+
+        const integration = integrations.find(
+            (i) => i.credentials && i.credentials.page_id === args.pageId
+        );
+
+        if (!integration) {
+            return;
+        }
+
+        // 3. Find or create the conversation
+        let conversationId;
+        const existingConversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
+            .collect();
+
+        const openConversation = existingConversations.find(
+            (c) => c.channelSenderId === args.senderId && c.status !== 1000
+        );
+
+        const isNew = !openConversation;
+
+        if (openConversation) {
+            conversationId = openConversation._id;
+        } else {
+            // @ts-ignore - Ignoring TS errors for strictly requested fields that might not be in schema
+            conversationId = await ctx.db.insert("conversations", {
+                projectId: integration.projectId,
+                visitorId: args.senderId,
+                visitorName: args.channel === "messenger" ? "Messenger User" : "Instagram User",
+                channel: args.channel,
+                channelSenderId: args.senderId,
+                status: 100,
+                unreadCount: 0,
+                updatedAt: Date.now(),
+            });
+        }
+
+        // 4. Insert the message
+        // @ts-ignore - Ignoring TS errors for strictly requested fields that might not be in schema
+        await ctx.db.insert("messages", {
+            conversationId: conversationId,
+            projectId: integration.projectId,
+            senderType: "visitor",
+            senderId: args.senderId,
+            content: args.messageText ?? "",
+            type: "text",
+            channelMessageId: args.messageId,
+        });
+
+        // 5. Patch the conversation
+        const conversation = await ctx.db.get(conversationId);
+        if (conversation) {
+            await ctx.db.patch(conversationId, {
+                lastMessage: args.messageText ?? "",
+                updatedAt: Date.now(),
+                unreadCount: (conversation.unreadCount ?? 0) + 1,
+            });
+
+            // 6. Trigger Bot Engine or Routing
+            if (isNew) {
+                // For new conversations, trigger the routing engine which handles bot assignment
+                await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+                    conversationId,
+                    projectId: integration.projectId,
+                    initialMessage: args.messageText ?? "",
+                });
+            } else if (!conversation.botPaused && conversation.botId) {
+                // For existing conversations assigned to a bot, trigger execution directly
+                await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
+                    conversationId,
+                    incomingMessage: args.messageText ?? "",
+                });
+            }
+        }
+    }
+});
+// Internal: fetch a conversation by ID without auth guard (for use in internalAction/internalMutation)
+export const getById = internalQuery({
+    args: { id: v.id("conversations") },
+    handler: async (ctx, args): Promise<any> => {
+        return await ctx.db.get(args.id);
+    },
+});
+
+// Internal action: send a message to a Meta channel (Messenger / Instagram)
+export const sendMetaMessage = internalAction({
+    args: {
+        conversationId: v.id("conversations"),
+        content: v.string(),
+    },
+    handler: async (ctx, args): Promise<string | undefined> => {
+        // 1. Fetch the conversation
+        const conversation: any = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
+        if (!conversation) return undefined;
+
+        // 2. Only proceed for Meta channels
+        if (conversation.channel !== "messenger" && conversation.channel !== "instagram") return undefined;
+
+        // 3. Require a sender ID to reply to
+        if (!conversation.channelSenderId) return undefined;
+
+        // 4. Fetch the project's integration for this channel
+        const integrations: any[] = await ctx.runQuery(internal.integrations.listForProject, {
+            projectId: conversation.projectId,
+        });
+
+        const integration: any = (integrations ?? []).find(
+            (i: any) => i.provider === conversation.channel && i.enabled === true
+        );
+
+        if (!integration) return undefined;
+
+        const accessToken: string = integration.credentials?.access_token;
+        if (!accessToken) return undefined;
+
+        // 5. Call Meta Graph API
+        try {
+            const response: Response = await fetch(
+                `https://graph.facebook.com/v19.0/me/messages?access_token=${accessToken}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        recipient: { id: conversation.channelSenderId },
+                        message: { text: args.content },
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.text();
+                console.error("[sendMetaMessage] Meta API error:", err);
+                return undefined;
+            }
+
+            const data: any = await response.json();
+            return data.message_id as string;
+        } catch (err) {
+            console.error("[sendMetaMessage] fetch error:", err);
+        }
+
+        return undefined;
+    },
+});
+
+// Public-facing mutation: schedule sending the agent reply to Meta channel
+// (internalActions can't be called from the frontend directly)
+export const relayToMeta = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        content: v.string(),
+    },
+    handler: async (ctx, args): Promise<void> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return;
+
+        await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
+            conversationId: args.conversationId,
+            content: args.content,
+        });
     },
 });

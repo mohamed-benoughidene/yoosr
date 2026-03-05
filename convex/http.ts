@@ -276,6 +276,72 @@ http.route({
     }),
 });
 
+// GET /webhooks/meta (Meta verification)
+http.route({
+    path: "/webhooks/meta",
+    method: "GET",
+    handler: httpAction(async (ctx, request) => {
+        const url = new URL(request.url);
+        const mode = url.searchParams.get("hub.mode");
+        const verifyToken = url.searchParams.get("hub.verify_token");
+        const challenge = url.searchParams.get("hub.challenge");
+
+        const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
+
+        if (mode === "subscribe" && verifyToken === WEBHOOK_VERIFY_TOKEN) {
+            return new Response(challenge, { status: 200 });
+        }
+
+        return new Response("Forbidden", { status: 403 });
+    }),
+});
+
+// POST /webhooks/meta (incoming messages)
+http.route({
+    path: "/webhooks/meta",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+        try {
+            const body = await request.json();
+
+            if (body.object !== "page" && body.object !== "instagram") {
+                return new Response("Not Found", { status: 404 });
+            }
+
+            if (body.entry && Array.isArray(body.entry)) {
+                for (const entry of body.entry) {
+                    if (entry.messaging && Array.isArray(entry.messaging)) {
+                        for (const messaging of entry.messaging) {
+                            if (!messaging.message || messaging.message.is_echo === true) {
+                                continue;
+                            }
+
+                            const pageId = entry.id;
+                            const senderId = messaging.sender.id;
+                            const messageText = messaging.message.text;
+                            const messageId = messaging.message.mid;
+                            const channel = body.object === "instagram" ? "instagram" : "messenger";
+
+                            // @ts-ignore - Will be implemented later
+                            await ctx.runMutation(internal.conversations.createOrUpdateFromMeta, {
+                                pageId,
+                                senderId,
+                                messageText,
+                                messageId,
+                                channel,
+                            });
+                        }
+                    }
+                }
+            }
+
+            return new Response("OK", { status: 200 });
+        } catch (error) {
+            console.error("Error processing Meta webhook:", error);
+            // Always return 200 per Meta webhook requirements
+            return new Response("OK", { status: 200 });
+        }
+    }),
+});
 
 export default http;
-

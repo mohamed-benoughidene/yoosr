@@ -69,6 +69,9 @@ export default defineSchema({
         priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
         firstResponseAt: v.optional(v.number()),
         slaDeadline: v.optional(v.number()),
+        // External channels
+        channel: v.optional(v.union(v.literal("widget"), v.literal("messenger"), v.literal("instagram"))),
+        channelSenderId: v.optional(v.string()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"]),
@@ -100,6 +103,7 @@ export default defineSchema({
         senderFullname: v.optional(v.string()),
         status: v.optional(v.number()),
         type: v.optional(v.string()),
+        channelMessageId: v.optional(v.string()),
     })
         .index("by_conversationId", ["conversationId"])
         .index("by_projectId", ["projectId"])
@@ -315,4 +319,20 @@ export default defineSchema({
     })
         .index("by_recipient", ["recipientId", "createdAt"])
         .index("by_project_recipient", ["projectId", "recipientId"]),
+
+    // Orders placed through chat or agents
+    orders: defineTable({
+        projectId: v.id("projects"),
+        conversationId: v.optional(v.id("conversations")),
+        contactName: v.string(),
+        phone: v.optional(v.string()),
+        product: v.string(),
+        notes: v.optional(v.string()),
+        status: v.union(v.literal("new"), v.literal("confirmed"), v.literal("cancelled")),
+        agentId: v.optional(v.string()),
+        createdAt: v.number(),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_conversationId", ["conversationId"])
+        .index("by_projectId_status", ["projectId", "status"]),
 });

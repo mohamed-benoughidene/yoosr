@@ -9,7 +9,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
-    User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus, Globe, Clock, Laptop, ExternalLink, MessageCircle, Facebook, CircleDot, Building, Hash, Tag, AlertCircle
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus, Globe, Clock, Laptop, ExternalLink, MessageCircle, Facebook, CircleDot, Building, Hash, Tag, AlertCircle, ShoppingBag, MoreHorizontal
 } from "lucide-react"
 import {
     Select,
@@ -180,6 +186,71 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
 
     const [contactSaving, setContactSaving] = useState(false)
     const [tagPopoverOpen, setTagPopoverOpen] = useState(false)
+
+    // Orders state and queries
+    const orders = useQuery(
+        api.orders.listOrders,
+        activeProject ? { projectId: activeProject._id } : "skip"
+    )
+    const createOrder = useMutation(api.orders.createOrder)
+    const updateOrderStatus = useMutation(api.orders.updateOrderStatus)
+
+    const [isOrderFormOpen, setIsOrderFormOpen] = useState(false)
+    const [orderFormSaving, setOrderFormSaving] = useState(false)
+    const [orderForm, setOrderForm] = useState({
+        contactName: "",
+        phone: "",
+        product: "",
+        notes: "",
+        status: "new" as "new" | "confirmed" | "cancelled"
+    })
+
+    // Pre-fill form when open state changes
+    useEffect(() => {
+        if (isOrderFormOpen && conversation) {
+            setOrderForm(prev => ({
+                ...prev,
+                contactName: prev.contactName || conversation.visitorName || "",
+                phone: prev.phone || conversation.visitorPhone || ""
+            }))
+        }
+    }, [isOrderFormOpen, conversation])
+
+    const conversationOrders = orders?.filter(o => o.conversationId === conversationId)
+
+    const handleCreateOrder = async () => {
+        if (!activeProject || !conversationId) return
+        if (!orderForm.product.trim() || !orderForm.contactName.trim()) {
+            toast.error("Contact Name and Product are required")
+            return
+        }
+
+        setOrderFormSaving(true)
+        try {
+            await createOrder({
+                projectId: activeProject._id,
+                conversationId,
+                contactName: orderForm.contactName,
+                phone: orderForm.phone || undefined,
+                product: orderForm.product,
+                notes: orderForm.notes || undefined,
+                status: orderForm.status
+            })
+            toast.success("Order saved")
+            setIsOrderFormOpen(false)
+            setOrderForm({
+                contactName: conversation?.visitorName || "",
+                phone: conversation?.visitorPhone || "",
+                product: "",
+                notes: "",
+                status: "new"
+            })
+        } catch {
+            toast.error("Failed to save order")
+        } finally {
+            setOrderFormSaving(false)
+        }
+    }
 
     const handleSaveField = useCallback(
         (field: EditableField, value: string) => {
@@ -505,6 +576,173 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                                     })
                                 )}
                             </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+
+                {/* 5. Orders */}
+                <AccordionItem value="orders" className="border-0 border-t">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                        <div className="flex items-center gap-2">
+                            <ShoppingBag className="h-4 w-4 text-muted-foreground shrink-0" />
+                            Orders
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-1 pb-3 px-2">
+                        <div className="space-y-4">
+                            {/* Orders List */}
+                            {orders === undefined ? (
+                                <div className="text-xs text-muted-foreground p-2 text-center flex items-center justify-center gap-2">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> Loading orders...
+                                </div>
+                            ) : conversationOrders && conversationOrders.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic pl-1">No orders for this conversation.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {conversationOrders?.map((order) => (
+                                        <div key={order._id} className="flex items-start justify-between bg-muted/30 border rounded-md p-2 gap-2 text-sm group">
+                                            <div className="flex flex-col gap-1 overflow-hidden min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 truncate whitespace-nowrap">
+                                                    <span className="font-medium truncate block">{order.contactName}</span>
+                                                    <span className="text-muted-foreground text-xs shrink-0">—</span>
+                                                    <span className="truncate block">{order.product}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    {order.status === "new" && <Badge className="bg-blue-500 hover:bg-blue-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">New</Badge>}
+                                                    {order.status === "confirmed" && <Badge className="bg-green-500 hover:bg-green-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">Confirmed</Badge>}
+                                                    {order.status === "cancelled" && <Badge className="bg-red-500 hover:bg-red-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">Cancelled</Badge>}
+                                                </div>
+                                            </div>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">
+                                                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-[160px]">
+                                                    <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "new" })} className="cursor-pointer">
+                                                        Mark New
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "confirmed" })} className="cursor-pointer">
+                                                        Mark Confirmed
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "cancelled" })} className="cursor-pointer">
+                                                        Mark Cancelled
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Form Toggle & Content */}
+                            {!isOrderFormOpen ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full h-8 text-xs font-medium bg-background"
+                                    onClick={() => setIsOrderFormOpen(true)}
+                                >
+                                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                    New Order
+                                </Button>
+                            ) : (
+                                <div className="border rounded-md bg-muted/10 p-3 space-y-3 shadow-inner">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                            <User className="h-3 w-3 text-muted-foreground" /> Contact Name <span className="text-red-500">*</span>
+                                        </label>
+                                        <Input
+                                            value={orderForm.contactName}
+                                            onChange={(e) => setOrderForm(p => ({ ...p, contactName: e.target.value }))}
+                                            placeholder="John Doe"
+                                            className="h-8 text-xs bg-background"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                            <Phone className="h-3 w-3 text-muted-foreground" /> Phone
+                                        </label>
+                                        <Input
+                                            value={orderForm.phone}
+                                            onChange={(e) => setOrderForm(p => ({ ...p, phone: e.target.value }))}
+                                            placeholder="+1 234 567 890"
+                                            className="h-8 text-xs bg-background"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                            <ShoppingBag className="h-3 w-3 text-muted-foreground" /> Product / Item <span className="text-red-500">*</span>
+                                        </label>
+                                        <Input
+                                            value={orderForm.product}
+                                            onChange={(e) => setOrderForm(p => ({ ...p, product: e.target.value }))}
+                                            placeholder="Product name or description"
+                                            className="h-8 text-xs bg-yellow-50/50 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50"
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                            <StickyNote className="h-3 w-3 text-muted-foreground" /> Notes
+                                        </label>
+                                        <Textarea
+                                            value={orderForm.notes}
+                                            onChange={(e) => setOrderForm(p => ({ ...p, notes: e.target.value }))}
+                                            placeholder="Order notes, specifications..."
+                                            className="min-h-[60px] text-xs resize-none bg-background"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                            <CircleDot className="h-3 w-3 text-muted-foreground" /> Status
+                                        </label>
+                                        <Select
+                                            value={orderForm.status}
+                                            onValueChange={(v: "new" | "confirmed" | "cancelled") => setOrderForm(p => ({ ...p, status: v }))}
+                                        >
+                                            <SelectTrigger className="h-8 text-xs bg-background">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="new"><span className="text-blue-600 font-medium">New</span></SelectItem>
+                                                <SelectItem value="confirmed"><span className="text-green-600 font-medium">Confirmed</span></SelectItem>
+                                                <SelectItem value="cancelled"><span className="text-red-600 font-medium">Cancelled</span></SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-2 border-t border-dashed mt-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setIsOrderFormOpen(false)}
+                                            className="h-8 text-xs flex-1 transition-colors"
+                                            disabled={orderFormSaving}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleCreateOrder}
+                                            disabled={orderFormSaving || !orderForm.product.trim() || !orderForm.contactName.trim()}
+                                            className="h-8 text-xs flex-1 transition-all"
+                                        >
+                                            {orderFormSaving ? (
+                                                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Saving...</>
+                                            ) : (
+                                                <><Check className="h-3.5 w-3.5 mr-1" /> Save Order</>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </AccordionContent>
                 </AccordionItem>
