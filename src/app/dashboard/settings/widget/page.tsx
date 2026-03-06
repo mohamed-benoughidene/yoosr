@@ -15,9 +15,9 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock, ExternalLink } from "lucide-react"
+import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock, ExternalLink, RefreshCw, UserMinus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
@@ -34,6 +34,8 @@ const THEMES = {
 export default function WidgetSetupPage() {
     const { activeProject } = useProject()
     const [loading, setLoading] = useState(false)
+    const [iframeKey, setIframeKey] = useState(0)
+    const iframeRef = useRef<HTMLIFrameElement>(null)
 
     // Config State
     const [primaryColor, setPrimaryColor] = useState("#000000")
@@ -103,6 +105,8 @@ export default function WidgetSetupPage() {
                 widgetConfig: config,
             })
             toast.success("Widget settings updated")
+            // Reload preview to reflect changes
+            setIframeKey(k => k + 1)
         } catch {
             toast.error("Failed to update widget settings")
         }
@@ -476,7 +480,7 @@ export default function WidgetSetupPage() {
                     </Button>
                     <Button
                         variant="outline"
-                        onClick={() => window.open(`/test-widget.html?projectId=${activeProject?._id}`, '_blank')}
+                        onClick={() => window.open(`/test-widget?projectId=${activeProject?._id}`, '_blank')}
                         className="flex-1 md:flex-none"
                     >
                         <ExternalLink className="mr-2 h-4 w-4" />
@@ -486,95 +490,56 @@ export default function WidgetSetupPage() {
             </div>
 
             {/* LIVE PREVIEW */}
-            <div className="lg:w-[380px] shrink-0 sticky top-6 hidden lg:block">
-                <Card className="h-[700px] flex flex-col p-0 bg-gray-50 dark:bg-zinc-900 border-2 border-dashed relative overflow-hidden">
-                    <div className="absolute top-4 w-full text-center text-sm text-muted-foreground z-10">
-                        Live Preview
-                    </div>
+            <div className="lg:w-[400px] shrink-0 sticky top-6 hidden lg:block">
+                <div className="flex flex-col items-center gap-4">
+                    <Card className="w-full h-[660px] flex flex-col p-0 border-[12px] border-slate-900 rounded-[3rem] shadow-2xl relative bg-slate-900 overflow-hidden ring-4 ring-slate-800/50">
+                        {/* iPhone Notch */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-slate-900 rounded-b-3xl z-20"></div>
 
-                    <div className="flex-1 relative w-full h-full p-4 flex flex-col justify-end">
-                        {/* Mock Widget UI */}
-                        <div
-                            className={cn(
-                                "w-[320px] bg-background rounded-lg shadow-2xl overflow-hidden border mb-4 transition-all duration-300 self-end",
-                                "animate-in fade-in slide-in-from-bottom-4 duration-700"
-                            )}
-                        >
-                            {/* Header */}
-                            <div
-                                className="p-4 text-white flex items-center gap-3"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
-                                    {logoUrl ? (
-                                        <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
-                                    ) : (
-                                        <MessageSquare className="w-5 h-5" />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-semibold text-base truncate">{translations.headerTitle}</div>
-                                    <div className="text-xs opacity-90 flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-green-400 rounded-full inline-block" />
-                                        {translations.onlineStatus}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Body */}
-                            <div className="h-[300px] bg-muted/20 flex flex-col gap-3 p-4 overflow-y-auto">
-                                {preChatFormEnabled ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                                        <div>
-                                            <h4 className="font-bold text-lg">{translations.preChatTitle}</h4>
-                                            <p className="text-xs text-muted-foreground">{translations.preChatSubtitle}</p>
-                                        </div>
-                                        <div className="w-full space-y-2">
-                                            <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Name</div>
-                                            {contactMethod === "email" ? (
-                                                <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Email</div>
-                                            ) : (
-                                                <div className="h-8 bg-white border rounded w-full px-2 flex items-center text-xs text-muted-foreground">Phone Number</div>
-                                            )}
-                                            <div className="h-8 rounded w-full text-white text-xs flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                                                Start Chat
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex gap-2 items-end">
-                                        <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${primaryColor}20` }}>
-                                            {logoUrl ? (
-                                                <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
-                                            ) : (
-                                                <MessageSquare className="w-3 h-3" style={{ color: primaryColor }} />
-                                            )}
-                                        </div>
-                                        <div className="bg-white dark:bg-muted p-3 rounded-2xl rounded-bl-none text-sm shadow-sm border max-w-[85%]">
-                                            {translations.welcomeMessage}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Footer */}
-                            <div className="p-3 border-t bg-background">
-                                <div className="flex gap-2">
-                                    <div className="flex-1 h-9 rounded-md bg-muted/50 border border-transparent" />
-                                    <div className="w-9 h-9 rounded-md" style={{ backgroundColor: primaryColor }} />
-                                </div>
-                            </div>
+                        {/* Speakers/Sensor (Subtle) */}
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+                            <div className="w-10 h-1 bg-slate-800 rounded-full"></div>
+                            <div className="w-1 h-1 bg-slate-800 rounded-full"></div>
                         </div>
 
-                        {/* Launcher Button */}
-                        <div
-                            className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110 cursor-pointer self-end"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            <MessageSquare className="w-7 h-7" />
+                        <div className="flex-1 bg-white relative rounded-[2.2rem] overflow-hidden mt-0 mb-0">
+                            <iframe
+                                ref={iframeRef}
+                                key={iframeKey}
+                                src={`/widget?projectId=${activeProject?._id}`}
+                                className="w-full h-full border-none"
+                                title="Widget Live Preview"
+                            />
                         </div>
-                    </div>
-                </Card>
+
+                        {/* Home Indicator */}
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-slate-800 rounded-full"></div>
+                    </Card>
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-foreground text-xs gap-2"
+                        onClick={() => {
+                            try {
+                                const win = iframeRef.current?.contentWindow
+                                if (win) {
+                                    win.localStorage.removeItem("yoosr_visitor_id")
+                                    setIframeKey(k => k + 1)
+                                    toast.success("Visitor session reset")
+                                }
+                            } catch (e) {
+                                // Fallback if CORS prevents direct access (though same-origin should work)
+                                localStorage.removeItem("yoosr_visitor_id")
+                                setIframeKey(k => k + 1)
+                                toast.success("Visitor session reset (global)")
+                            }
+                        }}
+                    >
+                        <UserMinus className="h-3.5 w-3.5" />
+                        Reset Visitor Session
+                    </Button>
+                </div>
             </div>
         </div>
     )

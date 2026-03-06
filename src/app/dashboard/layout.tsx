@@ -6,28 +6,35 @@ import { SiteHeader } from "@/components/dashboard/SiteHeader"
 import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { useEffect } from "react"
+import { useUser } from "@clerk/nextjs"
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const ensureProfile = useMutation(api.profiles.ensureCurrent)
     const setAvailability = useMutation(api.profiles.setAvailability)
+    const { isLoaded, isSignedIn } = useUser()
 
     // 1. Mark as online on mount
     useEffect(() => {
-        setAvailability({ isAvailable: true })
-    }, [setAvailability])
+        if (isSignedIn) {
+            setAvailability({ isAvailable: true })
+        }
+    }, [setAvailability, isSignedIn])
 
     // 2. Heartbeat every 30s
     useEffect(() => {
+        if (!isSignedIn) return
         const interval = setInterval(() => {
             setAvailability({ isAvailable: true })
         }, 30000)
         return () => clearInterval(interval)
-    }, [setAvailability])
+    }, [setAvailability, isSignedIn])
 
     useEffect(() => {
-        ensureProfile()
-    }, [ensureProfile])
+        if (isSignedIn) {
+            ensureProfile()
+        }
+    }, [ensureProfile, isSignedIn])
 
     return (
         <SidebarProvider>

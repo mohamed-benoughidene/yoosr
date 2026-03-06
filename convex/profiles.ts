@@ -42,7 +42,7 @@ export const updateMe = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) return;
 
         const existing = await ctx.db
             .query("profiles")
@@ -183,7 +183,7 @@ export const setAvailability = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) return;
 
         const existing = await ctx.db
             .query("profiles")
