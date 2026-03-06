@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 const http = httpRouter();
 
@@ -147,7 +148,7 @@ http.route({
         }
 
         const project = await ctx.runQuery(internal.projects.getPublic, {
-            id: projectId as any,
+            id: projectId,
         });
 
         return new Response(JSON.stringify(project ?? {}), {

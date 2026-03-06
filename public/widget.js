@@ -49,20 +49,37 @@
     var button = document.createElement("div");
     button.innerHTML =
         '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
-    Object.assign(button.style, {
-        width: "60px",
-        height: "60px",
-        borderRadius: "30px",
-        backgroundColor: config.primaryColor || "#000000",
-        color: "#ffffff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        position: "relative",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        transition: "transform 0.2s ease",
-    });
+
+    function applyStyles(primaryColor) {
+        Object.assign(button.style, {
+            width: "60px",
+            height: "60px",
+            borderRadius: "30px",
+            backgroundColor: primaryColor || "#6366f1", // Match dashboard default widget color
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            position: "relative",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            transition: "transform 0.2s ease",
+        });
+    }
+
+    applyStyles(config.primaryColor);
+
+    // If color is missing, fetch it from the project API
+    if (!config.primaryColor) {
+        fetch(baseUrl + "/api/widget/project?projectId=" + encodeURIComponent(config.projectId))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.widgetConfig && data.widgetConfig.primaryColor) {
+                    applyStyles(data.widgetConfig.primaryColor);
+                }
+            })
+            .catch(function (e) { console.error("Yoosr: Error fetching project config", e); });
+    }
 
     // 5a. Unread Badge
     var badge = document.createElement("div");

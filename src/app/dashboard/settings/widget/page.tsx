@@ -62,7 +62,7 @@ export default function WidgetSetupPage() {
     useEffect(() => {
         if (activeProject?.widgetConfig) {
             const config = activeProject.widgetConfig as Record<string, any>
-            setPrimaryColor(config.primaryColor || "#000000")
+            setPrimaryColor(config.primaryColor || "#6366f1")
             setAlign(config.align || "right")
             setLogoUrl(config.logoUrl || "")
             setWelcomeDelay(config.welcomeDelay ?? 3)
@@ -543,11 +543,11 @@ export default function WidgetSetupPage() {
                                     </div>
                                 ) : (
                                     <div className="flex gap-2 items-end">
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 shrink-0 flex items-center justify-center overflow-hidden">
+                                        <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${primaryColor}20` }}>
                                             {logoUrl ? (
                                                 <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
                                             ) : (
-                                                <MessageSquare className="w-3 h-3 text-primary" />
+                                                <MessageSquare className="w-3 h-3" style={{ color: primaryColor }} />
                                             )}
                                         </div>
                                         <div className="bg-white dark:bg-muted p-3 rounded-2xl rounded-bl-none text-sm shadow-sm border max-w-[85%]">

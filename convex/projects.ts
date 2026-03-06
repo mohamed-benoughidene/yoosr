@@ -11,9 +11,12 @@ type ClerkIdentity = {
 
 // Internal: get project for widget (no auth required)
 export const getPublic = internalQuery({
-    args: { id: v.id("projects") },
+    args: { id: v.string() },
     handler: async (ctx, args) => {
-        const project = await ctx.db.get(args.id);
+        const id = ctx.db.normalizeId("projects", args.id);
+        if (!id) return null;
+
+        const project = await ctx.db.get(id);
         if (!project) return null;
         return { name: project.name, widgetConfig: project.widgetConfig };
     },
