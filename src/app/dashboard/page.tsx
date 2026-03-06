@@ -11,11 +11,24 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Bot, Users, Activity, Clock, Inbox, UserCheck, MessageSquare, Plus, ActivitySquare, CheckCircle, Zap } from "lucide-react"
+import {
+    Bot,
+    Users,
+    Activity,
+    Clock,
+    Inbox,
+    UserCheck,
+    MessageSquare,
+    Plus,
+    ActivitySquare,
+    CheckCircle,
+    Zap,
+    Loader2
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useProject } from "@/context/ProjectContext"
-import { useQuery } from "convex/react"
+import { useQuery, usePaginatedQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { formatDistanceToNow } from "date-fns"
 
@@ -27,6 +40,12 @@ export default function DashboardPage() {
         api.dashboard.getHomeStats,
         activeProject ? { projectId: activeProject._id } : "skip"
     )
+
+    const { results: recentActivities, status: activityStatus, loadMore: loadMoreActivity } = usePaginatedQuery(
+        api.activityLogs.getActivityLog,
+        activeProject ? { projectId: activeProject._id } : "skip",
+        { initialNumItems: 5 }
+    );
 
     if (!homeStats) {
         return (
@@ -50,7 +69,7 @@ export default function DashboardPage() {
         )
     }
 
-    const { botsCount, liveStats, liveQueue, recentActivities, todaySnapshot } = homeStats
+    const { botsCount, liveStats, liveQueue, todaySnapshot } = homeStats
 
     return (
         <div className="flex flex-col gap-8 p-4 md:p-8">
@@ -194,32 +213,50 @@ export default function DashboardPage() {
                         <CardTitle>Recent Activity</CardTitle>
                         <CardDescription>Live feed of what's happening right now.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1">
-                        {recentActivities.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full py-8 text-center text-muted-foreground">
+                    <CardContent className="flex-1 overflow-y-auto max-h-[400px] scrollbar-thin pr-2">
+                        {!recentActivities || recentActivities.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-[300px] py-8 text-center text-muted-foreground">
                                 <ActivitySquare className="h-8 w-8 mb-3 opacity-20" />
-                                <p className="text-sm">Activity log coming soon.</p>
+                                <p className="text-sm">{recentActivities === undefined ? "Loading…" : "No activity yet."}</p>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {recentActivities.map((activity: any) => (
-                                    <div key={activity._id} className="flex gap-4">
-                                        <div className="mt-0.5 rounded-full bg-muted p-1.5 ring-1 ring-border shrink-0">
-                                            <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <p className="text-sm">
-                                                <span className="font-medium mr-1">{activity.actorName}</span>
-                                                <span className="text-muted-foreground">{activity.action?.replace(/_/g, " ")}</span>
-                                            </p>
-                                            {activity.createdAt && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
+                                <div className="space-y-6">
+                                    {recentActivities.map((activity: any) => (
+                                        <div key={activity._id} className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out">
+                                            <div className="mt-0.5 rounded-full bg-muted p-1.5 ring-1 ring-border shrink-0 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-all">
+                                                <Activity className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            </div>
+                                            <div className="flex flex-col gap-1 min-w-0">
+                                                <p className="text-sm leading-tight break-words">
+                                                    <span className="font-medium mr-1 text-foreground group-hover:text-primary transition-colors">{activity.actorName}</span>
+                                                    <span className="text-muted-foreground">{activity.action?.replace(/_/g, " ")}</span>
                                                 </p>
-                                            )}
+                                                {activity.createdAt && (
+                                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider tabular-nums">
+                                                        {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
+                                    ))}
+                                </div>
+                                {activityStatus !== "Exhausted" && (
+                                    <div className="pt-4 border-t mt-4 sticky bottom-0 bg-background/80 backdrop-blur-sm pb-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all cursor-pointer"
+                                            onClick={() => loadMoreActivity(5)}
+                                            disabled={activityStatus === "LoadingMore"}
+                                        >
+                                            {activityStatus === "LoadingMore" ? (
+                                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                            ) : null}
+                                            {activityStatus === "LoadingMore" ? "Loading…" : "View more activity"}
+                                        </Button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
                     </CardContent>

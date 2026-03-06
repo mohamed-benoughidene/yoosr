@@ -20,7 +20,7 @@ import {
 const sidebarNavItems = [
     {
         title: "Project Settings",
-        href: "/dashboard/settings/general",
+        href: "/dashboard/settings",
         icon: Settings
     },
     {
@@ -62,11 +62,6 @@ const sidebarNavItems = [
         title: "Integrations",
         href: "/dashboard/settings/integrations",
         icon: Plug
-    },
-    {
-        title: "App Store",
-        href: "/dashboard/settings/app-store",
-        icon: ShoppingBag
     },
 ]
 

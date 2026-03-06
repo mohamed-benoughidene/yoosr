@@ -73,11 +73,7 @@ export const getHomeStats = query({
         }));
 
         // 4. Recent Activity (40% width)
-        const recentActivities = await ctx.db
-            .query("activity_logs")
-            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .order("desc")
-            .take(10);
+        // Moved to separate paginated query in the frontend to optimize reads.
 
         // 5. Today's Snapshot (needs ALL conversations including resolved)
         const snapshotConversations = await ctx.db
@@ -137,7 +133,6 @@ export const getHomeStats = query({
                 myAssignedCount: myAssigned.length
             },
             liveQueue,
-            recentActivities,
             todaySnapshot: {
                 todayCount,
                 diffFromYesterday: todayCount - yesterdayCount,

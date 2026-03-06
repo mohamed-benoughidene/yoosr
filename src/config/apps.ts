@@ -1,9 +1,8 @@
 import {
     MessageSquare,
-    Bot,
     Sparkles,
-    Smartphone,
-    Mail
+    Instagram,
+    Send,
 } from "lucide-react";
 
 export interface AppDefinition {
@@ -18,19 +17,18 @@ export interface AppDefinition {
 
 export const AVAILABLE_APPS: AppDefinition[] = [
     {
+        id: 'openrouter',
+        name: 'OpenRouter',
+        description: 'Unified API for 100+ AI models.',
+        category: 'ai',
+        icon: Sparkles
+    },
+    {
         id: 'telegram',
         name: 'Telegram',
         description: 'Connect your Telegram Bot to handle support conversations.',
         category: 'channel',
-        icon: MessageSquare,
-    },
-    {
-        id: 'whatsapp',
-        name: 'WhatsApp',
-        description: 'Official WhatsApp Business API integration.',
-        category: 'channel',
-        icon: Smartphone,
-        isPro: true
+        icon: Send,
     },
     {
         id: 'messenger',
@@ -38,21 +36,13 @@ export const AVAILABLE_APPS: AppDefinition[] = [
         description: 'Connect your Facebook Page to receive messages.',
         category: 'channel',
         icon: MessageSquare,
-        isPro: true
+        isPro: false
     },
     {
-        id: 'openai',
-        name: 'OpenAI',
-        description: 'Use GPT-4 to power your AI Agents.',
-        category: 'ai',
-        icon: Sparkles
-    },
-    {
-        id: 'email',
-        name: 'Email Relay',
-        description: 'Forward emails to your project inbox.',
+        id: 'instagram',
+        name: 'Instagram',
+        description: 'Connect your Instagram Professional account for DMs.',
         category: 'channel',
-        icon: Mail,
-        isComingSoon: true
+        icon: Instagram,
     }
 ];
