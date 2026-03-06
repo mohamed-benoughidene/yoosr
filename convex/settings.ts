@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // ========================
 // DEPARTMENTS
@@ -109,6 +109,7 @@ export const removeDepartment = mutation({
 
         const department = await ctx.db.get(args.id);
         if (!department) throw new Error("Department not found");
+        if (department.isDefault) throw new ConvexError("Cannot delete the default department");
 
         await ctx.db.delete(args.id);
 
@@ -373,6 +374,20 @@ export const removeLabel = mutation({
         if (!label) throw new Error("Label not found");
 
         await ctx.db.delete(args.id);
+
+        // Cascade: remove the deleted label name from all conversation tags in this project
+        const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", label.projectId))
+            .collect();
+
+        for (const conv of conversations) {
+            if (conv.tags && conv.tags.includes(label.name)) {
+                await ctx.db.patch(conv._id, {
+                    tags: conv.tags.filter((t) => t !== label.name),
+                });
+            }
+        }
 
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: label.projectId,

@@ -83,6 +83,17 @@ export const remove = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const contact = await ctx.db.get(args.id);
+        if (!contact) throw new Error("Contact not found");
+
+        // Block deletion if the contact is linked to an active (non-resolved) conversation
+        if (contact.conversationId) {
+            const conversation = await ctx.db.get(contact.conversationId);
+            if (conversation && conversation.status !== 1000) {
+                throw new ConvexError("Cannot delete a contact with active conversations");
+            }
+        }
+
         await ctx.db.delete(args.id);
     },
 });

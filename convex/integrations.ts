@@ -1,5 +1,5 @@
 import { query, mutation, internalQuery } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // List integrations for a project
 export const list = query({
@@ -55,8 +55,17 @@ export const upsert = mutation({
 export const remove = mutation({
     args: { id: v.id("integrations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
+        const identity = await ctx.auth.getUserIdentity() as any;
         if (!identity) throw new Error("Not authenticated");
+
+        const integration = await ctx.db.get(args.id);
+        if (!integration) throw new Error("Integration not found");
+
+        const project = await ctx.db.get(integration.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new ConvexError("Unauthorized");
+        }
+
         await ctx.db.delete(args.id);
     },
 });

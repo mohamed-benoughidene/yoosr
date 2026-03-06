@@ -39,6 +39,16 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
@@ -66,6 +76,7 @@ export default function DepartmentsPage() {
     const [tags, setTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
     const [editingDeptId, setEditingDeptId] = useState<Id<"departments"> | null>(null)
+    const [deptPendingDelete, setDeptPendingDelete] = useState<Id<"departments"> | null>(null)
 
     const departments = useQuery(
         api.settings.listDepartments,
@@ -116,8 +127,9 @@ export default function DepartmentsPage() {
                 toast.success("Department created")
             }
             resetForm()
-        } catch {
-            toast.error(editingDeptId ? "Failed to update department" : "Failed to create department")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || (editingDeptId ? "Failed to update department" : "Failed to create department")
+            toast.error(errorMessage)
         }
     }
 
@@ -125,8 +137,9 @@ export default function DepartmentsPage() {
         try {
             await removeDepartment({ id })
             toast.success("Department deleted")
-        } catch {
-            toast.error("Failed to delete department")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to delete department"
+            toast.error(errorMessage)
         }
     }
 
@@ -451,7 +464,7 @@ export default function DepartmentsPage() {
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             {!dept.isDefault && (
-                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(dept._id)}>
+                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeptPendingDelete(dept._id)}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             )}
@@ -462,6 +475,32 @@ export default function DepartmentsPage() {
                         </TableBody>
                     </Table>
                 </Card>
+
+                {/* Delete Department Confirmation */}
+                <AlertDialog open={deptPendingDelete !== null} onOpenChange={(open) => { if (!open) setDeptPendingDelete(null) }}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Department</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This department will be permanently deleted. Conversations routed to it may be affected. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive text-white hover:bg-destructive/90"
+                                onClick={async () => {
+                                    if (deptPendingDelete) {
+                                        await handleDelete(deptPendingDelete)
+                                        setDeptPendingDelete(null)
+                                    }
+                                }}
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </TooltipProvider>
     )

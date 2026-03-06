@@ -37,6 +37,16 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
@@ -70,13 +80,15 @@ export function ContactsList() {
     const [rowSelection, setRowSelection] = React.useState({})
     const [selectedContact, setSelectedContact] = React.useState<Contact | null>(null)
     const [editDialogOpen, setEditDialogOpen] = React.useState(false)
+    const [contactPendingDelete, setContactPendingDelete] = React.useState<Id<"contacts"> | null>(null)
 
     const handleDelete = async (id: Id<"contacts">) => {
         try {
             await removeContact({ id })
             toast.success("Contact deleted")
-        } catch {
-            toast.error("Failed to delete contact")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to delete contact"
+            toast.error(errorMessage)
         }
     }
 
@@ -163,7 +175,7 @@ export function ContactsList() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => handleDelete(contact._id)}
+                                onClick={() => setContactPendingDelete(contact._id)}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -325,6 +337,32 @@ export function ContactsList() {
                 open={editDialogOpen}
                 onOpenChange={setEditDialogOpen}
             />
+
+            {/* Delete Contact Confirmation */}
+            <AlertDialog open={contactPendingDelete !== null} onOpenChange={(open) => { if (!open) setContactPendingDelete(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This contact will be permanently deleted. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={async () => {
+                                if (contactPendingDelete) {
+                                    await handleDelete(contactPendingDelete)
+                                    setContactPendingDelete(null)
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

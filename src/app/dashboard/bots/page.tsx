@@ -20,16 +20,28 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { CreateBotDialog } from "@/components/dashboard/bots/create-bot-dialog"
 import { useProject } from "@/context/ProjectContext"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
 
 export default function BotsPage() {
     const { activeProject } = useProject()
     const router = useRouter()
     const [filter, setFilter] = useState<'all' | 'chatbot' | 'automation'>('all')
     const [search, setSearch] = useState("")
+    const [botPendingDelete, setBotPendingDelete] = useState<Id<"bots"> | null>(null)
 
     const bots = useQuery(
         api.bots.list,
@@ -198,9 +210,9 @@ export default function BotsPage() {
                                                 Duplicate
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive" onClick={async (e) => {
+                                            <DropdownMenuItem className="text-destructive" onClick={(e) => {
                                                 e.stopPropagation();
-                                                await removeBot({ id: bot._id });
+                                                setBotPendingDelete(bot._id);
                                             }}>
                                                 <Trash className="mr-2 h-4 w-4" />
                                                 Delete
@@ -226,6 +238,32 @@ export default function BotsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Delete Bot Confirmation Dialog */}
+            <AlertDialog open={botPendingDelete !== null} onOpenChange={(open) => { if (!open) setBotPendingDelete(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Bot</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. The bot and all of its flow design will be permanently deleted.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={async () => {
+                                if (botPendingDelete) {
+                                    await removeBot({ id: botPendingDelete })
+                                    setBotPendingDelete(null)
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

@@ -1,5 +1,5 @@
 import { internalAction, internalQuery, query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 
 /**
@@ -121,8 +121,16 @@ export const update = mutation({
 export const remove = mutation({
     args: { id: v.id("webhook_subscriptions") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
+        const identity = await ctx.auth.getUserIdentity() as any;
+        if (!identity) throw new Error("Not authenticated");
+
+        const subscription = await ctx.db.get(args.id);
+        if (!subscription) throw new Error("Webhook subscription not found");
+
+        const project = await ctx.db.get(subscription.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new ConvexError("Unauthorized");
+        }
 
         await ctx.db.delete(args.id);
     }

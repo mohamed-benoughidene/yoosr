@@ -3,6 +3,16 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Globe, FileText, Trash2, RefreshCw, Type } from "lucide-react"
 import { useParams } from "next/navigation"
 import { AddContentDialog } from "@/components/dashboard/kb/add-content-dialog"
@@ -12,6 +22,7 @@ import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../../convex/_generated/dataModel"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function KnowledgeBaseDetailsPage() {
     const params = useParams()
@@ -19,6 +30,7 @@ export default function KnowledgeBaseDetailsPage() {
     const router = useRouter()
     const { activeProject } = useProject()
     const [resolvedKbId, setResolvedKbId] = useState<Id<"knowledge_bases"> | null>(null)
+    const [pendingDeleteId, setPendingDeleteId] = useState<Id<"knowledge_base_sources"> | null>(null)
 
     const getDefaultKb = useMutation(api.knowledgeBases.getOrCreateDefault)
 
@@ -56,7 +68,13 @@ export default function KnowledgeBaseDetailsPage() {
     }
 
     const handleRemove = async (id: Id<"knowledge_base_sources">) => {
-        await removeSource({ id })
+        try {
+            await removeSource({ id })
+            toast.success("Source deleted")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to delete source"
+            toast.error(errorMessage)
+        }
     }
 
     const handleExport = () => {
@@ -208,7 +226,7 @@ export default function KnowledgeBaseDetailsPage() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                        onClick={() => handleRemove(item._id)}
+                                        onClick={() => setPendingDeleteId(item._id)}
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -218,6 +236,32 @@ export default function KnowledgeBaseDetailsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Delete Source Confirmation */}
+            <AlertDialog open={pendingDeleteId !== null} onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Source</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This source and its indexed data will be permanently deleted. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={async () => {
+                                if (pendingDeleteId) {
+                                    await handleRemove(pendingDeleteId)
+                                    setPendingDeleteId(null)
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

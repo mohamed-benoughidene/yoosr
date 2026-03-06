@@ -39,6 +39,16 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -69,6 +79,7 @@ export default function CannedResponsesPage() {
     const [editTitle, setEditTitle] = useState("")
     const [editMessage, setEditMessage] = useState("")
     const editMessageRef = useRef<HTMLTextAreaElement>(null)
+    const [responsePendingDelete, setResponsePendingDelete] = useState<typeof responses[number]["_id"] | null>(null)
 
     const responses = useQuery(
         api.settings.listCannedResponses,
@@ -92,8 +103,9 @@ export default function CannedResponsesPage() {
             setNewTitle("")
             setNewMessage("")
             setCreateOpen(false)
-        } catch {
-            toast.error("Failed to create canned response")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to create canned response"
+            toast.error(errorMessage)
         }
     }
 
@@ -101,8 +113,9 @@ export default function CannedResponsesPage() {
         try {
             await removeCannedResponse({ id })
             toast.success("Response deleted")
-        } catch {
-            toast.error("Failed to delete response")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to delete response"
+            toast.error(errorMessage)
         }
     }
 
@@ -117,8 +130,9 @@ export default function CannedResponsesPage() {
             })
             toast.success("Canned response updated")
             setEditingId(null)
-        } catch {
-            toast.error("Failed to update canned response")
+        } catch (error: any) {
+            const errorMessage = error.data?.message || error.message || "Failed to update canned response"
+            toast.error(errorMessage)
         }
     }
 
@@ -345,7 +359,7 @@ export default function CannedResponsesPage() {
                                             variant="ghost"
                                             size="icon"
                                             className="text-destructive h-8 w-8"
-                                            onClick={() => handleDelete(res._id)}
+                                            onClick={() => setResponsePendingDelete(res._id)}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -448,6 +462,32 @@ export default function CannedResponsesPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Canned Response Confirmation */}
+            <AlertDialog open={responsePendingDelete !== null} onOpenChange={(open) => { if (!open) setResponsePendingDelete(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Canned Response</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This canned response will be permanently deleted. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={async () => {
+                                if (responsePendingDelete) {
+                                    await handleDelete(responsePendingDelete)
+                                    setResponsePendingDelete(null)
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
