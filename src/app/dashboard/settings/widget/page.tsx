@@ -17,10 +17,17 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Monitor, Languages, Code, Clock, ExternalLink, RefreshCw, UserMinus } from "lucide-react"
+import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, RefreshCw, UserMinus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 // Theme Presets
 const THEMES = {
@@ -58,6 +65,13 @@ export default function WidgetSetupPage() {
         preChatTitle: "Welcome!",
         preChatSubtitle: "Please fill in your details to start chatting."
     })
+
+    const [copiedHtml, setCopiedHtml] = useState(false)
+    const [copiedNext, setCopiedNext] = useState(false)
+    const [copiedSnippet, setCopiedSnippet] = useState(false)
+    const [selectedPlatform, setSelectedPlatform] = useState("html")
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com')
 
     const updateProject = useMutation(api.projects.update)
 
@@ -113,15 +127,60 @@ export default function WidgetSetupPage() {
         setLoading(false)
     }
 
-    const copyScript = () => {
-        const script = `<script>
-  window.yoosrSettings = {
-    projectId: "${activeProject?._id}"
-  };
-</script>
-<script src="${window.location.origin}/widget.js" async></script>`
-        navigator.clipboard.writeText(script)
-        toast.success("Script copied to clipboard")
+    const copyToClipboard = (text: string, type: 'html' | 'next' | 'generic') => {
+        navigator.clipboard.writeText(text)
+        if (type === 'html') {
+            setCopiedHtml(true)
+            setTimeout(() => setCopiedHtml(false), 2000)
+        } else if (type === 'next') {
+            setCopiedNext(true)
+            setTimeout(() => setCopiedNext(false), 2000)
+        } else {
+            setCopiedSnippet(true)
+            setTimeout(() => setCopiedSnippet(false), 2000)
+        }
+        toast.success("Snippet copied to clipboard")
+    }
+
+    const PLATFORMS = [
+        { id: "html", name: "HTML / Standard" },
+        { id: "nextjs", name: "Next.js" },
+        { id: "react", name: "React" },
+        { id: "vue", name: "Vue.js" },
+        { id: "nuxt", name: "Nuxt.js" },
+        { id: "angular", name: "Angular" },
+        { id: "wordpress", name: "WordPress (PHP)" },
+        { id: "shopify", name: "Shopify (Liquid)" },
+        { id: "webflow", name: "Webflow" },
+        { id: "gtm", name: "Google Tag Manager" },
+    ]
+
+    const getSnippet = (platform: string) => {
+        const pId = activeProject?._id || "PROJECT_ID"
+        switch (platform) {
+            case 'html':
+                return `<script>\n  window.yoosrSettings = { projectId: "${pId}" };\n</script>\n<script src="${baseUrl}/widget.js" async></script>`
+            case 'nextjs':
+                return `import Script from 'next/script'\n\n<>\n  <Script id="yoosr-init" strategy="afterInteractive">\n    {\`window.yoosrSettings = { projectId: "${pId}" };\`}\n  </Script>\n  <Script src="${baseUrl}/widget.js" strategy="afterInteractive" />\n</>`
+            case 'react':
+                return `import { useEffect } from 'react'\n\nexport function YoosrWidget() {\n  useEffect(() => {\n    const id = 'yoosr-widget-sdk';\n    let script = document.getElementById(id);\n    let created = false;\n    if (!script) {\n      window.yoosrSettings = { projectId: "${pId}" };\n      script = document.createElement('script');\n      script.id = id;\n      script.src = '${baseUrl}/widget.js';\n      script.async = true;\n      document.body.appendChild(script);\n      created = true;\n    }\n    return () => {\n      if (created && script?.parentNode) {\n        script.parentNode.removeChild(script);\n      }\n    };\n  }, []);\n  return null;\n}`
+            case 'vue':
+                return `<script setup>\nimport { onMounted, onUnmounted } from 'vue'\n\nconst SCRIPT_ID = 'yoosr-widget-sdk'\nlet scriptEl = null\nlet createdHere = false\n\nonMounted(() => {\n  scriptEl = document.getElementById(SCRIPT_ID)\n  if (!scriptEl) {\n    window.yoosrSettings = { projectId: "${pId}" };\n    scriptEl = document.createElement('script')\n    scriptEl.id = SCRIPT_ID\n    scriptEl.src = '${baseUrl}/widget.js'\n    scriptEl.async = true\n    document.body.appendChild(scriptEl)\n    createdHere = true\n  }\n})\n\nonUnmounted(() => {\n  if (createdHere && scriptEl?.parentNode) {\n    scriptEl.parentNode.removeChild(scriptEl)\n  }\n})\n</script>`
+            case 'nuxt':
+                return `// nuxt.config.ts\nexport default defineNuxtConfig({\n  app: {\n    head: {\n      script: [\n        { innerHTML: \`window.yoosrSettings = { projectId: "${pId}" };\` },\n        { src: '${baseUrl}/widget.js', async: true }\n      ]\n    }\n  }\n})`
+            case 'angular':
+                return `// In index.html before </body>\n<script>\n  window.yoosrSettings = { projectId: "${pId}" };\n</script>\n<script src="${baseUrl}/widget.js" async></script>`
+            case 'wordpress':
+                return `// In your theme's functions.php\nfunction yoosr_widget() { ?>\n  <script>\n    window.yoosrSettings = { projectId: "${pId}" };\n  </script>\n  <script src="${baseUrl}/widget.js" async></script>\n<?php }\nadd_action('wp_footer', 'yoosr_widget');`
+            case 'shopify':
+                return `{% comment %} In theme.liquid before </body> {% endcomment %}\n<script>\n  window.yoosrSettings = { projectId: "${pId}" };\n</script>\n<script src="${baseUrl}/widget.js" async></script>`
+            case 'webflow':
+                return `<!-- Webflow: Site Settings > Custom Code > Footer Code -->\n<script>\n  window.yoosrSettings = { projectId: "${pId}" };\n</script>\n<script src="${baseUrl}/widget.js" async></script>`
+            case 'gtm':
+                return `<!-- GTM: New Tag > Custom HTML, trigger: All Pages -->\n<script>\n(function(d) {\n  window.yoosrSettings = { projectId: "${pId}" };\n  var s = d.createElement('script');\n  s.src = '${baseUrl}/widget.js';\n  s.async = true;\n  s.onload = function() {\n    window.dataLayer = window.dataLayer || [];\n    window.dataLayer.push({ event: 'yoosr_widget_loaded' });\n  };\n  d.body.appendChild(s);\n})(document);\n</script>`
+            default:
+                return ""
+        }
     }
 
     const applyTheme = (key: string) => {
@@ -387,87 +446,43 @@ export default function WidgetSetupPage() {
                                     Choose your platform to get the installation code.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <Tabs defaultValue="html">
-                                    <TabsList className="mb-4">
-                                        <TabsTrigger value="html">HTML / Standard</TabsTrigger>
-                                        <TabsTrigger value="nextjs">Next.js</TabsTrigger>
-                                    </TabsList>
+                            <CardContent className="space-y-4">
+                                <div className="max-w-[300px]">
+                                    <Label className="mb-2 block">Platform</Label>
+                                    <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select platform" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PLATFORMS.map((p) => (
+                                                <SelectItem key={p.id} value={p.id}>
+                                                    {p.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                                    <TabsContent value="html">
-                                        <div className="relative">
-                                            <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
-                                                {`<script>
-  window.yoosrSettings = {
-    projectId: "${activeProject?._id}"
-  };
-</script>
-<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com'}/widget.js" async></script>`}
-                                            </pre>
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                className="absolute top-2 right-2"
-                                                onClick={copyScript}
-                                            >
-                                                <Copy className="h-4 w-4 mr-2" />
-                                                Copy
-                                            </Button>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                            Paste this before the closing <code>&lt;/body&gt;</code> tag.
-                                        </p>
-                                    </TabsContent>
+                                <div className="relative group">
+                                    <pre className="p-4 rounded-lg bg-[#09090b] text-zinc-100 text-xs overflow-x-auto whitespace-pre font-mono border border-zinc-800/80 ring-1 ring-white/5 shadow-2xl scrollbar-thin scrollbar-thumb-zinc-700">
+                                        <code className="block lining-nums tabular-nums leading-relaxed">{getSnippet(selectedPlatform)}</code>
+                                    </pre>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="absolute top-2 right-2 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/80 transition-all duration-200"
+                                        onClick={() => copyToClipboard(getSnippet(selectedPlatform), 'generic')}
+                                    >
+                                        {copiedSnippet ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                                        <span className="sr-only">Copy code</span>
+                                    </Button>
+                                </div>
 
-                                    <TabsContent value="nextjs">
-                                        <div className="relative">
-                                            <pre className="p-4 rounded-lg bg-muted text-xs overflow-x-auto whitespace-pre-wrap font-mono border">
-                                                {`import Script from 'next/script'
-
-// Add to your RootLayout or a high-level component
-
-<>
-  <Script id="yoosr-init" strategy="afterInteractive">
-    {\`
-      window.yoosrSettings = {
-        projectId: "${activeProject?._id}"
-      };
-    \`}
-  </Script>
-  <Script 
-    src="${typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com'}/widget.js"
-    strategy="afterInteractive" 
-  />
-</>`}
-                                            </pre>
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                className="absolute top-2 right-2"
-                                                onClick={() => {
-                                                    const script = `import Script from 'next/script'
-
-// ... in your Layout
-<>
-  <Script id="yoosr-init" strategy="afterInteractive">
-    {\`
-      window.yoosrSettings = {
-        projectId: "${activeProject?._id}"
-      };
-    \`}
-  </Script>
-  <Script src="${window.location.origin}/widget.js" strategy="afterInteractive" />
-</>`
-                                                    navigator.clipboard.writeText(script)
-                                                    toast.success("Next.js snippet copied")
-                                                }}
-                                            >
-                                                <Copy className="h-4 w-4 mr-2" />
-                                                Copy
-                                            </Button>
-                                        </div>
-                                    </TabsContent>
-                                </Tabs>
+                                {selectedPlatform === 'html' && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Paste this before the closing <code>&lt;/body&gt;</code> tag.
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
