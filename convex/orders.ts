@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // Extend the Identity type to include custom claims from Clerk
 type ClerkIdentity = {
@@ -119,5 +119,67 @@ export const deleteOrder = mutation({
         }
 
         await ctx.db.delete(args.orderId);
+    },
+});
+
+export const batchImportOrders = mutation({
+    args: {
+        orders: v.array(
+            v.object({
+                contactName: v.string(),
+                phone: v.optional(v.string()),
+                product: v.string(),
+                notes: v.optional(v.string()),
+                status: v.optional(v.string()),
+            })
+        ),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) {
+            throw new Error("Not authenticated or no active organization");
+        }
+
+        if (args.orders.length === 0 || args.orders.length > 500) {
+            throw new ConvexError("Array must contain between 1 and 500 items");
+        }
+
+        const project = await ctx.db
+            .query("projects")
+            .withIndex("by_orgId", (q) => q.eq("orgId", identity.org_id!))
+            .first();
+
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        const projectId = project._id;
+        let inserted = 0;
+        let skipped = 0;
+
+        for (const order of args.orders) {
+            if (!order.contactName || !order.product) {
+                skipped++;
+                continue;
+            }
+
+            let validStatus: "new" | "confirmed" | "cancelled" = "new";
+            if (order.status === "confirmed" || order.status === "cancelled") {
+                validStatus = order.status;
+            }
+
+            await ctx.db.insert("orders", {
+                projectId,
+                contactName: order.contactName,
+                phone: order.phone,
+                product: order.product,
+                notes: order.notes,
+                status: validStatus,
+                createdAt: Date.now(),
+            });
+            inserted++;
+        }
+
+        return { inserted, skipped };
     },
 });

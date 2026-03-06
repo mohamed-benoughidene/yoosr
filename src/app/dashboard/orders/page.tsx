@@ -18,16 +18,35 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, ShoppingBag, Trash2, Check, X, Loader2 } from "lucide-react"
+import { MoreHorizontal, ShoppingBag, Trash2, Check, X, Loader2, Download, Upload } from "lucide-react"
 import { toast } from "sonner"
+import { format } from "date-fns"
+import * as xlsx from "xlsx"
+import Papa from "papaparse"
 
 type FilterType = "all" | "new" | "confirmed" | "cancelled"
 
 export default function OrdersPage() {
     const { activeProject } = useProject()
     const [filter, setFilter] = useState<FilterType>("all")
+
+    const [importOpen, setImportOpen] = useState(false)
+    const [importLoading, setImportLoading] = useState(false)
+    const [parsedOrders, setParsedOrders] = useState<any[]>([])
+    const [skippedCount, setSkippedCount] = useState(0)
+    const [importError, setImportError] = useState<string | null>(null)
 
     const orders = useQuery(
         api.orders.listOrders,
@@ -36,6 +55,7 @@ export default function OrdersPage() {
 
     const updateOrderStatus = useMutation(api.orders.updateOrderStatus)
     const deleteOrder = useMutation(api.orders.deleteOrder)
+    const batchImportOrders = useMutation(api.orders.batchImportOrders)
 
     const filteredOrders = orders?.filter(order => {
         if (filter === "all") return true
@@ -71,6 +91,174 @@ export default function OrdersPage() {
         });
     }
 
+    const downloadBlob = (blob: Blob, filename: string) => {
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+    }
+
+    const handleExport = (formatType: "csv" | "json" | "xlsx") => {
+        if (!orders || orders.length === 0) {
+            toast.error("No orders to export.")
+            return
+        }
+
+        const dateStr = format(new Date(), "yyyy-MM-dd")
+        const filename = `orders-export-${dateStr}.${formatType}`
+
+        const exportData = orders.map(o => ({
+            "Contact Name": o.contactName || "",
+            "Phone": o.phone || "",
+            "Product": o.product || "",
+            "Notes": o.notes || "",
+            "Status": o.status || "",
+            "Created At": format(new Date(o.createdAt), "yyyy-MM-dd HH:mm")
+        }))
+
+        if (formatType === "csv") {
+            const headers = ["Contact Name", "Phone", "Product", "Notes", "Status", "Created At"]
+            const csvRows = [headers.join(",")]
+            exportData.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header as keyof typeof row] || ""
+                    return `"${String(value).replace(/"/g, '""')}"`
+                })
+                csvRows.push(values.join(","))
+            })
+            downloadBlob(new Blob([csvRows.join("\n")], { type: "text/csv" }), filename)
+        } else if (formatType === "json") {
+            downloadBlob(new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" }), filename)
+        } else if (formatType === "xlsx") {
+            const worksheet = xlsx.utils.json_to_sheet(exportData)
+            const workbook = xlsx.utils.book_new()
+            xlsx.utils.book_append_sheet(workbook, worksheet, "Orders")
+            xlsx.writeFile(workbook, filename)
+        }
+    }
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setImportError(null)
+        setParsedOrders([])
+        setSkippedCount(0)
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase()
+
+        const processData = (data: any[]) => {
+            let skipped = 0
+            const mapped = data.map(row => {
+                const contactName = row["Contact Name"] || row.contactName
+                const product = row["Product"] || row.product
+
+                if (!contactName || !product) {
+                    skipped++
+                    return null
+                }
+
+                return {
+                    contactName,
+                    phone: row["Phone"] || row.phone || undefined,
+                    product,
+                    notes: row["Notes"] || row.notes || undefined,
+                    status: row["Status"] || row.status || undefined,
+                }
+            }).filter(Boolean)
+
+            setSkippedCount(skipped)
+            setParsedOrders(mapped)
+
+            if (mapped.length === 0 && data.length > 0) {
+                setImportError("No valid orders found. Check required columns: Contact Name, Product.")
+            } else if (mapped.length === 0) {
+                setImportError("File is empty.")
+            }
+        }
+
+        if (fileExt === 'csv') {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    processData(results.data)
+                },
+                error: (error: Error) => {
+                    setImportError(`CSV Parse Error: ${error.message}`)
+                }
+            })
+        } else if (fileExt === 'xlsx') {
+            const reader = new FileReader()
+            reader.onload = (evt) => {
+                try {
+                    const bstr = evt.target?.result
+                    const wb = xlsx.read(bstr, { type: 'binary' })
+                    const wsname = wb.SheetNames[0]
+                    const ws = wb.Sheets[wsname]
+                    const data = xlsx.utils.sheet_to_json(ws)
+                    processData(data)
+                } catch (error: any) {
+                    setImportError(`Excel Parse Error: ${error.message}`)
+                }
+            }
+            reader.readAsBinaryString(file)
+        } else if (fileExt === 'json') {
+            const reader = new FileReader()
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target?.result as string)
+                    if (!Array.isArray(data)) {
+                        setImportError("JSON file must contain an array of objects.")
+                        return
+                    }
+                    processData(data)
+                } catch (error: any) {
+                    setImportError(`JSON Parse Error: ${error.message}`)
+                }
+            }
+            reader.readAsText(file)
+        } else {
+            setImportError("Unsupported file type. Please upload .csv, .xlsx, or .json")
+        }
+    }
+
+    const handleImportConfirm = async () => {
+        if (parsedOrders.length === 0) return
+
+        setImportLoading(true)
+        try {
+            let totalInserted = 0
+            let totalSkipped = 0
+
+            for (let i = 0; i < parsedOrders.length; i += 500) {
+                const chunk = parsedOrders.slice(i, i + 500)
+                const result = await batchImportOrders({
+                    orders: chunk
+                }) as { inserted: number, skipped: number }
+
+                totalInserted += result.inserted
+                totalSkipped += result.skipped
+            }
+
+            setImportOpen(false)
+            setParsedOrders([])
+            toast.success(`Imported ${totalInserted} orders.`)
+
+            // Allow re-uploading the same file
+            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+            if (fileInput) fileInput.value = ''
+        } catch (error: any) {
+            toast.error(`Import failed: ${error.message}`)
+        } finally {
+            setImportLoading(false)
+        }
+    }
+
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
@@ -79,6 +267,109 @@ export default function OrdersPage() {
                     <p className="text-muted-foreground mt-1">
                         Track and manage orders from your customer conversations.
                     </p>
+                </div>
+                <div className="flex gap-2">
+                    <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <Upload className="mr-2 h-4 w-4" />
+                                Import
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[600px]">
+                            <DialogHeader>
+                                <DialogTitle>Import Orders</DialogTitle>
+                                <DialogDescription>
+                                    Upload a .csv, .xlsx, or .json file. Required columns: Contact Name, Product.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <Input
+                                    type="file"
+                                    accept=".csv,.xlsx,.json"
+                                    onChange={handleFileUpload}
+                                />
+
+                                {importError && <p className="text-sm text-destructive font-medium">{importError}</p>}
+
+                                {parsedOrders.length > 0 && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium">
+                                            {parsedOrders.length} orders ready to import.
+                                        </p>
+                                        {skippedCount > 0 && (
+                                            <p className="text-sm text-muted-foreground">
+                                                {skippedCount} rows skipped — missing required fields.
+                                            </p>
+                                        )}
+                                        <div className="border rounded-md">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Contact Name</TableHead>
+                                                        <TableHead>Phone</TableHead>
+                                                        <TableHead>Product</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {parsedOrders.slice(0, 5).map((o, i) => (
+                                                        <TableRow key={i}>
+                                                            <TableCell>{o.contactName}</TableCell>
+                                                            <TableCell>{o.phone || "—"}</TableCell>
+                                                            <TableCell>{o.product}</TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="outline" className="text-[10px] uppercase font-bold py-0.5 px-2 shadow-sm border-none bg-muted hover:bg-muted">
+                                                                    {o.status || "new"}
+                                                                </Badge>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                        {parsedOrders.length > 5 && (
+                                            <p className="text-xs text-muted-foreground text-center">
+                                                Showing 5 of {parsedOrders.length} orders
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => {
+                                    setImportOpen(false)
+                                    setParsedOrders([])
+                                    setImportError(null)
+                                    setSkippedCount(0)
+                                }}>Cancel</Button>
+                                <Button onClick={handleImportConfirm} disabled={parsedOrders.length === 0 || importLoading}>
+                                    {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Import Orders
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Export
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleExport("csv")}>
+                                Export as CSV
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport("xlsx")}>
+                                Export as Excel
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport("json")}>
+                                Export as JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
