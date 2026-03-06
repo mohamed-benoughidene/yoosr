@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import {
     NavigationMenu,
     NavigationMenuContent,
@@ -9,6 +8,7 @@ import {
     NavigationMenuTrigger,
     navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+import { NavbarCTA } from "./NavbarCTA"
 import { MobileNav } from "./MobileNav"
 import { cn } from "@/lib/utils"
 
@@ -40,12 +40,7 @@ export function Header() {
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-2">
-                        <Button variant="ghost" asChild>
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href="/signup">Get Started</Link>
-                        </Button>
+                        <NavbarCTA />
                     </div>
                     <MobileNav />
                 </div>

@@ -9,7 +9,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { OrganizationSwitcher, useUser, useClerk } from "@clerk/nextjs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -78,7 +78,7 @@ function OrgSwitcher() {
 
 function NavUser() {
   const { user } = useUser()
-  const { signOut } = useClerk()
+  const { signOut, openUserProfile } = useClerk()
   const router = useRouter()
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
   const fullName = user?.fullName ?? user?.firstName ?? "Account"
@@ -90,6 +90,7 @@ function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
               <Avatar className="size-8 rounded-lg">
+                <AvatarImage src={user?.imageUrl} alt={fullName} />
                 <AvatarFallback className="rounded-lg text-xs font-semibold">{initial}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -101,8 +102,12 @@ function NavUser() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-sm">
+              <div
+                className="flex items-center gap-2 px-1 py-1.5 text-sm cursor-pointer hover:bg-sidebar-accent transition-colors rounded-t-lg"
+                onClick={() => openUserProfile()}
+              >
                 <Avatar className="size-8 rounded-lg">
+                  <AvatarImage src={user?.imageUrl} alt={fullName} />
                   <AvatarFallback className="rounded-lg text-xs">{initial}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
