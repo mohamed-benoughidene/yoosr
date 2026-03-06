@@ -116,7 +116,7 @@ function NavUser() {
               <Settings className="mr-2 size-4" />Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/sign-in" })}>
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
               <LogOut className="mr-2 size-4" />Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
