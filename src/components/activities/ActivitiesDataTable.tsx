@@ -21,11 +21,15 @@ import { Button } from "@/components/ui/button";
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    loadMore?: (numItems: number) => void;
+    status?: "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
 }
 
 export function ActivitiesDataTable<TData, TValue>({
     columns,
     data,
+    loadMore,
+    status,
 }: DataTableProps<TData, TValue>) {
     const table = useReactTable({
         data,
@@ -33,6 +37,14 @@ export function ActivitiesDataTable<TData, TValue>({
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
     });
+
+    const handleNextPage = () => {
+        if (table.getCanNextPage()) {
+            table.nextPage();
+        } else if (loadMore && (status === "CanLoadMore" || status === undefined)) {
+            loadMore(25);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -98,10 +110,13 @@ export function ActivitiesDataTable<TData, TValue>({
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
+                    onClick={handleNextPage}
+                    disabled={
+                        !table.getCanNextPage() &&
+                        (status === "Exhausted" || status === "LoadingMore" || !loadMore)
+                    }
                 >
-                    Next
+                    {status === "LoadingMore" ? "Loading..." : "Next"}
                 </Button>
             </div>
         </div>

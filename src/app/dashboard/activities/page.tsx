@@ -67,26 +67,12 @@ export default function ActivitiesPage() {
                         </div>
                     ) : (
                         <>
-                            <ActivitiesDataTable columns={columns} data={mappedLogs} />
-                            {status !== "Exhausted" && (
-                                <div className="flex justify-center mt-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => loadMore(PAGE_SIZE)}
-                                        disabled={status === "LoadingMore"}
-                                    >
-                                        {status === "LoadingMore" ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Loading...
-                                            </>
-                                        ) : (
-                                            "Load More"
-                                        )}
-                                    </Button>
-                                </div>
-                            )}
+                            <ActivitiesDataTable
+                                columns={columns}
+                                data={mappedLogs}
+                                loadMore={loadMore}
+                                status={status}
+                            />
                         </>
                     )}
                 </CardContent>
