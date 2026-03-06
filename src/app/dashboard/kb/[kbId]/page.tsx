@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Globe, FileText, Upload, Trash2, RefreshCw, Type } from "lucide-react"
+import { Globe, FileText, Trash2, RefreshCw, Type } from "lucide-react"
 import { useParams } from "next/navigation"
 import { AddContentDialog } from "@/components/dashboard/kb/add-content-dialog"
 import { useQuery, useMutation } from "convex/react"
@@ -59,6 +59,26 @@ export default function KnowledgeBaseDetailsPage() {
         await removeSource({ id })
     }
 
+    const handleExport = () => {
+        if (!sources || sources.length === 0) return
+
+        const exportData = sources.map(s => ({
+            type: s.type,
+            value: s.value,
+            status: s.status
+        }))
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = "kb-export.json"
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+    }
+
     if (loading) return <div className="p-6">Loading...</div>
 
     const contents = sources ?? []
@@ -71,8 +91,13 @@ export default function KnowledgeBaseDetailsPage() {
                     <p className="text-muted-foreground">Manage data sources for your AI agents.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">Import</Button>
-                    <Button variant="outline">Export</Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleExport}
+                        disabled={loading || contents.length === 0}
+                    >
+                        Export
+                    </Button>
                 </div>
             </div>
 
