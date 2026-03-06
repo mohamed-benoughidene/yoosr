@@ -9,7 +9,6 @@ import {
     MessageSquare,
     LayoutTemplate,
     Building2,
-    UserPlus,
     Tag,
     Clock,
     Plug,
@@ -32,11 +31,6 @@ const sidebarNavItems = [
         title: "Departments",
         href: "/dashboard/settings/departments",
         icon: Building2
-    },
-    {
-        title: "Teammates",
-        href: "/dashboard/settings/teammates",
-        icon: UserPlus
     },
     {
         title: "Canned Responses",

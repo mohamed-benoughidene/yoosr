@@ -12,10 +12,6 @@ const sidebarNavItems = [
         href: "/dashboard/settings",
     },
     {
-        title: "Teammates",
-        href: "/dashboard/settings/teammates",
-    },
-    {
         title: "Departments",
         href: "/dashboard/settings/departments",
     },
