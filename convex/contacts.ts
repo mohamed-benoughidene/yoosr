@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 
 // List contacts for a project
@@ -47,7 +48,16 @@ export const create = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        return await ctx.db.insert("contacts", args);
+        const contactId = await ctx.db.insert("contacts", args);
+
+        // Wire contact.created webhook
+        await ctx.scheduler.runAfter(0, (internal as any).webhooks.fireWebhookEvent, {
+            projectId: args.projectId,
+            event: "contact.created",
+            payload: { contactId, projectId: args.projectId },
+        });
+
+        return contactId;
     },
 });
 

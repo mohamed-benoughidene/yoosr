@@ -160,10 +160,28 @@ export const update = mutation({
                     targetId: args.id,
                     metadata: { assignedTo: args.assignedTo },
                 });
+
+                // Wire agent.assigned webhook
+                await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+                    projectId: conversation.projectId,
+                    event: "agent.assigned",
+                    payload: {
+                        conversationId: args.id,
+                        projectId: conversation.projectId,
+                        assignedTo: args.assignedTo,
+                    },
+                });
             }
 
             // Check for resolution
             if (Number(args.status) === 1000 && conversation.status !== 1000) {
+                // Wire conversation.closed webhook
+                await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+                    projectId: conversation.projectId,
+                    event: "conversation.closed",
+                    payload: { conversationId: args.id, projectId: conversation.projectId },
+                });
+
                 if (conversation.assignedTo && conversation.assignedTo !== identity.subject) {
                     await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
                         projectId: conversation.projectId,
@@ -345,6 +363,13 @@ export const createFromWidget = internalMutation({
             });
         }
 
+        // Wire conversation.opened webhook
+        await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+            projectId: args.projectId,
+            event: "conversation.opened",
+            payload: { conversationId, projectId: args.projectId },
+        });
+
         // Trigger smart routing engine
         await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
             conversationId,
@@ -387,6 +412,13 @@ export const resolve = mutation({
             lastMessage: "Conversation resolved",
             updatedAt: Date.now(),
             resolvedBy: identity.subject,
+        });
+
+        // Wire conversation.closed webhook
+        await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+            projectId: conversation.projectId,
+            event: "conversation.closed",
+            payload: { conversationId: args.id, projectId: conversation.projectId },
         });
 
         // Notify assigned agent if someone else resolved it
@@ -666,6 +698,13 @@ export const autoCloseInactive = internalMutation({
                     status: 1000,
                     lastMessage: "Conversation auto-closed due to inactivity",
                     updatedAt: now,
+                });
+
+                // Wire conversation.closed webhook
+                await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
+                    projectId: conv.projectId,
+                    event: "conversation.closed",
+                    payload: { conversationId: conv._id, projectId: conv.projectId },
                 });
 
                 // Trigger generative tags extraction
