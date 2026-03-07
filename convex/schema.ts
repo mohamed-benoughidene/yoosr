@@ -295,7 +295,7 @@ export default defineSchema({
         projectId: v.id("projects"),
         url: v.string(),
         events: v.array(v.string()), // e.g. ["message.create", "request.close"]
-        secretName: v.optional(v.string()), // Optionally store a secret lookup key 
+        secret: v.string(), // Cryptographically random secret for payload signing
         isActive: v.boolean(),
     })
         .index("by_projectId", ["projectId"])

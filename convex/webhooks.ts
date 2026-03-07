@@ -23,18 +23,40 @@ export const fireWebhookEvent = internalAction({
         // Fire HTTP POSTs
         const fetchPromises = subscriptions.map(async (sub: any) => {
             try {
+                const bodyString = JSON.stringify({
+                    event: args.event,
+                    projectId: args.projectId,
+                    timestamp: Date.now(),
+                    data: args.payload,
+                });
+
+                const encoder = new TextEncoder();
+                const key = await crypto.subtle.importKey(
+                    "raw",
+                    encoder.encode(sub.secret),
+                    { name: "HMAC", hash: "SHA-256" },
+                    false,
+                    ["sign"]
+                );
+
+                const signatureBuffer = await crypto.subtle.sign(
+                    "HMAC",
+                    key,
+                    encoder.encode(bodyString)
+                );
+
+                const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+
                 const response = await fetch(sub.url, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-Tiledesk-Event": args.event,
+                        "X-Yoosr-Event": args.event,
+                        "X-Yoosr-Signature": `sha256=${signatureHex}`
                     },
-                    body: JSON.stringify({
-                        event: args.event,
-                        projectId: args.projectId,
-                        timestamp: Date.now(),
-                        data: args.payload,
-                    }),
+                    body: bodyString,
                 });
 
                 if (!response.ok) {
@@ -96,12 +118,21 @@ export const create = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
 
-        return await ctx.db.insert("webhook_subscriptions", {
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
+        const secret = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+        const newId = await ctx.db.insert("webhook_subscriptions", {
             projectId: args.projectId,
             url: args.url,
             events: args.events,
+            secret,
             isActive: true,
         });
+
+        return await ctx.db.get(newId);
     }
 });
 
@@ -133,5 +164,31 @@ export const remove = mutation({
         }
 
         await ctx.db.delete(args.id);
+    }
+});
+
+/**
+ * One-time migration to backfill secrets for existing webhook subscriptions
+ */
+export const backfillWebhookSecrets = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const subscriptions = await ctx.db.query("webhook_subscriptions").collect();
+        let updatedCount = 0;
+
+        for (const sub of subscriptions) {
+            // Check if secret is missing or empty
+            if (!(sub as any).secret) {
+                const bytes = new Uint8Array(32);
+                crypto.getRandomValues(bytes);
+                const secret = Array.from(bytes)
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+
+                await ctx.db.patch(sub._id, { secret } as any);
+                updatedCount++;
+            }
+        }
+        return { updated: updatedCount, total: subscriptions.length };
     }
 });

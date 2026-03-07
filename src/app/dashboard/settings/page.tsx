@@ -37,7 +37,6 @@ import {
     Trash2,
     Shield,
     Key,
-    Webhook,
 } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
@@ -60,9 +59,6 @@ export default function SettingsPage() {
     // Developer settings state
     const [showApiKey, setShowApiKey] = useState(false)
     const [showJwtSecret, setShowJwtSecret] = useState(false)
-    const [webhookUrl, setWebhookUrl] = useState("")
-    const [webhookEnabled, setWebhookEnabled] = useState(false)
-    const [webhookLoading, setWebhookLoading] = useState(false)
 
     // Advanced state
     const [confirmDelete, setConfirmDelete] = useState("")
@@ -77,12 +73,6 @@ export default function SettingsPage() {
             setProjectDesc(activeProject.description || "")
             setDefaultModel(activeProject.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
             setSlaHours(activeProject.slaHours ? String(activeProject.slaHours) : "")
-            // Load webhook config from widgetConfig if stored there
-            const wc = activeProject.widgetConfig as Record<string, any> | undefined
-            if (wc) {
-                setWebhookUrl(wc.webhookUrl || "")
-                setWebhookEnabled(wc.webhookEnabled || false)
-            }
         }
     }, [activeProject])
 
@@ -117,28 +107,6 @@ export default function SettingsPage() {
         } catch {
             toast.error("Failed to save SLA setting")
         }
-    }
-
-    const handleSaveWebhook = async () => {
-        if (!activeProject) return
-        setWebhookLoading(true)
-
-        try {
-            // Store webhook config inside widgetConfig
-            const existingConfig = (activeProject.widgetConfig as Record<string, any>) || {}
-            await updateProject({
-                id: activeProject._id,
-                widgetConfig: {
-                    ...existingConfig,
-                    webhookUrl,
-                    webhookEnabled,
-                },
-            })
-            toast.success("Webhook settings saved")
-        } catch {
-            toast.error("Failed to save webhook settings")
-        }
-        setWebhookLoading(false)
     }
 
     const copyToClipboard = (text: string, label: string) => {
@@ -555,83 +523,6 @@ export default function SettingsPage() {
                                 </p>
                             </div>
                         </CardContent>
-                    </Card>
-
-                    {/* Webhooks */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Webhook className="h-5 w-5 text-muted-foreground" />
-                                Webhooks
-                            </CardTitle>
-                            <CardDescription>
-                                Receive real-time event notifications via HTTP
-                                POST.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">
-                                        Enable Webhooks
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Send events (new message, conversation
-                                        closed, etc.) to your endpoint.
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={webhookEnabled}
-                                    onCheckedChange={setWebhookEnabled}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="webhook-url" className="text-sm">
-                                    Endpoint URL
-                                </Label>
-                                <Input
-                                    id="webhook-url"
-                                    type="url"
-                                    placeholder="https://your-server.com/api/webhooks"
-                                    value={webhookUrl}
-                                    onChange={(e) =>
-                                        setWebhookUrl(e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="rounded-lg bg-muted/50 p-3">
-                                <p className="text-xs font-medium mb-1.5">
-                                    Events sent:
-                                </p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {[
-                                        "message.created",
-                                        "conversation.opened",
-                                        "conversation.closed",
-                                        "contact.created",
-                                        "agent.assigned",
-                                    ].map((evt) => (
-                                        <span
-                                            key={evt}
-                                            className="inline-flex text-[10px] font-mono bg-background border px-2 py-0.5 rounded"
-                                        >
-                                            {evt}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="border-t px-6 py-4">
-                            <Button
-                                onClick={handleSaveWebhook}
-                                disabled={webhookLoading}
-                            >
-                                {webhookLoading && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                Save Webhook Settings
-                            </Button>
-                        </CardFooter>
                     </Card>
                 </TabsContent>
             </Tabs>
