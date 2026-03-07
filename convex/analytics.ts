@@ -488,3 +488,30 @@ export const getSLABreachRate = query({
         };
     },
 });
+
+/**
+ * Delete an unanswered query by ID.
+ * Multi-tenancy check ensuring the query belongs to a project in the user's org.
+ */
+export const dismissUnansweredQuery = mutation({
+    args: { id: v.id("unanswered_queries") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() as { org_id?: string } | null;
+        if (!identity || !identity.org_id) {
+            throw new Error("No active organization found in identity.");
+        }
+
+        const queryRow = await ctx.db.get(args.id);
+        if (!queryRow) {
+            throw new Error("Unanswered query not found");
+        }
+
+        // Verify multi-tenancy: does the project this query belongs to match the user's org?
+        const project = await ctx.db.get(queryRow.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new Error("Unauthorized: Unanswered query does not belong to your organization.");
+        }
+
+        await ctx.db.delete(args.id);
+    },
+});
