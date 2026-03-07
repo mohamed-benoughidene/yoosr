@@ -39,6 +39,7 @@ import type * as routing from "../routing.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as tags from "../tags.js";
+import type * as utils from "../utils.js";
 import type * as webhooks from "../webhooks.js";
 
 import type {
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   settings: typeof settings;
   tags: typeof tags;
+  utils: typeof utils;
   webhooks: typeof webhooks;
 }>;
 

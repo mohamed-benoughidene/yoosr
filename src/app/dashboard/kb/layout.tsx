@@ -19,6 +19,7 @@ export default function KnowledgeBaseLayout({
     const pathname = usePathname()
     const activeId = params.kbId as string
     const { activeProject } = useProject()
+    const isAdmin = activeProject?.userRole === "org:admin"
 
     const knowledgeBases = useQuery(
         api.knowledgeBases.list,
@@ -31,9 +32,11 @@ export default function KnowledgeBaseLayout({
             <div className="w-full md:w-64 border-r bg-muted/10 flex flex-col">
                 <div className="p-4 border-b flex items-center justify-between">
                     <h2 className="font-semibold text-sm">Knowledge Bases</h2>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                    {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
                 <ScrollArea className="flex-1">
                     <div className="p-2 space-y-1">

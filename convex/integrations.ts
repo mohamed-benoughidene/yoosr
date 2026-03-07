@@ -1,5 +1,6 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import { requireAdmin } from "./utils";
 
 // List integrations for a project
 export const list = query({
@@ -25,6 +26,7 @@ export const upsert = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         // Check if we already have this provider for this project
@@ -56,6 +58,7 @@ export const remove = mutation({
     args: { id: v.id("integrations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as any;
+        requireAdmin(identity);
         if (!identity) throw new Error("Not authenticated");
 
         const integration = await ctx.db.get(args.id);

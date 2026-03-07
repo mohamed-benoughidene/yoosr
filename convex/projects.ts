@@ -1,5 +1,6 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./utils";
 
 // Extend the Identity type to include custom claims from Clerk
 type ClerkIdentity = {
@@ -170,6 +171,7 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        requireAdmin(identity);
         if (!identity || !identity.org_id) throw new Error("Not authenticated");
 
         const project = await ctx.db.get(args.id);
@@ -194,6 +196,7 @@ export const remove = mutation({
     args: { id: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        requireAdmin(identity);
         if (!identity || !identity.org_id) throw new Error("Not authenticated");
 
         const project = await ctx.db.get(args.id);

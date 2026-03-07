@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { requireAdmin } from "./utils";
 
 // List bots for a project
 export const list = query({
@@ -37,6 +38,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const botId = await ctx.db.insert("bots", {
@@ -73,6 +75,7 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const bot = await ctx.db.get(args.id);
@@ -102,6 +105,7 @@ export const remove = mutation({
     args: { id: v.id("bots") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const bot = await ctx.db.get(args.id);

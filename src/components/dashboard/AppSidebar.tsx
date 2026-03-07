@@ -9,6 +9,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { OrganizationSwitcher, useUser, useClerk } from "@clerk/nextjs"
+import { useProject } from "@/context/ProjectContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -79,7 +80,9 @@ function OrgSwitcher() {
 function NavUser() {
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
+  const { activeProject } = useProject()
   const router = useRouter()
+  const isAdmin = activeProject?.userRole === "org:admin"
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
   const fullName = user?.fullName ?? user?.firstName ?? "Account"
   const email = user?.emailAddresses?.[0]?.emailAddress ?? ""
@@ -117,10 +120,12 @@ function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-              <Settings className="mr-2 size-4" />Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <div className={isAdmin ? "" : "hidden"}>
+              <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+                <Settings className="mr-2 size-4" />Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </div>
             <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
               <LogOut className="mr-2 size-4" />Log out
             </DropdownMenuItem>
@@ -133,6 +138,8 @@ function NavUser() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { activeProject } = useProject()
+  const isAdmin = activeProject?.userRole === "org:admin"
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader><OrgSwitcher /></SidebarHeader>
@@ -145,8 +152,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu>
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href + "/"))
+                    const isHidden = item.label === "Analytics" && !isAdmin
                     return (
-                      <SidebarMenuItem key={item.href}>
+                      <SidebarMenuItem key={item.href} className={isHidden ? "hidden" : ""}>
                         <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                           <Link href={item.href}>
                             <item.icon className="size-4" />

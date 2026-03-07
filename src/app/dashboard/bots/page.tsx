@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import {
     Card,
     CardHeader,
@@ -39,6 +40,7 @@ import { Id } from "../../../../convex/_generated/dataModel"
 export default function BotsPage() {
     const { activeProject } = useProject()
     const router = useRouter()
+    const isAdmin = activeProject?.userRole === "org:admin"
     const [filter, setFilter] = useState<'all' | 'chatbot' | 'automation'>('all')
     const [search, setSearch] = useState("")
     const [botPendingDelete, setBotPendingDelete] = useState<Id<"bots"> | null>(null)
@@ -119,7 +121,7 @@ export default function BotsPage() {
                             <LayoutTemplate className="mr-2 h-4 w-4" />
                             Templates
                         </Button>
-                        <CreateBotDialog onCreate={handleCreateBot} />
+                        {isAdmin && <CreateBotDialog onCreate={handleCreateBot} />}
                     </div>
                 </div>
 
@@ -137,88 +139,99 @@ export default function BotsPage() {
                     {filteredBots.length === 0 ? (
                         <div className="col-span-full text-center p-12 border border-dashed rounded-lg">
                             <p className="text-muted-foreground mb-4">No flows found.</p>
-                            <div className="flex justify-center gap-4">
-                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New Agent', '', 'chatbot')}>
-                                    <CardHeader>
-                                        <Bot className="h-8 w-8 text-primary mb-2" />
-                                        <CardTitle className="text-base">New AI Agent</CardTitle>
-                                        <CardDescription>Build an AI-powered assistant.</CardDescription>
-                                    </CardHeader>
-                                </Card>
-                                <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New automation', '', 'automation')}>
-                                    <CardHeader>
-                                        <Zap className="h-8 w-8 text-orange-500 mb-2" />
-                                        <CardTitle className="text-base">New Automation</CardTitle>
-                                        <CardDescription>Create a rule-based workflow.</CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </div>
+                            {isAdmin && (
+                                <div className="flex justify-center gap-4">
+                                    <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New Agent', '', 'chatbot')}>
+                                        <CardHeader>
+                                            <Bot className="h-8 w-8 text-primary mb-2" />
+                                            <CardTitle className="text-base">New AI Agent</CardTitle>
+                                            <CardDescription>Build an AI-powered assistant.</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                    <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot('My New automation', '', 'automation')}>
+                                        <CardHeader>
+                                            <Zap className="h-8 w-8 text-orange-500 mb-2" />
+                                            <CardTitle className="text-base">New Automation</CardTitle>
+                                            <CardDescription>Create a rule-based workflow.</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         filteredBots.map((bot) => (
-                            <Card key={bot._id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`)}>
+                            <Card
+                                key={bot._id}
+                                className={cn(
+                                    "transition-all",
+                                    isAdmin ? "cursor-pointer hover:shadow-md" : "cursor-default"
+                                )}
+                                onClick={isAdmin ? () => router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`) : undefined}
+                            >
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <div className={`p-2 rounded-full ${bot.type === 'chatbot' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'}`}>
                                         {bot.type === 'chatbot' ? <Bot className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
                                     </div>
-                                    <DropdownMenu modal={false}>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
+                                    {isAdmin && (
+                                        <DropdownMenu modal={false}>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
+
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={(e) => {
                                                     e.stopPropagation();
-                                                }}
+                                                    router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`);
+                                                }}>
+                                                    <LayoutTemplate className="mr-2 h-4 w-4" />
+                                                    Open Canvas
+                                                </DropdownMenuItem>
 
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={(e) => {
-                                                e.stopPropagation();
-                                                router.push(`/design-studio/${bot._id}?project=${activeProject?._id}`);
-                                            }}>
-                                                <LayoutTemplate className="mr-2 h-4 w-4" />
-                                                Open Canvas
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuItem onClick={async (e) => {
-                                                e.stopPropagation();
-                                                await updateBot({
-                                                    id: bot._id,
-                                                    status: bot.status === 'active' ? 'draft' : 'active'
-                                                });
-                                            }}>
-                                                {bot.status === 'active' ? (
-                                                    <>
-                                                        <Pause className="mr-2 h-4 w-4" />
-                                                        Deactivate
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Play className="mr-2 h-4 w-4" />
-                                                        Activate
-                                                    </>
-                                                )}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                                                <Copy className="mr-2 h-4 w-4" />
-                                                Duplicate
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive" onClick={(e) => {
-                                                e.stopPropagation();
-                                                setBotPendingDelete(bot._id);
-                                            }}>
-                                                <Trash className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                                <DropdownMenuItem onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    await updateBot({
+                                                        id: bot._id,
+                                                        status: bot.status === 'active' ? 'draft' : 'active'
+                                                    });
+                                                }}>
+                                                    {bot.status === 'active' ? (
+                                                        <>
+                                                            <Pause className="mr-2 h-4 w-4" />
+                                                            Deactivate
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Play className="mr-2 h-4 w-4" />
+                                                            Activate
+                                                        </>
+                                                    )}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                                                    <Copy className="mr-2 h-4 w-4" />
+                                                    Duplicate
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setBotPendingDelete(bot._id);
+                                                }}>
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </CardHeader>
                                 <CardContent className="pt-4">
                                     <CardTitle className="text-base mb-1">{bot.name}</CardTitle>

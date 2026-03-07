@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import { requireAdmin } from "./utils";
 
 // Extend the Identity type to include custom claims from Clerk
 type ClerkIdentity = {
@@ -21,6 +22,7 @@ export const createOrder = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        requireAdmin(identity as any);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }
@@ -76,6 +78,7 @@ export const updateOrderStatus = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        requireAdmin(identity as any);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }
@@ -104,6 +107,7 @@ export const deleteOrder = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        requireAdmin(identity as any);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }

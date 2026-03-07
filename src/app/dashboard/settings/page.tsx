@@ -50,6 +50,7 @@ const AVAILABLE_MODELS = [
 
 export default function SettingsPage() {
     const { activeProject } = useProject()
+    const isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
     const [projectName, setProjectName] = useState("")
     const [projectDesc, setProjectDesc] = useState("")
@@ -329,68 +330,70 @@ export default function SettingsPage() {
                     </Card>
 
                     {/* Danger Zone */}
-                    <Card className="border-destructive/50">
-                        <CardHeader>
-                            <CardTitle className="text-destructive flex items-center gap-2">
-                                <AlertTriangle className="h-5 w-5" />
-                                Danger Zone
-                            </CardTitle>
-                            <CardDescription>
-                                Irreversible actions. Proceed with caution.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="rounded-lg border border-destructive/30 p-4 space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <Trash2 className="h-5 w-5 text-destructive mt-0.5" />
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium">
-                                            Delete this project
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            This will permanently delete all
-                                            conversations, contacts, bots,
-                                            integrations, and settings. This
-                                            action cannot be undone.
-                                        </p>
+                    {isAdmin && (
+                        <Card className="border-destructive/50">
+                            <CardHeader>
+                                <CardTitle className="text-destructive flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    Danger Zone
+                                </CardTitle>
+                                <CardDescription>
+                                    Irreversible actions. Proceed with caution.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="rounded-lg border border-destructive/30 p-4 space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <Trash2 className="h-5 w-5 text-destructive mt-0.5" />
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium">
+                                                Delete this project
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                This will permanently delete all
+                                                conversations, contacts, bots,
+                                                integrations, and settings. This
+                                                action cannot be undone.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 pl-8">
+                                        <Label className="text-xs text-muted-foreground">
+                                            Type{" "}
+                                            <span className="font-mono font-bold text-destructive">
+                                                {activeProject?.name}
+                                            </span>{" "}
+                                            to confirm:
+                                        </Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={confirmDelete}
+                                                onChange={(e) =>
+                                                    setConfirmDelete(e.target.value)
+                                                }
+                                                placeholder="Project name"
+                                                className="max-w-xs text-sm"
+                                            />
+                                            <Button
+                                                variant="destructive"
+                                                disabled={
+                                                    confirmDelete !==
+                                                    activeProject?.name ||
+                                                    deleting
+                                                }
+                                                onClick={handleDeleteProject}
+                                            >
+                                                {deleting && (
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                )}
+                                                Delete Project
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2 pl-8">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Type{" "}
-                                        <span className="font-mono font-bold text-destructive">
-                                            {activeProject?.name}
-                                        </span>{" "}
-                                        to confirm:
-                                    </Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            value={confirmDelete}
-                                            onChange={(e) =>
-                                                setConfirmDelete(e.target.value)
-                                            }
-                                            placeholder="Project name"
-                                            className="max-w-xs text-sm"
-                                        />
-                                        <Button
-                                            variant="destructive"
-                                            disabled={
-                                                confirmDelete !==
-                                                activeProject?.name ||
-                                                deleting
-                                            }
-                                            onClick={handleDeleteProject}
-                                        >
-                                            {deleting && (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            )}
-                                            Delete Project
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 {/* ──────── DEVELOPER TAB ──────── */}

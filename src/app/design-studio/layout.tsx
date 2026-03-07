@@ -19,12 +19,18 @@ export default function DesignStudioLayout({
     const searchParams = useSearchParams();
     const router = useRouter();
     const projectId = searchParams.get("project");
+    const isAdmin = activeProject?.userRole === "org:admin";
 
     // Ensure user profile exists
     const ensureProfile = useMutation(api.profiles.ensureCurrent);
 
     useEffect(() => {
         if (!isLoading && isOrgLoaded) {
+            if (!isAdmin) {
+                router.replace("/dashboard");
+                return;
+            }
+
             ensureProfile();
 
             if (!organization) {
@@ -33,7 +39,7 @@ export default function DesignStudioLayout({
                 return;
             }
         }
-    }, [projectId, activeProject, isLoading, router, ensureProfile, organization, isOrgLoaded]);
+    }, [projectId, activeProject, isLoading, router, ensureProfile, organization, isOrgLoaded, isAdmin]);
 
     if (isLoading) {
         return (

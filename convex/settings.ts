@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
+import { requireAdmin } from "./utils";
 
 // ========================
 // DEPARTMENTS
@@ -53,6 +54,7 @@ export const createDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("departments", args);
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
@@ -79,6 +81,7 @@ export const updateDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
 
@@ -105,6 +108,7 @@ export const removeDepartment = mutation({
     args: { id: v.id("departments") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const department = await ctx.db.get(args.id);
@@ -132,6 +136,7 @@ export const addMemberToDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = (await ctx.auth.getUserIdentity()) as any;
+        requireAdmin(identity);
         if (!identity || !identity.org_id) throw new Error("Not authenticated or missing org_id");
 
         const department = await ctx.db.get(args.departmentId);
@@ -221,6 +226,7 @@ export const createCannedResponse = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("canned_responses", {
             ...args,
@@ -249,6 +255,7 @@ export const updateCannedResponse = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
         const clean: Record<string, any> = {};
@@ -273,6 +280,7 @@ export const removeCannedResponse = mutation({
     args: { id: v.id("canned_responses") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const cannedResponse = await ctx.db.get(args.id);
@@ -315,6 +323,7 @@ export const createLabel = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("labels", {
             ...args,
@@ -343,6 +352,7 @@ export const updateLabel = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
         const clean: Record<string, any> = {};
@@ -368,6 +378,7 @@ export const removeLabel = mutation({
     args: { id: v.id("labels") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const label = await ctx.db.get(args.id);
@@ -427,6 +438,7 @@ export const upsertOperatingHours = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
 
         const existing = await ctx.db

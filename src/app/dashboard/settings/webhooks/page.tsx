@@ -40,6 +40,7 @@ const AVAILABLE_EVENTS = [
 
 export default function WebhooksPage() {
     const { activeProject } = useProject();
+    const isAdmin = activeProject?.userRole === "org:admin";
     const [url, setUrl] = useState("");
     const [selectedEvents, setSelectedEvents] = useState<string[]>(AVAILABLE_EVENTS);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,111 +97,113 @@ export default function WebhooksPage() {
                     </p>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Webhook className="h-5 w-5 text-muted-foreground" />
-                            Add New Endpoint
-                        </CardTitle>
-                        <CardDescription>
-                            We will send HTTP POST payloads to this URL when important things happen.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCreate} className="space-y-6">
-                            <div className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor="url">Endpoint URL</Label>
-                                    <Input
-                                        id="url"
-                                        placeholder="https://api.yourdomain.com/webhooks"
-                                        type="url"
-                                        value={url}
-                                        onChange={(e) => setUrl(e.target.value)}
-                                        required
-                                        className="bg-muted/30"
-                                    />
-                                </div>
-                                <Button type="submit" disabled={isSubmitting || !url || selectedEvents.length === 0}>
-                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                                    Add Webhook
-                                </Button>
-                            </div>
-
-                            <div className="space-y-3">
-                                <Label className="text-sm font-medium">Select Events to Subscribe</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border rounded-lg p-4 bg-muted/20">
-                                    {AVAILABLE_EVENTS.map((event) => (
-                                        <div key={event} className="flex items-center space-x-2 group">
-                                            <Checkbox
-                                                id={`event-${event}`}
-                                                checked={selectedEvents.includes(event)}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) {
-                                                        setSelectedEvents([...selectedEvents, event]);
-                                                    } else {
-                                                        setSelectedEvents(selectedEvents.filter((e) => e !== event));
-                                                    }
-                                                }}
-                                                className="border-primary/50 data-[state=checked]:bg-primary"
-                                            />
-                                            <label
-                                                htmlFor={`event-${event}`}
-                                                className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none group-hover:text-primary transition-colors"
-                                            >
-                                                {event}
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-                                {selectedEvents.length === 0 && (
-                                    <p className="text-[10px] text-destructive flex items-center gap-1">
-                                        <Check className="h-3 w-3 rotate-45" /> Select at least one event
-                                    </p>
-                                )}
-                            </div>
-                        </form>
-
-                        {newWebhookSecret && (
-                            <Alert className="mt-6 border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-200">
-                                <AlertTriangle className="h-4 w-4 stroke-amber-600 dark:stroke-amber-400" />
-                                <AlertTitle className="text-amber-800 dark:text-amber-300">
-                                    Save your webhook secret — it will not be shown again
-                                </AlertTitle>
-                                <AlertDescription className="space-y-3">
-                                    <p className="text-xs opacity-90">
-                                        Use this secret to verify that webhook requests actually came from Yoosr.
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <code className="relative rounded bg-background/50 px-[0.3rem] py-[0.2rem] font-mono text-sm border border-amber-500/20 select-all">
-                                            {newWebhookSecret}
-                                        </code>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8 bg-background/50 border-amber-500/20 hover:bg-amber-500/20"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(newWebhookSecret);
-                                                setCopiedSecret(true);
-                                                setTimeout(() => setCopiedSecret(false), 2000);
-                                                toast.success("Secret copied to clipboard");
-                                            }}
-                                        >
-                                            {copiedSecret ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
+                {isAdmin && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Webhook className="h-5 w-5 text-muted-foreground" />
+                                Add New Endpoint
+                            </CardTitle>
+                            <CardDescription>
+                                We will send HTTP POST payloads to this URL when important things happen.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleCreate} className="space-y-6">
+                                <div className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor="url">Endpoint URL</Label>
+                                        <Input
+                                            id="url"
+                                            placeholder="https://api.yourdomain.com/webhooks"
+                                            type="url"
+                                            value={url}
+                                            onChange={(e) => setUrl(e.target.value)}
+                                            required
+                                            className="bg-muted/30"
+                                        />
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        className="w-full bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500 dark:hover:bg-amber-600"
-                                        onClick={() => setNewWebhookSecret(null)}
-                                    >
-                                        I've saved my secret
+                                    <Button type="submit" disabled={isSubmitting || !url || selectedEvents.length === 0}>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                                        Add Webhook
                                     </Button>
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                    </CardContent>
-                </Card>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-medium">Select Events to Subscribe</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border rounded-lg p-4 bg-muted/20">
+                                        {AVAILABLE_EVENTS.map((event) => (
+                                            <div key={event} className="flex items-center space-x-2 group">
+                                                <Checkbox
+                                                    id={`event-${event}`}
+                                                    checked={selectedEvents.includes(event)}
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked) {
+                                                            setSelectedEvents([...selectedEvents, event]);
+                                                        } else {
+                                                            setSelectedEvents(selectedEvents.filter((e) => e !== event));
+                                                        }
+                                                    }}
+                                                    className="border-primary/50 data-[state=checked]:bg-primary"
+                                                />
+                                                <label
+                                                    htmlFor={`event-${event}`}
+                                                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none group-hover:text-primary transition-colors"
+                                                >
+                                                    {event}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {selectedEvents.length === 0 && (
+                                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                                            <Check className="h-3 w-3 rotate-45" /> Select at least one event
+                                        </p>
+                                    )}
+                                </div>
+                            </form>
+
+                            {newWebhookSecret && (
+                                <Alert className="mt-6 border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-200">
+                                    <AlertTriangle className="h-4 w-4 stroke-amber-600 dark:stroke-amber-400" />
+                                    <AlertTitle className="text-amber-800 dark:text-amber-300">
+                                        Save your webhook secret — it will not be shown again
+                                    </AlertTitle>
+                                    <AlertDescription className="space-y-3">
+                                        <p className="text-xs opacity-90">
+                                            Use this secret to verify that webhook requests actually came from Yoosr.
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="relative rounded bg-background/50 px-[0.3rem] py-[0.2rem] font-mono text-sm border border-amber-500/20 select-all">
+                                                {newWebhookSecret}
+                                            </code>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8 bg-background/50 border-amber-500/20 hover:bg-amber-500/20"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(newWebhookSecret);
+                                                    setCopiedSecret(true);
+                                                    setTimeout(() => setCopiedSecret(false), 2000);
+                                                    toast.success("Secret copied to clipboard");
+                                                }}
+                                            >
+                                                {copiedSecret ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            className="w-full bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500 dark:hover:bg-amber-600"
+                                            onClick={() => setNewWebhookSecret(null)}
+                                        >
+                                            I've saved my secret
+                                        </Button>
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 <h4 className="font-medium text-sm pt-4">Active Subscriptions</h4>
 
@@ -264,14 +267,16 @@ export default function WebhooksPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setWebhookPendingDelete(sub._id)}
-                                                className="text-destructive hover:bg-destructive/10"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            {isAdmin && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setWebhookPendingDelete(sub._id)}
+                                                    className="text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

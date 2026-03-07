@@ -29,6 +29,7 @@ export default function KnowledgeBaseDetailsPage() {
     const rawKbId = params.kbId as string
     const router = useRouter()
     const { activeProject } = useProject()
+    const isAdmin = activeProject?.userRole === "org:admin"
     const [resolvedKbId, setResolvedKbId] = useState<Id<"knowledge_bases"> | null>(null)
     const [pendingDeleteId, setPendingDeleteId] = useState<Id<"knowledge_base_sources"> | null>(null)
 
@@ -146,7 +147,7 @@ export default function KnowledgeBaseDetailsPage() {
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Data Sources</h2>
                     <div className="flex gap-2">
-                        <AddContentDialog onAdd={handleAddContent} />
+                        {isAdmin && <AddContentDialog onAdd={handleAddContent} />}
                     </div>
                 </div>
 
@@ -222,14 +223,16 @@ export default function KnowledgeBaseDetailsPage() {
                                     {item._creationTime ? new Date(item._creationTime).toLocaleDateString() : "-"}
                                 </div>
                                 <div className="col-span-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                        onClick={() => setPendingDeleteId(item._id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {isAdmin && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            onClick={() => setPendingDeleteId(item._id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))

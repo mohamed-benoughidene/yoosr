@@ -1,6 +1,7 @@
 import { internalAction, internalQuery, query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
+import { requireAdmin } from "./utils";
 
 /**
  * Action triggered to fetch outbound URLs and fire POST requests
@@ -116,6 +117,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Unauthorized");
 
         const bytes = new Uint8Array(32);
@@ -143,6 +145,7 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as any);
         if (!identity) throw new Error("Unauthorized");
 
         await ctx.db.patch(args.id, { isActive: args.isActive });
@@ -153,6 +156,7 @@ export const remove = mutation({
     args: { id: v.id("webhook_subscriptions") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as any;
+        requireAdmin(identity);
         if (!identity) throw new Error("Not authenticated");
 
         const subscription = await ctx.db.get(args.id);
