@@ -75,6 +75,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
 
     const sendMessage = useMutation(api.messages.sendMessage);
     const sendMetaMsg = useMutation(api.conversations.relayToMeta);
+    const relayToTelegramMsg = useMutation(api.conversations.relayToTelegram);
     const joinConversation = useMutation(api.conversations.join);
     const leaveConversation = useMutation(api.conversations.leave);
     const closeConversation = useMutation(api.conversations.resolve);
@@ -116,6 +117,21 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                     });
                 } catch (metaErr) {
                     console.error("Failed to relay to Meta:", metaErr);
+                }
+            }
+
+
+            if (
+                messageMode !== "internal" &&
+                conversation.channel === "telegram"
+            ) {
+                try {
+                    await relayToTelegramMsg({
+                        conversationId: conversation.id as Id<"conversations">,
+                        content,
+                    });
+                } catch (telegramErr) {
+                    console.error("Failed to relay to Telegram:", telegramErr);
                 }
             }
         } catch (error) {

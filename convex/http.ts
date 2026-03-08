@@ -345,4 +345,53 @@ http.route({
     }),
 });
 
+// GET /webhooks/telegram (Telegram verification)
+http.route({
+    path: "/webhooks/telegram",
+    method: "GET",
+    handler: httpAction(async () => {
+        return new Response("OK", { status: 200 });
+    }),
+});
+
+// POST /webhooks/telegram (incoming messages)
+http.route({
+    path: "/webhooks/telegram",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+        try {
+            const secretToken = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+            if (secretToken !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            const body = await request.json();
+
+            if (!body.message) {
+                return new Response("OK", { status: 200 });
+            }
+
+            const chatId = String(body.message.chat.id);
+            const senderId = String(body.message.from.id);
+            const senderName = (body.message.from.first_name + " " + (body.message.from.last_name ?? "")).trim();
+            const messageText = body.message.text;
+            const messageId = String(body.message.message_id);
+
+            await ctx.runMutation(internal.conversations.createOrUpdateFromTelegram, {
+                chatId,
+                senderId,
+                senderName,
+                messageText,
+                messageId,
+            });
+
+            return new Response("OK", { status: 200 });
+        } catch (error) {
+            console.error("Error processing Telegram webhook:", error);
+            // Telegram expects 200 so it doesn't keep retrying relentlessly on simple app errors
+            return new Response("OK", { status: 200 });
+        }
+    }),
+});
+
 export default http;

@@ -15,7 +15,37 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-    User, Mail, Phone, MapPin, StickyNote, Pencil, Check, X, UserPlus, RefreshCw, Loader2, Plus, Globe, Clock, Laptop, ExternalLink, MessageCircle, Facebook, CircleDot, Building, Hash, Tag, AlertCircle, ShoppingBag, MoreHorizontal
+    MoreHorizontal,
+    MoreVertical,
+    Clock,
+    Globe,
+    Building,
+    MessageCircle,
+    Hash,
+    User,
+    AlertCircle,
+    Laptop,
+    Check,
+    X,
+    ExternalLink,
+    Facebook,
+    Mail,
+    UserCircle,
+    Phone,
+    MapPin,
+    StickyNote,
+    Edit2,
+    Save,
+    UserPlus,
+    RefreshCw,
+    Plus,
+    Tag,
+    Loader2,
+    ShoppingBag,
+    Send,
+    Instagram,
+    Pencil,
+    CircleDot
 } from "lucide-react"
 import {
     Select,
@@ -153,10 +183,12 @@ function InlineEditField({
 
 const getChannelIcon = (channel?: string) => {
     switch (channel?.toLowerCase()) {
-        case "whatsapp": return <MessageCircle className="h-4 w-4" />
-        case "facebook": return <Facebook className="h-4 w-4" />
-        case "email": return <Mail className="h-4 w-4" />
-        default: return <Globe className="h-4 w-4" />
+        case "messenger": return <MessageCircle className="h-4 w-4 text-indigo-500" />
+        case "instagram": return <Instagram className="h-4 w-4 text-pink-500" />
+        case "telegram": return <Send className="h-4 w-4 text-sky-500" />
+        case "whatsapp": return <MessageCircle className="h-4 w-4 text-green-500" />
+        case "email": return <Mail className="h-4 w-4 text-orange-500" />
+        default: return <Globe className="h-4 w-4 text-muted-foreground" />
     }
 }
 

@@ -2,6 +2,7 @@ import { query, mutation, internalMutation, internalQuery, internalAction } from
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { decryptSecret } from "./lib/crypto";
 
 // List conversations for a project
 export const list = query({
@@ -446,6 +447,13 @@ export const resolve = mutation({
             content: "This conversation has been resolved. Thank you!",
         });
 
+        if (conversation.channel === "telegram") {
+            await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
+                conversationId: args.id,
+                content: "This conversation has been resolved. Thank you!",
+            });
+        }
+
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: conversation.projectId,
             actorId: identity.subject,
@@ -496,6 +504,13 @@ export const join = mutation({
                 content: "You are now connected with an agent.",
                 type: "text",
             });
+
+            if (conversation.channel === "telegram") {
+                await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
+                    conversationId: args.id,
+                    content: "You are now connected with an agent.",
+                });
+            }
         }
     },
 });
@@ -719,6 +734,13 @@ export const autoCloseInactive = internalMutation({
                     senderType: "bot",
                     content: "This conversation was automatically closed due to inactivity.",
                 });
+
+                if (conv.channel === "telegram") {
+                    await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
+                        conversationId: conv._id,
+                        content: "This conversation was automatically closed due to inactivity.",
+                    });
+                }
             }
         }
     },
@@ -988,8 +1010,13 @@ export const sendMetaMessage = internalAction({
 
         if (!integration) return undefined;
 
-        const accessToken: string = integration.credentials?.access_token;
-        if (!accessToken) return undefined;
+        const rawToken: string = integration.credentials?.access_token;
+        if (!rawToken) return undefined;
+        const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        if (!encKey) return undefined;
+        const accessToken = rawToken.includes(":")
+            ? await decryptSecret(rawToken, encKey)
+            : rawToken;
 
         // 5. Call Meta Graph API
         try {
@@ -1033,6 +1060,186 @@ export const relayToMeta = mutation({
         if (!identity) return;
 
         await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
+            conversationId: args.conversationId,
+            content: args.content,
+        });
+    },
+});
+
+// Create or update conversation from Telegram
+export const createOrUpdateFromTelegram = internalMutation({
+    args: {
+        chatId: v.string(),
+        senderId: v.string(),
+        senderName: v.optional(v.string()),
+        messageText: v.optional(v.string()),
+        messageId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        // 1. Deduplicate
+        const existingMessages = await ctx.db
+            .query("messages")
+            .filter(q => q.eq(q.field("channelMessageId"), args.messageId))
+            .collect();
+
+        if (existingMessages.length > 0) {
+            return;
+        }
+
+        // 2. Find the project integration
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) => q.eq(q.field("provider"), "telegram"))
+            .filter((q) => q.eq(q.field("enabled"), true))
+            .collect();
+
+        const integration = integrations[0];
+
+        if (!integration) {
+            return;
+        }
+
+        // 3. Find or create the conversation
+        let conversationId;
+        const existingConversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
+            .collect();
+
+        const openConversation = existingConversations.find(
+            (c) => c.channelSenderId === args.chatId && c.status !== 1000
+        );
+
+        const isNew = !openConversation;
+
+        if (openConversation) {
+            conversationId = openConversation._id;
+        } else {
+            // @ts-ignore
+            conversationId = await ctx.db.insert("conversations", {
+                projectId: integration.projectId,
+                visitorId: args.senderId,
+                visitorName: args.senderName ?? "Telegram User",
+                channel: "telegram",
+                channelSenderId: args.chatId,
+                status: 100,
+                unreadCount: 0,
+                updatedAt: Date.now(),
+            });
+        }
+
+        // 4. Insert the message
+        // @ts-ignore
+        await ctx.db.insert("messages", {
+            conversationId: conversationId,
+            projectId: integration.projectId,
+            senderType: "visitor",
+            senderId: args.senderId,
+            content: args.messageText ?? "",
+            type: "text",
+            channelMessageId: args.messageId,
+        });
+
+        // 5. Patch the conversation
+        const conversation = await ctx.db.get(conversationId);
+        if (conversation) {
+            await ctx.db.patch(conversationId, {
+                lastMessage: args.messageText ?? "",
+                updatedAt: Date.now(),
+                unreadCount: (conversation.unreadCount ?? 0) + 1,
+            });
+
+            // 6. Trigger Bot Engine or Routing
+            if (isNew) {
+                await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+                    conversationId,
+                    projectId: integration.projectId,
+                    initialMessage: args.messageText ?? "",
+                });
+            } else if (!conversation.botPaused && conversation.botId) {
+                await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
+                    conversationId,
+                    incomingMessage: args.messageText ?? "",
+                });
+            }
+        }
+    }
+});
+
+// Internal action: send a message to a Telegram channel
+export const sendTelegramMessage = internalAction({
+    args: {
+        conversationId: v.id("conversations"),
+        content: v.string(),
+    },
+    handler: async (ctx, args) => {
+        // 1. Fetch the conversation
+        const conversation: any = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
+        if (!conversation) return undefined;
+
+        // 2. Only proceed for Telegram channel
+        if (conversation.channel !== "telegram") return undefined;
+
+        // 3. Require a sender ID to reply to
+        if (!conversation.channelSenderId) return undefined;
+
+        // 4. Fetch the project's integration for this channel
+        const integrations: any[] = await ctx.runQuery(internal.integrations.listForProject, {
+            projectId: conversation.projectId,
+        });
+
+        const integration: any = (integrations ?? []).find(
+            (i: any) => i.provider === "telegram" && i.enabled === true
+        );
+
+        if (!integration) return undefined;
+
+        const rawToken: string = integration.credentials?.bot_token;
+        if (!rawToken) return undefined;
+        const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        if (!encKey) return undefined;
+        const botToken = rawToken.includes(":")
+            ? await decryptSecret(rawToken, encKey)
+            : rawToken;
+
+        // 5. Call Telegram API
+        try {
+            const response = await fetch(
+                `https://api.telegram.org/bot${botToken}/sendMessage`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        chat_id: conversation.channelSenderId,
+                        text: args.content,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.text();
+                console.error("[sendTelegramMessage] Telegram API error:", err);
+                return undefined;
+            }
+        } catch (err) {
+            console.error("[sendTelegramMessage] fetch error:", err);
+        }
+
+        return undefined;
+    },
+});
+
+// Public-facing mutation: schedule sending the agent reply to Telegram channel
+export const relayToTelegram = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        content: v.string(),
+    },
+    handler: async (ctx, args): Promise<void> => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+
+        await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
             conversationId: args.conversationId,
             content: args.content,
         });

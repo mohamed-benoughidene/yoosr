@@ -42,7 +42,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, SlidersHorizontal, Tag } from "lucide-react"
 
-import { MessageCircle, Globe, Facebook, Mail } from "lucide-react"
+import { MessageCircle, Globe, Facebook, Mail, Instagram, Send } from "lucide-react"
 
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
@@ -78,10 +78,12 @@ export interface ConversationListProps {
 
 const getChannelIcon = (channel: string) => {
     switch (channel) {
-        case "whatsapp": return <MessageCircle className="h-3 w-3" />
-        case "facebook": return <Facebook className="h-3 w-3" />
-        case "email": return <Mail className="h-3 w-3" />
-        default: return <Globe className="h-3 w-3" />
+        case "messenger": return <MessageCircle className="h-3 w-3 text-indigo-500" />
+        case "instagram": return <Instagram className="h-3 w-3 text-pink-500" />
+        case "telegram": return <Send className="h-3 w-3 text-sky-500" />
+        case "whatsapp": return <MessageCircle className="h-3 w-3 text-green-500" />
+        case "email": return <Mail className="h-3 w-3 text-orange-500" />
+        default: return <Globe className="h-3 w-3 text-muted-foreground" />
     }
 }
 

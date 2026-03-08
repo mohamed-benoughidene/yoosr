@@ -9,13 +9,13 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { useState } from "react"
 import { toast } from "sonner"
-import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle } from "lucide-react"
-import { useQuery, useMutation } from "convex/react"
+import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle, Send } from "lucide-react"
+import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 
 const INTEGRATIONS = [
     { id: "openrouter", name: "OpenRouter", description: "Unified API for 100+ AI models", category: "ai", icon: "🔀", color: "bg-pink-100 text-pink-700", locked: false, fields: [{ key: "api_key", label: "API Key", type: "password", placeholder: "sk-or-..." }, { key: "model", label: "Model", type: "text", placeholder: "openai/gpt-4o" }], instructions: "Get your API key from openrouter.ai/keys." },
-    { id: "telegram", name: "Telegram", description: "Connect your Telegram bot", category: "channel", icon: "✈", color: "bg-sky-100 text-sky-700", locked: false, fields: [{ key: "bot_token", label: "Bot Token", type: "password", placeholder: "123456:ABC-DEF..." }], instructions: "Create a bot via @BotFather on Telegram." },
+    { id: "telegram", name: "Telegram", description: "Connect a Telegram bot to receive and reply to messages", category: "channel", icon: <Send className="h-5 w-5" />, color: "bg-sky-100 text-sky-600", locked: false, fields: [{ key: "bot_token", label: "Bot Token", type: "password", placeholder: "Paste your bot token from @BotFather" }], instructions: "Create a bot via @BotFather on Telegram, copy the token, paste it here, then set your webhook URL to: https://your-domain.com/webhooks/telegram" },
     { id: "messenger", name: "Messenger", description: "Facebook Messenger via Meta Graph API", category: "channel", icon: "💬", color: "bg-indigo-100 text-indigo-700", locked: false, fields: [{ key: "page_id", label: "Page ID", type: "text", placeholder: "Page ID" }, { key: "access_token", label: "Access Token", type: "password", placeholder: "EAA..." }], instructions: "Create an app at developers.facebook.com." },
     { id: "instagram", name: "Instagram", description: "Instagram DMs via Meta Graph API", category: "channel", icon: "📸", color: "bg-fuchsia-100 text-fuchsia-700", locked: false, fields: [{ key: "page_id", label: "Account ID", type: "text", placeholder: "Account ID" }, { key: "access_token", label: "Access Token", type: "password", placeholder: "EAA..." }], instructions: "Connect your Professional Account." },
 ] as const
@@ -31,6 +31,8 @@ export default function IntegrationsPage() {
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
     const upsertIntegration = useMutation(api.integrations.upsert)
+    const saveChannelIntegration = useAction(api.integrations.saveChannelIntegration)
+    const registerWebhook = useAction(api.integrations.registerTelegramWebhook)
 
     const savedMap: Record<string, any> = {}
         ; (integrations ?? []).forEach((row: any) => { savedMap[row.provider] = row })
@@ -47,8 +49,27 @@ export default function IntegrationsPage() {
         if (!activeProject || !activeConfig) return
         setSaving(true)
         try {
-            await upsertIntegration({ projectId: activeProject._id, provider: activeConfig.id, credentials: formValues, enabled: formEnabled })
-            toast.success(`${activeConfig.name} integration saved`)
+            if (activeConfig.category === "channel") {
+                await saveChannelIntegration({ projectId: activeProject._id, provider: activeConfig.id, credentials: formValues, enabled: formEnabled })
+            } else {
+                await upsertIntegration({ projectId: activeProject._id, provider: activeConfig.id, credentials: formValues, enabled: formEnabled })
+            }
+            
+            if (activeConfig.id === "telegram" && formValues.bot_token) {
+                try {
+                    await registerWebhook({
+                        botToken: formValues.bot_token,
+                        projectId: activeProject._id,
+                    })
+                    toast.success("Telegram bot connected and webhook registered")
+                } catch (err: any) {
+                    toast.error(`Webhook registration failed: ${err.message}`)
+                    setSaving(false)
+                    return
+                }
+            } else {
+                toast.success(`${activeConfig.name} integration saved`)
+            }
         } catch { toast.error("Failed to save integration") }
         setSaving(false)
     }

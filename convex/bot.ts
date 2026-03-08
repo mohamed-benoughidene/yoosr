@@ -625,6 +625,13 @@ export const createBotMessage = internalMutation({
             });
         }
 
+        if (conversation.channel === "telegram") {
+            await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
+                conversationId: args.conversationId,
+                content: args.content,
+            });
+        }
+
         return messageId;
     }
 });

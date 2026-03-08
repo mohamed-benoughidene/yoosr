@@ -84,6 +84,7 @@ export function ChatArea() {
 
     const sendMessage = useMutation(api.messages.sendMessage)
     const sendMetaMsg = useMutation(api.conversations.relayToMeta)
+    const relayToTelegramMsg = useMutation(api.conversations.relayToTelegram)
     const resolveConversation = useMutation(api.conversations.resolve)
     const markAsRead = useMutation(api.conversations.markAsRead)
     const updateConversation = useMutation(api.conversations.update)
@@ -134,6 +135,20 @@ export function ChatArea() {
                     });
                 } catch (metaErr) {
                     console.error("Failed to relay to Meta:", metaErr);
+                }
+            }
+
+            if (
+                messageMode !== "internal" &&
+                conversation.channel === "telegram"
+            ) {
+                try {
+                    await relayToTelegramMsg({
+                        conversationId,
+                        content,
+                    });
+                } catch (telegramErr) {
+                    console.error("Failed to relay to Telegram:", telegramErr);
                 }
             }
         } catch (error) {
