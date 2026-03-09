@@ -126,7 +126,6 @@ function InlineEditField({
                             onChange={(e) => setDraft(e.target.value)}
                             placeholder={placeholder}
                             className="min-h-[60px] text-sm"
-                            autoFocus
                             onBlur={handleBlur}
                             onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
                                 if (e.key === "Enter" && !e.shiftKey) {
@@ -142,7 +141,6 @@ function InlineEditField({
                             onChange={(e) => setDraft(e.target.value)}
                             placeholder={placeholder}
                             className="h-8 text-sm"
-                            autoFocus
                             onBlur={handleBlur}
                             onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                                 if (e.key === "Enter") handleSave()
@@ -680,10 +678,11 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                             ) : (
                                 <div className="border rounded-md bg-muted/10 p-3 space-y-3 shadow-inner">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                        <label htmlFor="order-contact-name" className="text-xs font-medium flex items-center gap-1.5">
                                             <User className="h-3 w-3 text-muted-foreground" /> Contact Name <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            id="order-contact-name"
                                             value={orderForm.contactName}
                                             onChange={(e) => setOrderForm(p => ({ ...p, contactName: e.target.value }))}
                                             placeholder="John Doe"
@@ -692,10 +691,11 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                        <label htmlFor="order-phone" className="text-xs font-medium flex items-center gap-1.5">
                                             <Phone className="h-3 w-3 text-muted-foreground" /> Phone
                                         </label>
                                         <Input
+                                            id="order-phone"
                                             value={orderForm.phone}
                                             onChange={(e) => setOrderForm(p => ({ ...p, phone: e.target.value }))}
                                             placeholder="+1 234 567 890"
@@ -704,23 +704,24 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                        <label htmlFor="order-product" className="text-xs font-medium flex items-center gap-1.5">
                                             <ShoppingBag className="h-3 w-3 text-muted-foreground" /> Product / Item <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            id="order-product"
                                             value={orderForm.product}
                                             onChange={(e) => setOrderForm(p => ({ ...p, product: e.target.value }))}
                                             placeholder="Product name or description"
                                             className="h-8 text-xs bg-yellow-50/50 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50"
-                                            autoFocus
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                        <label htmlFor="order-notes" className="text-xs font-medium flex items-center gap-1.5">
                                             <StickyNote className="h-3 w-3 text-muted-foreground" /> Notes
                                         </label>
                                         <Textarea
+                                            id="order-notes"
                                             value={orderForm.notes}
                                             onChange={(e) => setOrderForm(p => ({ ...p, notes: e.target.value }))}
                                             placeholder="Order notes, specifications..."
@@ -729,14 +730,14 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium flex items-center gap-1.5">
+                                        <label htmlFor="order-status" className="text-xs font-medium flex items-center gap-1.5">
                                             <CircleDot className="h-3 w-3 text-muted-foreground" /> Status
                                         </label>
                                         <Select
                                             value={orderForm.status}
                                             onValueChange={(v: "new" | "confirmed" | "cancelled") => setOrderForm(p => ({ ...p, status: v }))}
                                         >
-                                            <SelectTrigger className="h-8 text-xs bg-background">
+                                            <SelectTrigger id="order-status" className="h-8 text-xs bg-background">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
