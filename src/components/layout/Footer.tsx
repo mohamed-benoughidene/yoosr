@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 
 export function Footer() {
     return (
-        <footer className="bg-slate-50 dark:bg-muted/10 border-t">
+        <footer className="bg-muted/30 border-t">
             <div className="container py-12 md:py-16 lg:py-20">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6 mb-12">
                     <div className="col-span-2 lg:col-span-2 lg:pr-8">
@@ -86,7 +86,13 @@ export function Footer() {
                             </div>
                         </div>
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground lg:justify-end">
-                            <p>&copy; {new Date().getFullYear()} Yoosr, Inc. Open Source. MIT License.</p>
+                            <div className="flex flex-col gap-1 items-center sm:items-end">
+                                <p>&copy; {new Date().getFullYear()} Yoosr, Inc. Open Source. MIT License.</p>
+                                <p className="text-xs text-muted-foreground text-center sm:text-right">
+                                    Yoosr is currently in early access. Some features are still
+                                    in development — expect frequent updates.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

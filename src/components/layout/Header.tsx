@@ -17,8 +17,11 @@ export function Header() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
                 <div className="flex items-center gap-6 md:gap-10">
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link href="/" className="flex items-center gap-2">
                         <span className="text-xl font-bold">Yoosr</span>
+                        <span className="hidden sm:inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground tracking-wide">
+                            Early Access
+                        </span>
                     </Link>
                     <nav className="hidden md:flex gap-6">
                         <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
