@@ -237,16 +237,6 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
         status: "new" as "new" | "confirmed" | "cancelled"
     })
 
-    // Pre-fill form when open state changes
-    useEffect(() => {
-        if (isOrderFormOpen && conversation) {
-            setOrderForm(prev => ({
-                ...prev,
-                contactName: prev.contactName || conversation.visitorName || "",
-                phone: prev.phone || conversation.visitorPhone || ""
-            }))
-        }
-    }, [isOrderFormOpen, conversation])
 
     const conversationOrders = orders?.filter(o => o.conversationId === conversationId)
 
@@ -675,7 +665,14 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
                                     variant="outline"
                                     size="sm"
                                     className="w-full h-8 text-xs font-medium bg-background"
-                                    onClick={() => setIsOrderFormOpen(true)}
+                                    onClick={() => {
+                                        setIsOrderFormOpen(true);
+                                        setOrderForm(prev => ({
+                                            ...prev,
+                                            contactName: prev.contactName || conversation?.visitorName || "",
+                                            phone: prev.phone || conversation?.visitorPhone || ""
+                                        }));
+                                    }}
                                 >
                                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                                     New Order

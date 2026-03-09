@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { useState } from "react"
+import { useReducer } from "react"
 import { toast } from "sonner"
 import { Plus, Trash2, Building2, Bot, Pencil, X, Users, UserPlus } from "lucide-react"
 import {
@@ -63,20 +63,121 @@ import { api } from "../../../../../convex/_generated/api"
 import type { Id } from "../../../../../convex/_generated/dataModel"
 import { useOrganization } from "@clerk/nextjs"
 
+
+interface DraftDept {
+    newDeptName: string;
+    newDesc: string;
+    routingMode: "assigned" | "pooled";
+    useBot: boolean;
+    botId: string | undefined;
+    tags: string[];
+    tagInput: string;
+}
+
+interface UiState {
+    createOpen: boolean;
+    editingDeptId: Id<"departments"> | null;
+    deptPendingDelete: Id<"departments"> | null;
+}
+
+interface DepartmentsState {
+    draftDept: DraftDept;
+    uiState: UiState;
+}
+
+type DepartmentsAction =
+    | { type: "SET_CREATE_OPEN"; payload: boolean }
+    | { type: "SET_NEW_DEPT_NAME"; payload: string }
+    | { type: "SET_NEW_DESC"; payload: string }
+    | { type: "SET_ROUTING_MODE"; payload: "assigned" | "pooled" }
+    | { type: "SET_USE_BOT"; payload: boolean }
+    | { type: "SET_BOT_ID"; payload: string | undefined }
+    | { type: "SET_TAGS"; payload: string[] }
+    | { type: "SET_TAG_INPUT"; payload: string }
+    | { type: "SET_EDITING_DEPT_ID"; payload: Id<"departments"> | null }
+    | { type: "SET_DEPT_PENDING_DELETE"; payload: Id<"departments"> | null }
+    | { type: "RESET_DRAFT" }
+    | { type: "START_EDIT"; payload: any }
+    | { type: "ADD_TAG"; payload: string }
+    | { type: "REMOVE_TAG"; payload: string }
+
+const initialState: DepartmentsState = {
+    draftDept: {
+        newDeptName: "",
+        newDesc: "",
+        routingMode: "pooled",
+        useBot: false,
+        botId: undefined,
+        tags: [],
+        tagInput: "",
+    },
+    uiState: {
+        createOpen: false,
+        editingDeptId: null,
+        deptPendingDelete: null,
+    }
+}
+
+function departmentsReducer(state: DepartmentsState, action: DepartmentsAction): DepartmentsState {
+    switch (action.type) {
+        case "SET_CREATE_OPEN": return { ...state, uiState: { ...state.uiState, createOpen: action.payload } }
+        case "SET_NEW_DEPT_NAME": return { ...state, draftDept: { ...state.draftDept, newDeptName: action.payload } }
+        case "SET_NEW_DESC": return { ...state, draftDept: { ...state.draftDept, newDesc: action.payload } }
+        case "SET_ROUTING_MODE": return { ...state, draftDept: { ...state.draftDept, routingMode: action.payload } }
+        case "SET_USE_BOT": return { ...state, draftDept: { ...state.draftDept, useBot: action.payload } }
+        case "SET_BOT_ID": return { ...state, draftDept: { ...state.draftDept, botId: action.payload } }
+        case "SET_TAGS": return { ...state, draftDept: { ...state.draftDept, tags: action.payload } }
+        case "SET_TAG_INPUT": return { ...state, draftDept: { ...state.draftDept, tagInput: action.payload } }
+        case "SET_EDITING_DEPT_ID": return { ...state, uiState: { ...state.uiState, editingDeptId: action.payload } }
+        case "SET_DEPT_PENDING_DELETE": return { ...state, uiState: { ...state.uiState, deptPendingDelete: action.payload } }
+        case "RESET_DRAFT": return {
+            ...state,
+            draftDept: initialState.draftDept,
+            uiState: { ...state.uiState, editingDeptId: null, createOpen: false }
+        }
+        case "START_EDIT": return {
+            ...state,
+            draftDept: {
+                newDeptName: action.payload.name,
+                newDesc: action.payload.description || "",
+                routingMode: action.payload.routingMode || "pooled",
+                useBot: !!action.payload.botId,
+                botId: action.payload.botId,
+                tags: action.payload.tags || [],
+                tagInput: "",
+            },
+            uiState: {
+                ...state.uiState,
+                editingDeptId: action.payload._id,
+                createOpen: true,
+            }
+        }
+        case "ADD_TAG": return {
+            ...state,
+            draftDept: {
+                ...state.draftDept,
+                tags: [...state.draftDept.tags, action.payload],
+                tagInput: ""
+            }
+        }
+        case "REMOVE_TAG": return {
+            ...state,
+            draftDept: {
+                ...state.draftDept,
+                tags: state.draftDept.tags.filter(t => t !== action.payload)
+            }
+        }
+        default: return state;
+    }
+}
+
 export default function DepartmentsPage() {
     const { activeProject } = useProject()
-    const [createOpen, setCreateOpen] = useState(false)
-
-    // Form State
-    const [newDeptName, setNewDeptName] = useState("")
-    const [newDesc, setNewDesc] = useState("")
-    const [routingMode, setRoutingMode] = useState<"assigned" | "pooled">("pooled")
-    const [useBot, setUseBot] = useState(false)
-    const [botId, setBotId] = useState<string | undefined>()
-    const [tags, setTags] = useState<string[]>([])
-    const [tagInput, setTagInput] = useState("")
-    const [editingDeptId, setEditingDeptId] = useState<Id<"departments"> | null>(null)
-    const [deptPendingDelete, setDeptPendingDelete] = useState<Id<"departments"> | null>(null)
+    
+    const [state, dispatch] = useReducer(departmentsReducer, initialState)
+    const { draftDept, uiState } = state
+    const { newDeptName, newDesc, routingMode, useBot, botId, tags, tagInput } = draftDept
+    const { createOpen, editingDeptId, deptPendingDelete } = uiState
 
     const departments = useQuery(
         api.settings.listDepartments,
@@ -144,38 +245,24 @@ export default function DepartmentsPage() {
     }
 
     const resetForm = () => {
-        setNewDeptName("")
-        setNewDesc("")
-        setRoutingMode("pooled")
-        setUseBot(false)
-        setBotId(undefined)
-        setTags([])
-        setTagInput("")
-        setEditingDeptId(null)
-        setCreateOpen(false)
+        dispatch({ type: "RESET_DRAFT" })
     }
 
     const handleEdit = (dept: any) => {
-        setEditingDeptId(dept._id)
-        setNewDeptName(dept.name)
-        setNewDesc(dept.description || "")
-        setRoutingMode(dept.routingMode || "pooled")
-        setUseBot(!!dept.botId)
-        setBotId(dept.botId)
-        setTags(dept.tags || [])
-        setCreateOpen(true)
+        dispatch({ type: "START_EDIT", payload: dept })
     }
 
     const addTag = () => {
         const trimmed = tagInput.trim().toLowerCase()
         if (trimmed && !tags.includes(trimmed)) {
-            setTags([...tags, trimmed])
+            dispatch({ type: "ADD_TAG", payload: trimmed })
+        } else {
+            dispatch({ type: "SET_TAG_INPUT", payload: "" })
         }
-        setTagInput("")
     }
 
     const removeTag = (tagToRemove: string) => {
-        setTags(tags.filter(t => t !== tagToRemove))
+        dispatch({ type: "REMOVE_TAG", payload: tagToRemove })
     }
 
     const handleAssignMember = async (clerkUserId: string, departmentId: Id<"departments">) => {
@@ -212,7 +299,7 @@ export default function DepartmentsPage() {
                         </p>
                     </div>
                     <Dialog open={createOpen} onOpenChange={(open) => {
-                        setCreateOpen(open)
+                        dispatch({ type: "SET_CREATE_OPEN", payload: open })
                         if (!open) resetForm()
                     }}>
                         <DialogTrigger asChild>
@@ -234,7 +321,7 @@ export default function DepartmentsPage() {
                                     <Input
                                         id="name"
                                         value={newDeptName}
-                                        onChange={(e) => setNewDeptName(e.target.value)}
+                                        onChange={(e) => dispatch({ type: "SET_NEW_DEPT_NAME", payload: e.target.value })}
                                         placeholder="e.g. Customer Support"
                                     />
                                 </div>
@@ -244,7 +331,7 @@ export default function DepartmentsPage() {
                                     <Input
                                         id="desc"
                                         value={newDesc}
-                                        onChange={(e) => setNewDesc(e.target.value)}
+                                        onChange={(e) => dispatch({ type: "SET_NEW_DESC", payload: e.target.value })}
                                         placeholder="Handles general inquiries"
                                     />
                                 </div>
@@ -260,14 +347,14 @@ export default function DepartmentsPage() {
                                         <Switch
                                             id="ai-toggle"
                                             checked={useBot}
-                                            onCheckedChange={setUseBot}
+                                            onCheckedChange={(v) => dispatch({ type: "SET_USE_BOT", payload: v })}
                                         />
                                     </div>
 
                                     {useBot && (
                                         <div className="grid gap-2 pl-2">
                                             <Label htmlFor="bot-select" className="text-xs">Selected Bot</Label>
-                                            <Select value={botId} onValueChange={setBotId}>
+                                            <Select value={botId} onValueChange={(v) => dispatch({ type: "SET_BOT_ID", payload: v })}>
                                                 <SelectTrigger id="bot-select">
                                                     <SelectValue placeholder="Choose a bot" />
                                                 </SelectTrigger>
@@ -294,7 +381,7 @@ export default function DepartmentsPage() {
 
                                 <div className="grid gap-3">
                                     <Label>Routing Rules</Label>
-                                    <RadioGroup value={routingMode} onValueChange={(v: "assigned" | "pooled") => setRoutingMode(v)}>
+                                    <RadioGroup value={routingMode} onValueChange={(v: "assigned" | "pooled") => dispatch({ type: "SET_ROUTING_MODE", payload: v })}>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="pooled" id="r-pooled" />
                                             <Label htmlFor="r-pooled" className="font-normal">Pooled (Agents pick from Unassigned)</Label>
@@ -323,7 +410,7 @@ export default function DepartmentsPage() {
                                     <div className="flex gap-2">
                                         <Input
                                             value={tagInput}
-                                            onChange={(e) => setTagInput(e.target.value)}
+                                            onChange={(e) => dispatch({ type: "SET_TAG_INPUT", payload: e.target.value })}
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter") {
                                                     e.preventDefault()
@@ -338,7 +425,7 @@ export default function DepartmentsPage() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+                                <Button variant="outline" onClick={() => dispatch({ type: "SET_CREATE_OPEN", payload: false })}>Cancel</Button>
                                 <Button onClick={handleSave}>{editingDeptId ? "Update Department" : "Create Department"}</Button>
                             </DialogFooter>
                         </DialogContent>
@@ -464,7 +551,7 @@ export default function DepartmentsPage() {
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             {!dept.isDefault && (
-                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeptPendingDelete(dept._id)}>
+                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => dispatch({ type: "SET_DEPT_PENDING_DELETE", payload: dept._id })}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             )}
@@ -477,7 +564,7 @@ export default function DepartmentsPage() {
                 </Card>
 
                 {/* Delete Department Confirmation */}
-                <AlertDialog open={deptPendingDelete !== null} onOpenChange={(open) => { if (!open) setDeptPendingDelete(null) }}>
+                <AlertDialog open={deptPendingDelete !== null} onOpenChange={(open) => { if (!open) dispatch({ type: "SET_DEPT_PENDING_DELETE", payload: null }) }}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Department</AlertDialogTitle>
@@ -492,7 +579,7 @@ export default function DepartmentsPage() {
                                 onClick={async () => {
                                     if (deptPendingDelete) {
                                         await handleDelete(deptPendingDelete)
-                                        setDeptPendingDelete(null)
+                                        dispatch({ type: "SET_DEPT_PENDING_DELETE", payload: null })
                                     }
                                 }}
                             >

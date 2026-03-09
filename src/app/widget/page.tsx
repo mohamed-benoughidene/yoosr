@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useReducer, useEffect, useRef, useCallback } from "react"
 import { RatingComponent } from "./rating-component"
 import { PreChatForm } from "./components/PreChatForm"
 
@@ -49,26 +49,85 @@ async function apiGet(endpoint: string, params: Record<string, string>) {
     return res.json()
 }
 
+
+interface ChatState {
+    projectId: string | null;
+    visitorId: string;
+    conversationId: string | null;
+    messages: Message[];
+    input: string;
+    loading: boolean;
+    error: string | null;
+    projectConfig: any;
+    conversationStatus: number;
+    showRating: boolean;
+    showPreChat: boolean;
+    preChatData: { name: string, email?: string, phone?: string } | null;
+}
+
+type ChatAction = 
+    | { type: "SET_PROJECT_ID", payload: string | null }
+    | { type: "SET_VISITOR_ID", payload: string }
+    | { type: "SET_CONVERSATION_ID", payload: string | null }
+    | { type: "SET_MESSAGES", payload: Message[] | ((prev: Message[]) => Message[]) }
+    | { type: "SET_INPUT", payload: string }
+    | { type: "SET_LOADING", payload: boolean }
+    | { type: "SET_ERROR", payload: string | null }
+    | { type: "SET_PROJECT_CONFIG", payload: any }
+    | { type: "SET_CONVERSATION_STATUS", payload: number }
+    | { type: "SET_SHOW_RATING", payload: boolean }
+    | { type: "SET_SHOW_PRE_CHAT", payload: boolean }
+    | { type: "SET_PRE_CHAT_DATA", payload: { name: string, email?: string, phone?: string } | null }
+
+const initialState: ChatState = {
+    projectId: null,
+    visitorId: "",
+    conversationId: null,
+    messages: [],
+    input: "",
+    loading: true,
+    error: null,
+    projectConfig: null,
+    conversationStatus: 100,
+    showRating: false,
+    showPreChat: false,
+    preChatData: null,
+}
+
+function chatReducer(state: ChatState, action: ChatAction): ChatState {
+    switch (action.type) {
+        case "SET_PROJECT_ID": return { ...state, projectId: action.payload }
+        case "SET_VISITOR_ID": return { ...state, visitorId: action.payload }
+        case "SET_CONVERSATION_ID": return { ...state, conversationId: action.payload }
+        case "SET_MESSAGES": return {
+            ...state,
+            messages: typeof action.payload === 'function' ? action.payload(state.messages) : action.payload
+        }
+        case "SET_INPUT": return { ...state, input: action.payload }
+        case "SET_LOADING": return { ...state, loading: action.payload }
+        case "SET_ERROR": return { ...state, error: action.payload }
+        case "SET_PROJECT_CONFIG": return { ...state, projectConfig: action.payload }
+        case "SET_CONVERSATION_STATUS": return { ...state, conversationStatus: action.payload }
+        case "SET_SHOW_RATING": return { ...state, showRating: action.payload }
+        case "SET_SHOW_PRE_CHAT": return { ...state, showPreChat: action.payload }
+        case "SET_PRE_CHAT_DATA": return { ...state, preChatData: action.payload }
+        default: return state;
+    }
+}
+
 export default function WidgetPage() {
-    const [projectId, setProjectId] = useState<string | null>(null)
-    const [visitorId, setVisitorId] = useState<string>("")
-    const [conversationId, setConversationId] = useState<string | null>(null)
-    const [messages, setMessages] = useState<Message[]>([])
-    const [input, setInput] = useState("")
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [projectConfig, setProjectConfig] = useState<any>(null)
-    const [conversationStatus, setConversationStatus] = useState<number>(100)
-    const [showRating, setShowRating] = useState(false)
+    const [state, dispatch] = useReducer(chatReducer, initialState)
+    const {
+        projectId, visitorId, conversationId, messages, input, loading, error,
+        projectConfig, conversationStatus, showRating, showPreChat, preChatData
+    } = state
+
     const chatEndRef = useRef<HTMLDivElement>(null)
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const prevMessageCountRef = useRef<number>(0)
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const welcomeShownRef = useRef(false)
-
-    const [showPreChat, setShowPreChat] = useState(false)
-    const [preChatData, setPreChatData] = useState<{ name: string, email?: string, phone?: string } | null>(null)
 
     // Create audio element for notifications
     useEffect(() => {
@@ -83,19 +142,19 @@ export default function WidgetPage() {
         const urlParams = new URLSearchParams(window.location.search)
         const pid = urlParams.get("projectId")
         if (pid) {
-            setProjectId(pid)
+            dispatch({ type: "SET_PROJECT_ID", payload: pid })
         } else {
-            setError("No projectId provided")
-            setLoading(false)
+            dispatch({ type: "SET_ERROR", payload: "No projectId provided" })
+            dispatch({ type: "SET_LOADING", payload: false })
         }
 
         const stored = localStorage.getItem("yoosr_visitor_id")
         if (stored) {
-            setVisitorId(stored)
+            dispatch({ type: "SET_VISITOR_ID", payload: stored })
         } else {
             const vid = "visitor_" + Math.random().toString(36).slice(2, 11)
             localStorage.setItem("yoosr_visitor_id", vid)
-            setVisitorId(vid)
+            dispatch({ type: "SET_VISITOR_ID", payload: vid })
         }
     }, [])
 
@@ -103,7 +162,7 @@ export default function WidgetPage() {
     useEffect(() => {
         if (!projectId) return
         apiGet("/widget/project", { projectId }).then((data) => {
-            setProjectConfig(data)
+            dispatch({ type: "SET_PROJECT_CONFIG", payload: data })
         }).catch(() => { /* ignore */ })
     }, [projectId])
 
@@ -121,7 +180,7 @@ export default function WidgetPage() {
         const timer = setTimeout(() => {
             if (!welcomeShownRef.current) {
                 welcomeShownRef.current = true
-                setMessages(prev => {
+                dispatch({ type: "SET_MESSAGES", payload: prev => {
                     if (prev.length > 0) return prev
                     return [{
                         _id: "welcome_" + Date.now(),
@@ -129,7 +188,7 @@ export default function WidgetPage() {
                         senderType: "bot",
                         _creationTime: Date.now(),
                     }]
-                })
+                }})
                 // Notify parent for unread badge
                 try {
                     window.parent.postMessage({ type: "yoosr:new_message" }, "*")
@@ -152,23 +211,23 @@ export default function WidgetPage() {
                 })
 
                 if (existing && existing._id) {
-                    setConversationId(existing._id)
-                    setConversationStatus(existing.status || 100)
+                    dispatch({ type: "SET_CONVERSATION_ID", payload: existing._id })
+                    dispatch({ type: "SET_CONVERSATION_STATUS", payload: existing.status || 100 })
                     if (existing.status === 1000 && !existing.rating) {
-                        setShowRating(true)
+                        dispatch({ type: "SET_SHOW_RATING", payload: true })
                     }
                 } else {
                     // Don't create conversation until first message
                     // Show Pre-chat form if configured and no data yet
                     const enablePreChat = projectConfig.widgetConfig?.preChatFormEnabled ?? true
                     if (!preChatData && enablePreChat) {
-                        setShowPreChat(true)
+                        dispatch({ type: "SET_SHOW_PRE_CHAT", payload: true })
                     }
                 }
             } catch (e) {
-                setError("Failed to connect. Please try again.")
+                dispatch({ type: "SET_ERROR", payload: "Failed to connect. Please try again." })
             }
-            setLoading(false)
+            dispatch({ type: "SET_LOADING", payload: false })
         }
 
         init()
@@ -199,7 +258,7 @@ export default function WidgetPage() {
                     }
                 }
                 prevMessageCountRef.current = msgs.length
-                setMessages(msgs)
+                dispatch({ type: "SET_MESSAGES", payload: msgs })
                 welcomeShownRef.current = true // Don't show welcome if real messages exist
             }
         } catch {
@@ -215,9 +274,9 @@ export default function WidgetPage() {
             try {
                 const convo = await apiGet("/widget/conversations/get", { id: conversationId })
                 if (convo) {
-                    setConversationStatus(convo.status)
+                    dispatch({ type: "SET_CONVERSATION_STATUS", payload: convo.status })
                     if (convo.status === 1000 && !convo.rating) {
-                        setShowRating(true)
+                        dispatch({ type: "SET_SHOW_RATING", payload: true })
                     }
                 }
             } catch { /* ignore */ }
@@ -255,10 +314,10 @@ export default function WidgetPage() {
                 initialMessage,
             })
             const newId = result.conversationId
-            setConversationId(newId)
+            dispatch({ type: "SET_CONVERSATION_ID", payload: newId })
             return newId
         } catch {
-            setError("Failed to create conversation")
+            dispatch({ type: "SET_ERROR", payload: "Failed to create conversation" })
             return null
         }
     }
@@ -268,7 +327,7 @@ export default function WidgetPage() {
 
         // Optimistic update
         const tempId = "temp_" + Date.now()
-        setMessages((prev) => [
+        dispatch({ type: "SET_MESSAGES", payload: (prev) => [
             ...prev,
             {
                 _id: tempId,
@@ -277,19 +336,19 @@ export default function WidgetPage() {
                 senderId: visitorId,
                 _creationTime: Date.now(),
             },
-        ])
+        ]})
 
         const isNewConversation = !conversationId
         const convId = await ensureConversation(isNewConversation ? text : undefined)
         if (!convId) {
-            setMessages(prev => prev.filter(m => m._id !== tempId))
+            dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
             return
         }
 
         if (isNewConversation) {
             // First message is pushed atomically during conversation creation.
             // Fast-forward UI:
-            setConversationId(convId)
+            dispatch({ type: "SET_CONVERSATION_ID", payload: convId })
             fetchMessages()
             return
         }
@@ -301,23 +360,23 @@ export default function WidgetPage() {
                 visitorId,
             })
 
-            setMessages(prev => prev.filter(m => m._id !== tempId))
+            dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
 
             if (res.conversationId && res.conversationId !== convId) {
-                setConversationId(res.conversationId)
+                dispatch({ type: "SET_CONVERSATION_ID", payload: res.conversationId })
             } else {
                 fetchMessages()
             }
         } catch {
-            setMessages(prev => prev.filter(m => m._id !== tempId))
-            setError("Failed to send message")
+            dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
+            dispatch({ type: "SET_ERROR", payload: "Failed to send message" })
         }
     }
 
     const handleSend = async () => {
         if (!input.trim()) return
         const text = input.trim()
-        setInput("")
+        dispatch({ type: "SET_INPUT", payload: "" })
         await handleSendText(text)
     }
 
@@ -330,7 +389,7 @@ export default function WidgetPage() {
 
         // For now, send file name as message (full upload requires Convex file storage endpoint)
         const text = `📎 ${file.name}`
-        setMessages((prev) => [
+        dispatch({ type: "SET_MESSAGES", payload: (prev) => [
             ...prev,
             {
                 _id: "temp_file_" + Date.now(),
@@ -339,7 +398,7 @@ export default function WidgetPage() {
                 senderId: visitorId,
                 _creationTime: Date.now(),
             },
-        ])
+        ]})
 
         try {
             const res = await apiPost("/widget/messages", {
@@ -349,12 +408,12 @@ export default function WidgetPage() {
             })
 
             if (res.conversationId && res.conversationId !== convId) {
-                setConversationId(res.conversationId)
+                dispatch({ type: "SET_CONVERSATION_ID", payload: res.conversationId })
             } else {
                 fetchMessages()
             }
         } catch {
-            setError("Failed to send attachment")
+            dispatch({ type: "SET_ERROR", payload: "Failed to send attachment" })
         }
 
         // Reset file input
@@ -370,10 +429,10 @@ export default function WidgetPage() {
                 rating,
                 feedback
             })
-            setShowRating(false)
+            dispatch({ type: "SET_SHOW_RATING", payload: false })
         } catch (error) {
             console.error("Failed to submit rating", error)
-            setError("Failed to submit rating")
+            dispatch({ type: "SET_ERROR", payload: "Failed to submit rating" })
         }
     }
 
@@ -403,8 +462,8 @@ export default function WidgetPage() {
         return (
             <PreChatForm
                 onSubmit={(data) => {
-                    setPreChatData(data)
-                    setShowPreChat(false)
+                    dispatch({ type: "SET_PRE_CHAT_DATA", payload: data })
+                    dispatch({ type: "SET_SHOW_PRE_CHAT", payload: false })
                 }}
                 primaryColor={widgetColor}
                 title={widgetConfig?.translations?.preChatTitle}
@@ -532,7 +591,7 @@ export default function WidgetPage() {
                     className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
                     placeholder={conversationStatus === 1000 ? "This conversation is resolved" : "Type a message..."}
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={(e) => dispatch({ type: "SET_INPUT", payload: e.target.value })}
                     onKeyDown={handleKeyDown}
                     disabled={loading || conversationStatus === 1000}
                 />

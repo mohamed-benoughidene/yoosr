@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useReducer } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
@@ -38,15 +38,49 @@ import Papa from "papaparse"
 
 type FilterType = "all" | "new" | "confirmed" | "cancelled"
 
+
+interface ImportState {
+    importOpen: boolean;
+    importLoading: boolean;
+    parsedOrders: any[];
+    skippedCount: number;
+    importError: string | null;
+}
+
+type ImportAction =
+    | { type: "OPEN_IMPORT" }
+    | { type: "CLOSE_IMPORT" }
+    | { type: "SET_PARSED"; payload: { data: any[], skipped: number } }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "SET_ERROR"; payload: string | null }
+    | { type: "RESET" }
+
+const initialImportState: ImportState = {
+    importOpen: false,
+    importLoading: false,
+    parsedOrders: [],
+    skippedCount: 0,
+    importError: null,
+}
+
+function importReducer(state: ImportState, action: ImportAction): ImportState {
+    switch (action.type) {
+        case "OPEN_IMPORT": return { ...state, importOpen: true }
+        case "CLOSE_IMPORT": return { ...state, importOpen: false }
+        case "SET_PARSED": return { ...state, parsedOrders: action.payload.data, skippedCount: action.payload.skipped }
+        case "SET_LOADING": return { ...state, importLoading: action.payload }
+        case "SET_ERROR": return { ...state, importError: action.payload }
+        case "RESET": return initialImportState
+        default: return state
+    }
+}
+
 export default function OrdersPage() {
     const { activeProject } = useProject()
     const [filter, setFilter] = useState<FilterType>("all")
 
-    const [importOpen, setImportOpen] = useState(false)
-    const [importLoading, setImportLoading] = useState(false)
-    const [parsedOrders, setParsedOrders] = useState<any[]>([])
-    const [skippedCount, setSkippedCount] = useState(0)
-    const [importError, setImportError] = useState<string | null>(null)
+    const [importState, importDispatch] = useReducer(importReducer, initialImportState)
+    const { importOpen, importLoading, parsedOrders, skippedCount, importError } = importState
 
     const orders = useQuery(
         api.orders.listOrders,
@@ -145,9 +179,8 @@ export default function OrdersPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        setImportError(null)
-        setParsedOrders([])
-        setSkippedCount(0)
+        importDispatch({ type: "SET_ERROR", payload: null })
+        importDispatch({ type: "SET_PARSED", payload: { data: [], skipped: 0 } })
 
         const fileExt = file.name.split('.').pop()?.toLowerCase()
 
@@ -171,13 +204,12 @@ export default function OrdersPage() {
                 }
             }).filter(Boolean)
 
-            setSkippedCount(skipped)
-            setParsedOrders(mapped)
+            importDispatch({ type: "SET_PARSED", payload: { data: mapped, skipped } })
 
             if (mapped.length === 0 && data.length > 0) {
-                setImportError("No valid orders found. Check required columns: Contact Name, Product.")
+                importDispatch({ type: "SET_ERROR", payload: "No valid orders found. Check required columns: Contact Name, Product." })
             } else if (mapped.length === 0) {
-                setImportError("File is empty.")
+                importDispatch({ type: "SET_ERROR", payload: "File is empty." })
             }
         }
 
@@ -189,7 +221,7 @@ export default function OrdersPage() {
                     processData(results.data)
                 },
                 error: (error: Error) => {
-                    setImportError(`CSV Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `CSV Parse Error: ${error.message}` })
                 }
             })
         } else if (fileExt === 'xlsx') {
@@ -203,7 +235,7 @@ export default function OrdersPage() {
                     const data = xlsx.utils.sheet_to_json(ws)
                     processData(data)
                 } catch (error: any) {
-                    setImportError(`Excel Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `Excel Parse Error: ${error.message}` })
                 }
             }
             reader.readAsBinaryString(file)
@@ -213,24 +245,24 @@ export default function OrdersPage() {
                 try {
                     const data = JSON.parse(evt.target?.result as string)
                     if (!Array.isArray(data)) {
-                        setImportError("JSON file must contain an array of objects.")
+                        importDispatch({ type: "SET_ERROR", payload: "JSON file must contain an array of objects." })
                         return
                     }
                     processData(data)
                 } catch (error: any) {
-                    setImportError(`JSON Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `JSON Parse Error: ${error.message}` })
                 }
             }
             reader.readAsText(file)
         } else {
-            setImportError("Unsupported file type. Please upload .csv, .xlsx, or .json")
+            importDispatch({ type: "SET_ERROR", payload: "Unsupported file type. Please upload .csv, .xlsx, or .json" })
         }
     }
 
     const handleImportConfirm = async () => {
         if (parsedOrders.length === 0) return
 
-        setImportLoading(true)
+        importDispatch({ type: "SET_LOADING", payload: true })
         try {
             let totalInserted = 0
             let totalSkipped = 0
@@ -245,8 +277,7 @@ export default function OrdersPage() {
                 totalSkipped += result.skipped
             }
 
-            setImportOpen(false)
-            setParsedOrders([])
+            importDispatch({ type: "RESET" })
             toast.success(`Imported ${totalInserted} orders.`)
 
             // Allow re-uploading the same file
@@ -255,7 +286,7 @@ export default function OrdersPage() {
         } catch (error: any) {
             toast.error(`Import failed: ${error.message}`)
         } finally {
-            setImportLoading(false)
+            importDispatch({ type: "SET_LOADING", payload: false })
         }
     }
 
@@ -269,7 +300,7 @@ export default function OrdersPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                    <Dialog open={importOpen} onOpenChange={(val) => importDispatch({ type: val ? "OPEN_IMPORT" : "CLOSE_IMPORT" })}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
                                 <Upload className="mr-2 h-4 w-4" />
@@ -338,10 +369,7 @@ export default function OrdersPage() {
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => {
-                                    setImportOpen(false)
-                                    setParsedOrders([])
-                                    setImportError(null)
-                                    setSkippedCount(0)
+                                    importDispatch({ type: "RESET" })
                                 }}>Cancel</Button>
                                 <Button onClick={handleImportConfirm} disabled={parsedOrders.length === 0 || importLoading}>
                                     {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

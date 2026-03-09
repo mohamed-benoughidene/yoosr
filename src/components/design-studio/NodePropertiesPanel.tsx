@@ -42,17 +42,19 @@ function NodePropertiesPanelContent({
     const labels = useQuery(api.settings.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
 
-    if (!node) return null;
-
-    const data = node.data as Record<string, any>;
+    const data = (node?.data || {}) as Record<string, any>;
     const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     const update = useCallback(
         (key: string, value: unknown) => {
-            onUpdateNode(node.id, { ...data, [key]: value });
+            if (node) {
+                onUpdateNode(node.id, { ...data, [key]: value });
+            }
         },
-        [node.id, data, onUpdateNode]
+        [node, data, onUpdateNode]
     );
+
+    if (!node) return null;
 
     return (
         <div className="flex h-full w-80 flex-col border-l bg-background">

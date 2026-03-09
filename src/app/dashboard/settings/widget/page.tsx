@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useState, useEffect, useRef } from "react"
+import { useReducer, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, RefreshCw, UserMinus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -38,38 +38,125 @@ const THEMES = {
     dark: { name: "Midnight", color: "#0f172a" },
 }
 
+
+interface WidgetConfig {
+    primaryColor: string;
+    align: "left" | "right";
+    logoUrl: string;
+    welcomeDelay: number;
+    enableWelcomeNotification: boolean;
+    autoCloseMinutes: number;
+    preChatFormEnabled: boolean;
+    contactMethod: "email" | "phone";
+    translations: {
+        headerTitle: string;
+        onlineStatus: string;
+        startChat: string;
+        welcomeMessage: string;
+        preChatTitle: string;
+        preChatSubtitle: string;
+    };
+}
+
+interface UiState {
+    loading: boolean;
+    iframeKey: number;
+    copiedHtml: boolean;
+    copiedNext: boolean;
+    copiedSnippet: boolean;
+    selectedPlatform: string;
+}
+
+interface WidgetSettingsState {
+    widgetConfig: WidgetConfig;
+    uiState: UiState;
+}
+
+type WidgetSettingsAction = 
+    | { type: "SET_THEME"; payload: string }
+    | { type: "SET_ALIGN"; payload: "left" | "right" }
+    | { type: "SET_LOGO_URL"; payload: string }
+    | { type: "SET_WELCOME_DELAY"; payload: number }
+    | { type: "SET_ENABLE_WELCOME"; payload: boolean }
+    | { type: "SET_AUTO_CLOSE"; payload: number }
+    | { type: "SET_PRE_CHAT_ENABLED"; payload: boolean }
+    | { type: "SET_CONTACT_METHOD"; payload: "email" | "phone" }
+    | { type: "UPDATE_TRANSLATION"; payload: { key: string; value: string } }
+    | { type: "SET_TRANSLATIONS"; payload: WidgetConfig["translations"] }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "INC_IFRAME_KEY" }
+    | { type: "SET_COPIED_HTML"; payload: boolean }
+    | { type: "SET_COPIED_NEXT"; payload: boolean }
+    | { type: "SET_COPIED_SNIPPET"; payload: boolean }
+    | { type: "SET_SELECTED_PLATFORM"; payload: string }
+
+const initialState: WidgetSettingsState = {
+    widgetConfig: {
+        primaryColor: "#000000",
+        align: "right",
+        logoUrl: "",
+        welcomeDelay: 3,
+        enableWelcomeNotification: true,
+        autoCloseMinutes: 30,
+        preChatFormEnabled: true,
+        contactMethod: "email",
+        translations: {
+            headerTitle: "Chat Support",
+            onlineStatus: "Online",
+            startChat: "Start Conversation",
+            welcomeMessage: "Hi there! How can we help you?",
+            preChatTitle: "Welcome!",
+            preChatSubtitle: "Please fill in your details to start chatting."
+        }
+    },
+    uiState: {
+        loading: false,
+        iframeKey: 0,
+        copiedHtml: false,
+        copiedNext: false,
+        copiedSnippet: false,
+        selectedPlatform: "html"
+    }
+}
+
+function widgetSettingsReducer(state: WidgetSettingsState, action: WidgetSettingsAction): WidgetSettingsState {
+    switch (action.type) {
+        case "SET_THEME": return { ...state, widgetConfig: { ...state.widgetConfig, primaryColor: action.payload } }
+        case "SET_ALIGN": return { ...state, widgetConfig: { ...state.widgetConfig, align: action.payload } }
+        case "SET_LOGO_URL": return { ...state, widgetConfig: { ...state.widgetConfig, logoUrl: action.payload } }
+        case "SET_WELCOME_DELAY": return { ...state, widgetConfig: { ...state.widgetConfig, welcomeDelay: action.payload } }
+        case "SET_ENABLE_WELCOME": return { ...state, widgetConfig: { ...state.widgetConfig, enableWelcomeNotification: action.payload } }
+        case "SET_AUTO_CLOSE": return { ...state, widgetConfig: { ...state.widgetConfig, autoCloseMinutes: action.payload } }
+        case "SET_PRE_CHAT_ENABLED": return { ...state, widgetConfig: { ...state.widgetConfig, preChatFormEnabled: action.payload } }
+        case "SET_CONTACT_METHOD": return { ...state, widgetConfig: { ...state.widgetConfig, contactMethod: action.payload } }
+        case "UPDATE_TRANSLATION": return {
+            ...state,
+            widgetConfig: { ...state.widgetConfig, translations: { ...state.widgetConfig.translations, [action.payload.key]: action.payload.value } }
+        }
+        case "SET_TRANSLATIONS": return { ...state, widgetConfig: { ...state.widgetConfig, translations: action.payload } }
+        case "SET_LOADING": return { ...state, uiState: { ...state.uiState, loading: action.payload } }
+        case "INC_IFRAME_KEY": return { ...state, uiState: { ...state.uiState, iframeKey: state.uiState.iframeKey + 1 } }
+        case "SET_COPIED_HTML": return { ...state, uiState: { ...state.uiState, copiedHtml: action.payload } }
+        case "SET_COPIED_NEXT": return { ...state, uiState: { ...state.uiState, copiedNext: action.payload } }
+        case "SET_COPIED_SNIPPET": return { ...state, uiState: { ...state.uiState, copiedSnippet: action.payload } }
+        case "SET_SELECTED_PLATFORM": return { ...state, uiState: { ...state.uiState, selectedPlatform: action.payload } }
+        default: return state;
+    }
+}
+
 export default function WidgetSetupPage() {
     const { activeProject } = useProject()
-    const [loading, setLoading] = useState(false)
-    const [iframeKey, setIframeKey] = useState(0)
+    const [state, dispatch] = useReducer(widgetSettingsReducer, initialState)
+    const { widgetConfig, uiState } = state
+    const {
+        primaryColor, align, logoUrl, welcomeDelay, enableWelcomeNotification,
+        autoCloseMinutes, preChatFormEnabled, contactMethod, translations
+    } = widgetConfig
+    const {
+        loading, iframeKey, copiedHtml, copiedNext, copiedSnippet, selectedPlatform
+    } = uiState
+
     const iframeRef = useRef<HTMLIFrameElement>(null)
-
-    // Config State
-    const [primaryColor, setPrimaryColor] = useState("#000000")
-    const [align, setAlign] = useState<"left" | "right">("right")
-    const [logoUrl, setLogoUrl] = useState("")
-
-    // New Config
-    const [welcomeDelay, setWelcomeDelay] = useState(3)
-    const [enableWelcomeNotification, setEnableWelcomeNotification] = useState(true)
-    const [autoCloseMinutes, setAutoCloseMinutes] = useState(30)
-    const [preChatFormEnabled, setPreChatFormEnabled] = useState(true)
-    const [contactMethod, setContactMethod] = useState<"email" | "phone">("email")
-
-    // Translations
-    const [translations, setTranslations] = useState({
-        headerTitle: "Chat Support",
-        onlineStatus: "Online",
-        startChat: "Start Conversation",
-        welcomeMessage: "Hi there! How can we help you?",
-        preChatTitle: "Welcome!",
-        preChatSubtitle: "Please fill in your details to start chatting."
-    })
-
-    const [copiedHtml, setCopiedHtml] = useState(false)
-    const [copiedNext, setCopiedNext] = useState(false)
-    const [copiedSnippet, setCopiedSnippet] = useState(false)
-    const [selectedPlatform, setSelectedPlatform] = useState("html")
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com')
 
@@ -78,28 +165,28 @@ export default function WidgetSetupPage() {
     useEffect(() => {
         if (activeProject?.widgetConfig) {
             const config = activeProject.widgetConfig as Record<string, any>
-            setPrimaryColor(config.primaryColor || "#6366f1")
-            setAlign(config.align || "right")
-            setLogoUrl(config.logoUrl || "")
-            setWelcomeDelay(config.welcomeDelay ?? 3)
-            setEnableWelcomeNotification(config.enableWelcomeNotification ?? true)
-            setAutoCloseMinutes(config.autoCloseMinutes ?? 30)
-            setPreChatFormEnabled(config.preChatFormEnabled ?? true)
-            setContactMethod(config.contactMethod || "email")
-            setTranslations({
+            dispatch({ type: "SET_THEME", payload: config.primaryColor || "#6366f1" })
+            dispatch({ type: "SET_ALIGN", payload: config.align || "right" })
+            dispatch({ type: "SET_LOGO_URL", payload: config.logoUrl || "" })
+            dispatch({ type: "SET_WELCOME_DELAY", payload: config.welcomeDelay ?? 3 })
+            dispatch({ type: "SET_ENABLE_WELCOME", payload: config.enableWelcomeNotification ?? true })
+            dispatch({ type: "SET_AUTO_CLOSE", payload: config.autoCloseMinutes ?? 30 })
+            dispatch({ type: "SET_PRE_CHAT_ENABLED", payload: config.preChatFormEnabled ?? true })
+            dispatch({ type: "SET_CONTACT_METHOD", payload: config.contactMethod || "email" })
+            dispatch({ type: "SET_TRANSLATIONS", payload: {
                 headerTitle: config.translations?.headerTitle || "Chat Support",
                 onlineStatus: config.translations?.onlineStatus || "Online",
                 startChat: config.translations?.startChat || "Start Conversation",
                 welcomeMessage: config.translations?.welcomeMessage || "Hi there! How can we help you?",
                 preChatTitle: config.translations?.preChatTitle || "Welcome!",
                 preChatSubtitle: config.translations?.preChatSubtitle || "Please fill in your details to start chatting."
-            })
+            }})
         }
     }, [activeProject])
 
     const handleSave = async () => {
         if (!activeProject) return
-        setLoading(true)
+        dispatch({ type: "SET_LOADING", payload: true })
 
         const config = {
             primaryColor,
@@ -120,24 +207,24 @@ export default function WidgetSetupPage() {
             })
             toast.success("Widget settings updated")
             // Reload preview to reflect changes
-            setIframeKey(k => k + 1)
+            dispatch({ type: "INC_IFRAME_KEY" })
         } catch {
             toast.error("Failed to update widget settings")
         }
-        setLoading(false)
+        dispatch({ type: "SET_LOADING", payload: false })
     }
 
     const copyToClipboard = (text: string, type: 'html' | 'next' | 'generic') => {
         navigator.clipboard.writeText(text)
         if (type === 'html') {
-            setCopiedHtml(true)
-            setTimeout(() => setCopiedHtml(false), 2000)
+            dispatch({ type: "SET_COPIED_HTML", payload: true })
+            setTimeout(() => dispatch({ type: "SET_COPIED_HTML", payload: false }), 2000)
         } else if (type === 'next') {
-            setCopiedNext(true)
-            setTimeout(() => setCopiedNext(false), 2000)
+            dispatch({ type: "SET_COPIED_NEXT", payload: true })
+            setTimeout(() => dispatch({ type: "SET_COPIED_NEXT", payload: false }), 2000)
         } else {
-            setCopiedSnippet(true)
-            setTimeout(() => setCopiedSnippet(false), 2000)
+            dispatch({ type: "SET_COPIED_SNIPPET", payload: true })
+            setTimeout(() => dispatch({ type: "SET_COPIED_SNIPPET", payload: false }), 2000)
         }
         toast.success("Snippet copied to clipboard")
     }
@@ -186,12 +273,12 @@ export default function WidgetSetupPage() {
     const applyTheme = (key: string) => {
         const theme = THEMES[key as keyof typeof THEMES]
         if (theme) {
-            setPrimaryColor(theme.color)
+            dispatch({ type: "SET_THEME", payload: theme.color })
         }
     }
 
     const updateTranslation = (key: string, value: string) => {
-        setTranslations(prev => ({ ...prev, [key]: value }))
+        dispatch({ type: "UPDATE_TRANSLATION", payload: { key, value } })
     }
 
     return (
@@ -257,11 +344,11 @@ export default function WidgetSetupPage() {
                                             type="color"
                                             className="w-12 h-10 p-1 cursor-pointer"
                                             value={primaryColor}
-                                            onChange={(e) => setPrimaryColor(e.target.value)}
+                                            onChange={(e) => dispatch({ type: "SET_THEME", payload: e.target.value })}
                                         />
                                         <Input
                                             value={primaryColor}
-                                            onChange={(e) => setPrimaryColor(e.target.value)}
+                                            onChange={(e) => dispatch({ type: "SET_THEME", payload: e.target.value })}
                                             className="font-mono"
                                         />
                                     </div>
@@ -280,7 +367,7 @@ export default function WidgetSetupPage() {
                                         id="logo"
                                         placeholder="https://example.com/logo.png"
                                         value={logoUrl}
-                                        onChange={(e) => setLogoUrl(e.target.value)}
+                                        onChange={(e) => dispatch({ type: "SET_LOGO_URL", payload: e.target.value })}
                                     />
                                     <p className="text-xs text-muted-foreground">URL to your company logo (displayed in header).</p>
                                 </div>
@@ -306,7 +393,7 @@ export default function WidgetSetupPage() {
                                     <Switch
                                         id="auto-open"
                                         checked={enableWelcomeNotification}
-                                        onCheckedChange={setEnableWelcomeNotification}
+                                        onCheckedChange={(v) => dispatch({ type: "SET_ENABLE_WELCOME", payload: v })}
                                     />
                                 </div>
 
@@ -320,7 +407,7 @@ export default function WidgetSetupPage() {
                                     <Switch
                                         id="pre-chat"
                                         checked={preChatFormEnabled}
-                                        onCheckedChange={setPreChatFormEnabled}
+                                        onCheckedChange={(v) => dispatch({ type: "SET_PRE_CHAT_ENABLED", payload: v })}
                                     />
                                 </div>
 
@@ -329,7 +416,7 @@ export default function WidgetSetupPage() {
                                         <Label>Contact Method</Label>
                                         <RadioGroup
                                             value={contactMethod}
-                                            onValueChange={(v) => setContactMethod(v as "email" | "phone")}
+                                            onValueChange={(v) => dispatch({ type: "SET_CONTACT_METHOD", payload: v as "email" | "phone" })}
                                             className="flex gap-4"
                                         >
                                             <div className="flex items-center space-x-2">
@@ -354,7 +441,7 @@ export default function WidgetSetupPage() {
                                                 min="0"
                                                 max="60"
                                                 value={welcomeDelay}
-                                                onChange={(e) => setWelcomeDelay(Number(e.target.value))}
+                                                onChange={(e) => dispatch({ type: "SET_WELCOME_DELAY", payload: Number(e.target.value) })}
                                                 className="w-24"
                                             />
                                             <span className="text-sm text-muted-foreground">
@@ -381,7 +468,7 @@ export default function WidgetSetupPage() {
                                             min="0"
                                             max="1440"
                                             value={autoCloseMinutes}
-                                            onChange={(e) => setAutoCloseMinutes(Number(e.target.value))}
+                                            onChange={(e) => dispatch({ type: "SET_AUTO_CLOSE", payload: Number(e.target.value) })}
                                             className="w-24"
                                         />
                                         <span className="text-sm text-muted-foreground">
@@ -449,7 +536,7 @@ export default function WidgetSetupPage() {
                             <CardContent className="space-y-4">
                                 <div className="max-w-[300px]">
                                     <Label className="mb-2 block">Platform</Label>
-                                    <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                                    <Select value={selectedPlatform} onValueChange={(v) => dispatch({ type: "SET_SELECTED_PLATFORM", payload: v })}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Select platform" />
                                         </SelectTrigger>
@@ -540,13 +627,13 @@ export default function WidgetSetupPage() {
                                 const win = iframeRef.current?.contentWindow
                                 if (win) {
                                     win.localStorage.removeItem("yoosr_visitor_id")
-                                    setIframeKey(k => k + 1)
+                                    dispatch({ type: "INC_IFRAME_KEY" })
                                     toast.success("Visitor session reset")
                                 }
                             } catch (e) {
                                 // Fallback if CORS prevents direct access (though same-origin should work)
                                 localStorage.removeItem("yoosr_visitor_id")
-                                setIframeKey(k => k + 1)
+                                dispatch({ type: "INC_IFRAME_KEY" })
                                 toast.success("Visitor session reset (global)")
                             }
                         }}

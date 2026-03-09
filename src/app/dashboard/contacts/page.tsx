@@ -32,11 +32,49 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useState } from "react"
+import { useState, useReducer } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
+
+interface ImportState {
+    importOpen: boolean;
+    importLoading: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    parsedContacts: any[];
+    skippedCount: number;
+    importError: string | null;
+}
+
+type ImportAction =
+    | { type: "OPEN_IMPORT" }
+    | { type: "CLOSE_IMPORT" }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | { type: "SET_PARSED"; payload: { data: any[], skipped: number } }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "SET_ERROR"; payload: string | null }
+    | { type: "RESET" }
+
+const initialImportState: ImportState = {
+    importOpen: false,
+    importLoading: false,
+    parsedContacts: [],
+    skippedCount: 0,
+    importError: null,
+}
+
+function importReducer(state: ImportState, action: ImportAction): ImportState {
+    switch (action.type) {
+        case "OPEN_IMPORT": return { ...state, importOpen: true }
+        case "CLOSE_IMPORT": return { ...state, importOpen: false }
+        case "SET_PARSED": return { ...state, parsedContacts: action.payload.data, skippedCount: action.payload.skipped }
+        case "SET_LOADING": return { ...state, importLoading: action.payload }
+        case "SET_ERROR": return { ...state, importError: action.payload }
+        case "RESET": return initialImportState
+        default: return state
+    }
+}
 
 export default function ContactsPage() {
     const { activeProject } = useProject()
@@ -57,12 +95,8 @@ export default function ContactsPage() {
         note: ""
     })
 
-    const [importOpen, setImportOpen] = useState(false)
-    const [importLoading, setImportLoading] = useState(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [parsedContacts, setParsedContacts] = useState<any[]>([])
-    const [skippedCount, setSkippedCount] = useState(0)
-    const [importError, setImportError] = useState<string | null>(null)
+    const [importState, importDispatch] = useReducer(importReducer, initialImportState)
+    const { importOpen, importLoading, parsedContacts, skippedCount, importError } = importState
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -151,9 +185,8 @@ export default function ContactsPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        setImportError(null)
-        setParsedContacts([])
-        setSkippedCount(0)
+        importDispatch({ type: "SET_ERROR", payload: null })
+        importDispatch({ type: "SET_PARSED", payload: { data: [], skipped: 0 } })
 
         const fileExt = file.name.split('.').pop()?.toLowerCase()
 
@@ -185,11 +218,10 @@ export default function ContactsPage() {
                 }
             }).filter(Boolean)
 
-            setSkippedCount(skipped)
-            setParsedContacts(mapped)
+            importDispatch({ type: "SET_PARSED", payload: { data: mapped, skipped } })
 
             if (mapped.length === 0) {
-                setImportError("No valid contacts found in file.")
+                importDispatch({ type: "SET_ERROR", payload: "No valid contacts found in file." })
             }
         }
 
@@ -201,7 +233,7 @@ export default function ContactsPage() {
                     processData(results.data)
                 },
                 error: (error: Error) => {
-                    setImportError(`CSV Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `CSV Parse Error: ${error.message}` })
                 }
             })
         } else if (fileExt === 'xlsx') {
@@ -216,7 +248,7 @@ export default function ContactsPage() {
                     processData(data)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any) {
-                    setImportError(`Excel Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `Excel Parse Error: ${error.message}` })
                 }
             }
             reader.readAsBinaryString(file)
@@ -226,25 +258,25 @@ export default function ContactsPage() {
                 try {
                     const data = JSON.parse(evt.target?.result as string)
                     if (!Array.isArray(data)) {
-                        setImportError("JSON file must contain an array of objects.")
+                        importDispatch({ type: "SET_ERROR", payload: "JSON file must contain an array of objects." })
                         return
                     }
                     processData(data)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (error: any) {
-                    setImportError(`JSON Parse Error: ${error.message}`)
+                    importDispatch({ type: "SET_ERROR", payload: `JSON Parse Error: ${error.message}` })
                 }
             }
             reader.readAsText(file)
         } else {
-            setImportError("Unsupported file type. Please upload .csv, .xlsx, or .json")
+            importDispatch({ type: "SET_ERROR", payload: "Unsupported file type. Please upload .csv, .xlsx, or .json" })
         }
     }
 
     const handleImportConfirm = async () => {
         if (parsedContacts.length === 0) return
 
-        setImportLoading(true)
+        importDispatch({ type: "SET_LOADING", payload: true })
         try {
             let totalInserted = 0
             let totalSkipped = 0
@@ -259,8 +291,7 @@ export default function ContactsPage() {
                 totalSkipped += result.skipped
             }
 
-            setImportOpen(false)
-            setParsedContacts([])
+            importDispatch({ type: "RESET" })
             toast.success(`Imported ${totalInserted} contacts. ${totalSkipped} skipped (duplicates).`)
 
             // Allow re-uploading the same file
@@ -271,7 +302,7 @@ export default function ContactsPage() {
             toast.error(`Import failed: ${error.message}`)
             console.error(error)
         } finally {
-            setImportLoading(false)
+            importDispatch({ type: "SET_LOADING", payload: false })
         }
     }
 
@@ -280,7 +311,7 @@ export default function ContactsPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Contacts</h1>
                 <div className="flex gap-2">
-                    <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                    <Dialog open={importOpen} onOpenChange={(val) => importDispatch({ type: val ? "OPEN_IMPORT" : "CLOSE_IMPORT" })}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
                                 <Upload className="mr-2 h-4 w-4" />
@@ -343,10 +374,7 @@ export default function ContactsPage() {
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => {
-                                    setImportOpen(false)
-                                    setParsedContacts([])
-                                    setImportError(null)
-                                    setSkippedCount(0)
+                                    importDispatch({ type: "RESET" })
                                 }}>Cancel</Button>
                                 <Button onClick={handleImportConfirm} disabled={parsedContacts.length === 0 || importLoading}>
                                     {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

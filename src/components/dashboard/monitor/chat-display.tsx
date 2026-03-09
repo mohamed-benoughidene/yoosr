@@ -578,6 +578,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
                 )}>
                     {showPicker && cannedResponses && (
                         <CannedResponsePicker
+                            key={pickerQuery}
                             responses={cannedResponses}
                             query={pickerQuery}
                             onSelect={handlePickerSelect}

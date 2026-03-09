@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react"
+import { ComponentProps, useState, useReducer } from "react"
 import { useOrganization } from "@clerk/nextjs"
 
 
@@ -87,6 +87,44 @@ const getChannelIcon = (channel: string) => {
     }
 }
 
+type SortOption = "timestamp" | "priority" | "sla"
+
+interface FiltersState {
+    activeLabel: string | null;
+    activeStatus: number | null;
+    activeAgent: string | null;
+    sortBy: SortOption;
+    searchQuery: string;
+}
+
+type FiltersAction =
+    | { type: "SET_LABEL", payload: string | null }
+    | { type: "SET_STATUS", payload: number | null }
+    | { type: "SET_AGENT", payload: string | null }
+    | { type: "SET_SORT", payload: SortOption }
+    | { type: "SET_SEARCH", payload: string }
+    | { type: "CLEAR_ALL" }
+
+const initialFilters: FiltersState = {
+    activeLabel: null,
+    activeStatus: null,
+    activeAgent: null,
+    sortBy: "timestamp",
+    searchQuery: ""
+}
+
+function filtersReducer(state: FiltersState, action: FiltersAction): FiltersState {
+    switch (action.type) {
+        case "SET_LABEL": return { ...state, activeLabel: action.payload }
+        case "SET_STATUS": return { ...state, activeStatus: action.payload }
+        case "SET_AGENT": return { ...state, activeAgent: action.payload }
+        case "SET_SORT": return { ...state, sortBy: action.payload }
+        case "SET_SEARCH": return { ...state, searchQuery: action.payload }
+        case "CLEAR_ALL": return initialFilters
+        default: return state
+    }
+}
+
 export function ConversationList({
     items,
     selectedId,
@@ -107,11 +145,8 @@ export function ConversationList({
         projectId ? { projectId } : "skip"
     )
 
-    const [activeLabel, setActiveLabel] = useState<string | null>(null)
-    const [activeStatus, setActiveStatus] = useState<number | null>(null)
-    const [activeAgent, setActiveAgent] = useState<string | null>(null)
-    const [sortBy, setSortBy] = useState<"timestamp" | "priority" | "sla">("timestamp")
-    const [searchQuery, setSearchQuery] = useState("")
+    const [filters, dispatch] = useReducer(filtersReducer, initialFilters)
+    const { activeLabel, activeStatus, activeAgent, sortBy, searchQuery } = filters
 
     const { memberships, isLoaded: membersLoaded } = useOrganization({
         memberships: {
@@ -190,7 +225,7 @@ export function ConversationList({
                         placeholder="Search conversations..."
                         className="pl-8"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => dispatch({ type: "SET_SEARCH", payload: e.target.value })}
                     />
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -212,7 +247,7 @@ export function ConversationList({
                                     variant="ghost"
                                     size="sm"
                                     className="justify-start font-normal h-8"
-                                    onClick={() => setActiveLabel(null)}
+                                    onClick={() => dispatch({ type: "SET_LABEL", payload: null })}
                                 >
                                     All Conversations
                                 </Button>
@@ -222,7 +257,7 @@ export function ConversationList({
                                         variant="ghost"
                                         size="sm"
                                         className="justify-start font-normal h-8 flex items-center gap-2"
-                                        onClick={() => setActiveLabel(activeLabel === label.name ? null : label.name)}
+                                        onClick={() => dispatch({ type: "SET_LABEL", payload: activeLabel === label.name ? null : label.name })}
                                     >
                                         <div
                                             className="w-2 h-2 rounded-full shrink-0"
@@ -294,13 +329,13 @@ export function ConversationList({
                         <DropdownMenuContent className="w-[200px]" align="start">
                             <DropdownMenuLabel className="text-xs font-medium">Filter by agent</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setActiveAgent(null)} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_AGENT", payload: null })} className="text-xs">
                                 All Agents
                             </DropdownMenuItem>
                             {agents?.map((agent) => (
                                 <DropdownMenuItem
                                     key={agent.id}
-                                    onClick={() => setActiveAgent(agent.id)}
+                                    onClick={() => dispatch({ type: "SET_AGENT", payload: agent.id })}
                                     className="text-xs"
                                 >
                                     <div className="flex items-center justify-between w-full">
@@ -333,13 +368,13 @@ export function ConversationList({
                         <DropdownMenuContent align="start" className="w-[150px]">
                             <DropdownMenuLabel className="text-xs font-medium">Sort by</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setSortBy("timestamp")} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "timestamp" })} className="text-xs">
                                 Recent
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setSortBy("priority")} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "priority" })} className="text-xs">
                                 Priority
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setSortBy("sla")} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "sla" })} className="text-xs">
                                 SLA Deadline
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -359,16 +394,16 @@ export function ConversationList({
                         <DropdownMenuContent className="w-[160px]" align="start">
                             <DropdownMenuLabel className="text-xs font-medium">Filter by status</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setActiveStatus(null)} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: null })} className="text-xs">
                                 All Statuses
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setActiveStatus(100)} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 100 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
                                     <span>Open</span>
                                     {activeStatus === 100 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setActiveStatus(200)} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 200 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
                                     <span>Assigned</span>
                                     {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}

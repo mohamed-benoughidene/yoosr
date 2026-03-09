@@ -28,6 +28,7 @@ import type * as integrations from "../integrations.js";
 import type * as knowledge from "../knowledge.js";
 import type * as knowledgeBases from "../knowledgeBases.js";
 import type * as labels from "../labels.js";
+import type * as lib_crypto from "../lib/crypto.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   knowledge: typeof knowledge;
   knowledgeBases: typeof knowledgeBases;
   labels: typeof labels;
+  "lib/crypto": typeof lib_crypto;
   messages: typeof messages;
   migrations: typeof migrations;
   notifications: typeof notifications;

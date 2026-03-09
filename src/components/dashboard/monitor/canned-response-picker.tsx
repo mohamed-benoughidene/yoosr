@@ -25,13 +25,7 @@ export function CannedResponsePicker({
     onClose,
 }: CannedResponsePickerProps) {
     const [selectedIndex, setSelectedIndex] = useState(0)
-    const [prevQuery, setPrevQuery] = useState(query)
     const listRef = useRef<HTMLDivElement>(null)
-
-    if (query !== prevQuery) {
-        setSelectedIndex(0)
-        setPrevQuery(query)
-    }
 
     const filteredResponses = responses.filter((r) =>
         r.trigger.toLowerCase().includes(query.toLowerCase())
