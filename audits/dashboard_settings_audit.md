@@ -407,7 +407,8 @@ type ClerkIdentity = {
 
 ## 8. Route Protection (Next.js Middleware)
 
-**File:** `src/middleware.ts`
+**File:** `src/proxy.ts`
+
 
 ```typescript
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
