@@ -21,7 +21,9 @@ import { useState } from "react"
 
 type ChatTab = "all" | "unread"
 
-export function ConversationList() {
+import { Suspense } from "react"
+
+function ConversationListContent() {
     const { activeProject } = useProject()
     const { user } = useUser()
     const searchParams = useSearchParams()
@@ -192,5 +194,13 @@ export function ConversationList() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export function ConversationList() {
+    return (
+        <Suspense fallback={null}>
+            <ConversationListContent />
+        </Suspense>
     )
 }

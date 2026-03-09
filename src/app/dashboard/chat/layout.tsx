@@ -28,7 +28,7 @@ function VisitorPanelWrapper() {
     return <VisitorPanel conversationId={conversationId} />
 }
 
-export default function ChatLayout({
+function ChatLayoutContent({
     children,
 }: {
     children: React.ReactNode
@@ -65,5 +65,13 @@ export default function ChatLayout({
                 </ResizablePanel>
             </ResizablePanelGroup>
         </div>
+    )
+}
+
+export default function ChatLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={null}>
+            <ChatLayoutContent>{children}</ChatLayoutContent>
+        </Suspense>
     )
 }

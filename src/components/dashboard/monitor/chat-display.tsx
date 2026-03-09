@@ -234,7 +234,7 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
             const newValue = inputValue.substring(0, lastSlashIndex) + processedMessage;
             setInputValue(newValue);
         } else {
-            setInputValue(inputValue + processedMessage);
+            setInputValue(prev => prev + processedMessage);
         }
 
         setShowPicker(false);

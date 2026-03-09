@@ -14,7 +14,9 @@ interface FlowToolbarProps {
     onToggleAIBar?: () => void;
 }
 
-export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger, isAIBarOpen, onToggleAIBar }: FlowToolbarProps) {
+import { Suspense } from "react";
+
+function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger, isAIBarOpen, onToggleAIBar }: FlowToolbarProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project");
@@ -89,5 +91,13 @@ export function FlowToolbar({ botName, saveState, onSave, isDebuggerOpen, onTogg
                 )}
             </div>
         </div>
+    );
+}
+
+export function FlowToolbar(props: FlowToolbarProps) {
+    return (
+        <Suspense fallback={<div className="h-14 border-b bg-background px-4 flex items-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>}>
+            <FlowToolbarContent {...props} />
+        </Suspense>
     );
 }

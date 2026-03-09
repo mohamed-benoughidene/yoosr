@@ -9,7 +9,9 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
 
-export default function DesignStudioLayout({
+import { Suspense } from "react";
+
+function DesignStudioLayoutContent({
     children,
 }: {
     children: React.ReactNode;
@@ -55,4 +57,20 @@ export default function DesignStudioLayout({
 
     // Render children directly (standalone layout, no sidebar/header)
     return <div className="h-screen w-full bg-background">{children}</div>;
+}
+
+export default function DesignStudioLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <DesignStudioLayoutContent>{children}</DesignStudioLayoutContent>
+        </Suspense>
+    );
 }

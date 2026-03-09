@@ -30,7 +30,9 @@ import { useUser, useOrganization } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picker"
 
-export function ChatArea() {
+import { Suspense } from "react"
+
+function ChatAreaContent() {
     const searchParams = useSearchParams()
     const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null
     const { user } = useUser()
@@ -279,7 +281,7 @@ export function ChatArea() {
             const newValue = inputValue.substring(0, lastSlashIndex) + processedMessage;
             setInputValue(newValue);
         } else {
-            setInputValue(inputValue + processedMessage);
+            setInputValue(prev => prev + processedMessage);
         }
 
         setShowPicker(false);
@@ -605,5 +607,13 @@ export function ChatArea() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export function ChatArea() {
+    return (
+        <Suspense fallback={null}>
+            <ChatAreaContent />
+        </Suspense>
     )
 }

@@ -28,7 +28,9 @@ interface NodePropertiesPanelProps {
     onDeleteNode: (nodeId: string) => void;
 }
 
-export function NodePropertiesPanel({
+import { Suspense } from "react";
+
+function NodePropertiesPanelContent({
     node,
     onUpdateNode,
     onClose,
@@ -38,11 +40,11 @@ export function NodePropertiesPanel({
     const projectId = searchParams.get("project") as Id<"projects"> | null;
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
     const labels = useQuery(api.settings.listLabels, projectId ? { projectId } : "skip") || [];
+    const { activeProject } = useProject();
 
     if (!node) return null;
 
     const data = node.data as Record<string, any>;
-    const { activeProject } = useProject();
     const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     const update = useCallback(
@@ -651,5 +653,13 @@ export function NodePropertiesPanel({
                 </div>
             )}
         </div>
+    );
+}
+
+export function NodePropertiesPanel(props: NodePropertiesPanelProps) {
+    return (
+        <Suspense fallback={null}>
+            <NodePropertiesPanelContent {...props} />
+        </Suspense>
     );
 }

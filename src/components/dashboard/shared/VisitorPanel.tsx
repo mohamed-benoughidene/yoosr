@@ -93,11 +93,12 @@ function InlineEditField({
     onSave: (value: string) => void
 }) {
     const [editing, setEditing] = useState(false)
-    const [draft, setDraft] = useState(value)
+    const [draft, setDraft] = useState("")
 
-    useEffect(() => {
+    const handleStartEdit = () => {
         setDraft(value)
-    }, [value])
+        setEditing(true)
+    }
 
     const handleSave = useCallback(() => {
         setEditing(false)
@@ -108,8 +109,7 @@ function InlineEditField({
 
     const handleCancel = useCallback(() => {
         setEditing(false)
-        setDraft(value)
-    }, [value])
+    }, [])
 
     const handleBlur = () => {
         handleSave()
@@ -170,7 +170,7 @@ function InlineEditField({
     return (
         <div
             className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-muted/50 rounded-md px-1 py-1.5 -mx-1 transition-colors"
-            onClick={() => setEditing(true)}
+            onClick={handleStartEdit}
         >
             <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className={value ? "truncate whitespace-pre-wrap" : "text-muted-foreground truncate"}>
