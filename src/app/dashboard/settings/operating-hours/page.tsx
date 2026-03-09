@@ -295,7 +295,7 @@ export default function OperatingHoursPage() {
                                 <>
                                     {day.slots.map((slot, slotIndex) => (
                                         <div
-                                            key={slotIndex}
+                                            key={`slot-${slotIndex}`}
                                             className="flex items-center gap-2"
                                         >
                                             <Select

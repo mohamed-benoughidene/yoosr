@@ -100,7 +100,7 @@ function NodePropertiesPanelContent({
                                 </Button>
                             </div>
                             {(data.textVariations || (data.text ? [data.text] : [""])).map((text: string, i: number) => (
-                                <div key={i} className="flex flex-col gap-1 relative border p-2 rounded-md bg-muted/30 pointer-events-auto">
+                                <div key={`variation-${i}`} className="flex flex-col gap-1 relative border p-2 rounded-md bg-muted/30 pointer-events-auto">
                                     {((data.textVariations || [data.text]).length > 1) && (
                                         <Button variant="ghost" size="icon" onClick={() => {
                                             const textVariations = [...(data.textVariations || [data.text])];
@@ -147,7 +147,7 @@ function NodePropertiesPanelContent({
                                 </Button>
                             </div>
                             {(data.buttons || []).map((btn: any, i: number) => (
-                                <div key={i} className="flex items-center gap-1.5">
+                                <div key={`button-${i}`} className="flex items-center gap-1.5">
                                     <Input
                                         value={btn.label}
                                         onChange={(e) => {
