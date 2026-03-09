@@ -1,6 +1,7 @@
 "use client"
 
 import { useReducer, useEffect, useRef, useCallback } from "react"
+import Image from "next/image"
 import { RatingComponent } from "./rating-component"
 import { PreChatForm } from "./components/PreChatForm"
 
@@ -482,7 +483,7 @@ export default function WidgetPage() {
             >
                 {logoUrl && (
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
-                        <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
+                        <Image src={logoUrl} width={40} height={40} className="w-full h-full object-cover" alt="Logo" />
                     </div>
                 )}
                 <div className="flex-1">
@@ -512,7 +513,7 @@ export default function WidgetPage() {
                                 {!isVisitor && (
                                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 overflow-hidden mr-2 mt-1">
                                         {logoUrl ? (
-                                            <img src={logoUrl} className="w-full h-full object-cover" alt="Avatar" />
+                                            <Image src={logoUrl} width={32} height={32} className="w-full h-full object-cover" alt="Avatar" />
                                         ) : (
                                             <span className="text-xs font-semibold text-gray-500">
                                                 {msg.senderType === "bot" ? "AI" : "A"}
