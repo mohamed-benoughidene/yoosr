@@ -4,11 +4,22 @@ import { useState, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
-import { ConversationVolumeChart } from "@/components/analytics/ConversationVolumeChart";
+import dynamic from "next/dynamic";
+
+const ConversationVolumeChart = dynamic(
+    () => import("@/components/analytics/ConversationVolumeChart")
+        .then(m => ({ default: m.ConversationVolumeChart })),
+    { ssr: false }
+);
+const AnalyticsTagsChart = dynamic(
+    () => import("@/components/analytics/AnalyticsTagsChart")
+        .then(m => ({ default: m.AnalyticsTagsChart })),
+    { ssr: false }
+);
+
 import { AnalyticsCSAT } from "@/components/analytics/AnalyticsCSAT";
 import { AnalyticsUnansweredQueries } from "@/components/analytics/AnalyticsUnansweredQueries";
 import { AnalyticsUsageQuotas } from "@/components/analytics/AnalyticsUsageQuotas";
-import { AnalyticsTagsChart } from "@/components/analytics/AnalyticsTagsChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
