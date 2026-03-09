@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
 import {
     Select,
     SelectContent,
@@ -30,13 +29,8 @@ import { toast } from "sonner"
 import {
     Loader2,
     Copy,
-    Eye,
-    EyeOff,
-    RefreshCw,
     AlertTriangle,
     Trash2,
-    Shield,
-    Key,
 } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
@@ -56,10 +50,6 @@ export default function SettingsPage() {
     const [projectDesc, setProjectDesc] = useState("")
     const [defaultModel, setDefaultModel] = useState("mistralai/mistral-small-3.1-24b-instruct:free")
     const [slaHours, setSlaHours] = useState("")
-
-    // Developer settings state
-    const [showApiKey, setShowApiKey] = useState(false)
-    const [showJwtSecret, setShowJwtSecret] = useState(false)
 
     // Advanced state
     const [confirmDelete, setConfirmDelete] = useState("")
@@ -115,14 +105,7 @@ export default function SettingsPage() {
         toast.success(`${label} copied to clipboard`)
     }
 
-    // Derived keys
     const projectId = activeProject?._id || ""
-    const apiKey = activeProject
-        ? `ys_${btoa(projectId).replace(/=/g, "").slice(0, 24)}`
-        : ""
-    const jwtSecret = activeProject
-        ? `ysjwt_${btoa(projectId + "_secret").replace(/=/g, "").slice(0, 32)}`
-        : ""
 
     const handleDeleteProject = async () => {
         if (!activeProject) return
@@ -147,16 +130,15 @@ export default function SettingsPage() {
             <div>
                 <h3 className="text-lg font-medium">Project Settings</h3>
                 <p className="text-sm text-muted-foreground">
-                    Manage your project configuration, security, and developer settings.
+                    Manage your project configuration.
                 </p>
             </div>
             <Separator />
 
             <Tabs defaultValue="general" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsList className="grid w-full grid-cols-2 max-w-md">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                    <TabsTrigger value="developer">Developer</TabsTrigger>
                 </TabsList>
 
                 {/* ──────── GENERAL TAB ──────── */}
@@ -277,57 +259,6 @@ export default function SettingsPage() {
 
                 {/* ──────── ADVANCED TAB ──────── */}
                 <TabsContent value="advanced" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Shield className="h-5 w-5 text-muted-foreground" />
-                                Security Preferences
-                            </CardTitle>
-                            <CardDescription>
-                                Configure security settings for your project.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">
-                                        Require Email Verification
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Contacts must verify their email before
-                                        starting a conversation.
-                                    </p>
-                                </div>
-                                <Switch defaultChecked={false} />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">
-                                        Block Spam Messages
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Automatically filter and block suspected
-                                        spam conversations.
-                                    </p>
-                                </div>
-                                <Switch defaultChecked={true} />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">
-                                        IP Rate Limiting
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Limit API requests per IP to prevent
-                                        abuse.
-                                    </p>
-                                </div>
-                                <Switch defaultChecked={true} />
-                            </div>
-                        </CardContent>
-                    </Card>
 
                     {/* Danger Zone */}
                     {isAdmin && (
@@ -396,138 +327,6 @@ export default function SettingsPage() {
                     )}
                 </TabsContent>
 
-                {/* ──────── DEVELOPER TAB ──────── */}
-                <TabsContent value="developer" className="space-y-6">
-                    {/* API Key */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Key className="h-5 w-5 text-muted-foreground" />
-                                API Key
-                            </CardTitle>
-                            <CardDescription>
-                                Use this key to authenticate REST API requests.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex gap-2">
-                                <Input
-                                    readOnly
-                                    value={
-                                        showApiKey
-                                            ? apiKey
-                                            : "•".repeat(32)
-                                    }
-                                    className="font-mono text-xs bg-muted"
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="shrink-0"
-                                    onClick={() => setShowApiKey(!showApiKey)}
-                                >
-                                    {showApiKey ? (
-                                        <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                        <Eye className="h-4 w-4" />
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="shrink-0"
-                                    onClick={() =>
-                                        copyToClipboard(apiKey, "API Key")
-                                    }
-                                >
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Include this key in the{" "}
-                                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                                    Authorization
-                                </code>{" "}
-                                header:{" "}
-                                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                                    Bearer {"<api_key>"}
-                                </code>
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    {/* JWT Secret */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Shield className="h-5 w-5 text-muted-foreground" />
-                                JWT Secret
-                            </CardTitle>
-                            <CardDescription>
-                                Used to sign and verify JWT tokens for
-                                authenticated users.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex gap-2">
-                                <Input
-                                    readOnly
-                                    value={
-                                        showJwtSecret
-                                            ? jwtSecret
-                                            : "•".repeat(40)
-                                    }
-                                    className="font-mono text-xs bg-muted"
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="shrink-0"
-                                    onClick={() =>
-                                        setShowJwtSecret(!showJwtSecret)
-                                    }
-                                >
-                                    {showJwtSecret ? (
-                                        <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                        <Eye className="h-4 w-4" />
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="shrink-0"
-                                    onClick={() =>
-                                        copyToClipboard(
-                                            jwtSecret,
-                                            "JWT Secret"
-                                        )
-                                    }
-                                >
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() =>
-                                        toast.info(
-                                            "Secret rotation is not yet available."
-                                        )
-                                    }
-                                >
-                                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                                    Rotate Secret
-                                </Button>
-                                <p className="text-xs text-muted-foreground">
-                                    Rotating will invalidate existing tokens.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
             </Tabs>
         </div>
     )

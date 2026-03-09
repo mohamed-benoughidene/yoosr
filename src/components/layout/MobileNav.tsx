@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import Link from "next/link"
@@ -13,6 +13,12 @@ export function MobileNav() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                    <SheetTitle className="sr-only">Menu</SheetTitle>
+                    <SheetDescription className="sr-only">
+                        Navigation links for Yoosr landing page.
+                    </SheetDescription>
+                </SheetHeader>
                 <nav className="flex flex-col gap-4">
                     <Link href="/" className="text-lg font-bold">
                         Yoosr
