@@ -24,7 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import {
     Loader2,
@@ -44,12 +44,18 @@ const AVAILABLE_MODELS = [
 
 export default function SettingsPage() {
     const { activeProject } = useProject()
+
+    return <SettingsContent key={activeProject?._id} />
+}
+
+function SettingsContent() {
+    const { activeProject } = useProject()
     const isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
-    const [projectName, setProjectName] = useState("")
-    const [projectDesc, setProjectDesc] = useState("")
-    const [defaultModel, setDefaultModel] = useState("mistralai/mistral-small-3.1-24b-instruct:free")
-    const [slaHours, setSlaHours] = useState("")
+    const [projectName, setProjectName] = useState(activeProject?.name || "")
+    const [projectDesc, setProjectDesc] = useState(activeProject?.description || "")
+    const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
+    const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")
 
     // Advanced state
     const [confirmDelete, setConfirmDelete] = useState("")
@@ -57,15 +63,6 @@ export default function SettingsPage() {
 
     const updateProject = useMutation(api.projects.update)
     const removeProject = useMutation(api.projects.remove)
-
-    useEffect(() => {
-        if (activeProject) {
-            setProjectName(activeProject.name)
-            setProjectDesc(activeProject.description || "")
-            setDefaultModel(activeProject.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
-            setSlaHours(activeProject.slaHours ? String(activeProject.slaHours) : "")
-        }
-    }, [activeProject])
 
     const handleSave = async () => {
         if (!activeProject) return

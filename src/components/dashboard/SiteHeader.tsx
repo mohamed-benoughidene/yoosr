@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback } from "react"
 import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -39,24 +39,11 @@ export function SiteHeader() {
     const profile = useQuery(api.profiles.getMe)
     const setAvailability = useMutation(api.profiles.setAvailability)
 
-    const [isAvailable, setIsAvailable] = useState(true)
-
-    useEffect(() => {
-        if (profile) {
-            setIsAvailable(profile.isAvailable ?? true)
-        }
-    }, [profile])
-
-
     const handleCheckedChange = async (val: boolean) => {
-        setIsAvailable(val)
         try {
             await setAvailability({ isAvailable: val })
         } catch (error) {
             console.error("Failed to update availability:", error)
-            if (profile) {
-                setIsAvailable(profile.isAvailable ?? true)
-            }
         }
     }
 
@@ -75,11 +62,11 @@ export function SiteHeader() {
                 <div className="flex items-center gap-2">
                     <Switch
                         id="availability"
-                        checked={isAvailable}
+                        checked={profile?.isAvailable ?? true}
                         onCheckedChange={handleCheckedChange}
                         disabled={profile === undefined}
                     />
-                    <label htmlFor="availability" className={`cursor-pointer select-none text-sm font-medium ${isAvailable ? "text-green-600" : "text-muted-foreground"}`}>
+                    <label htmlFor="availability" className={`cursor-pointer select-none text-sm font-medium ${profile?.isAvailable ?? true ? "text-green-600" : "text-muted-foreground"}`}>
                         Available
                     </label>
                 </div>

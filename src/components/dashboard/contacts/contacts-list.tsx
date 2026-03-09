@@ -333,6 +333,7 @@ export function ContactsList() {
             </div>
 
             <EditContactDialog
+                key={selectedContact?._id}
                 contact={selectedContact}
                 open={editDialogOpen}
                 onOpenChange={setEditDialogOpen}

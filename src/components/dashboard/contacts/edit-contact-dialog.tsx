@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
@@ -39,24 +39,12 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
     const updateContact = useMutation(api.contacts.update)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        note: ""
+        name: contact?.name || "",
+        email: contact?.email || "",
+        phone: contact?.phone || "",
+        address: contact?.address || "",
+        note: contact?.note || ""
     })
-
-    useEffect(() => {
-        if (contact) {
-            setFormData({
-                name: contact.name || "",
-                email: contact.email || "",
-                phone: contact.phone || "",
-                address: contact.address || "",
-                note: contact.note || ""
-            })
-        }
-    }, [contact])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
