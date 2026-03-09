@@ -1,5 +1,15 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params
+    const formattedSlug = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    return {
+        title: `${formattedSlug} Solutions — Yoosr`,
+        description: `See how Yoosr helps ${slug.replace(/-/g, ' ')} businesses manage customer support.`
+    }
+}
 import Link from "next/link"
 import { ArrowLeft, CheckCircle2 } from "lucide-react"
 

@@ -1,4 +1,10 @@
+import type { Metadata } from "next"
 import React from "react";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — Yoosr",
+  description: "How Yoosr collects, uses, and protects your data."
+}
 
 export default function PrivacyPolicy() {
   const lastUpdated = "March 2025";

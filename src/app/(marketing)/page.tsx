@@ -1,5 +1,11 @@
+import type { Metadata } from "next"
 import { Hero } from "@/components/landing/Hero"
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid"
+
+export const metadata: Metadata = {
+  title: "Yoosr — Customer Support for MENA Businesses",
+  description: "Live chat, bot automation, and team inbox built for MENA businesses. Start for free."
+}
 import { DesignStudioSection } from "@/components/landing/DesignStudioSection"
 import { HowItWorks } from "@/components/landing/HowItWorks"
 import { ChannelsSection } from "@/components/landing/ChannelsSection"
