@@ -23,7 +23,9 @@ export function NavbarCTA() {
                 <Button asChild variant="default">
                     <Link href="/dashboard">Go to Dashboard</Link>
                 </Button>
-                <UserButton afterSignOutUrl="/" />
+                <div className="hidden lg:flex">
+                    <UserButton afterSignOutUrl="/" />
+                </div>
             </div>
         )
     }

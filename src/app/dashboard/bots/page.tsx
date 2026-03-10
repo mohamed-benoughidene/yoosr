@@ -109,14 +109,14 @@ export default function BotsPage() {
 
             {/* Main Content */}
             <div className="flex-1 p-6 space-y-6 overflow-auto">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Flows</h1>
                         <p className="text-muted-foreground">
                             Design and manage your conversational flows.
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 shrink-0">
                         <Button variant="outline">
                             <LayoutTemplate className="mr-2 h-4 w-4" />
                             Templates

@@ -22,6 +22,8 @@ export default function MonitorLayout() {
 
     const [activeDeptId, setActiveDeptId] = React.useState<Id<"departments"> | null>(null)
 
+    const [mobileView, setMobileView] = React.useState<"list" | "chat" | "contact">("list")
+
     const conversations = useQuery(
         api.conversations.getConversations,
         projectId ? {
@@ -60,44 +62,95 @@ export default function MonitorLayout() {
                         </div>
                     </div>
                 ) : (
-                    <ResizablePanelGroup
-                        direction="horizontal"
-                        className="h-full items-stretch"
-                    >
-                        <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                            <ConversationList
-                                items={conversations}
-                                selectedId={selectedConversationId}
-                                onSelect={setSelectedConversationId}
-                                activeDeptId={activeDeptId}
-                                onDeptChange={setActiveDeptId}
-                            />
-                        </ResizablePanel>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={50} minSize={30}>
-                            {selectedConversation ? (
-                                <ChatDisplay conversation={selectedConversation} />
-                            ) : conversations.length === 0 ? (
-                                <div className="flex h-full items-center justify-center flex-col gap-4">
-                                    <span className="text-muted-foreground">No conversations yet</span>
-                                </div>
-                            ) : (
-                                <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
-                                    Select a conversation to start chatting
-                                </div>
+                    <>
+                        {/* Mobile View — hidden on desktop */}
+                        <div className="flex flex-col h-full lg:hidden w-full overflow-hidden">
+                            {mobileView === "list" && (
+                                <ConversationList
+                                    items={conversations}
+                                    selectedId={selectedConversationId}
+                                    onSelect={setSelectedConversationId}
+                                    activeDeptId={activeDeptId}
+                                    onDeptChange={setActiveDeptId}
+                                    onSelectConversation={(id) => {
+                                        setSelectedConversationId(id)
+                                        setMobileView("chat")
+                                    }}
+                                />
                             )}
-                        </ResizablePanel>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                            {selectedConversation ? (
-                                <VisitorPanel conversationId={selectedConversation.id as Id<"conversations">} />
-                            ) : (
-                                <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-                                    Select a conversation to view details
-                                </div>
+                            {mobileView === "chat" && (
+                                selectedConversation ? (
+                                    <ChatDisplay 
+                                        conversation={selectedConversation} 
+                                        onBack={() => setMobileView("list")}
+                                        onOpenContact={() => setMobileView("contact")}
+                                    />
+                                ) : conversations.length === 0 ? (
+                                    <div className="flex h-full items-center justify-center flex-col gap-4">
+                                        <span className="text-muted-foreground">No conversations yet</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
+                                        Select a conversation to start chatting
+                                    </div>
+                                )
                             )}
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
+                            {mobileView === "contact" && (
+                                selectedConversation ? (
+                                    <VisitorPanel 
+                                        conversationId={selectedConversation.id as Id<"conversations">} 
+                                        onBack={() => setMobileView("chat")}
+                                    />
+                                ) : (
+                                    <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+                                        Select a conversation to view details
+                                    </div>
+                                )
+                            )}
+                        </div>
+
+                        {/* Desktop View — hidden on mobile */}
+                        <div className="hidden lg:flex h-full w-full overflow-hidden">
+                            <ResizablePanelGroup
+                                direction="horizontal"
+                                className="h-full items-stretch"
+                            >
+                                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                                    <ConversationList
+                                        items={conversations}
+                                        selectedId={selectedConversationId}
+                                        onSelect={setSelectedConversationId}
+                                        activeDeptId={activeDeptId}
+                                        onDeptChange={setActiveDeptId}
+                                    />
+                                </ResizablePanel>
+                                <ResizableHandle withHandle />
+                                <ResizablePanel defaultSize={50} minSize={30}>
+                                    {selectedConversation ? (
+                                        <ChatDisplay conversation={selectedConversation} />
+                                    ) : conversations.length === 0 ? (
+                                        <div className="flex h-full items-center justify-center flex-col gap-4">
+                                            <span className="text-muted-foreground">No conversations yet</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
+                                            Select a conversation to start chatting
+                                        </div>
+                                    )}
+                                </ResizablePanel>
+                                <ResizableHandle withHandle />
+                                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                                    {selectedConversation ? (
+                                        <VisitorPanel conversationId={selectedConversation.id as Id<"conversations">} />
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+                                            Select a conversation to view details
+                                        </div>
+                                    )}
+                                </ResizablePanel>
+                            </ResizablePanelGroup>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

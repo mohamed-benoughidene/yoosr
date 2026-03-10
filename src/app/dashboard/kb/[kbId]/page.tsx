@@ -104,12 +104,12 @@ export default function KnowledgeBaseDetailsPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-6 border-b">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Knowledge Base Details</h1>
                     <p className="text-muted-foreground">Manage data sources for your AI agents.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 shrink-0">
                     <Button
                         variant="outline"
                         onClick={handleExport}
@@ -144,15 +144,15 @@ export default function KnowledgeBaseDetailsPage() {
                     </Card>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <h2 className="text-lg font-semibold">Data Sources</h2>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 shrink-0">
                         {isAdmin && <AddContentDialog onAdd={handleAddContent} />}
                     </div>
                 </div>
 
-                <div className="border rounded-md">
-                    <div className="grid grid-cols-12 gap-4 p-4 border-b bg-muted/50 font-medium text-sm">
+                <div className="border rounded-md overflow-x-auto">
+                    <div className="grid grid-cols-12 gap-4 p-4 border-b bg-muted/50 font-medium text-sm min-w-[800px]">
                         <div className="col-span-1">Type</div>
                         <div className="col-span-6">Source</div>
                         <div className="col-span-2">Status</div>
@@ -165,7 +165,7 @@ export default function KnowledgeBaseDetailsPage() {
                         </div>
                     ) : (
                         contents.map((item: any) => (
-                            <div key={item._id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm hover:bg-muted/10 transition-colors">
+                            <div key={item._id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm hover:bg-muted/10 transition-colors min-w-[800px]">
                                 <div className="col-span-1">
                                     {item.type === 'url' && (
                                         <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">

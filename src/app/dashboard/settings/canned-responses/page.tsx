@@ -176,14 +176,15 @@ export default function CannedResponsesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h3 className="text-lg font-medium">Canned Responses</h3>
                     <p className="text-sm text-muted-foreground">
                         Create quick replies for your agents. Use <code className="text-xs bg-muted px-1 py-0.5 rounded">/</code> in chat to access them.
                     </p>
                 </div>
-                <Dialog
+                <div className="flex flex-wrap gap-2 shrink-0">
+                    <Dialog
                     open={createOpen}
                     onOpenChange={(open) => {
                         setCreateOpen(open)
@@ -276,7 +277,8 @@ export default function CannedResponsesPage() {
                     </DialogContent>
                 </Dialog>
             </div>
-            <Separator />
+        </div>
+        <Separator />
 
             {/* Search */}
             {responses.length > 0 && (

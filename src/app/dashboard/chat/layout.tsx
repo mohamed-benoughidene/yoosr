@@ -8,7 +8,7 @@ import {
 import { ConversationList } from "@/components/chat/ConversationList"
 import { ChatArea } from "@/components/chat/ChatArea"
 import { VisitorPanel } from "@/components/dashboard/shared/VisitorPanel"
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Id } from "../../../../convex/_generated/dataModel"
@@ -33,37 +33,70 @@ function ChatLayoutContent({
 }: {
     children: React.ReactNode
 }) {
+    const [mobileView, setMobileView] = useState<"list" | "chat" | "contact">("list")
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+
     return (
-        <div className="h-[calc(100vh-64px)] w-full border rounded-lg bg-background">
-            <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                    <Suspense fallback={
-                        <div className="flex h-full items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
-                    }>
-                        <ConversationList />
-                    </Suspense>
-                </ResizablePanel>
+        <div className="h-[calc(100vh-64px)] w-full border rounded-lg bg-background overflow-hidden">
+            {/* Mobile View */}
+            <div className="flex flex-col h-full lg:hidden">
+                {mobileView === "list" && (
+                    <ConversationList
+                        onSelectConversation={(id) => {
+                            setSelectedConversationId(id)
+                            setMobileView("chat")
+                        }}
+                    />
+                )}
+                {mobileView === "chat" && (
+                    <ChatArea
+                        conversationId={selectedConversationId}
+                        onBack={() => setMobileView("list")}
+                        onOpenContact={() => setMobileView("contact")}
+                    />
+                )}
+                {mobileView === "contact" && (
+                    selectedConversationId && (
+                        <VisitorPanel
+                            conversationId={selectedConversationId as Id<"conversations">}
+                            onBack={() => setMobileView("chat")}
+                        />
+                    )
+                )}
+            </div>
 
-                <ResizableHandle />
+            {/* Desktop View */}
+            <div className="hidden lg:flex h-full w-full">
+                <ResizablePanelGroup direction="horizontal">
+                    <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                        <Suspense fallback={
+                            <div className="flex h-full items-center justify-center">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        }>
+                            <ConversationList />
+                        </Suspense>
+                    </ResizablePanel>
 
-                <ResizablePanel defaultSize={55} minSize={30}>
-                    {children}
-                </ResizablePanel>
+                    <ResizableHandle />
 
-                <ResizableHandle />
+                    <ResizablePanel defaultSize={55} minSize={30}>
+                        {children}
+                    </ResizablePanel>
 
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                    <Suspense fallback={
-                        <div className="flex h-full items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
-                    }>
-                        <VisitorPanelWrapper />
-                    </Suspense>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+                    <ResizableHandle />
+
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+                        <Suspense fallback={
+                            <div className="flex h-full items-center justify-center">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        }>
+                            <VisitorPanelWrapper />
+                        </Suspense>
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            </div>
         </div>
     )
 }

@@ -88,17 +88,19 @@ export default function HistoryPage() {
 
     return (
         <div className="flex flex-col gap-6 p-6 h-[calc(100vh-60px)] overflow-hidden">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Conversation History</h1>
                     <p className="text-muted-foreground">
                         Archive of closed and solved conversations.
                     </p>
                 </div>
-                <Button variant="outline" onClick={exportToCSV}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export CSV
-                </Button>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                    <Button variant="outline" onClick={exportToCSV}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export CSV
+                    </Button>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">

@@ -291,23 +291,24 @@ export default function DepartmentsPage() {
     return (
         <TooltipProvider>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h3 className="text-lg font-medium">Departments</h3>
                         <p className="text-sm text-muted-foreground">
                             Organize your team into groups (e.g., Sales, Support).
                         </p>
                     </div>
-                    <Dialog open={createOpen} onOpenChange={(open) => {
-                        dispatch({ type: "SET_CREATE_OPEN", payload: open })
-                        if (!open) resetForm()
-                    }}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Department
-                            </Button>
-                        </DialogTrigger>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                        <Dialog open={createOpen} onOpenChange={(open) => {
+                            dispatch({ type: "SET_CREATE_OPEN", payload: open })
+                            if (!open) resetForm()
+                        }}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Department
+                                </Button>
+                            </DialogTrigger>
                         <DialogContent className="max-w-md">
                             <DialogHeader>
                                 <DialogTitle>{editingDeptId ? "Edit Department" : "Create Department"}</DialogTitle>
@@ -431,6 +432,7 @@ export default function DepartmentsPage() {
                         </DialogContent>
                     </Dialog>
                 </div>
+            </div>
                 <Separator />
 
                 <Card>

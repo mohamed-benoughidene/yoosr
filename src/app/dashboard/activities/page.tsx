@@ -66,14 +66,14 @@ export default function ActivitiesPage() {
                             No activity yet. Actions taken by admin users will appear here.
                         </div>
                     ) : (
-                        <>
+                        <div className="overflow-x-auto">
                             <ActivitiesDataTable
                                 columns={columns}
                                 data={mappedLogs}
                                 loadMore={loadMore}
                                 status={status}
                             />
-                        </>
+                        </div>
                     )}
                 </CardContent>
             </Card>

@@ -164,7 +164,7 @@ export default function DashboardPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Inbox zero achieved! Everyone has been helped.</p>
                             </div>
                         ) : (
-                            <div className="border rounded-md">
+                            <div className="border rounded-md overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>

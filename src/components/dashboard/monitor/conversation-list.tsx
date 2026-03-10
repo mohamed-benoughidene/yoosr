@@ -74,6 +74,7 @@ export interface ConversationListProps {
     onSelect: (id: string) => void
     activeDeptId: Id<"departments"> | null
     onDeptChange: (id: Id<"departments"> | null) => void
+    onSelectConversation?: (id: string) => void
 }
 
 const getChannelIcon = (channel: string) => {
@@ -131,6 +132,7 @@ export function ConversationList({
     onSelect,
     activeDeptId,
     onDeptChange,
+    onSelectConversation,
 }: ConversationListProps) {
     const { activeProject } = useProject()
     const projectId = activeProject?._id
@@ -430,7 +432,10 @@ export function ConversationList({
                                 "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
                                 selectedId === item.id && "bg-muted"
                             )}
-                            onClick={() => onSelect(item.id)}
+                            onClick={() => {
+                                onSelect(item.id);
+                                if (onSelectConversation) onSelectConversation(item.id);
+                            }}
                         >
                             <div className="flex w-full flex-col gap-1">
                                 <div className="flex items-center">

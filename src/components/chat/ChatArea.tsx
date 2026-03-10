@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Paperclip, Send, Smile, Loader2, CheckCircle, MoreVertical } from "lucide-react"
+import { Paperclip, Send, Smile, Loader2, CheckCircle, MoreVertical, ChevronLeft, Info } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,9 +32,17 @@ import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picke
 
 import { Suspense } from "react"
 
-function ChatAreaContent() {
+interface ChatAreaProps {
+    conversationId?: string | null
+    onBack?: () => void
+    onOpenContact?: () => void
+}
+
+function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenContact }: ChatAreaProps) {
     const searchParams = useSearchParams()
-    const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null
+    const conversationIdFromParams = searchParams.get("conversationId") as Id<"conversations"> | null
+    const conversationId = (propConversationId || conversationIdFromParams) as Id<"conversations"> | null
+
     const { user } = useUser()
     const [inputValue, setInputValue] = useState("")
     const [isSending, setIsSending] = useState(false)
@@ -300,25 +308,35 @@ function ChatAreaContent() {
     const isResolved = conversation?.status === 1000
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full bg-background overflow-hidden">
             {/* Header */}
-            <div className="flex items-center h-[73px] p-4 border-b">
-                <div className="flex items-center gap-2">
-                    <Avatar>
+            <div className="flex items-center h-[73px] p-4 border-b shrink-0">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    {onBack && (
+                        <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={onBack}>
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                    )}
+                    <Avatar className="shrink-0">
                         <AvatarFallback>
                             {(conversation?.visitorName ?? "V").substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
-                    <div>
-                        <div className="font-semibold">{conversation?.visitorName || "Visitor"}</div>
-                        <div className="text-xs text-muted-foreground">
+                    <div className="overflow-hidden">
+                        <div className="font-semibold truncate">{conversation?.visitorName || "Visitor"}</div>
+                        <div className="text-xs text-muted-foreground truncate">
                             {isResolved ? "Resolved" : "Online"}
                         </div>
                     </div>
                 </div>
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ml-auto flex items-center gap-2 shrink-0">
+                    {onOpenContact && (
+                        <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={onOpenContact}>
+                            <Info className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    )}
                     {isResolved ? (
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 hidden sm:flex">
                             <CheckCircle className="mr-1 h-3 w-3" />
                             Resolved
                         </Badge>
@@ -327,7 +345,7 @@ function ChatAreaContent() {
                             variant="outline"
                             size="sm"
                             onClick={handleResolve}
-                            className="text-green-600 border-green-500/30 hover:bg-green-500/10"
+                            className="text-green-600 border-green-500/30 hover:bg-green-500/10 hidden sm:flex"
                         >
                             <CheckCircle className="mr-1.5 h-4 w-4" />
                             Resolve
@@ -611,10 +629,10 @@ function ChatAreaContent() {
     )
 }
 
-export function ChatArea() {
+export function ChatArea(props: ChatAreaProps) {
     return (
         <Suspense fallback={null}>
-            <ChatAreaContent />
+            <ChatAreaContent {...props} />
         </Suspense>
     )
 }

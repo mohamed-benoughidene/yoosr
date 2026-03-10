@@ -23,7 +23,7 @@ type ChatTab = "all" | "unread"
 
 import { Suspense } from "react"
 
-function ConversationListContent() {
+function ConversationListContent({ onSelectConversation }: { onSelectConversation?: (id: string) => void }) {
     const { activeProject } = useProject()
     const { user } = useUser()
     const searchParams = useSearchParams()
@@ -59,6 +59,7 @@ function ConversationListContent() {
 
     const handleSelectConversation = (id: string) => {
         router.push(`/dashboard/chat?conversationId=${id}`)
+        if (onSelectConversation) onSelectConversation(id)
     }
 
     // Filter conversations based on active tab and search
@@ -197,10 +198,10 @@ function ConversationListContent() {
     )
 }
 
-export function ConversationList() {
+export function ConversationList({ onSelectConversation }: { onSelectConversation?: (id: string) => void }) {
     return (
         <Suspense fallback={null}>
-            <ConversationListContent />
+            <ConversationListContent onSelectConversation={onSelectConversation} />
         </Suspense>
     )
 }

@@ -205,17 +205,19 @@ export default function OperatingHoursPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h3 className="text-lg font-medium">Operating Hours</h3>
                     <p className="text-sm text-muted-foreground">
                         Set when your project is open or closed for conversations.
                     </p>
                 </div>
-                <Button onClick={handleSave} disabled={saving}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {saving ? "Saving..." : "Save Changes"}
-                </Button>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                    <Button onClick={handleSave} disabled={saving}>
+                        <Save className="mr-2 h-4 w-4" />
+                        {saving ? "Saving..." : "Save Changes"}
+                    </Button>
+                </div>
             </div>
             <Separator />
 
@@ -264,9 +266,9 @@ export default function OperatingHoursPage() {
                 {schedule.map((day, dayIndex) => (
                     <div
                         key={day.day}
-                        className="flex items-start gap-4 p-4"
+                        className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 p-4"
                     >
-                        <div className="flex items-center gap-3 w-[160px] pt-1.5">
+                        <div className="flex items-center gap-3 w-full lg:w-[160px] pt-1.5">
                             <Switch
                                 checked={day.open}
                                 onCheckedChange={() => toggleDayOpen(dayIndex)}
@@ -276,7 +278,7 @@ export default function OperatingHoursPage() {
                             </span>
                         </div>
 
-                        <div className="pt-2 w-[70px]">
+                        <div className="pt-2 w-full lg:w-[70px]">
                             {day.open ? (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                                     <span className="h-1.5 w-1.5 rounded-full bg-green-500" />

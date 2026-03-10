@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Conversation } from "./conversation-list"
-import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown } from "lucide-react"
+import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown, ChevronLeft, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import {
     DropdownMenu,
@@ -30,9 +30,11 @@ import { CannedResponsePicker } from "./canned-response-picker"
 
 interface ChatDisplayProps {
     conversation: Conversation | null
+    onBack?: () => void
+    onOpenContact?: () => void
 }
 
-export function ChatDisplay({ conversation }: ChatDisplayProps) {
+export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplayProps) {
     const { activeProject } = useProject()
     const projectId = activeProject?._id
 
@@ -323,31 +325,41 @@ export function ChatDisplay({ conversation }: ChatDisplayProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b bg-background p-4">
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10 border">
+                    {onBack && (
+                        <Button variant="ghost" size="icon" className="lg:hidden shrink-0 -ml-2" onClick={onBack}>
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                    )}
+                    <Avatar className="h-10 w-10 border shrink-0">
                         <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
                         <AvatarFallback>{conversation.user.initials}</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <div className="font-semibold">{conversation.user.name}</div>
-                        <div className="text-xs text-muted-foreground">{conversation.user.email}</div>
+                    <div className="overflow-hidden">
+                        <div className="font-semibold truncate">{conversation.user.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{conversation.user.email}</div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {onOpenContact && (
+                        <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={onOpenContact}>
+                            <Info className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    )}
                     <Button
                         variant={isJoined ? "secondary" : "outline"}
                         size="sm"
-                        className="h-9 gap-2"
+                        className="h-9 gap-2 hidden sm:flex"
                         onClick={handleJoinLeave}
                     >
                         {isJoined ? (
                             <>
                                 <LogOut className="h-4 w-4" />
-                                Leave
+                                <span className="hidden sm:inline">Leave</span>
                             </>
                         ) : (
                             <>
                                 <LogIn className="h-4 w-4" />
-                                Join
+                                <span className="hidden sm:inline">Join</span>
                             </>
                         )}
                     </Button>

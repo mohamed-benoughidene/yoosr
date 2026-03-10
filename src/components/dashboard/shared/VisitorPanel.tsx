@@ -45,7 +45,8 @@ import {
     Send,
     Instagram,
     Pencil,
-    CircleDot
+    CircleDot,
+    ChevronLeft
 } from "lucide-react"
 import {
     Select,
@@ -190,7 +191,7 @@ const getChannelIcon = (channel?: string) => {
     }
 }
 
-export function VisitorPanel({ conversationId }: { conversationId: Id<"conversations"> }) {
+export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"conversations">, onBack?: () => void }) {
     const { activeProject } = useProject()
 
     const conversation = useQuery(api.conversations.get, { id: conversationId })
@@ -355,6 +356,13 @@ export function VisitorPanel({ conversationId }: { conversationId: Id<"conversat
 
     return (
         <div className="flex flex-col h-full bg-background border-l p-4 space-y-6 overflow-y-auto w-full">
+            {onBack && (
+                <div className="flex items-center -mt-2 -ml-2 mb-2 lg:hidden">
+                    <Button variant="ghost" size="icon" onClick={onBack}>
+                        <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                </div>
+            )}
             <div className="flex flex-col items-center gap-2 text-center pt-2">
                 <Avatar className="h-20 w-20">
                     <AvatarFallback className="text-xl bg-primary/10 text-primary">{initials}</AvatarFallback>
