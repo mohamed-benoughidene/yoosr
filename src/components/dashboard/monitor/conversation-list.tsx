@@ -445,7 +445,10 @@ export function ConversationList({
                                                 <AvatarImage src={item.user.avatar} alt={item.user.name} />
                                                 <AvatarFallback>{item.user.initials}</AvatarFallback>
                                             </Avatar>
-                                            {/* Status indicator could go here */}
+                                            <div className={cn(
+                                                "absolute bottom-0 right-0 h-2 w-2 rounded-full border border-background",
+                                                item.assignedTo ? "bg-blue-500" : "bg-red-500"
+                                            )} />
                                         </div>
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-2">
