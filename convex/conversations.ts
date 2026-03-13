@@ -494,6 +494,13 @@ export const join = mutation({
             updates.status = 200; // Assigned
         }
 
+        // SLA Reset Logic: Mirroring assignToHuman logic from bot.ts
+        const project = await ctx.db.get(conversation.projectId);
+        if (project && project.slaHours) {
+            updates.slaDeadline = Date.now() + (project.slaHours * 60 * 60 * 1000);
+            updates.firstResponseAt = undefined;
+        }
+
         await ctx.db.patch(args.id, updates);
 
         if (wasUnassigned) {
