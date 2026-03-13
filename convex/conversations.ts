@@ -291,7 +291,7 @@ export const createFromWidget = internalMutation({
             const existingContacts = await ctx.db
                 .query("contacts")
                 .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-                .collect();
+                .take(500); // TODO: replace with paginated aggregation
 
             let contactId = existingContacts.find(c =>
                 (args.visitorEmail && c.email === args.visitorEmail) ||
@@ -382,7 +382,7 @@ export const findByVisitor = internalQuery({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         return conversations.find((c) => c.visitorId === args.visitorId && (c.status === 100 || c.status === 200)) ?? null;
     },
@@ -685,7 +685,7 @@ export const autoCloseInactive = internalMutation({
         // Get all open conversations
         const openConversations = await ctx.db
             .query("conversations")
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         const now = Date.now();
 
@@ -879,12 +879,12 @@ export const createOrUpdateFromMeta = internalMutation({
     },
     handler: async (ctx, args) => {
         // 1. Deduplicate
-        const existingMessages = await ctx.db
+        const existingMessage = await ctx.db
             .query("messages")
             .filter(q => q.eq(q.field("channelMessageId"), args.messageId))
-            .collect();
+            .first();
 
-        if (existingMessages.length > 0) {
+        if (existingMessage) {
             return;
         }
 
@@ -893,7 +893,7 @@ export const createOrUpdateFromMeta = internalMutation({
             .query("integrations")
             .filter((q) => q.eq(q.field("provider"), args.channel))
             .filter((q) => q.eq(q.field("enabled"), true))
-            .collect();
+            .take(100);
 
         const integration = integrations.find(
             (i) => i.credentials && i.credentials.page_id === args.pageId
@@ -908,7 +908,7 @@ export const createOrUpdateFromMeta = internalMutation({
         const existingConversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         const openConversation = existingConversations.find(
             (c) => c.channelSenderId === args.senderId && c.status !== 1000
@@ -1074,12 +1074,12 @@ export const createOrUpdateFromTelegram = internalMutation({
     },
     handler: async (ctx, args) => {
         // 1. Deduplicate
-        const existingMessages = await ctx.db
+        const existingMessage = await ctx.db
             .query("messages")
             .filter(q => q.eq(q.field("channelMessageId"), args.messageId))
-            .collect();
+            .first();
 
-        if (existingMessages.length > 0) {
+        if (existingMessage) {
             return;
         }
 
@@ -1088,7 +1088,7 @@ export const createOrUpdateFromTelegram = internalMutation({
             .query("integrations")
             .filter((q) => q.eq(q.field("provider"), "telegram"))
             .filter((q) => q.eq(q.field("enabled"), true))
-            .collect();
+            .take(100);
 
         const integration = integrations[0];
 
@@ -1101,7 +1101,7 @@ export const createOrUpdateFromTelegram = internalMutation({
         const existingConversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         const openConversation = existingConversations.find(
             (c) => c.channelSenderId === args.chatId && c.status !== 1000

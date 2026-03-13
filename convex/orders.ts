@@ -65,7 +65,7 @@ export const listOrders = query({
         const orders = await ctx.db
             .query("orders")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         return orders.sort((a, b) => b.createdAt - a.createdAt);
     },

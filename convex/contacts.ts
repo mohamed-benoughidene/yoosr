@@ -12,7 +12,7 @@ export const list = query({
         return await ctx.db
             .query("contacts")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
     },
 });
 
@@ -23,12 +23,12 @@ export const findByConversation = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
-        const contacts = await ctx.db
+        const contact = await ctx.db
             .query("contacts")
             .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
-            .collect();
+            .first();
 
-        return contacts[0] ?? null;
+        return contact ?? null;
     },
 });
 

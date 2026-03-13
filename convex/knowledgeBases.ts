@@ -12,7 +12,7 @@ export const list = query({
         return await ctx.db
             .query("knowledge_bases")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
     },
 });
 
@@ -78,7 +78,7 @@ export const listSources = query({
         return await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
     },
 });
 

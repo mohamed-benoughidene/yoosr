@@ -27,7 +27,7 @@ export const getHomeStats = query({
             .query("conversations")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
             .filter(q => q.neq(q.field("status"), 1000))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         // Live Stats Row
         const openConversations = allConversations.filter(c => c.status === 100 || c.status === 200);
@@ -39,7 +39,7 @@ export const getHomeStats = query({
         const orgProfiles = project ? await ctx.db
             .query("profiles")
             .withIndex("by_orgId", q => q.eq("orgId", project.orgId))
-            .collect() : [];
+            .take(500) : [];
 
         const onlineTeammatesCount = orgProfiles.filter(
             p => p.isAvailable === true
@@ -80,7 +80,7 @@ export const getHomeStats = query({
             .query("conversations")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
             .filter(q => q.gte(q.field("_creationTime"), startOfYesterdayMs))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         const conversationsToday = snapshotConversations.filter(c => (c._creationTime ?? 0) >= startOfTodayMs);
         const conversationsYesterday = snapshotConversations.filter(c =>
@@ -97,7 +97,7 @@ export const getHomeStats = query({
                     .gte("createdAt", startOfTodayMs)
             )
             .filter(q => q.gte(q.field("createdAt"), startOfTodayMs))
-            .collect();
+            .take(500); // TODO: replace with paginated aggregation
 
         const botResolvedToday = todayEvents.filter(e => e.handledBy === "bot" && e.closed).length;
 
