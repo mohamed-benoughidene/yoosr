@@ -21,6 +21,7 @@ import { api } from "../../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Id } from "../../../../convex/_generated/dataModel"
+import { toast } from "sonner"
 
 type RequestFilter = "unassigned" | "mine" | "bot_escalated"
 
@@ -93,6 +94,7 @@ export default function RequestsPage() {
             router.push(`/dashboard/chat?conversationId=${id}`)
         } catch (error) {
             console.error("Error assigning conversation:", error)
+            toast.error("Failed to assign conversation")
         } finally {
             setAssigningId(null)
         }
@@ -104,6 +106,7 @@ export default function RequestsPage() {
             await resolveConversation({ id })
         } catch (error) {
             console.error("Error resolving conversation:", error)
+            toast.error("Failed to resolve conversation")
         } finally {
             setResolvingId(null)
         }

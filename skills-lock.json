@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "skills": {
+    "api-error-handling": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "computedHash": "82850b8ca5b9641afd88dd18a75dafc8a41da64ca1ce1b5ce9ae3d42a285f93d"
+    },
+    "code-review": {
+      "source": "coderabbitai/skills",
+      "sourceType": "github",
+      "computedHash": "7f793b91a34e2222e54572de0f8c52abdda222d4e06c1cd4ae959117c1c976e2"
+    },
+    "convex": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "5f2c6994d1d1ec70cfd45e310f98ad9dccc50f196b4b39ddacf614bc9ae61231"
+    },
+    "convex-performance-patterns": {
+      "source": "fluid-tools/claude-skills",
+      "sourceType": "github",
+      "computedHash": "e84f5265f8cda93e867d8d3951247a2366f4dd7966fa194d484089333506d34f"
+    },
+    "convex-security-audit": {
+      "source": "waynesutton/convexskills",
+      "sourceType": "github",
+      "computedHash": "a1468190e59af7e8a8352dd6d3707f0b5a19659e3f4503042c6be0a91cbb3916"
+    },
+    "debugging-strategies": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "4946473a374cc2caf51871e51e40051025703517bb578ce9b01b6cadf72a0c0e"
+    },
+    "error-handling-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "824c53fa080765f05862d3ec0ef829aaff9f8d544f9de0039b8fcafa6bc1a899"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "computedHash": "6412eb4eb3b91595ebab937f0c69501240e7ba761b3d82510b5cf506ec5c7adc"
+    },
+    "ln-620-codebase-auditor": {
+      "source": "levnikolaevich/claude-code-skills",
+      "sourceType": "github",
+      "computedHash": "96a34b205026bd9f5b7a5a29c15e18a1033a94a3017e613224e167fa07fc6fe9"
+    },
+    "ln-646-project-structure-auditor": {
+      "source": "levnikolaevich/claude-code-skills",
+      "sourceType": "github",
+      "computedHash": "b519aa0d3ec8e747e0419ff313b1d0b489dddfefeca248d68012888ff3f5ccce"
+    },
+    "systematic-debugging": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "computedHash": "72e9ab72627e4fd8ed26a582e82309a98ecdc4f6e1c99418430ac05682c9e91d"
+    }
+  }
+}
