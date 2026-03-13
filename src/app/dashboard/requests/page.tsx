@@ -43,14 +43,13 @@ export default function RequestsPage() {
     )
 
     // Real-time conversations
-    const allConversations =
-        useQuery(
-            api.conversations.list,
-            activeProject ? {
-                projectId: activeProject._id,
-                departmentId: myDepartments && myDepartments.length > 0 ? myDepartments[0]._id : undefined
-            } : "skip"
-        ) ?? []
+    const rawConversations = useQuery(
+        api.conversations.list,
+        activeProject ? {
+            projectId: activeProject._id,
+        } : "skip"
+    )
+    const allConversations = rawConversations ?? []
 
     // Filter based on selection
     const requests = allConversations.filter((req) => {
@@ -112,7 +111,7 @@ export default function RequestsPage() {
         }
     }
 
-    const isLoading = allConversations === undefined
+    const isLoading = rawConversations === undefined
 
     return (
         <div className="flex h-[calc(100vh-60px)] flex-col md:flex-row">

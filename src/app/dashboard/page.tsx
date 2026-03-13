@@ -223,7 +223,15 @@ export default function DashboardPage() {
                             <div className="space-y-6">
                                 <div className="space-y-6">
                                     {recentActivities.map((activity: any) => (
-                                        <div key={activity._id} className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out">
+                                        <div 
+                                            key={activity._id} 
+                                            className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out"
+                                            onClick={() => {
+                                                if (activity.targetType === "conversation" && activity.targetId) {
+                                                    router.push(`/dashboard/chat?conversationId=${activity.targetId}`);
+                                                }
+                                            }}
+                                        >
                                             <div className="mt-0.5 rounded-full bg-muted p-1.5 ring-1 ring-border shrink-0 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-all">
                                                 <Activity className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                                             </div>
