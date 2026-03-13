@@ -303,12 +303,53 @@ export const sendMessage = mutation({
 export const listPublic = internalQuery({
     args: { conversationId: v.id("conversations") },
     handler: async (ctx, args) => {
-        return await ctx.db
+        const messages = await ctx.db
             .query("messages")
             .withIndex("by_conversationId", (q) =>
                 q.eq("conversationId", args.conversationId)
             )
             .filter((q) => q.neq(q.field("type"), "internal"))
             .collect();
+
+        // 1. Collect unique senderIds where senderType is "agent"
+        const agentIds = [...new Set(
+            messages
+                .filter(m => m.senderType === "agent" && m.senderId)
+                .map(m => m.senderId as string)
+        )];
+
+        // 2. Look up matching profiles from the profiles table using by_userId index
+        const profiles = await Promise.all(
+            agentIds.map(id =>
+                ctx.db.query("profiles")
+                    .withIndex("by_userId", (q) => q.eq("userId", id))
+                    .first()
+            )
+        );
+
+        // 3. Build a map of senderId → firstName (first word of fullName)
+        const nameMap = new Map<string, string>();
+        profiles.forEach(p => {
+            if (p && p.fullName) {
+                const firstName = p.fullName.split(" ")[0];
+                nameMap.set(p.userId, firstName);
+            }
+        });
+
+        // 4. Add a senderName field to each message
+        return messages.map(msg => {
+            let senderName = null;
+            if (msg.senderType === "agent" && msg.senderId) {
+                senderName = nameMap.get(msg.senderId) ?? null;
+            } else if (msg.senderType === "bot") {
+                senderName = "AI Assistant";
+            }
+
+            return {
+                ...msg,
+                senderName
+            };
+        });
     },
 });
+

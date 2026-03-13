@@ -30,6 +30,7 @@ interface Message {
     content: string
     senderType: string
     senderId?: string
+    senderName?: string
     attachments?: any
     _creationTime: number
 }
@@ -525,7 +526,7 @@ export default function WidgetPage() {
                                 <div className="flex flex-col gap-1 max-w-[80%]">
                                     {!isVisitor && (
                                         <span className="text-[10px] text-gray-500 ml-1">
-                                            {msg.senderType === "bot" ? "AI Assistant" : "Support Agent"}
+                                            {msg.senderName ?? (msg.senderType === "bot" ? "AI Assistant" : "Support Agent")}
                                         </span>
                                     )}
 

@@ -1,4 +1,0 @@
-git add -A && git commit -m "fix: 
-- correct loading state and remove department filter narrowing in Requests page
-- make activity feed rows clickable and navigate to conversation chat
-"
