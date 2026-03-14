@@ -33,6 +33,7 @@ import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as openrouter from "../openrouter.js";
+import type * as openrouter_api from "../openrouter_api.js";
 import type * as orders from "../orders.js";
 import type * as profiles from "../profiles.js";
 import type * as projects from "../projects.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   notifications: typeof notifications;
   openrouter: typeof openrouter;
+  openrouter_api: typeof openrouter_api;
   orders: typeof orders;
   profiles: typeof profiles;
   projects: typeof projects;

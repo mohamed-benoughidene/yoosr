@@ -53,6 +53,16 @@ function SettingsContent() {
     const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
     const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")
 
+    const mergedModels = [...AVAILABLE_MODELS]
+    if (activeProject?.defaultModel && !AVAILABLE_MODELS.some(m => m.id === activeProject.defaultModel)) {
+        mergedModels.push({
+            id: activeProject.defaultModel,
+            name: activeProject.defaultModel,
+            provider: "Custom",
+            description: "Custom model set via Integrations",
+        })
+    }
+
 
 
     const updateProject = useMutation(api.projects.update)
@@ -132,7 +142,7 @@ function SettingsContent() {
                                     <SelectContent>
                                         <SelectGroup>
                                             <SelectLabel>Available Models</SelectLabel>
-                                            {AVAILABLE_MODELS.map((m) => (
+                                            {mergedModels.map((m) => (
                                                 <SelectItem key={m.id} value={m.id} className="cursor-pointer">
                                                     {m.name} <span className="text-muted-foreground font-mono text-xs ml-1">({m.provider})</span>
                                                 </SelectItem>
@@ -141,7 +151,7 @@ function SettingsContent() {
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {AVAILABLE_MODELS.find(m => m.id === defaultModel)?.description || "Select a model to use by default."}
+                                    {mergedModels.find(m => m.id === defaultModel)?.description || "Select a model to use by default."}
                                 </p>
                             </div>
 

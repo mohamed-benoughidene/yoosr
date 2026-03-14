@@ -24,6 +24,7 @@ export default defineSchema({
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
         widgetConfig: v.optional(v.any()), // JSON config for widget appearance
         defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
+        openRouterApiKey: v.optional(v.string()),
         slaHours: v.optional(v.number()),
     }).index("by_orgId", ["orgId"]),
 

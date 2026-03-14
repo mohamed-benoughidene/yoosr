@@ -3,6 +3,7 @@ import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
+import { decryptSecret } from "./lib/crypto";
 
 /**
  * Executes a specific block type and returns the state mutation instructions.
@@ -53,8 +54,16 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const userInput = interpolate(action.userInput || "{{lastUserText}}", attributes);
             try {
                 const _aiTaskConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-                const projectDefaultModel = _aiTaskConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: _aiTaskConv.projectId }) : undefined;
-                const llmResult = await callAITask(systemPrompt, userInput, action.model, projectDefaultModel);
+                const projectInfo = _aiTaskConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: _aiTaskConv.projectId }) : undefined;
+                const projectDefaultModel = projectInfo?.defaultModel;
+                let projectApiKey: string | undefined;
+                if (projectInfo?.openRouterApiKey) {
+                    const encryptionKey = process.env.ENCRYPTION_KEY;
+                    if (encryptionKey) {
+                        projectApiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
+                    }
+                }
+                const llmResult = await callAITask(systemPrompt, userInput, action.model, projectDefaultModel, projectApiKey);
                 // Log token usage
                 if (_aiTaskConv) {
                     try {
@@ -103,7 +112,17 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 const contextStr = kbResult.map((r: any) => r.text).join("\n").slice(0, 3000);
                 const kbPrompt = `Context:\n${contextStr}\n\nQuestion: ${kbQuery}\nAnswer based only on context.`;
                 try {
-                    const kbLlmResult = await callAITask(kbPrompt, kbQuery);
+                    let kbProjectApiKey: string | undefined;
+                    if (kbConversation) {
+                        const kbProjectInfo = await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: kbConversation.projectId });
+                        if (kbProjectInfo?.openRouterApiKey) {
+                            const encryptionKey = process.env.ENCRYPTION_KEY;
+                            if (encryptionKey) {
+                                kbProjectApiKey = await decryptSecret(kbProjectInfo.openRouterApiKey, encryptionKey);
+                            }
+                        }
+                    }
+                    const kbLlmResult = await callAITask(kbPrompt, kbQuery, undefined, undefined, kbProjectApiKey);
                     kbAnswer = kbLlmResult.text;
                     // Log token usage
                     if (kbConversation) {
@@ -248,10 +267,18 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
                 // Fetch project ID for token logging
                 const assistantConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-                const projectDefaultModel = assistantConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: assistantConv.projectId }) : undefined;
+                const assistantProjectInfo = assistantConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: assistantConv.projectId }) : undefined;
+                const projectDefaultModel = assistantProjectInfo?.defaultModel;
+                let assistantApiKey: string | undefined;
+                if (assistantProjectInfo?.openRouterApiKey) {
+                    const encryptionKey = process.env.ENCRYPTION_KEY;
+                    if (encryptionKey) {
+                        assistantApiKey = await decryptSecret(assistantProjectInfo.openRouterApiKey, encryptionKey);
+                    }
+                }
                 let lastReply = "";
                 for (let turn = 0; turn < maxTurns; turn++) {
-                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model, projectDefaultModel);
+                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model, projectDefaultModel, assistantApiKey);
                     if (!llmResult.text) break;
 
                     lastReply = llmResult.text;
@@ -700,7 +727,10 @@ export const getProjectDefaultModel = internalQuery({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const project = await ctx.db.get(args.projectId);
-        return project?.defaultModel;
+        return {
+            defaultModel: project?.defaultModel,
+            openRouterApiKey: project?.openRouterApiKey,
+        };
     }
 });
 

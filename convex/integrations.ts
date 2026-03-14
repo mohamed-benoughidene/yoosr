@@ -1,7 +1,7 @@
 import { query, mutation, internalMutation, internalQuery, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
-import { encryptSecret } from "./lib/crypto";
+import { encryptSecret, decryptSecret } from "./lib/crypto";
 import { requireAdmin } from "./utils";
 
 // List integrations for a project
@@ -201,3 +201,5 @@ export const registerTelegramWebhook = action({
         return { success: true };
     },
 });
+
+
