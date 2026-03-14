@@ -221,53 +221,51 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="space-y-6">
-                                    {recentActivities.map((activity: any) => (
-                                        <div 
-                                            key={activity._id} 
-                                            className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out"
-                                            onClick={() => {
-                                                if (activity.targetType === "conversation" && activity.targetId) {
-                                                    router.push(`/dashboard/chat?conversationId=${activity.targetId}`);
-                                                }
-                                            }}
-                                        >
-                                            <div className="mt-0.5 rounded-full bg-muted p-1.5 ring-1 ring-border shrink-0 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-all">
-                                                <Activity className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                                            </div>
-                                            <div className="flex flex-col gap-1 min-w-0">
-                                                <p className="text-sm leading-tight break-words">
-                                                    <span className="font-medium mr-1 text-foreground group-hover:text-primary transition-colors">{activity.actorName}</span>
-                                                    <span className="text-muted-foreground">{activity.action?.replace(/_/g, " ")}</span>
-                                                </p>
-                                                {activity.createdAt && (
-                                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider tabular-nums">
-                                                        {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
-                                                    </p>
-                                                )}
-                                            </div>
+                                {recentActivities.map((activity: any) => (
+                                    <div
+                                        key={activity._id}
+                                        className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out"
+                                        onClick={() => {
+                                            if (activity.targetType === "conversation" && activity.targetId) {
+                                                router.push(`/dashboard/chat?conversationId=${activity.targetId}`);
+                                            }
+                                        }}
+                                    >
+                                        <div className="mt-0.5 rounded-full bg-muted p-1.5 ring-1 ring-border shrink-0 group-hover:bg-primary/10 group-hover:ring-primary/20 transition-all">
+                                            <Activity className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </div>
-                                    ))}
-                                </div>
-                                {activityStatus !== "Exhausted" && (
-                                    <div className="pt-4 border-t mt-4 sticky bottom-0 bg-background/80 backdrop-blur-sm pb-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all cursor-pointer"
-                                            onClick={() => loadMoreActivity(5)}
-                                            disabled={activityStatus === "LoadingMore"}
-                                        >
-                                            {activityStatus === "LoadingMore" ? (
-                                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                                            ) : null}
-                                            {activityStatus === "LoadingMore" ? "Loading…" : "View more activity"}
-                                        </Button>
+                                        <div className="flex flex-col gap-1 min-w-0">
+                                            <p className="text-sm leading-tight break-words">
+                                                <span className="font-medium mr-1 text-foreground group-hover:text-primary transition-colors">{activity.actorName}</span>
+                                                <span className="text-muted-foreground">{activity.action?.replace(/_/g, " ")}</span>
+                                            </p>
+                                            {activity.createdAt && (
+                                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider tabular-nums">
+                                                    {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
+                                ))}
                             </div>
                         )}
                     </CardContent>
+                    {activityStatus !== "Exhausted" && (
+                        <div className="px-6 pb-4 border-t pt-3">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all cursor-pointer"
+                                onClick={() => loadMoreActivity(5)}
+                                disabled={activityStatus === "LoadingMore"}
+                            >
+                                {activityStatus === "LoadingMore" ? (
+                                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                ) : null}
+                                {activityStatus === "LoadingMore" ? "Loading…" : "View more activity"}
+                            </Button>
+                        </div>
+                    )}
                 </Card>
 
             </div>
