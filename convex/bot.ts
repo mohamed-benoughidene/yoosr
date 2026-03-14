@@ -8,7 +8,7 @@ import { decryptSecret } from "./lib/crypto";
 /**
  * Executes a specific block type and returns the state mutation instructions.
  */
-async function executeAction(ctx: any, action: any, attributes: any, incomingMessage: string, conversationId: any) {
+async function executeAction(ctx: any, action: any, attributes: any, incomingMessage: string, conversationId: any, projectId: any, channel: any) {
     switch (action._type) {
         case "reply":
             let textValue = action.text;
@@ -18,6 +18,8 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const text = interpolate(textValue, attributes);
             await ctx.runMutation(internal.bot.createBotMessage, {
                 conversationId,
+                projectId,
+                channel,
                 content: text,
                 attachments: action.buttons && action.buttons.length > 0 ? {
                     type: "template",
@@ -300,6 +302,8 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                     // Send the reply as a bot message
                     await ctx.runMutation(internal.bot.createBotMessage, {
                         conversationId,
+                        projectId,
+                        channel,
                         content: llmResult.text,
                     });
 
@@ -441,7 +445,7 @@ export const executeNextBlock = internalAction({
 
         for (const action of actions) {
             console.log(`[BOT ENGINE] -> Running Action: ${action._type}`);
-            const result = await executeAction(ctx, action, attributes, args.incomingMessage, args.conversationId);
+            const result = await executeAction(ctx, action, attributes, args.incomingMessage, args.conversationId, conversation.projectId, conversation.channel || "widget");
 
             if (result.newAttributes) {
                 attributes = { ...attributes, ...result.newAttributes };
@@ -629,30 +633,29 @@ export const updateConversationState = internalMutation({
 export const createBotMessage = internalMutation({
     args: {
         conversationId: v.id("conversations"),
+        projectId: v.id("projects"),
+        channel: v.string(),
         content: v.string(),
         attachments: v.optional(v.any())
     },
     handler: async (ctx, args) => {
-        const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) return null;
-
         const messageId = await ctx.db.insert("messages", {
             conversationId: args.conversationId,
-            projectId: conversation.projectId,
+            projectId: args.projectId,
             senderType: "bot",
             content: args.content,
             attachments: args.attachments,
         });
 
         // Relay bot reply to Meta if conversation is on a Meta channel
-        if (conversation.channel === "messenger" || conversation.channel === "instagram") {
+        if (args.channel === "messenger" || args.channel === "instagram") {
             await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
                 conversationId: args.conversationId,
                 content: args.content,
             });
         }
 
-        if (conversation.channel === "telegram") {
+        if (args.channel === "telegram") {
             await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
                 conversationId: args.conversationId,
                 content: args.content,
