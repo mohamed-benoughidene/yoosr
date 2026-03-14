@@ -1198,7 +1198,9 @@ export const sendTelegramMessage = internalAction({
         if (!rawToken) return undefined;
         const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
         if (!encKey) return undefined;
-        const botToken = rawToken.includes(":")
+        const beforeColon = rawToken.split(":")[0];
+        const isEncrypted = !/^\d+$/.test(beforeColon);
+        const botToken = isEncrypted
             ? await decryptSecret(rawToken, encKey)
             : rawToken;
 
@@ -1222,7 +1224,7 @@ export const sendTelegramMessage = internalAction({
                 return undefined;
             }
         } catch (err) {
-            console.error("[sendTelegramMessage] fetch error:", err);
+            console.error("[relayToTelegram] Failed to send message:", err);
         }
 
         return undefined;
