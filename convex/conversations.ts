@@ -653,7 +653,6 @@ export const transferToDepartment = mutation({
         await ctx.db.patch(args.id, {
             assignedTo: undefined,
             status: 100, // 100: unassigned
-            botPaused: false, // Re-enable so a bot can pick it up if the department has one
             departmentId: args.departmentId,
             updatedAt: Date.now(),
             attributes: {

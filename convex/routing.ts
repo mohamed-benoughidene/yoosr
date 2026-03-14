@@ -58,10 +58,13 @@ export const routeConversation = internalMutation({
 
                 // Trigger the Design Studio BotEngine action
                 // to evaluate the conversational graph nodes (Start Node).
-                await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
-                    conversationId: args.conversationId,
-                    incomingMessage: args.initialMessage ?? "",
-                });
+                const currentConversation = await ctx.db.get(args.conversationId);
+                if (!currentConversation?.botPaused) {
+                    await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
+                        conversationId: args.conversationId,
+                        incomingMessage: args.initialMessage ?? "",
+                    });
+                }
                 return; // Bot assigned, exit routing
             }
         }
