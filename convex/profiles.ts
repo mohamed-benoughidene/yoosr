@@ -209,6 +209,27 @@ export const setAvailability = mutation({
     },
 });
 
+// Update only the lastSeenAt timestamp for heartbeat
+export const updateHeartbeat = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return;
+
+        const existing = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+            .first();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, {
+                lastSeenAt: Date.now(),
+                updatedAt: Date.now(),
+            });
+        }
+    },
+});
+
 // Internal: mark agent as offline (used by sendBeacon)
 export const setOffline = internalMutation({
     args: { userId: v.string() },

@@ -11,24 +11,24 @@ import { useUser } from "@clerk/nextjs"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const ensureProfile = useMutation(api.profiles.ensureCurrent)
-    const setAvailability = useMutation(api.profiles.setAvailability)
+    const updateHeartbeat = useMutation(api.profiles.updateHeartbeat)
     const { isLoaded, isSignedIn } = useUser()
 
     // 1. Mark as online on mount
     useEffect(() => {
         if (isSignedIn) {
-            setAvailability({ isAvailable: true })
+            updateHeartbeat()
         }
-    }, [setAvailability, isSignedIn])
+    }, [updateHeartbeat, isSignedIn])
 
     // 2. Heartbeat every 30s
     useEffect(() => {
         if (!isSignedIn) return
         const interval = setInterval(() => {
-            setAvailability({ isAvailable: true })
+            updateHeartbeat()
         }, 30000)
         return () => clearInterval(interval)
-    }, [setAvailability, isSignedIn])
+    }, [updateHeartbeat, isSignedIn])
 
     useEffect(() => {
         if (isSignedIn) {
