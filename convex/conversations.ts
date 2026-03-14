@@ -846,6 +846,7 @@ export const getConversations = query({
                 priority: c.priority,
                 firstResponseAt: c.firstResponseAt,
                 slaDeadline: c.slaDeadline,
+                botId: c.botId ?? null,
             };
         });
     },

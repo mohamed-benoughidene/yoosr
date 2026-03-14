@@ -36,6 +36,7 @@ export interface Conversation {
     priority?: "low" | "normal" | "high" | "urgent";
     firstResponseAt?: number;
     slaDeadline?: number;
+    botId?: string | null;
 }
 
 import { Button } from "@/components/ui/button"
@@ -157,12 +158,25 @@ export function ConversationList({
         },
     });
 
+    const bots = useQuery(
+        api.bots.list,
+        projectId ? { projectId } : "skip"
+    );
+
     const agents = (memberships?.data ?? []).map((m) => ({
         id: m.publicUserData?.userId ?? "",
         name: `${m.publicUserData?.firstName ?? ""} ${m.publicUserData?.lastName ?? ""}`.trim() || m.publicUserData?.identifier || "Agent",
+        type: "agent" as const,
     })).filter(a => a.id !== "");
 
-    const activeAgentName = agents?.find(a => a.id === activeAgent)?.name;
+    const botList = (bots ?? []).map((b) => ({
+        id: b._id,
+        name: b.name,
+        type: "bot" as const,
+    }));
+
+    const combinedFilterList = [...agents, ...botList];
+    const activeAgentName = combinedFilterList.find(a => a.id === activeAgent)?.name;
     const activeDeptName = departments?.find(d => d._id === activeDeptId)?.name;
 
     const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
@@ -177,7 +191,9 @@ export function ConversationList({
                 : true;
             const matchesLabel = activeLabel ? item.tags?.includes(activeLabel) : true;
             const matchesStatus = activeStatus !== null ? item.status === activeStatus : true;
-            const matchesAgent = activeAgent ? item.assignedTo === activeAgent : true;
+            const matchesAgent = activeAgent
+                ? (item.assignedTo === activeAgent || item.botId === activeAgent)
+                : true;
             return matchesSearch && matchesLabel && matchesStatus && matchesAgent;
         })
         .sort((a, b) => {
@@ -332,22 +348,48 @@ export function ConversationList({
                             <DropdownMenuLabel className="text-xs font-medium">Filter by agent</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_AGENT", payload: null })} className="text-xs">
-                                All Agents
+                                All Agents & Bots
                             </DropdownMenuItem>
-                            {agents?.map((agent) => (
-                                <DropdownMenuItem
-                                    key={agent.id}
-                                    onClick={() => dispatch({ type: "SET_AGENT", payload: agent.id })}
-                                    className="text-xs"
-                                >
-                                    <div className="flex items-center justify-between w-full">
-                                        <span className="truncate">{agent.name}</span>
-                                        {activeAgent === agent.id && (
-                                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                        )}
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
+                            {agents.length > 0 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">Agents</DropdownMenuLabel>
+                                    {agents.map((agent) => (
+                                        <DropdownMenuItem
+                                            key={agent.id}
+                                            onClick={() => dispatch({ type: "SET_AGENT", payload: agent.id })}
+                                            className="text-xs"
+                                        >
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="truncate">{agent.name}</span>
+                                                {activeAgent === agent.id && (
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                                )}
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </>
+                            )}
+                            {botList.length > 0 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">Bots</DropdownMenuLabel>
+                                    {botList.map((bot) => (
+                                        <DropdownMenuItem
+                                            key={bot.id}
+                                            onClick={() => dispatch({ type: "SET_AGENT", payload: bot.id })}
+                                            className="text-xs"
+                                        >
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="truncate">{bot.name}</span>
+                                                {activeAgent === bot.id && (
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                                )}
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </>
+                            )}
                             {!membersLoaded && (
                                 <div className="text-[10px] text-muted-foreground p-2 text-center italic">
                                     Loading members...
