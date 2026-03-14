@@ -1,51 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Rocket, Zap, Shield, Globe, ChevronRight } from "lucide-react"
+import { ArrowLeft, Rocket, Zap, Shield, Globe, ChevronRight, MessageSquare, X } from "lucide-react"
 import Link from "next/link"
-
-declare global {
-    interface Window {
-        yoosrSettings?: {
-            projectId: string;
-        };
-    }
-}
 
 export default function TestWidgetPage() {
     const { activeProject, isLoading: isProjectLoading } = useProject()
-
-    useEffect(() => {
-        if (!activeProject?._id) return
-
-        // 1. Set settings
-        window.yoosrSettings = {
-            projectId: activeProject._id
-        }
-
-        // 2. Inject script
-        const script = document.createElement("script")
-        script.src = "/widget.js"
-        script.async = true
-        script.id = "yoosr-widget-script"
-        document.body.appendChild(script)
-
-        // 3. Cleanup
-        return () => {
-            const existingScript = document.getElementById("yoosr-widget-script")
-            if (existingScript) {
-                document.body.removeChild(existingScript)
-            }
-            // Remove the widget container if it exists (assuming it adds a div)
-            const widgetContainer = document.querySelector(".yoosr-widget-container")
-            if (widgetContainer) {
-                widgetContainer.remove()
-            }
-            delete window.yoosrSettings
-        }
-    }, [activeProject?._id])
+    const [isOpen, setIsOpen] = useState(false)
 
     if (isProjectLoading) {
         return (
@@ -208,6 +171,32 @@ export default function TestWidgetPage() {
                     </div>
                 </div>
             </footer>
+
+            {/* Widget Launcher Button */}
+            <button
+                className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-[9999] transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95"
+                style={{ backgroundColor: activeProject?.widgetConfig?.primaryColor ?? "#6366f1" }}
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label={isOpen ? "Close chat widget" : "Open chat widget"}
+            >
+                <MessageSquare
+                    className={`text-white h-6 w-6 absolute transition-all duration-200 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+                />
+                <X
+                    className={`text-white h-6 w-6 absolute transition-all duration-200 ${isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"}`}
+                />
+            </button>
+
+            {/* Widget Iframe */}
+            {isOpen && (
+                <div className="fixed bottom-[104px] right-6 w-[380px] h-[min(580px,calc(100vh-120px))] rounded-2xl shadow-2xl border border-border overflow-hidden z-[9999] bg-white animate-in fade-in slide-in-from-bottom-4 duration-200">
+                    <iframe
+                        src={`/widget?projectId=${activeProject?._id}`}
+                        className="w-full h-full border-0"
+                        title="Yoosr Widget"
+                    />
+                </div>
+            )}
         </div>
     )
 }

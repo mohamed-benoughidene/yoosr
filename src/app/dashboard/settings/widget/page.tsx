@@ -612,6 +612,13 @@ export default function WidgetSetupPage() {
                                 className="w-full h-full border-none"
                                 title="Widget Live Preview"
                             />
+                            {/* Mock Launcher Button */}
+                            <div 
+                                className="absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <MessageSquare className="text-white h-5 w-5" />
+                            </div>
                         </div>
 
                         {/* Home Indicator */}

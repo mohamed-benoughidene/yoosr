@@ -69,17 +69,15 @@
 
     applyStyles(config.primaryColor);
 
-    // If color is missing, fetch it from the project API
-    if (!config.primaryColor) {
-        fetch(baseUrl + "/api/widget/project?projectId=" + encodeURIComponent(config.projectId))
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data && data.widgetConfig && data.widgetConfig.primaryColor) {
-                    applyStyles(data.widgetConfig.primaryColor);
-                }
-            })
-            .catch(function (e) { console.error("Yoosr: Error fetching project config", e); });
-    }
+    // Always fetch project config to get the real primaryColor
+    fetch(baseUrl + "/api/widget/project?projectId=" + encodeURIComponent(config.projectId))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data && data.widgetConfig && data.widgetConfig.primaryColor) {
+                applyStyles(data.widgetConfig.primaryColor);
+            }
+        })
+        .catch(function (e) { console.error("Yoosr: Error fetching project config", e); });
 
     // 5a. Unread Badge
     var badge = document.createElement("div");
