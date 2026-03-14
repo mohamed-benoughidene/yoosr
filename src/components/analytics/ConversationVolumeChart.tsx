@@ -1,8 +1,8 @@
 "use client";
 
 import {
-    LineChart,
-    Line,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -43,8 +43,8 @@ export function ConversationVolumeChart({ data, isLoading }: Props) {
                     </div>
                 ) : (
                     <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                            <CartesianGrid className="stroke-border" />
                             <XAxis
                                 dataKey="date"
                                 tick={{ fontSize: 12 }}
@@ -59,23 +59,17 @@ export function ConversationVolumeChart({ data, isLoading }: Props) {
                                 labelFormatter={(label) => new Date(label).toLocaleDateString()}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />
-                            <Line
-                                type="monotone"
+                            <Bar
                                 dataKey="bot"
                                 name="Bot Handled"
-                                stroke="hsl(var(--primary))"
-                                strokeWidth={2}
-                                dot={false}
+                                fill="#3b82f6"
                             />
-                            <Line
-                                type="monotone"
+                            <Bar
                                 dataKey="agent"
                                 name="Agent Handled"
-                                stroke="hsl(var(--chart-2, 220 70% 50%))"
-                                strokeWidth={2}
-                                dot={false}
+                                fill="#22c55e"
                             />
-                        </LineChart>
+                        </BarChart>
                     </ResponsiveContainer>
                 )}
             </CardContent>

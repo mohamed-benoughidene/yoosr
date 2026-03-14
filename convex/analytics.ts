@@ -89,6 +89,7 @@ export const getConversationVolume = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .order("desc")
             .take(500); // TODO: replace with paginated aggregation
 
         const filtered = conversations.filter(c => {
