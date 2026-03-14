@@ -579,13 +579,16 @@ export const updateMetadataInternal = internalMutation({
         setStatusUnassigned: v.boolean(),
     },
     handler: async (ctx, args) => {
+        const conversation = await ctx.db.get(args.id);
+        if (!conversation) throw new Error("Conversation not found");
+
         const patch: Record<string, any> = {
             lastMessage: args.lastMessage,
             updatedAt: Date.now(),
             unreadCount: args.unreadCount,
         };
 
-        if (args.setStatusUnassigned) {
+        if (args.setStatusUnassigned && conversation.status === 100) {
             patch.status = 100;
         }
 

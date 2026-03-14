@@ -389,8 +389,8 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
-                                {activeStatus === 100 ? "Status: Open" :
-                                    activeStatus === 200 ? "Status: Assigned" : "Status"}
+                                {activeStatus === 100 ? "Status: Unassigned" :
+                                    activeStatus === 200 ? "Status: Assigned / Active" : "Status"}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[160px]" align="start">
@@ -401,13 +401,13 @@ export function ConversationList({
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 100 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
-                                    <span>Open</span>
+                                    <span>Unassigned</span>
                                     {activeStatus === 100 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 200 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
-                                    <span>Assigned</span>
+                                    <span>Assigned / Active</span>
                                     {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
