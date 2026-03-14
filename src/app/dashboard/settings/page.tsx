@@ -29,8 +29,6 @@ import { toast } from "sonner"
 import {
     Loader2,
     Copy,
-    AlertTriangle,
-    Trash2,
 } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
@@ -52,17 +50,12 @@ function SettingsContent() {
     const { activeProject } = useProject()
     const isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
-    const [projectName, setProjectName] = useState(activeProject?.name || "")
-    const [projectDesc, setProjectDesc] = useState(activeProject?.description || "")
     const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
     const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")
 
-    // Advanced state
-    const [confirmDelete, setConfirmDelete] = useState("")
-    const [deleting, setDeleting] = useState(false)
+
 
     const updateProject = useMutation(api.projects.update)
-    const removeProject = useMutation(api.projects.remove)
 
     const handleSave = async () => {
         if (!activeProject) return
@@ -71,8 +64,6 @@ function SettingsContent() {
         try {
             await updateProject({
                 id: activeProject._id,
-                name: projectName,
-                description: projectDesc,
                 defaultModel,
             })
             toast.success("Project settings updated")
@@ -104,23 +95,7 @@ function SettingsContent() {
 
     const projectId = activeProject?._id || ""
 
-    const handleDeleteProject = async () => {
-        if (!activeProject) return
-        if (confirmDelete !== activeProject.name) {
-            toast.error("Project name doesn't match")
-            return
-        }
-        setDeleting(true)
 
-        try {
-            await removeProject({ id: activeProject._id })
-            toast.success("Project deleted")
-            window.location.href = "/dashboard"
-        } catch {
-            toast.error("Failed to delete project")
-        }
-        setDeleting(false)
-    }
 
     return (
         <div className="space-y-6">
@@ -133,9 +108,8 @@ function SettingsContent() {
             <Separator />
 
             <Tabs defaultValue="general" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsList className="grid w-full grid-cols-1 max-w-[200px]">
                     <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
                 </TabsList>
 
                 {/* ──────── GENERAL TAB ──────── */}
@@ -148,28 +122,7 @@ function SettingsContent() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Project Name</Label>
-                                <Input
-                                    id="name"
-                                    value={projectName}
-                                    onChange={(e) =>
-                                        setProjectName(e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">
-                                    Description (Optional)
-                                </Label>
-                                <Textarea
-                                    id="description"
-                                    value={projectDesc}
-                                    onChange={(e) =>
-                                        setProjectDesc(e.target.value)
-                                    }
-                                />
-                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="model-select">Default AI Model</Label>
                                 <Select value={defaultModel} onValueChange={setDefaultModel}>
@@ -252,77 +205,11 @@ function SettingsContent() {
                             </Button>
                         </CardFooter>
                     </Card>
+
+
                 </TabsContent>
 
-                {/* ──────── ADVANCED TAB ──────── */}
-                <TabsContent value="advanced" className="space-y-6">
 
-                    {/* Danger Zone */}
-                    {isAdmin && (
-                        <Card className="border-destructive/50">
-                            <CardHeader>
-                                <CardTitle className="text-destructive flex items-center gap-2">
-                                    <AlertTriangle className="h-5 w-5" />
-                                    Danger Zone
-                                </CardTitle>
-                                <CardDescription>
-                                    Irreversible actions. Proceed with caution.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="rounded-lg border border-destructive/30 p-4 space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <Trash2 className="h-5 w-5 text-destructive mt-0.5" />
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium">
-                                                Delete this project
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                This will permanently delete all
-                                                conversations, contacts, bots,
-                                                integrations, and settings. This
-                                                action cannot be undone.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 pl-8">
-                                        <Label className="text-xs text-muted-foreground">
-                                            Type{" "}
-                                            <span className="font-mono font-bold text-destructive">
-                                                {activeProject?.name}
-                                            </span>{" "}
-                                            to confirm:
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={confirmDelete}
-                                                onChange={(e) =>
-                                                    setConfirmDelete(e.target.value)
-                                                }
-                                                placeholder="Project name"
-                                                className="max-w-xs text-sm"
-                                            />
-                                            <Button
-                                                variant="destructive"
-                                                disabled={
-                                                    confirmDelete !==
-                                                    activeProject?.name ||
-                                                    deleting
-                                                }
-                                                onClick={handleDeleteProject}
-                                            >
-                                                {deleting && (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                )}
-                                                Delete Project
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
 
             </Tabs>
         </div>
