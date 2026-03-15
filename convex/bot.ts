@@ -65,6 +65,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                         projectApiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
                     }
                 }
+                console.log("[BOT DEBUG] Executing AI block, model:", action.model, "projectDefault:", projectDefaultModel, "hasProjectKey:", !!projectApiKey)
                 const llmResult = await callAITask(systemPrompt, userInput, action.model, projectDefaultModel, projectApiKey);
                 // Log token usage
                 if (_aiTaskConv) {
@@ -280,6 +281,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 }
                 let lastReply = "";
                 for (let turn = 0; turn < maxTurns; turn++) {
+                    console.log("[BOT DEBUG] Executing AI block, model:", action.model, "projectDefault:", projectDefaultModel, "hasProjectKey:", !!assistantApiKey)
                     const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model, projectDefaultModel, assistantApiKey);
                     if (!llmResult.text) break;
 
@@ -382,6 +384,7 @@ export const executeNextBlock = internalAction({
             console.log(`[BOT ENGINE] Convo ${args.conversationId} not found`);
             return;
         }
+        console.log("[BOT DEBUG] Bot triggered for conversation:", args.conversationId, "project:", conversation.projectId)
 
         // Infinite Loop Guard
         const currentStepCount = conversation.botStepCount || 0;

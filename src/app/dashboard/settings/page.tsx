@@ -33,12 +33,7 @@ import {
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 
-const AVAILABLE_MODELS = [
-    { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", provider: "Mistral", description: "Reliable, balanced performance" },
-    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", provider: "Meta", description: "Strong Arabic support, enterprise-grade" },
-    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", provider: "Mistral", description: "Lightweight, fast responses" },
-    { id: "openrouter/free", name: "Auto (OpenRouter)", provider: "OpenRouter", description: "Automatically picks best available free model" },
-]
+
 
 export default function SettingsPage() {
     const { activeProject } = useProject()
@@ -50,18 +45,14 @@ function SettingsContent() {
     const { activeProject } = useProject()
     const isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
-    const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free")
+    const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel ?? "openrouter/free")
     const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")
 
-    const mergedModels = [...AVAILABLE_MODELS]
-    if (activeProject?.defaultModel && !AVAILABLE_MODELS.some(m => m.id === activeProject.defaultModel)) {
-        mergedModels.push({
-            id: activeProject.defaultModel,
-            name: activeProject.defaultModel,
-            provider: "Custom",
-            description: "Custom model set via Integrations",
-        })
-    }
+    const modelOptions = [
+        { id: "openrouter/free", name: "OpenRouter Free", description: "Use OpenRouter's automatic free model routing." }
+    ]
+
+
 
 
 
@@ -141,17 +132,17 @@ function SettingsContent() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectLabel>Available Models</SelectLabel>
-                                            {mergedModels.map((m) => (
+                                            <SelectLabel>Model Preference</SelectLabel>
+                                            {modelOptions.map((m) => (
                                                 <SelectItem key={m.id} value={m.id} className="cursor-pointer">
-                                                    {m.name} <span className="text-muted-foreground font-mono text-xs ml-1">({m.provider})</span>
+                                                    {m.name}
                                                 </SelectItem>
                                             ))}
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {mergedModels.find(m => m.id === defaultModel)?.description || "Select a model to use by default."}
+                                    {modelOptions.find(m => m.id === defaultModel)?.description || "Currently using OpenRouter's free model routing."}
                                 </p>
                             </div>
 

@@ -7,6 +7,7 @@ import OpenAI from "openai";
 
 
 function getClient(customApiKey?: string): OpenAI {
+    console.log("[OPENROUTER DEBUG] Using key source:", customApiKey ? "project" : "env", "model will be set by caller")
     const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error("Missing OPENROUTER_API_KEY environment variable");
@@ -40,7 +41,7 @@ export async function callAITask(
     apiKey?: string
 ): Promise<LLMResult> {
     const client = getClient(apiKey);
-    const resolvedModel = model || projectDefaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
+    const resolvedModel = model || projectDefaultModel || "openrouter/free";
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
@@ -71,7 +72,7 @@ export async function callAIAssistant(
     apiKey?: string
 ): Promise<LLMResult> {
     const client = getClient(apiKey);
-    const resolvedModel = model || projectDefaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
+    const resolvedModel = model || projectDefaultModel || "openrouter/free";
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         ...conversationHistory,

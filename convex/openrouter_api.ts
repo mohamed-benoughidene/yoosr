@@ -96,7 +96,7 @@ export const testOpenRouterKey = action({
 
         const decryptedKey = await decryptSecret(project.openRouterApiKey, encryptionKey);
 
-        const model: string = project.defaultModel || "mistralai/mistral-7b-instruct:free";
+        const model: string = project.defaultModel || "openrouter/free";
 
         try {
             const response: Response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
