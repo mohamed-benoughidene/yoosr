@@ -43,7 +43,7 @@ export const clearOpenRouterKey = mutation({
             .first();
         if (!project) throw new ConvexError("Project not found");
 
-        await ctx.db.patch(project._id, { openRouterApiKey: undefined });
+        await ctx.db.patch(project._id, { openRouterApiKey: undefined, defaultModel: undefined });
     },
 });
 
