@@ -43,6 +43,8 @@ import { SetPriorityNode } from "./nodes/SetPriorityNode";
 import { BlockPalette } from "./BlockPalette";
 import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
+import { useTranslations } from "next-intl";
+
 const nodeTypes: NodeTypes = {
     start: StartNode,
     reply: ReplyNode,
@@ -86,10 +88,11 @@ export function FlowEditor({
     activeNodeId,
     onFlowChange,
 }: FlowEditorProps) {
+    const t = useTranslations("designStudio");
     const [nodes, setNodes, onNodesChange] = useNodesState(
         initialNodes && initialNodes.length > 0
             ? initialNodes
-            : [defaultStartNode]
+            : [{ ...defaultStartNode, data: { ...defaultStartNode.data, label: t("canvas.start") } }]
     );
     const [edges, setEdges, onEdgesChange] = useEdgesState(
         initialEdges || []

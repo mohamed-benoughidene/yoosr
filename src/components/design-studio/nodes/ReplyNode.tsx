@@ -2,8 +2,10 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function ReplyNode({ data, selected }: NodeProps) {
+    const t = useTranslations("designStudio");
     const nodeData = data as Record<string, any>;
 
     return (
@@ -24,16 +26,23 @@ export function ReplyNode({ data, selected }: NodeProps) {
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/10">
                     <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
                 </div>
-                <span className="text-xs font-semibold">
-                    {nodeData.label || "Reply"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate leading-tight">
+                        {t("blocks.reply.name")}
+                    </span>
+                    {nodeData.label && (
+                        <span className="text-[10px] text-muted-foreground truncate leading-tight">
+                            {nodeData.label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Body */}
             <div className="px-4 py-3">
                 {nodeData.textVariations && nodeData.textVariations.length > 0 ? (
                     <div className="space-y-1">
-                        <p className="text-[10px] text-muted-foreground/70 uppercase">Random From:</p>
+                        <p className="text-[10px] text-muted-foreground/70 uppercase">{t("nodes.randomFrom")}</p>
                         {nodeData.textVariations.map((v: string, i: number) => (
                             <p key={i} className="text-xs text-muted-foreground line-clamp-2 bg-muted/50 p-1 rounded">
                                 {v}
@@ -46,7 +55,7 @@ export function ReplyNode({ data, selected }: NodeProps) {
                     </p>
                 ) : (
                     <p className="text-xs italic text-muted-foreground/50">
-                        Click to add message...
+                        {t("nodes.clickToAddMessage")}
                     </p>
                 )}
 
@@ -59,7 +68,7 @@ export function ReplyNode({ data, selected }: NodeProps) {
                                     key={i}
                                     className="rounded-md border border-dashed px-2 py-1 text-center text-[10px] text-muted-foreground"
                                 >
-                                    {btn.label || "Button"}
+                                    {btn.label || t("nodes.button")}
                                 </div>
                             )
                         )}

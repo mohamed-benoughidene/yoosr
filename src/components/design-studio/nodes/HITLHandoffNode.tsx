@@ -2,8 +2,10 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { UserRoundPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function HITLHandoffNode({ data, selected }: NodeProps) {
+    const t = useTranslations("designStudio");
     const nodeData = data as Record<string, any>;
 
     return (
@@ -23,14 +25,21 @@ export function HITLHandoffNode({ data, selected }: NodeProps) {
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500/10">
                     <UserRoundPlus className="h-3.5 w-3.5 text-orange-500" />
                 </div>
-                <span className="text-xs font-semibold">
-                    {nodeData.label || "HITL Handoff"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate leading-tight">
+                        {t("blocks.hitlHandoff.name")}
+                    </span>
+                    {nodeData.label && (
+                        <span className="text-[10px] text-muted-foreground truncate leading-tight">
+                            {nodeData.label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className="px-4 py-3">
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                    {nodeData.handoffMessage || "Connecting you with a human agent..."}
+                    {nodeData.handoffMessage || t("blocks.hitlHandoff.defaultMessage")}
                 </p>
             </div>
         </div>

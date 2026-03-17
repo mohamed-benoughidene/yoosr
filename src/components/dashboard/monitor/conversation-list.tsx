@@ -127,6 +127,8 @@ function filtersReducer(state: FiltersState, action: FiltersAction): FiltersStat
     }
 }
 
+import { useTranslations, useLocale } from "next-intl"
+
 export function ConversationList({
     items,
     selectedId,
@@ -135,6 +137,8 @@ export function ConversationList({
     onDeptChange,
     onSelectConversation,
 }: ConversationListProps) {
+    const t = useTranslations("monitor")
+    const locale = useLocale()
     const { activeProject } = useProject()
     const projectId = activeProject?._id
 
@@ -165,7 +169,7 @@ export function ConversationList({
 
     const agents = (memberships?.data ?? []).map((m) => ({
         id: m.publicUserData?.userId ?? "",
-        name: `${m.publicUserData?.firstName ?? ""} ${m.publicUserData?.lastName ?? ""}`.trim() || m.publicUserData?.identifier || "Agent",
+        name: `${m.publicUserData?.firstName ?? ""} ${m.publicUserData?.lastName ?? ""}`.trim() || m.publicUserData?.identifier || t("filter_agent_fallback"),
         type: "agent" as const,
     })).filter(a => a.id !== "");
 
@@ -240,7 +244,7 @@ export function ConversationList({
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search conversations..."
+                        placeholder={t("search")}
                         className="pl-8"
                         value={searchQuery}
                         onChange={(e) => dispatch({ type: "SET_SEARCH", payload: e.target.value })}
@@ -255,19 +259,19 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <Tag className="mr-2 h-3 w-3" />
-                                {activeLabel ? `Label: ${activeLabel}` : "Label"}
+                                {activeLabel ? `${t("filter_label_button")}: ${activeLabel}` : t("filter_label_button")}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[200px] p-2" align="start">
                             <div className="flex flex-col gap-1">
-                                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Filter by label</div>
+                                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">{t("filter_label_header")}</div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="justify-start font-normal h-8"
                                     onClick={() => dispatch({ type: "SET_LABEL", payload: null })}
                                 >
-                                    All Conversations
+                                    {t("filter_label_all")}
                                 </Button>
                                 {labels?.map((label) => (
                                     <Button
@@ -289,7 +293,7 @@ export function ConversationList({
                                 ))}
                                 {labels && labels.length === 0 && (
                                     <div className="text-xs text-muted-foreground p-2 text-center">
-                                        No labels found
+                                        {t("filter_label_none")}
                                     </div>
                                 )}
                             </div>
@@ -303,14 +307,14 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <Filter className="mr-2 h-3 w-3" />
-                                {activeDeptId ? `Dept: ${activeDeptName}` : "Dept"}
+                                {activeDeptId ? `${t("filter_dept_button")}: ${activeDeptName}` : t("filter_dept_button")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[200px]" align="start">
-                            <DropdownMenuLabel className="text-xs font-medium">Filter by department</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs font-medium">{t("filter_dept_header")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onDeptChange(null)} className="text-xs">
-                                All Departments
+                                {t("filter_dept_all")}
                             </DropdownMenuItem>
                             {departments?.map((dept) => (
                                 <DropdownMenuItem
@@ -328,7 +332,7 @@ export function ConversationList({
                             ))}
                             {departments && departments.length === 0 && (
                                 <div className="text-[10px] text-muted-foreground p-2 text-center italic">
-                                    No departments configured
+                                    {t("filter_dept_none")}
                                 </div>
                             )}
                         </DropdownMenuContent>
@@ -341,19 +345,19 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <Filter className="mr-2 h-3 w-3" />
-                                {activeAgent ? `Agent: ${activeAgentName}` : "Agent"}
+                                {activeAgent ? `${t("filter_agent_button")}: ${activeAgentName}` : t("filter_agent_button")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[200px]" align="start">
-                            <DropdownMenuLabel className="text-xs font-medium">Filter by agent</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs font-medium">{t("filter_agent_header")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_AGENT", payload: null })} className="text-xs">
-                                All Agents & Bots
+                                {t("filter_agent_all")}
                             </DropdownMenuItem>
                             {agents.length > 0 && (
                                 <>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">Agents</DropdownMenuLabel>
+                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">{t("filter_agent_agents")}</DropdownMenuLabel>
                                     {agents.map((agent) => (
                                         <DropdownMenuItem
                                             key={agent.id}
@@ -373,7 +377,7 @@ export function ConversationList({
                             {botList.length > 0 && (
                                 <>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">Bots</DropdownMenuLabel>
+                                    <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground py-1">{t("filter_agent_bots")}</DropdownMenuLabel>
                                     {botList.map((bot) => (
                                         <DropdownMenuItem
                                             key={bot.id}
@@ -392,7 +396,7 @@ export function ConversationList({
                             )}
                             {!membersLoaded && (
                                 <div className="text-[10px] text-muted-foreground p-2 text-center italic">
-                                    Loading members...
+                                    {t("filter_agent_loading")}
                                 </div>
                             )}
                         </DropdownMenuContent>
@@ -405,21 +409,21 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
-                                {sortBy === "priority" ? "Sort: Priority" :
-                                    sortBy === "sla" ? "Sort: SLA" : "Sort: Recent"}
+                                {sortBy === "priority" ? `${t("sort_header")}: ${t("sort_priority")}` :
+                                    sortBy === "sla" ? `${t("sort_header")}: ${t("sort_sla")}` : t("sort_recent")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-[150px]">
-                            <DropdownMenuLabel className="text-xs font-medium">Sort by</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs font-medium">{t("sort_header")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "timestamp" })} className="text-xs">
-                                Recent
+                                {t("sort_recent")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "priority" })} className="text-xs">
-                                Priority
+                                {t("sort_priority")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_SORT", payload: "sla" })} className="text-xs">
-                                SLA Deadline
+                                {t("sort_sla")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -431,25 +435,25 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
-                                {activeStatus === 100 ? "Status: Unassigned" :
-                                    activeStatus === 200 ? "Status: Assigned / Active" : "Status"}
+                                {activeStatus === 100 ? `${t("filter_status_header")}: ${t("filter_status_unassigned")}` :
+                                    activeStatus === 200 ? `${t("filter_status_header")}: ${t("filter_status_assigned")}` : t("filter_status_header")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[160px]" align="start">
-                            <DropdownMenuLabel className="text-xs font-medium">Filter by status</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs font-medium">{t("filter_status_header")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: null })} className="text-xs">
-                                All Statuses
+                                {t("filter_status_all")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 100 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
-                                    <span>Unassigned</span>
+                                    <span>{t("filter_status_unassigned")}</span>
                                     {activeStatus === 100 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 200 })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
-                                    <span>Assigned / Active</span>
+                                    <span>{t("filter_status_assigned")}</span>
                                     {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
@@ -457,10 +461,10 @@ export function ConversationList({
                     </DropdownMenu>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Active ({filteredItems.length})</span>
+                    <span>{t("active")} ({filteredItems.length})</span>
                     <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-blue-500"></div> Served</span>
-                        <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500"></div> Unserved</span>
+                        <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-blue-500"></div> {t("served")}</span>
+                        <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500"></div> {t("unserved")}</span>
                     </div>
                 </div>
             </div>
@@ -503,7 +507,7 @@ export function ConversationList({
                                                                     <MessageCircle className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500/10" />
                                                                 </div>
                                                             </TooltipTrigger>
-                                                            <TooltipContent side="right">Messenger</TooltipContent>
+                                                            <TooltipContent side="right">{t("channel_messenger")}</TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 )}
@@ -515,23 +519,23 @@ export function ConversationList({
                                                                     IG
                                                                 </div>
                                                             </TooltipTrigger>
-                                                            <TooltipContent side="right">Instagram</TooltipContent>
+                                                            <TooltipContent side="right">{t("channel_instagram")}</TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 )}
                                                 {item.priority === "urgent" && (
-                                                    <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">Urgent</Badge>
+                                                    <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">{t("badge_urgent")}</Badge>
                                                 )}
                                                 {item.priority === "high" && (
-                                                    <Badge className="h-4 px-1 text-[9px] bg-orange-500 hover:bg-orange-500 text-white border-none uppercase font-bold">High</Badge>
+                                                    <Badge className="h-4 px-1 text-[9px] bg-orange-500 hover:bg-orange-500 text-white border-none uppercase font-bold">{t("badge_high")}</Badge>
                                                 )}
                                                 {item.priority === "low" && (
-                                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase font-bold">Low</Badge>
+                                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase font-bold">{t("badge_low")}</Badge>
                                                 )}
                                                 {item.slaDeadline && !item.firstResponseAt && (() => {
                                                     const timeRemaining = item.slaDeadline - Date.now();
                                                     if (timeRemaining <= 0) {
-                                                        return <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">Overdue</Badge>;
+                                                        return <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">{t("badge_overdue")}</Badge>;
                                                     }
 
                                                     const isAmber = timeRemaining <= 30 * 60 * 1000;
@@ -548,7 +552,7 @@ export function ConversationList({
                                             </div>
                                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                 {getChannelIcon(item.channel)}
-                                                <span className="capitalize">{item.channel}</span>
+                                                <span className="capitalize">{item.channel === "messenger" ? t("channel_messenger") : item.channel === "instagram" ? t("channel_instagram") : item.channel}</span>
                                             </div>
                                         </div>
                                         {item.unread > 0 && (
@@ -563,7 +567,7 @@ export function ConversationList({
                                                 : "text-muted-foreground"
                                         )}
                                     >
-                                        {new Intl.DateTimeFormat("en", {
+                                        {new Intl.DateTimeFormat(locale, {
                                             timeStyle: "short"
                                         }).format(new Date(item.timestamp))}
                                     </div>
@@ -586,7 +590,7 @@ export function ConversationList({
                     ))}
                     {filteredItems.length === 0 && (
                         <div className="text-sm text-center text-muted-foreground py-8">
-                            {searchQuery ? "No conversations match your search." : "No conversations found."}
+                            {searchQuery ? t("no_results") : t("no_conversations_found")}
                         </div>
                     )}
                 </div>

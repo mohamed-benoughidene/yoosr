@@ -29,6 +29,9 @@ interface NodePropertiesPanelProps {
 }
 
 import { Suspense } from "react";
+import { useTranslations } from "next-intl";
+
+const toCamelCase = (str: string) => str.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
 function NodePropertiesPanelContent({
     node,
@@ -36,6 +39,7 @@ function NodePropertiesPanelContent({
     onClose,
     onDeleteNode,
 }: NodePropertiesPanelProps) {
+    const t = useTranslations("designStudio");
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project") as Id<"projects"> | null;
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
@@ -61,9 +65,14 @@ function NodePropertiesPanelContent({
             {/* Header */}
             <div className="flex items-center justify-between border-b px-4 py-3">
                 <div>
-                    <h3 className="text-sm font-semibold">{data.label || node.type}</h3>
-                    <p className="text-[10px] text-muted-foreground capitalize">
-                        {node.type} block
+                    <h3 className="text-sm font-semibold">{t(`blocks.${toCamelCase(node.type)}.name`)}</h3>
+                    {typeof data.label === "string" && data.label.trim() !== "" && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {data.label}
+                        </p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground capitalize mt-0.5">
+                        {t(`blocks.${toCamelCase(node.type)}.name`)} {t("properties.blockSuffix")}
                     </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
@@ -75,12 +84,12 @@ function NodePropertiesPanelContent({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Label (all node types) */}
                 <div className="space-y-1.5">
-                    <Label className="text-xs">Label</Label>
+                    <Label className="text-xs">{t("properties.label")}</Label>
                     <Input
                         value={data.label || ""}
                         onChange={(e) => update("label", e.target.value)}
                         className="h-8 text-sm"
-                        placeholder="Block name"
+                        placeholder={t("properties.blockName")}
                     />
                 </div>
 
@@ -89,14 +98,14 @@ function NodePropertiesPanelContent({
                     <>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between pointer-events-auto">
-                                <Label className="text-xs">Message Variations</Label>
+                                <Label className="text-xs">{t("properties.messageVariations")}</Label>
                                 <Button variant="ghost" size="sm" onClick={() => {
                                     const textVariations = [...(data.textVariations || (data.text ? [data.text] : [""]))];
                                     if (!data.textVariations && !data.text) textVariations[0] = "";
                                     textVariations.push("");
                                     update("textVariations", textVariations);
                                 }} className="h-6 px-2 text-xs">
-                                    <Plus className="mr-1 h-3 w-3" /> Add Variation
+                                    <Plus className="mr-1 h-3 w-3" /> {t("properties.addVariation")}
                                 </Button>
                             </div>
                             {(data.textVariations || (data.text ? [data.text] : [""])).map((text: string, i: number) => (
@@ -120,14 +129,14 @@ function NodePropertiesPanelContent({
                                             if (i === 0) update("text", e.target.value);
                                         }}
                                         className="min-h-[60px] text-xs resize-none"
-                                        placeholder="Message variation..."
+                                        placeholder={t("properties.variationPlaceholder")}
                                     />
                                 </div>
                             ))}
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label className="text-xs">Buttons</Label>
+                                <Label className="text-xs">{t("properties.buttons")}</Label>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -143,7 +152,7 @@ function NodePropertiesPanelContent({
                                     }}
                                 >
                                     <Plus className="mr-1 h-3 w-3" />
-                                    Add
+                                    {t("properties.add")}
                                 </Button>
                             </div>
                             {(data.buttons || []).map((btn: any, i: number) => (
@@ -160,7 +169,7 @@ function NodePropertiesPanelContent({
                                             update("buttons", buttons);
                                         }}
                                         className="h-7 text-xs"
-                                        placeholder="Button label"
+                                        placeholder={t("properties.buttonLabel")}
                                     />
                                     <Button
                                         variant="ghost"
@@ -185,25 +194,25 @@ function NodePropertiesPanelContent({
                 {node.type === "setAttribute" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Attribute key</Label>
+                            <Label className="text-xs">{t("properties.attributeKey")}</Label>
                             <Input
                                 value={data.attributeKey || ""}
                                 onChange={(e) =>
                                     update("attributeKey", e.target.value)
                                 }
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., user_email"
+                                placeholder={t("properties.attributeKeyPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Value</Label>
+                            <Label className="text-xs">{t("properties.value")}</Label>
                             <Input
                                 value={data.attributeValue || ""}
                                 onChange={(e) =>
                                     update("attributeValue", e.target.value)
                                 }
                                 className="h-8 text-sm"
-                                placeholder="e.g., {{email}} or a static value"
+                                placeholder={t("properties.valuePlaceholder")}
                             />
                         </div>
                     </>
@@ -213,18 +222,18 @@ function NodePropertiesPanelContent({
                 {node.type === "condition" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Attribute to check</Label>
+                            <Label className="text-xs">{t("properties.attributeToCheck")}</Label>
                             <Input
                                 value={data.attributeKey || ""}
                                 onChange={(e) =>
                                     update("attributeKey", e.target.value)
                                 }
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., lead_score"
+                                placeholder={t("properties.attributeToCheckPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Operator</Label>
+                            <Label className="text-xs">{t("properties.operator")}</Label>
                             <Select
                                 value={data.operator || "equals"}
                                 onValueChange={(v) => update("operator", v)}
@@ -233,31 +242,31 @@ function NodePropertiesPanelContent({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="equals">Equals</SelectItem>
+                                    <SelectItem value="equals">{t("properties.operators.equals")}</SelectItem>
                                     <SelectItem value="notEquals">
-                                        Not Equals
+                                        {t("properties.operators.notEquals")}
                                     </SelectItem>
                                     <SelectItem value="contains">
-                                        Contains
+                                        {t("properties.operators.contains")}
                                     </SelectItem>
                                     <SelectItem value="greaterThan">
-                                        Greater Than
+                                        {t("properties.operators.greaterThan")}
                                     </SelectItem>
                                     <SelectItem value="lessThan">
-                                        Less Than
+                                        {t("properties.operators.lessThan")}
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Compare value</Label>
+                            <Label className="text-xs">{t("properties.compareValue")}</Label>
                             <Input
                                 value={data.compareValue || ""}
                                 onChange={(e) =>
                                     update("compareValue", e.target.value)
                                 }
                                 className="h-8 text-sm"
-                                placeholder="Value to compare against"
+                                placeholder={t("properties.compareValuePlaceholder")}
                             />
                         </div>
                     </>
@@ -267,7 +276,7 @@ function NodePropertiesPanelContent({
                 {node.type === "webRequest" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">HTTP Method</Label>
+                            <Label className="text-xs">{t("properties.httpMethod")}</Label>
                             <Select
                                 value={data.method || "GET"}
                                 onValueChange={(v) => update("method", v)}
@@ -284,7 +293,7 @@ function NodePropertiesPanelContent({
                             </Select>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">URL</Label>
+                            <Label className="text-xs">{t("properties.url")}</Label>
                             <Input
                                 value={data.url || ""}
                                 onChange={(e) => update("url", e.target.value)}
@@ -294,7 +303,7 @@ function NodePropertiesPanelContent({
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs">
-                                Save response to variable
+                                {t("properties.saveResponseToVariable")}
                             </Label>
                             <Input
                                 value={data.responseVariable || ""}
@@ -302,7 +311,7 @@ function NodePropertiesPanelContent({
                                     update("responseVariable", e.target.value)
                                 }
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., api_response"
+                                placeholder={t("properties.responseVariablePlaceholder")}
                             />
                         </div>
                     </>
@@ -312,7 +321,7 @@ function NodePropertiesPanelContent({
                 {node.type === "aiTask" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">System Prompt</Label>
+                            <Label className="text-xs">{t("properties.systemPrompt")}</Label>
                             <Textarea
                                 value={data.prompt || data.systemPrompt || ""}
                                 onChange={(e) => {
@@ -320,11 +329,11 @@ function NodePropertiesPanelContent({
                                     update("systemPrompt", e.target.value);
                                 }}
                                 className="min-h-[100px] text-sm resize-none"
-                                placeholder="Enter system prompt... Use {{variable}} for context"
+                                placeholder={t("properties.systemPromptPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">User Input Variable</Label>
+                            <Label className="text-xs">{t("properties.userInputVariable")}</Label>
                             <Input
                                 value={data.userInput || ""}
                                 onChange={(e) => update("userInput", e.target.value)}
@@ -333,7 +342,7 @@ function NodePropertiesPanelContent({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Model</Label>
+                            <Label className="text-xs">{t("properties.model")}</Label>
                             <Input
                                 value={data.model || ""}
                                 onChange={(e) => update("model", e.target.value)}
@@ -343,7 +352,7 @@ function NodePropertiesPanelContent({
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs">
-                                Save output to variable
+                                {t("properties.saveOutputToVariable")}
                             </Label>
                             <Input
                                 value={data.outputVariable || ""}
@@ -351,11 +360,11 @@ function NodePropertiesPanelContent({
                                     update("outputVariable", e.target.value)
                                 }
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., gpt_reply"
+                                placeholder={t("properties.outputVariablePlaceholder")}
                             />
                         </div>
                         <p className="text-[10px] text-muted-foreground">
-                            If the LLM returns valid JSON, keys are auto-mapped to context attributes.
+                            {t("properties.jsonHint")}
                         </p>
                     </>
                 )}
@@ -364,16 +373,16 @@ function NodePropertiesPanelContent({
                 {node.type === "ai_assistant" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">System Prompt</Label>
+                            <Label className="text-xs">{t("properties.systemPrompt")}</Label>
                             <Textarea
                                 value={data.systemPrompt || ""}
                                 onChange={(e) => update("systemPrompt", e.target.value)}
                                 className="min-h-[120px] text-sm resize-none"
-                                placeholder="Define your AI assistant persona and guardrails..."
+                                placeholder={t("properties.aiAssistantPromptPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Model</Label>
+                            <Label className="text-xs">{t("properties.model")}</Label>
                             <Input
                                 value={data.model || ""}
                                 onChange={(e) => update("model", e.target.value)}
@@ -382,7 +391,7 @@ function NodePropertiesPanelContent({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Max Turns</Label>
+                            <Label className="text-xs">{t("properties.maxTurns")}</Label>
                             <Input
                                 type="number"
                                 value={data.maxTurns || 3}
@@ -394,17 +403,17 @@ function NodePropertiesPanelContent({
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs">
-                                Save final reply to variable
+                                {t("properties.saveFinalReplyTo")}
                             </Label>
                             <Input
                                 value={data.assignTo || ""}
                                 onChange={(e) => update("assignTo", e.target.value)}
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g., assistant_reply"
+                                placeholder={t("properties.finalReplyPlaceholder")}
                             />
                         </div>
                         <p className="text-[10px] text-muted-foreground">
-                            Suspends flow and gives full control to the LLM for multi-turn reasoning.
+                            {t("properties.multiTurnHint")}
                         </p>
                     </>
                 )}
@@ -412,7 +421,7 @@ function NodePropertiesPanelContent({
                 {/* Wait Node fields */}
                 {node.type === "wait" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Delay in Seconds</Label>
+                        <Label className="text-xs">{t("properties.delaySeconds")}</Label>
                         <Input
                             type="number"
                             value={data.delaySeconds || 1}
@@ -426,23 +435,23 @@ function NodePropertiesPanelContent({
                 {node.type === "if_operating_hours" && (
                     <div className="space-y-4">
                         <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
-                            This block checks your project's operating hours schedule at runtime.
+                            {t("properties.operatingHoursHint")}
                         </div>
 
                         <Button variant="outline" size="sm" asChild className="w-full shadow-sm h-8 mt-1">
                             <Link href="/dashboard/settings/operating-hours">
-                                Configure Operating Hours &rarr;
+                                {t("properties.configureOperatingHours")}
                             </Link>
                         </Button>
 
                         <div className="space-y-2 pt-2 border-t">
-                            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Output Paths</Label>
+                            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("properties.outputPaths")}</Label>
                             <div className="flex flex-col gap-2 pt-1">
                                 <div className="inline-flex items-center rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                                    TRUE — Within operating hours
+                                    {t("properties.withinHours")}
                                 </div>
                                 <div className="inline-flex items-center rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
-                                    FALSE — Outside operating hours or disabled
+                                    {t("properties.outsideHours")}
                                 </div>
                             </div>
                         </div>
@@ -453,21 +462,21 @@ function NodePropertiesPanelContent({
                 {node.type === "ask_kb" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Search Query</Label>
+                            <Label className="text-xs">{t("properties.searchQuery")}</Label>
                             <Input
                                 value={data.query || ""}
                                 onChange={(e) => update("query", e.target.value)}
                                 className="h-8 text-sm"
-                                placeholder="e.g. {{user_message}}"
+                                placeholder={t("properties.searchQueryPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Assign Result To Variable</Label>
+                            <Label className="text-xs">{t("properties.assignResultTo")}</Label>
                             <Input
                                 value={data.assignTo || ""}
                                 onChange={(e) => update("assignTo", e.target.value)}
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g. kb_reply"
+                                placeholder={t("properties.assignResultPlaceholder")}
                             />
                         </div>
                     </>
@@ -476,18 +485,18 @@ function NodePropertiesPanelContent({
                 {/* Apply Label Node fields */}
                 {node.type === "applyLabel" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Label Name</Label>
+                        <Label className="text-xs">{t("properties.labelName")}</Label>
                         <Select
                             value={data.labelName || ""}
                             onValueChange={(val) => update("labelName", val)}
                         >
                             <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select a label" />
+                                <SelectValue placeholder={t("properties.selectLabel")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {labels.length === 0 ? (
                                     <SelectItem value="none" disabled>
-                                        No labels found
+                                        {t("properties.noLabels")}
                                     </SelectItem>
                                 ) : (
                                     labels.map((lbl: any) => (
@@ -510,12 +519,12 @@ function NodePropertiesPanelContent({
                 {/* Capture Reply Form */}
                 {node.type === "capture_user_reply" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Save reply to attribute</Label>
+                        <Label className="text-xs">{t("properties.saveReplyTo")}</Label>
                         <Input
                             value={data.attribute || ""}
                             onChange={(e) => update("attribute", e.target.value)}
                             className="h-8 text-sm font-mono"
-                            placeholder="e.g. email_address"
+                            placeholder={t("properties.saveReplyPlaceholder")}
                         />
                     </div>
                 )}
@@ -523,12 +532,12 @@ function NodePropertiesPanelContent({
                 {/* Replace Bot Node */}
                 {node.type === "replace_bot" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Target Bot Slug</Label>
+                        <Label className="text-xs">{t("properties.targetBotSlug")}</Label>
                         <Input
                             value={data.slug || ""}
                             onChange={(e) => update("slug", e.target.value)}
                             className="h-8 text-sm font-mono"
-                            placeholder="e.g. tech_support_bot"
+                            placeholder={t("properties.targetBotSlugPlaceholder")}
                         />
                     </div>
                 )}
@@ -536,18 +545,18 @@ function NodePropertiesPanelContent({
                 {/* Change Dept Node */}
                 {node.type === "change_department" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Department</Label>
+                        <Label className="text-xs">{t("properties.department")}</Label>
                         <Select
                             value={data.departmentId || ""}
                             onValueChange={(val) => update("departmentId", val)}
                         >
                             <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select a department" />
+                                <SelectValue placeholder={t("properties.selectDepartment")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {departments.length === 0 ? (
                                     <SelectItem value="none" disabled>
-                                        No departments found
+                                        {t("properties.noDepartments")}
                                     </SelectItem>
                                 ) : (
                                     departments.map((dept: any) => (
@@ -565,21 +574,21 @@ function NodePropertiesPanelContent({
                 {node.type === "code_action" && (
                     <>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">JS Expression</Label>
+                            <Label className="text-xs">{t("properties.jsExpression")}</Label>
                             <Textarea
                                 value={data.expression || ""}
                                 onChange={(e) => update("expression", e.target.value)}
                                 className="min-h-[80px] text-sm font-mono resize-none"
-                                placeholder="e.g. price * 0.9 + shipping"
+                                placeholder={t("properties.jsExpressionPlaceholder")}
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Assign output to variable</Label>
+                            <Label className="text-xs">{t("properties.assignOutputTo")}</Label>
                             <Input
                                 value={data.assignTo || ""}
                                 onChange={(e) => update("assignTo", e.target.value)}
                                 className="h-8 text-sm font-mono"
-                                placeholder="e.g. code_result"
+                                placeholder={t("properties.assignOutputPlaceholder")}
                             />
                         </div>
                     </>
@@ -588,14 +597,14 @@ function NodePropertiesPanelContent({
                 {/* HITL Handoff fields */}
                 {node.type === "hitlHandoff" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Handoff message</Label>
+                        <Label className="text-xs">{t("properties.handoffMessage")}</Label>
                         <Textarea
                             value={data.handoffMessage || ""}
                             onChange={(e) =>
                                 update("handoffMessage", e.target.value)
                             }
                             className="min-h-[60px] text-sm resize-none"
-                            placeholder="Message shown when handing off to agent"
+                            placeholder={t("properties.handoffMessagePlaceholder")}
                         />
                     </div>
                 )}
@@ -603,14 +612,14 @@ function NodePropertiesPanelContent({
                 {/* Close fields */}
                 {node.type === "close" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Closing message</Label>
+                        <Label className="text-xs">{t("properties.closingMessage")}</Label>
                         <Textarea
                             value={data.closingMessage || ""}
                             onChange={(e) =>
                                 update("closingMessage", e.target.value)
                             }
                             className="min-h-[60px] text-sm resize-none"
-                            placeholder="Message shown when conversation closes"
+                            placeholder={t("properties.closingMessagePlaceholder")}
                         />
                     </div>
                 )}
@@ -618,23 +627,23 @@ function NodePropertiesPanelContent({
                 {/* Set Priority Node fields */}
                 {node.type === "setPriority" && (
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Conversation Priority</Label>
+                        <Label className="text-xs">{t("properties.conversationPriority")}</Label>
                         <Select
                             value={data.priority || "normal"}
                             onValueChange={(val) => update("priority", val)}
                         >
                             <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select priority" />
+                                <SelectValue placeholder={t("properties.selectPriority")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="normal">Normal</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
+                                <SelectItem value="low">{t("properties.priorities.low")}</SelectItem>
+                                <SelectItem value="normal">{t("properties.priorities.normal")}</SelectItem>
+                                <SelectItem value="high">{t("properties.priorities.high")}</SelectItem>
+                                <SelectItem value="urgent">{t("properties.priorities.urgent")}</SelectItem>
                             </SelectContent>
                         </Select>
                         <p className="text-[10px] text-muted-foreground pt-1 italic">
-                            Automatically updates the conversation urgency level.
+                            {t("properties.priorityHint")}
                         </p>
                     </div>
                 )}
@@ -650,7 +659,7 @@ function NodePropertiesPanelContent({
                         onClick={() => onDeleteNode(node.id)}
                     >
                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                        Delete block
+                        {t("properties.deleteBlock")}
                     </Button>
                 </div>
             )}

@@ -61,6 +61,7 @@ import { Id } from "../../../../convex/_generated/dataModel"
 import { useState, useEffect, useCallback, KeyboardEvent } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
+import { useTranslations, useLocale } from "next-intl"
 
 type EditableField = "visitorName" | "visitorEmail" | "visitorPhone" | "visitorAddress" | "visitorNote"
 
@@ -72,13 +73,7 @@ interface FieldConfig {
     multiline?: boolean
 }
 
-const FIELDS: FieldConfig[] = [
-    { key: "visitorName", label: "Name", placeholder: "Name", icon: User },
-    { key: "visitorEmail", label: "Email", placeholder: "Email", icon: Mail },
-    { key: "visitorPhone", label: "Phone", placeholder: "Phone number", icon: Phone },
-    { key: "visitorAddress", label: "Address", placeholder: "Address", icon: MapPin },
-    { key: "visitorNote", label: "Note", placeholder: "Add a note...", icon: StickyNote, multiline: true },
-]
+
 
 function InlineEditField({
     value,
@@ -192,7 +187,18 @@ const getChannelIcon = (channel?: string) => {
 }
 
 export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"conversations">, onBack?: () => void }) {
+    const t = useTranslations("visitor")
+    const tChat = useTranslations("chat")
+    const locale = useLocale()
     const { activeProject } = useProject()
+
+    const FIELDS: FieldConfig[] = [
+        { key: "visitorName", label: t("field_name"), placeholder: t("field_name"), icon: User },
+        { key: "visitorEmail", label: t("field_email"), placeholder: t("field_email"), icon: Mail },
+        { key: "visitorPhone", label: t("field_phone"), placeholder: t("field_phone"), icon: Phone },
+        { key: "visitorAddress", label: t("field_address"), placeholder: t("field_address"), icon: MapPin },
+        { key: "visitorNote", label: t("field_note"), placeholder: t("field_note"), icon: StickyNote, multiline: true },
+    ]
 
     const conversation = useQuery(api.conversations.get, { id: conversationId })
     const existingContact = useQuery(
@@ -242,7 +248,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
     const handleCreateOrder = async () => {
         if (!activeProject || !conversationId) return
         if (!orderForm.product.trim() || !orderForm.contactName.trim()) {
-            toast.error("Contact Name and Product are required")
+            toast.error(t("toast_contact_required"))
             return
         }
 
@@ -257,7 +263,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 notes: orderForm.notes || undefined,
                 status: orderForm.status
             })
-            toast.success("Order saved")
+            toast.success(t("toast_order_saved"))
             setIsOrderFormOpen(false)
             setOrderForm({
                 contactName: conversation?.visitorName || "",
@@ -267,7 +273,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 status: "new"
             })
         } catch {
-            toast.error("Failed to save order")
+            toast.error(t("toast_order_failed"))
         } finally {
             setOrderFormSaving(false)
         }
@@ -291,27 +297,27 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
             if (existingContact) {
                 await updateContact({
                     id: existingContact._id,
-                    name: conversation.visitorName || "Visitor",
+                    name: conversation.visitorName || t("name_fallback"),
                     email: conversation.visitorEmail || undefined,
                     phone: conversation.visitorPhone || undefined,
                     address: conversation.visitorAddress || undefined,
                     note: conversation.visitorNote || undefined,
                 })
-                toast.success("Contact updated")
+                toast.success(t("toast_contact_updated"))
             } else {
                 await createContact({
                     projectId: activeProject._id,
-                    name: conversation.visitorName || "Visitor",
+                    name: conversation.visitorName || t("name_fallback"),
                     email: conversation.visitorEmail || undefined,
                     phone: conversation.visitorPhone || undefined,
                     address: conversation.visitorAddress || undefined,
                     note: conversation.visitorNote || undefined,
                     conversationId,
                 })
-                toast.success("Contact added")
+                toast.success(t("toast_contact_added"))
             }
         } catch {
-            toast.error("Failed to save contact")
+            toast.error(t("toast_contact_failed"))
         } finally {
             setContactSaving(false)
         }
@@ -322,9 +328,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
         try {
             await assignTag({ conversationId, tagName });
             setTagPopoverOpen(false);
-            toast.success("Tag added");
+            toast.success(t("toast_tag_added"));
         } catch {
-            toast.error("Failed to add tag");
+            toast.error(t("toast_tag_add_failed"));
         }
     }
 
@@ -332,9 +338,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
         if (!conversationId) return;
         try {
             await removeTag({ conversationId, tagName });
-            toast.success("Tag removed");
+            toast.success(t("toast_tag_removed"));
         } catch {
-            toast.error("Failed to remove tag");
+            toast.error(tChat("error_remove_tag"));
         }
     }
 
@@ -342,7 +348,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
         return (
             <div className="flex flex-col h-full bg-background border-l p-4 items-center justify-center text-muted-foreground text-sm">
                 <Loader2 className="h-6 w-6 animate-spin mb-2" />
-                Loading...
+                {t("loading")}
             </div>
         )
     }
@@ -352,7 +358,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
     const tags = conversation.tags || []
 
     const dateObj = new Date(conversation._creationTime);
-    const formattedTime = `${dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: false })}`;
+    const formattedTime = `${dateObj.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" })} · ${dateObj.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", hour12: false })}`;
 
     return (
         <div className="flex flex-col h-full bg-background border-l p-4 space-y-6 overflow-y-auto w-full">
@@ -368,7 +374,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                     <AvatarFallback className="text-xl bg-primary/10 text-primary">{initials}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <h2 className="text-xl font-semibold">{conversation.visitorName || "Visitor"}</h2>
+                    <h2 className="text-xl font-semibold">{conversation.visitorName || t("name_fallback")}</h2>
                     {conversation.visitorEmail && (
                         <p className="text-sm text-muted-foreground">{conversation.visitorEmail}</p>
                     )}
@@ -381,7 +387,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 {/* 1. Visitor Info (Inline Editable) */}
                 <AccordionItem value="visitor-info" className="border-b">
                     <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
-                        Visitor Info
+                        {t("section_info")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
                         <div className="space-y-1">
@@ -402,7 +408,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 {/* 2. Conversation Details (read-only) */}
                 <AccordionItem value="conversation-details" className="border-b">
                     <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
-                        Conversation Details
+                        {t("section_conversation")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
                         <div className="flex flex-col gap-3 text-sm px-1">
@@ -410,77 +416,77 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                 <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
                                 <span className="flex items-center gap-1.5 capitalize">
                                     {getChannelIcon(attributes.channel || "web")}
-                                    {attributes.channel || "Web"}
+                                    {attributes.channel || t("channel_web")}
                                 </span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <CircleDot className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-muted-foreground">Status: </span>
+                                <span className="text-muted-foreground">{t("status_label")}: </span>
                                 <span className="flex items-center gap-1.5 w-full">
                                     {conversation.status === 1000 ? (
-                                        <><div className="h-2 w-2 rounded-full bg-green-500" /> Resolved</>
+                                        <><div className="h-2 w-2 rounded-full bg-green-500" /> {t("status_resolved")}</>
                                     ) : conversation.status === 200 && conversation.assignedTo ? (
-                                        <><div className="h-2 w-2 rounded-full bg-blue-500" /> Assigned</>
+                                        <><div className="h-2 w-2 rounded-full bg-blue-500" /> {t("status_assigned")}</>
                                     ) : conversation.status === 200 && !conversation.assignedTo && conversation.botId ? (
-                                        <><div className="h-2 w-2 rounded-full bg-purple-500" /> Bot Active</>
+                                        <><div className="h-2 w-2 rounded-full bg-purple-500" /> {t("status_bot")}</>
                                     ) : (
-                                        <><div className="h-2 w-2 rounded-full bg-yellow-500" /> Open</>
+                                        <><div className="h-2 w-2 rounded-full bg-yellow-500" /> {t("status_open")}</>
                                     )}
                                 </span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Building className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>{attributes.department || "General"}</span>
+                                <span>{attributes.department || t("dept_fallback")}</span>
                             </div>
                             <div className="flex items-center gap-3 group">
                                 <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-muted-foreground min-w-[60px]">Priority: </span>
+                                <span className="text-muted-foreground min-w-[60px]">{t("priority_label")}: </span>
                                 <Select
                                     value={conversation.priority || "normal"}
                                     onValueChange={(val: any) => {
                                         updateConversation({
                                             id: conversationId,
                                             priority: val
-                                        }).catch(() => toast.error("Failed to update priority"))
+                                        }).catch(() => toast.error(tChat("error_update_priority")))
                                     }}
                                 >
                                     <SelectTrigger className="h-7 w-auto border-none p-0 focus:ring-0 shadow-none bg-transparent hover:bg-muted/50 rounded-md px-1 transition-colors">
                                         <div className="flex items-center gap-2">
                                             {conversation.priority === "urgent" && (
-                                                <Badge className="bg-red-600 hover:bg-red-600 border-none uppercase text-[10px] font-bold">Urgent</Badge>
+                                                <Badge className="bg-red-600 hover:bg-red-600 border-none uppercase text-[10px] font-bold">{t("priority_urgent")}</Badge>
                                             )}
                                             {conversation.priority === "high" && (
-                                                <Badge className="bg-orange-500 hover:bg-orange-500 border-none uppercase text-[10px] font-bold">High</Badge>
+                                                <Badge className="bg-orange-500 hover:bg-orange-500 border-none uppercase text-[10px] font-bold">{t("priority_high")}</Badge>
                                             )}
                                             {conversation.priority === "low" && (
-                                                <Badge variant="secondary" className="bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase text-[10px] font-bold">Low</Badge>
+                                                <Badge variant="secondary" className="bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase text-[10px] font-bold">{t("priority_low")}</Badge>
                                             )}
                                             {(!conversation.priority || conversation.priority === "normal") && (
-                                                <Badge variant="secondary" className="bg-gray-200 text-gray-700 hover:bg-gray-200 border-none uppercase text-[10px] font-bold">Normal</Badge>
+                                                <Badge variant="secondary" className="bg-gray-200 text-gray-700 hover:bg-gray-200 border-none uppercase text-[10px] font-bold">{t("priority_normal")}</Badge>
                                             )}
                                         </div>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="normal">Normal</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                        <SelectItem value="low">{t("priority_low")}</SelectItem>
+                                        <SelectItem value="normal">{t("priority_normal")}</SelectItem>
+                                        <SelectItem value="high">{t("priority_high")}</SelectItem>
+                                        <SelectItem value="urgent">{t("priority_urgent")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="flex items-center gap-3">
                                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-muted-foreground">Assigned to: </span>
+                                <span className="text-muted-foreground">{t("assigned_label")}: </span>
                                 {conversation.assignedTo ? (
                                     assignedProfile === undefined ? (
-                                        <span className="text-muted-foreground animate-pulse text-xs">Loading...</span>
+                                        <span className="text-muted-foreground animate-pulse text-xs">{t("loading")}</span>
                                     ) : (
-                                        <span className="truncate font-medium">{assignedProfile?.fullName || assignedProfile?.email || "Unknown Agent"}</span>
+                                        <span className="truncate font-medium">{assignedProfile?.fullName || assignedProfile?.email || t("tech_unknown")}</span>
                                     )
                                 ) : conversation.botId ? (
-                                    <span className="truncate font-medium">Bot</span>
+                                    <span className="truncate font-medium">{t("assigned_bot")}</span>
                                 ) : (
-                                    <span>Unassigned</span>
+                                    <span>{t("assigned_none")}</span>
                                 )}
                             </div>
                         </div>
@@ -490,40 +496,40 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 {/* 3. Technical Info (collapsible accordion, read-only) */}
                 <AccordionItem value="technical-info" className="border-b">
                     <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
-                        Technical Info
+                        {t("tech_section")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
                         <div className="flex flex-col gap-3 text-sm">
                             <div className="flex items-center gap-3">
                                 <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>Created {formattedTime}</span>
+                                <span>{t("tech_created_at_label")} {formattedTime}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>Language: {attributes.language || "Unknown"}</span>
+                                <span>{t("tech_language")}: {attributes.language || t("tech_unknown")}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Laptop className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>OS: {attributes.os || "Unknown"}</span>
+                                <span>{t("tech_os")}: {attributes.os || t("tech_unknown")}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>Browser: {attributes.browser || "Unknown"}</span>
+                                <span>{t("tech_browser")}: {attributes.browser || t("tech_unknown")}</span>
                             </div>
                             <div className="flex flex-col gap-1 items-start w-full">
                                 <div className="flex items-center gap-3 w-full">
                                     <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <span className="truncate text-muted-foreground">Source Page:</span>
+                                    <span className="truncate text-muted-foreground">{t("tech_source")}:</span>
                                 </div>
                                 {attributes.sourcePage ? (
                                     <a href={attributes.sourcePage} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline inline-block truncate ml-7 w-[200px]">
                                         {attributes.sourcePage}
                                     </a>
-                                ) : <span className="ml-7 text-muted-foreground">Unknown</span>}
+                                ) : <span className="ml-7 text-muted-foreground">{t("tech_unknown")}</span>}
                             </div>
                             <div className="flex items-center gap-3">
                                 <Laptop className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="font-mono text-xs">{attributes.ip || "Unknown IP"}</span>
+                                <span className="font-mono text-xs">{attributes.ip || t("tech_unknown_ip")}</span>
                             </div>
                         </div>
                     </AccordionContent>
@@ -532,12 +538,12 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                 {/* 4. Tags */}
                 <AccordionItem value="tags" className="border-0">
                     <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
-                        Tags
+                        {t("tags_label")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Manage tags</span>
+                                <span className="text-xs text-muted-foreground">{t("tags_manage")}</span>
                                 <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
                                     <PopoverTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
@@ -546,11 +552,11 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[200px] p-2" align="end">
                                         <div className="flex flex-col gap-1">
-                                            <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Add a tag</div>
+                                            <div className="text-xs font-medium text-muted-foreground mb-1 px-2">{t("tags_add")}</div>
                                             {labels === undefined ? (
-                                                <div className="text-xs text-muted-foreground p-2 text-center">Loading...</div>
+                                                <div className="text-xs text-muted-foreground p-2 text-center">{t("loading")}</div>
                                             ) : labels.length === 0 ? (
-                                                <div className="text-xs text-muted-foreground p-2 text-center">No labels configured</div>
+                                                <div className="text-xs text-muted-foreground p-2 text-center">{t("tags_none_configured")}</div>
                                             ) : (
                                                 labels.map((label: any) => {
                                                     if (tags.includes(label.name)) return null;
@@ -578,7 +584,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                             <div className="flex flex-wrap gap-1.5">
                                 {tags.length === 0 ? (
-                                    <span className="text-xs text-muted-foreground italic">No tags added</span>
+                                    <span className="text-xs text-muted-foreground italic">{t("tags_none_added")}</span>
                                 ) : (
                                     tags.map((tag: string) => {
                                         const labelInfo = labels?.find((l: any) => l.name === tag);
@@ -613,7 +619,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                     <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="h-4 w-4 text-muted-foreground shrink-0" />
-                            Orders
+                            {t("orders_label")}
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
@@ -621,10 +627,10 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                             {/* Orders List */}
                             {orders === undefined ? (
                                 <div className="text-xs text-muted-foreground p-2 text-center flex items-center justify-center gap-2">
-                                    <Loader2 className="h-3 w-3 animate-spin" /> Loading orders...
+                                    <Loader2 className="h-3 w-3 animate-spin" /> {t("orders_loading")}
                                 </div>
                             ) : conversationOrders && conversationOrders.length === 0 ? (
-                                <p className="text-xs text-muted-foreground italic pl-1">No orders for this conversation.</p>
+                                <p className="text-xs text-muted-foreground italic pl-1">{t("orders_none")}</p>
                             ) : (
                                 <div className="space-y-2">
                                     {conversationOrders?.map((order) => (
@@ -636,9 +642,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                                     <span className="truncate block">{order.product}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    {order.status === "new" && <Badge className="bg-blue-500 hover:bg-blue-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">New</Badge>}
-                                                    {order.status === "confirmed" && <Badge className="bg-green-500 hover:bg-green-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">Confirmed</Badge>}
-                                                    {order.status === "cancelled" && <Badge className="bg-red-500 hover:bg-red-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">Cancelled</Badge>}
+                                                    {order.status === "new" && <Badge className="bg-blue-500 hover:bg-blue-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_new")}</Badge>}
+                                                    {order.status === "confirmed" && <Badge className="bg-green-500 hover:bg-green-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_confirmed")}</Badge>}
+                                                    {order.status === "cancelled" && <Badge className="bg-red-500 hover:bg-red-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_cancelled")}</Badge>}
                                                 </div>
                                             </div>
 
@@ -650,13 +656,13 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-[160px]">
                                                     <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "new" })} className="cursor-pointer">
-                                                        Mark New
+                                                        {t("order_mark_new")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "confirmed" })} className="cursor-pointer">
-                                                        Mark Confirmed
+                                                        {t("order_mark_confirmed")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => updateOrderStatus({ orderId: order._id, status: "cancelled" })} className="cursor-pointer">
-                                                        Mark Cancelled
+                                                        {t("order_mark_cancelled")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -681,65 +687,65 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     }}
                                 >
                                     <Plus className="mr-1.5 h-3.5 w-3.5" />
-                                    New Order
+                                    {t("order_form_title")}
                                 </Button>
                             ) : (
                                 <div className="border rounded-md bg-muted/10 p-3 space-y-3 shadow-inner">
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-contact-name" className="text-xs font-medium flex items-center gap-1.5">
-                                            <User className="h-3 w-3 text-muted-foreground" /> Contact Name <span className="text-red-500">*</span>
+                                            <User className="h-3 w-3 text-muted-foreground" /> {t("order_form_contact")} <span className="text-red-500">*</span>
                                         </label>
                                         <Input
                                             id="order-contact-name"
                                             value={orderForm.contactName}
                                             onChange={(e) => setOrderForm(p => ({ ...p, contactName: e.target.value }))}
-                                            placeholder="John Doe"
+                                            placeholder={t("order_form_contact_placeholder")}
                                             className="h-8 text-xs bg-background"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-phone" className="text-xs font-medium flex items-center gap-1.5">
-                                            <Phone className="h-3 w-3 text-muted-foreground" /> Phone
+                                            <Phone className="h-3 w-3 text-muted-foreground" /> {t("order_form_phone")}
                                         </label>
                                         <Input
                                             id="order-phone"
                                             value={orderForm.phone}
                                             onChange={(e) => setOrderForm(p => ({ ...p, phone: e.target.value }))}
-                                            placeholder="+1 234 567 890"
+                                            placeholder={t("order_form_phone_placeholder")}
                                             className="h-8 text-xs bg-background"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-product" className="text-xs font-medium flex items-center gap-1.5">
-                                            <ShoppingBag className="h-3 w-3 text-muted-foreground" /> Product / Item <span className="text-red-500">*</span>
+                                            <ShoppingBag className="h-3 w-3 text-muted-foreground" /> {t("order_form_product")} <span className="text-red-500">*</span>
                                         </label>
                                         <Input
                                             id="order-product"
                                             value={orderForm.product}
                                             onChange={(e) => setOrderForm(p => ({ ...p, product: e.target.value }))}
-                                            placeholder="Product name or description"
+                                            placeholder={t("order_form_product_placeholder")}
                                             className="h-8 text-xs bg-yellow-50/50 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-notes" className="text-xs font-medium flex items-center gap-1.5">
-                                            <StickyNote className="h-3 w-3 text-muted-foreground" /> Notes
+                                            <StickyNote className="h-3 w-3 text-muted-foreground" /> {t("order_form_notes")}
                                         </label>
                                         <Textarea
                                             id="order-notes"
                                             value={orderForm.notes}
                                             onChange={(e) => setOrderForm(p => ({ ...p, notes: e.target.value }))}
-                                            placeholder="Order notes, specifications..."
+                                            placeholder={t("order_form_notes_placeholder")}
                                             className="min-h-[60px] text-xs resize-none bg-background"
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-status" className="text-xs font-medium flex items-center gap-1.5">
-                                            <CircleDot className="h-3 w-3 text-muted-foreground" /> Status
+                                            <CircleDot className="h-3 w-3 text-muted-foreground" /> {t("order_form_status")}
                                         </label>
                                         <Select
                                             value={orderForm.status}
@@ -749,9 +755,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="new"><span className="text-blue-600 font-medium">New</span></SelectItem>
-                                                <SelectItem value="confirmed"><span className="text-green-600 font-medium">Confirmed</span></SelectItem>
-                                                <SelectItem value="cancelled"><span className="text-red-600 font-medium">Cancelled</span></SelectItem>
+                                                <SelectItem value="new"><span className="text-blue-600 font-medium">{t("order_status_new")}</span></SelectItem>
+                                                <SelectItem value="confirmed"><span className="text-green-600 font-medium">{t("order_status_confirmed")}</span></SelectItem>
+                                                <SelectItem value="cancelled"><span className="text-red-600 font-medium">{t("order_status_cancelled")}</span></SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -764,7 +770,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                             className="h-8 text-xs flex-1 transition-colors"
                                             disabled={orderFormSaving}
                                         >
-                                            Cancel
+                                            {t("btn_cancel")}
                                         </Button>
                                         <Button
                                             size="sm"
@@ -773,9 +779,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                             className="h-8 text-xs flex-1 transition-all"
                                         >
                                             {orderFormSaving ? (
-                                                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Saving...</>
+                                                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("btn_saving")}</>
                                             ) : (
-                                                <><Check className="h-3.5 w-3.5 mr-1" /> Save Order</>
+                                                <><Check className="h-3.5 w-3.5 mr-1" /> {t("btn_save_order")}</>
                                             )}
                                         </Button>
                                     </div>
@@ -803,7 +809,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                     ) : (
                         <UserPlus className="mr-2 h-4 w-4" />
                     )}
-                    {existingContact ? "Update Contact" : "Save as Contact"}
+                    {existingContact ? t("btn_update_contact") : t("btn_save_contact")}
                 </Button>
             </div>
         </div>

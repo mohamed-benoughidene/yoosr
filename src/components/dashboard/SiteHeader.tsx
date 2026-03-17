@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -33,6 +34,8 @@ function getPageLabel(pathname: string): string {
 }
 
 export function SiteHeader() {
+    const t = useTranslations("header")
+    const tNav = useTranslations("nav")
     const pathname = usePathname()
     const pageLabel = getPageLabel(pathname ?? "")
 
@@ -51,11 +54,13 @@ export function SiteHeader() {
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-                <span className="text-sm font-medium">{pageLabel}</span>
+                <SidebarTrigger className="-ms-1" />
+                <Separator orientation="vertical" className="me-2 data-[orientation=vertical]:h-4" />
+                <span className="text-sm font-medium">
+                    {pageLabel === "Monitor" ? tNav("monitor") : pageLabel}
+                </span>
             </div>
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ms-auto flex items-center gap-3">
                 <SignedIn>
                     <NotificationBell />
                 </SignedIn>
@@ -67,7 +72,7 @@ export function SiteHeader() {
                         disabled={profile === undefined}
                     />
                     <label htmlFor="availability" className={`cursor-pointer select-none text-sm font-medium ${profile?.isAvailable ?? true ? "text-green-600" : "text-muted-foreground"}`}>
-                        Available
+                        {t("available")}
                     </label>
                 </div>
             </div>

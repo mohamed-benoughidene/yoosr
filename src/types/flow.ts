@@ -129,7 +129,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Entry point for the flow",
         icon: "Play",
         color: "text-emerald-500",
-        defaultData: { label: "Start" },
+        defaultData: {},
     },
     {
         type: "reply",
@@ -137,7 +137,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Send text, buttons, or media",
         icon: "MessageSquare",
         color: "text-blue-500",
-        defaultData: { label: "Reply", text: "" },
+        defaultData: { text: "" },
     },
     {
         type: "setAttribute",
@@ -145,7 +145,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Save a value to context",
         icon: "Database",
         color: "text-violet-500",
-        defaultData: { label: "Set Attribute", attributeKey: "", attributeValue: "" },
+        defaultData: { attributeKey: "", attributeValue: "" },
     },
     {
         type: "condition",
@@ -154,7 +154,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "GitBranch",
         color: "text-amber-500",
         defaultData: {
-            label: "Condition",
             attributeKey: "",
             operator: "equals" as const,
             compareValue: "",
@@ -167,7 +166,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "Globe",
         color: "text-cyan-500",
         defaultData: {
-            label: "Web Request",
             url: "",
             method: "GET" as const,
         },
@@ -178,7 +176,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Execute an LLM prompt",
         icon: "Sparkles",
         color: "text-pink-500",
-        defaultData: { label: "AI Task", prompt: "", systemPrompt: "", model: "", outputVariable: "gpt_reply" },
+        defaultData: { prompt: "", systemPrompt: "", model: "", outputVariable: "gpt_reply" },
     },
     {
         type: "ai_assistant",
@@ -186,7 +184,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Autonomous multi-turn LLM",
         icon: "Bot",
         color: "text-fuchsia-500",
-        defaultData: { label: "AI Assistant", systemPrompt: "", model: "", maxTurns: 3, assignTo: "assistant_reply" },
+        defaultData: { systemPrompt: "", model: "", maxTurns: 3, assignTo: "assistant_reply" },
     },
     {
         type: "hitlHandoff",
@@ -195,7 +193,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "UserRoundPlus",
         color: "text-orange-500",
         defaultData: {
-            label: "HITL Handoff",
             handoffMessage: "Connecting you with a human agent...",
         },
     },
@@ -206,7 +203,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         icon: "CircleX",
         color: "text-red-500",
         defaultData: {
-            label: "Close",
             closingMessage: "Thank you! This conversation has been closed.",
         },
     },
@@ -216,7 +212,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Branch by schedule",
         icon: "Clock",
         color: "text-amber-500",
-        defaultData: { label: "Operating Hours" },
+        defaultData: {},
     },
     {
         type: "if_online_agent",
@@ -224,7 +220,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Branch by agent availability",
         icon: "Users",
         color: "text-amber-500",
-        defaultData: { label: "If Online Agent" },
+        defaultData: {},
     },
     {
         type: "capture_user_reply",
@@ -232,7 +228,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Wait for user input",
         icon: "UserCheck",
         color: "text-purple-500",
-        defaultData: { label: "Capture Reply", attribute: "user_input" },
+        defaultData: { attribute: "user_input" },
     },
     {
         type: "wait",
@@ -240,7 +236,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Pause execution",
         icon: "Timer",
         color: "text-gray-500",
-        defaultData: { label: "Wait", delaySeconds: 2 },
+        defaultData: { delaySeconds: 2 },
     },
     {
         type: "ask_kb",
@@ -248,7 +244,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Query document embeddings",
         icon: "BookOpen",
         color: "text-indigo-500",
-        defaultData: { label: "Ask KB", query: "", assignTo: "kb_reply" },
+        defaultData: { query: "", assignTo: "kb_reply" },
     },
     {
         type: "replace_bot",
@@ -256,7 +252,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Switch to another bot",
         icon: "Repeat",
         color: "text-pink-500",
-        defaultData: { label: "Replace Bot", slug: "" },
+        defaultData: { slug: "" },
     },
     {
         type: "change_department",
@@ -264,7 +260,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Route to department",
         icon: "Network",
         color: "text-cyan-500",
-        defaultData: { label: "Change Dept", departmentId: "" },
+        defaultData: { departmentId: "" },
     },
     {
         type: "code_action",
@@ -272,7 +268,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Run safe JS expressions",
         icon: "Code2",
         color: "text-emerald-500",
-        defaultData: { label: "Code Action", expression: "", assignTo: "code_result" },
+        defaultData: { expression: "", assignTo: "code_result" },
     },
     {
         type: "clear_transcript",
@@ -280,7 +276,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Reset conversation memory",
         icon: "Eraser",
         color: "text-red-500",
-        defaultData: { label: "Clear Transcript" },
+        defaultData: {},
     },
     {
         type: "applyLabel",
@@ -288,7 +284,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Tag the conversation",
         icon: "Tag",
         color: "text-pink-500",
-        defaultData: { label: "Apply Label", labelName: "" },
+        defaultData: { labelName: "" },
     },
     {
         type: "setPriority",
@@ -296,6 +292,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Set conversation urgency",
         icon: "AlertCircle",
         color: "text-orange-600",
-        defaultData: { label: "Set Priority", priority: "normal" },
+        defaultData: { priority: "normal" },
     },
 ];

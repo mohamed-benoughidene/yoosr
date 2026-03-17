@@ -16,7 +16,11 @@ import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import { useTranslations } from "next-intl"
+
 export default function MonitorLayout() {
+    const tNav = useTranslations("nav")
+    const t = useTranslations("monitor")
     const { activeProject } = useProject()
     const projectId = activeProject?._id
 
@@ -49,7 +53,7 @@ export default function MonitorLayout() {
         <div className="h-[calc(100vh-5rem)] w-full">
             <div className="flex h-full flex-col">
                 <div className="flex items-center px-4 py-2">
-                    <h1 className="text-xl font-bold">Monitor</h1>
+                    <h1 className="text-xl font-bold">{tNav("monitor")}</h1>
                 </div>
                 <Separator />
 
@@ -87,11 +91,11 @@ export default function MonitorLayout() {
                                     />
                                 ) : conversations.length === 0 ? (
                                     <div className="flex h-full items-center justify-center flex-col gap-4">
-                                        <span className="text-muted-foreground">No conversations yet</span>
+                                        <span className="text-muted-foreground">{t("no_conversations_yet")}</span>
                                     </div>
                                 ) : (
                                     <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
-                                        Select a conversation to start chatting
+                                        {t("select_conversation")}
                                     </div>
                                 )
                             )}
@@ -103,7 +107,7 @@ export default function MonitorLayout() {
                                     />
                                 ) : (
                                     <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-                                        Select a conversation to view details
+                                        {t("select_conversation")}
                                     </div>
                                 )
                             )}
@@ -130,11 +134,11 @@ export default function MonitorLayout() {
                                         <ChatDisplay conversation={selectedConversation} />
                                     ) : conversations.length === 0 ? (
                                         <div className="flex h-full items-center justify-center flex-col gap-4">
-                                            <span className="text-muted-foreground">No conversations yet</span>
+                                            <span className="text-muted-foreground">{t("no_conversations_yet")}</span>
                                         </div>
                                     ) : (
                                         <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
-                                            Select a conversation to start chatting
+                                            {t("select_conversation")}
                                         </div>
                                     )}
                                 </ResizablePanel>
@@ -144,7 +148,7 @@ export default function MonitorLayout() {
                                         <VisitorPanel conversationId={selectedConversation.id as Id<"conversations">} />
                                     ) : (
                                         <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-                                            Select a conversation to view details
+                                            {t("select_conversation")}
                                         </div>
                                     )}
                                 </ResizablePanel>

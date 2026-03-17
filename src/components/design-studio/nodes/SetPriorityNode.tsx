@@ -3,8 +3,10 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
 
 export function SetPriorityNode({ data, selected }: NodeProps) {
+    const t = useTranslations("designStudio");
     const nodeData = data as Record<string, any>;
 
     const getPriorityColor = (priority: string) => {
@@ -33,16 +35,23 @@ export function SetPriorityNode({ data, selected }: NodeProps) {
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500/10">
                     <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
                 </div>
-                <span className="text-xs font-semibold">
-                    {nodeData.label || "Set Priority"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate leading-tight">
+                        {t("blocks.setPriority.name")}
+                    </span>
+                    {nodeData.label && (
+                        <span className="text-[10px] text-muted-foreground truncate leading-tight">
+                            {nodeData.label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground">Priority:</span>
-                    <Badge variant="secondary" className={`text-[10px] uppercase h-5 px-1.5 ${getPriorityColor(nodeData.priority || "normal")}`}>
-                        {nodeData.priority || "normal"}
+                    <span className="text-[10px] text-muted-foreground">{t("nodes.priority")}</span>
+                    <Badge variant="secondary" className={`text-[10px] uppercase h-5 px-1.5 ${getPriorityColor(nodeData.priority || t("nodes.normalFallback") as string)}`}>
+                        {nodeData.priority || t("nodes.normalFallback")}
                     </Badge>
                 </div>
             </div>

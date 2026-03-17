@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,8 @@ interface Props {
 }
 
 export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
+    const t = useTranslations("knowledge_base");
+    const tCommon = useTranslations("common");
     const { activeProject } = useProject();
 
     // State for Dialog
@@ -87,11 +90,11 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
             // 2. Dismiss unanswered query
             await dismissQuery({ id: selectedQuery._id });
 
-            toast.success("Added to knowledge base");
+            toast.success(t("added_to_kb"));
             setSelectedQuery(null);
         } catch (error) {
             console.error("Failed to add to KB:", error);
-            toast.error("Failed to save to knowledge base");
+            toast.error(t("failed_to_save_kb"));
         } finally {
             setIsSaving(false);
         }
@@ -101,8 +104,8 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
         <>
             <Card>
                 <CardHeader>
-                    <CardTitle>Unanswered Queries</CardTitle>
-                    <CardDescription>Questions the bot couldn&apos;t answer — create KB entries to fill the gaps</CardDescription>
+                    <CardTitle>{t("unanswered_queries")}</CardTitle>
+                    <CardDescription>{t("unanswered_queries_desc")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -111,16 +114,16 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
                         </div>
                     ) : !data || data.length === 0 ? (
                         <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-                            No unanswered queries yet. 🎉
+                            {t("no_unanswered")}
                         </div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Query</TableHead>
-                                    <TableHead className="w-24 text-center">Asked</TableHead>
-                                    <TableHead className="w-40">Last Asked</TableHead>
-                                    <TableHead className="w-40 text-right">Action</TableHead>
+                                    <TableHead>{t("query_col")}</TableHead>
+                                    <TableHead className="w-24 text-center">{t("asked_col")}</TableHead>
+                                    <TableHead className="w-40">{t("last_asked_col")}</TableHead>
+                                    <TableHead className="w-40 text-right">{t("action_col")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -143,7 +146,7 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
                                                 className="gap-1.5"
                                             >
                                                 <PlusCircle className="h-3.5 w-3.5" />
-                                                Create KB Entry
+                                                {t("create_kb_entry")}
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -157,15 +160,15 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
             <Dialog open={!!selectedQuery} onOpenChange={(open) => !open && setSelectedQuery(null)}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>Create Knowledge Base Entry</DialogTitle>
+                        <DialogTitle>{t("create_kb_entry_title")}</DialogTitle>
                         <DialogDescription>
-                            Turn this unanswered query into a trained answer for your AI bot.
+                            {t("create_kb_entry_desc")}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="query">Unanswered Query</Label>
+                            <Label htmlFor="query">{t("unanswered_query_label")}</Label>
                             <Input
                                 id="query"
                                 value={selectedQuery?.query || ""}
@@ -174,29 +177,29 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="answer">Answer</Label>
+                            <Label htmlFor="answer">{t("answer")}</Label>
                             <Textarea
                                 id="answer"
-                                placeholder="Type the answer the bot should provide..."
+                                placeholder={t("answer_placeholder")}
                                 value={answer}
                                 onChange={(e) => setAnswer(e.target.value)}
                                 className="min-h-[120px]"
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="kb">Knowledge Base</Label>
+                            <Label htmlFor="kb">{t("kb_selector_label")}</Label>
                             <Select
                                 value={selectedKbId}
                                 onValueChange={setSelectedKbId}
                                 disabled={!kbs || kbs.length === 0}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a knowledge base" />
+                                    <SelectValue placeholder={t("kb_selector_placeholder")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {kbs?.map((kb) => (
                                         <SelectItem key={kb._id} value={kb._id}>
-                                            {kb.name} {kb.isDefault ? "(Default)" : ""}
+                                            {kb.name} {kb.isDefault ? t("default_label") : ""}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -206,7 +209,7 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setSelectedQuery(null)} disabled={isSaving}>
-                            Cancel
+                            {tCommon("cancel")}
                         </Button>
                         <Button
                             onClick={handleSaveToKB}
@@ -216,10 +219,10 @@ export function AnalyticsUnansweredQueries({ data, isLoading }: Props) {
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
+                                    {t("saving")}
                                 </>
                             ) : (
-                                "Save to Knowledge Base"
+                                t("save_to_kb")
                             )}
                         </Button>
                     </DialogFooter>

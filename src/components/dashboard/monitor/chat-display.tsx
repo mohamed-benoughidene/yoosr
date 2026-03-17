@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useProject } from "@/context/ProjectContext"
 import { useUser, useOrganization } from "@clerk/nextjs"
 import { CannedResponsePicker } from "./canned-response-picker"
+import { useTranslations } from "next-intl"
 
 interface ChatDisplayProps {
     conversation: Conversation | null
@@ -35,6 +36,7 @@ interface ChatDisplayProps {
 }
 
 export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplayProps) {
+    const t = useTranslations("monitor")
     const { activeProject } = useProject()
     const projectId = activeProject?._id
 
@@ -53,7 +55,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
     const projectMembers = (memberships?.data ?? []).map(m => ({
         userId: m.publicUserData?.userId ?? "",
         profile: {
-            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || 'Agent',
+            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || t("agent_fallback"),
             avatarUrl: m.publicUserData?.imageUrl,
         },
         role: m.role,
@@ -218,8 +220,8 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
 
         let processedMessage = message;
 
-        const visitorName = conversation.user?.name || "there";
-        const agentName = user?.fullName || "Agent";
+        const visitorName = conversation.user?.name || t("greeting_fallback");
+        const agentName = user?.fullName || t("agent_fallback");
         const projectName = activeProject?.name || "";
         const visitorEmail = conversation.user?.email || "";
         const ticketId = conversation.id || "";
@@ -276,7 +278,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             });
             await sendSystemMessage({
                 conversationId: conversation.id as Id<"conversations">,
-                content: `Conversation transferred to ${agentName}`,
+                content: t("transferred_to_agent", { agentName }),
                 senderType: "bot",
             });
             setAgentSearch("");
@@ -295,7 +297,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             });
             await sendSystemMessage({
                 conversationId: conversation.id as Id<"conversations">,
-                content: `Conversation transferred to ${departmentName}`,
+                content: t("transferred_to_dept", { departmentName }),
                 senderType: "bot",
             });
             setDepartmentSearch("");
@@ -311,8 +313,8 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
                         <MessageCircle className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-medium">No conversation selected</h3>
-                    <p className="text-sm text-muted-foreground">Select a conversation from the list to start chatting.</p>
+                    <h3 className="text-lg font-medium">{t("no_conversation_title")}</h3>
+                    <p className="text-sm text-muted-foreground">{t("no_conversation_body")}</p>
                 </div>
             </div>
         )
@@ -354,12 +356,12 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                         {isJoined ? (
                             <>
                                 <LogOut className="h-4 w-4" />
-                                <span className="hidden sm:inline">Leave</span>
+                                <span className="hidden sm:inline">{t("btn_leave")}</span>
                             </>
                         ) : (
                             <>
                                 <LogIn className="h-4 w-4" />
-                                <span className="hidden sm:inline">Join</span>
+                                <span className="hidden sm:inline">{t("btn_join")}</span>
                             </>
                         )}
                     </Button>
@@ -374,25 +376,25 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                 onClick={() => joinConversation({ id: conversation.id as Id<"conversations"> })}
                                 disabled={isJoined || conversation.status === 1000}
                             >
-                                Assign to me
+                                {t("menu_assign_me")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsTransferDialogOpen(true)}
                                 disabled={conversation.status === 1000}
                             >
-                                Transfer to agent
+                                {t("menu_transfer_agent")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsDepartmentTransferDialogOpen(true)}
                                 disabled={conversation.status === 1000}
                             >
-                                Transfer to department
+                                {t("menu_transfer_dept")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={handleClose}
                                 disabled={conversation.status === 1000}
                             >
-                                Resolve conversation
+                                {t("menu_resolve")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -403,7 +405,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Transfer Conversation</DialogTitle>
+                        <DialogTitle>{t("menu_transfer_agent")}</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-4">
                         <Input
@@ -427,7 +429,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     .map(m => (
                                         <div
                                             key={m.userId}
-                                            onClick={() => handleTransfer(m.userId, m.profile?.fullName || 'Agent')}
+                                            onClick={() => handleTransfer(m.userId, m.profile?.fullName || t("agent_fallback"))}
                                             className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                                         >
                                             <Avatar className="h-8 w-8">
@@ -450,7 +452,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             <Dialog open={isDepartmentTransferDialogOpen} onOpenChange={setIsDepartmentTransferDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Transfer to Department</DialogTitle>
+                        <DialogTitle>{t("menu_transfer_dept")}</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-4">
                         <Input

@@ -2,8 +2,10 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { GitBranch } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function ConditionNode({ data, selected }: NodeProps) {
+    const t = useTranslations("designStudio");
     const nodeData = data as Record<string, any>;
 
     return (
@@ -23,9 +25,16 @@ export function ConditionNode({ data, selected }: NodeProps) {
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-500/10">
                     <GitBranch className="h-3.5 w-3.5 text-amber-500" />
                 </div>
-                <span className="text-xs font-semibold">
-                    {nodeData.label || "Condition"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate leading-tight">
+                        {t("blocks.condition.name")}
+                    </span>
+                    {nodeData.label && (
+                        <span className="text-[10px] text-muted-foreground truncate leading-tight">
+                            {nodeData.label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className="px-4 py-3">
@@ -39,15 +48,15 @@ export function ConditionNode({ data, selected }: NodeProps) {
                     </p>
                 ) : (
                     <p className="text-xs italic text-muted-foreground/50">
-                        Click to configure...
+                        {t("nodes.clickToConfigure")}
                     </p>
                 )}
             </div>
 
             {/* Two output handles: true and false */}
             <div className="flex items-center justify-between px-4 pb-2">
-                <span className="text-[10px] font-medium text-emerald-500">True</span>
-                <span className="text-[10px] font-medium text-red-500">False</span>
+                <span className="text-[10px] font-medium text-emerald-500">{t("nodes.trueLabel")}</span>
+                <span className="text-[10px] font-medium text-red-500">{t("nodes.falseLabel")}</span>
             </div>
 
             <Handle

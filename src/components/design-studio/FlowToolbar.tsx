@@ -3,6 +3,7 @@
 import { ArrowLeft, Check, Loader2, Save, Sparkles, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface FlowToolbarProps {
     botName: string;
@@ -17,6 +18,7 @@ interface FlowToolbarProps {
 import { Suspense } from "react";
 
 function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onToggleDebugger, isAIBarOpen, onToggleAIBar }: FlowToolbarProps) {
+    const t = useTranslations("designStudio");
     const router = useRouter();
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project");
@@ -45,17 +47,17 @@ function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onTogg
                     {saveState === "saving" && (
                         <>
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>Saving...</span>
+                            <span>{t("toolbar.saving")}</span>
                         </>
                     )}
                     {saveState === "saved" && (
                         <>
                             <Check className="h-3 w-3 text-emerald-500" />
-                            <span className="text-emerald-500">Saved</span>
+                            <span className="text-emerald-500">{t("toolbar.saved")}</span>
                         </>
                     )}
                     {saveState === "error" && (
-                        <span className="text-red-500">Save failed</span>
+                        <span className="text-red-500">{t("toolbar.saveFailed")}</span>
                     )}
                 </div>
                 <Button
@@ -65,7 +67,7 @@ function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onTogg
                     disabled={saveState === "saving"}
                 >
                     <Save className="mr-1.5 h-3.5 w-3.5" />
-                    Save
+                    {t("toolbar.save")}
                 </Button>
                 {onToggleAIBar && (
                     <Button
@@ -75,7 +77,7 @@ function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onTogg
                         className="gap-1.5 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
                     >
                         <Sparkles className="h-3.5 w-3.5" />
-                        Build with AI
+                        {t("toolbar.buildWithAI")}
                     </Button>
                 )}
                 {onToggleDebugger && (
@@ -86,7 +88,7 @@ function FlowToolbarContent({ botName, saveState, onSave, isDebuggerOpen, onTogg
                         className="ml-2 gap-1.5"
                     >
                         <Terminal className="h-4 w-4" />
-                        Debugger
+                        {t("toolbar.debugger")}
                     </Button>
                 )}
             </div>

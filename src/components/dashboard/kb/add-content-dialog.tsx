@@ -18,8 +18,10 @@ import { Globe, FileText, Upload, Link as LinkIcon, Plus } from "lucide-react"
 import { useState, useRef } from "react"
 import { useAction } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
+import { useTranslations } from "next-intl"
 
 export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: string) => Promise<void> }) {
+    const t = useTranslations("knowledge_base")
     const [open, setOpen] = useState(false)
     const [url, setUrl] = useState("")
     const [text, setText] = useState("")
@@ -68,7 +70,7 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                     body: file,
                 });
 
-                if (!result.ok) throw new Error("File upload failed");
+                if (!result.ok) throw new Error(t("file_upload_failed"));
                 const { storageId } = await result.json();
 
                 await onAdd('file', storageId)
@@ -87,38 +89,38 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Content
+                    {t("add_content")}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] md:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle>Add Data Source</DialogTitle>
+                    <DialogTitle>{t("add_data_source")}</DialogTitle>
                     <DialogDescription>
-                        Add content to your Knowledge Base to train your AI agents.
+                        {t("add_data_source_desc")}
                     </DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="url" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="url">
                             <Globe className="mr-2 h-4 w-4" />
-                            URL
+                            {t("url")}
                         </TabsTrigger>
                         <TabsTrigger value="text">
                             <FileText className="mr-2 h-4 w-4" />
-                            Text
+                            {t("text")}
                         </TabsTrigger>
                         <TabsTrigger value="file">
                             <Upload className="mr-2 h-4 w-4" />
-                            File
+                            {t("file")}
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="url" className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="url">Web Page URL</Label>
+                            <Label htmlFor="url">{t("url")}</Label>
                             <div className="flex gap-2">
                                 <Input
                                     id="url"
-                                    placeholder="https://example.com/page"
+                                    placeholder={t("url_placeholder")}
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                 />
@@ -127,26 +129,26 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                                 </Button>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                We will scrape the content of this page and index it.
+                                {t("url_hint")}
                             </p>
                         </div>
                         <DialogFooter>
-                            <Button onClick={() => handleSubmit('url')} disabled={!url}>Import URL</Button>
+                            <Button onClick={() => handleSubmit('url')} disabled={!url}>{t("import_url")}</Button>
                         </DialogFooter>
                     </TabsContent>
                     <TabsContent value="text" className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="text">Plain Text</Label>
+                            <Label htmlFor="text">{t("plain_text")}</Label>
                             <Textarea
                                 id="text"
-                                placeholder="Paste your content here..."
+                                placeholder={t("text_placeholder")}
                                 className="min-h-[150px]"
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                             />
                         </div>
                         <DialogFooter>
-                            <Button onClick={() => handleSubmit('text')} disabled={!text}>Save Text</Button>
+                            <Button onClick={() => handleSubmit('text')} disabled={!text}>{t("save_text")}</Button>
                         </DialogFooter>
                     </TabsContent>
                     <TabsContent value="file" className="space-y-4 py-4">
@@ -165,24 +167,24 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                             />
                             <Upload className="h-10 w-10 text-muted-foreground mb-4" />
                             <h3 className="text-lg font-semibold text-center break-all">
-                                {file ? file.name : "Upload Files"}
+                                {file ? file.name : t("upload_files")}
                             </h3>
                             <p className="text-sm text-muted-foreground mb-4">
-                                {file ? "Click or drag a new file to replace" : "Drag & drop or click to upload TXT, MD, CSV"}
+                                {file ? t("drop_to_replace") : t("drop_to_upload")}
                             </p>
                             <Button variant="secondary" type="button" className="pointer-events-none">
-                                {file ? "Change File" : "Select Files"}
+                                {file ? t("change_file") : t("select_files")}
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
-                            Max file size: 10MB. Content will be reflected after processing.
+                            {t("file_size_hint")}
                         </p>
                         <DialogFooter>
                             <Button
                                 onClick={() => handleSubmit('file')}
                                 disabled={!file || loading}
                             >
-                                {loading ? "Uploading..." : "Save File"}
+                                {loading ? t("uploading") : t("save_file")}
                             </Button>
                         </DialogFooter>
                     </TabsContent>

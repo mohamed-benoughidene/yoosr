@@ -7,10 +7,12 @@ import {
 } from "lucide-react"
 import * as React from "react"
 import Link from "next/link"
+import { useLocale, useTranslations } from "next-intl"
 import { usePathname, useRouter } from "next/navigation"
 import { OrganizationSwitcher, useUser, useClerk } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -26,27 +28,27 @@ const navGroups = [
   {
     title: "",
     items: [
-      { label: "Home", icon: LayoutDashboard, href: "/dashboard" },
-      { label: "Monitor", icon: MonitorPlay, href: "/dashboard/monitor" },
-      { label: "Chat", icon: MessageSquare, href: "/dashboard/chat" },
-      { label: "Requests", icon: Ticket, href: "/dashboard/requests" },
-      { label: "Orders", icon: ShoppingBag, href: "/dashboard/orders" },
+      { labelKey: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      { labelKey: "monitor", icon: MonitorPlay, href: "/dashboard/monitor" },
+      { labelKey: "chat", icon: MessageSquare, href: "/dashboard/chat" },
+      { labelKey: "requests", icon: Ticket, href: "/dashboard/requests" },
+      { labelKey: "orders", icon: ShoppingBag, href: "/dashboard/orders" },
     ],
   },
   {
-    title: "AI",
+    title: "group_ai",
     items: [
-      { label: "Bots", icon: Bot, href: "/dashboard/bots" },
-      { label: "Knowledge Base", icon: BookOpen, href: "/dashboard/kb" },
+      { labelKey: "bots", icon: Bot, href: "/dashboard/bots" },
+      { labelKey: "knowledge_base", icon: BookOpen, href: "/dashboard/kb" },
     ],
   },
   {
-    title: "Data",
+    title: "group_data",
     items: [
-      { label: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
-      { label: "Activities", icon: Activity, href: "/dashboard/activities" },
-      { label: "History", icon: History, href: "/dashboard/history" },
-      { label: "Contacts", icon: Users, href: "/dashboard/contacts" },
+      { labelKey: "analytics", icon: BarChart3, href: "/dashboard/analytics" },
+      { labelKey: "activities", icon: Activity, href: "/dashboard/activities" },
+      { labelKey: "history", icon: History, href: "/dashboard/history" },
+      { labelKey: "contacts", icon: Users, href: "/dashboard/contacts" },
     ],
   },
 ]
@@ -66,7 +68,7 @@ function OrgSwitcher() {
                   organizationPreviewAvatarBox: "size-8 shrink-0",
                   organizationPreviewMainIdentifier: "text-sm font-semibold",
                   organizationPreviewSecondaryIdentifier: "text-xs text-muted-foreground",
-                  organizationSwitcherTriggerIcon: "ml-auto text-muted-foreground",
+                  organizationSwitcherTriggerIcon: "ms-auto text-muted-foreground",
                 },
               }}
             />
@@ -78,6 +80,7 @@ function OrgSwitcher() {
 }
 
 function NavUser() {
+  const t = useTranslations("nav")
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
   const { activeProject } = useProject()
@@ -100,7 +103,7 @@ function NavUser() {
                 <span className="truncate font-medium">{fullName}</span>
                 <span className="truncate text-xs text-muted-foreground">{email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown className="ms-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
@@ -122,12 +125,14 @@ function NavUser() {
             <DropdownMenuSeparator />
             <div className={isAdmin ? "" : "hidden"}>
               <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-                <Settings className="mr-2 size-4" />Settings
+                <Settings className="me-2 size-4" />{t("settings")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </div>
+            <LanguageSwitcher />
+            <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
-              <LogOut className="mr-2 size-4" />Log out
+              <LogOut className="me-2 size-4" />Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -137,28 +142,33 @@ function NavUser() {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const t = useTranslations("nav")
+  const locale = useLocale()
   const pathname = usePathname()
   const { activeProject } = useProject()
   const isAdmin = activeProject?.userRole === "org:admin"
+  const side = locale === "ar" ? "right" : "left"
+  const dir = locale === "ar" ? "rtl" : "ltr"
+
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar variant="inset" side={side} dir={dir} {...props}>
       <SidebarHeader><OrgSwitcher /></SidebarHeader>
       <SidebarContent className="overflow-hidden">
         <ScrollArea className="min-h-0 flex-1">
           {navGroups.map((group) => (
             <SidebarGroup key={group.title}>
-              {group.title && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
+              <SidebarGroupLabel dir="auto">{group.title ? t(group.title) : null}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href + "/"))
-                    const isHidden = item.label === "Analytics" && !isAdmin
+                    const isHidden = item.labelKey === "analytics" && !isAdmin
                     return (
                       <SidebarMenuItem key={item.href} className={isHidden ? "hidden" : ""}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.labelKey as any)}>
                           <Link href={item.href}>
                             <item.icon className="size-4" />
-                            <span>{item.label}</span>
+                            <span>{t(item.labelKey as any)}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

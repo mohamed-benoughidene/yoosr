@@ -8,6 +8,7 @@ import { Loader2, Play, Terminal, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface DebuggerPanelProps {
     projectId: string | null;
@@ -17,6 +18,7 @@ interface DebuggerPanelProps {
 }
 
 export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }: DebuggerPanelProps) {
+    const t = useTranslations("designStudio");
     // We get the most recently active conversation for this project
     const recentConversations = useQuery(
         api.conversations.list,
@@ -51,7 +53,7 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
             <CardHeader className="flex flex-row items-center justify-between py-3 border-b">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Terminal className="h-4 w-4" />
-                    Real-Time Debugger
+                    {t("debugger.title")}
                 </CardTitle>
                 <div className="flex items-center gap-1">
                     {activeConv ? (
@@ -72,10 +74,10 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
                         </div>
                     ) : executionLog.length === 0 ? (
                         <div className="text-sm text-muted-foreground text-center py-8">
-                            No execution history detected.
+                            {t("debugger.empty")}
                             <br />
                             <br />
-                            Start a chat simulation using the widget in your Tiledesk portal to watch the graph execute in real time.
+                            {t("debugger.hint")}
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -90,10 +92,10 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
                                         onClick={() => onActiveNodeChange(log.nodeId)}
                                     >
                                         <Play className="h-3 w-3 text-emerald-500" />
-                                        <span>Node ID: {log.nodeId}</span>
+                                        <span>{t("debugger.nodeId")}{log.nodeId}</span>
                                     </div>
                                     <div className="text-[10px] text-muted-foreground ml-5">
-                                        Type: <span className="text-foreground">{log.type}</span>
+                                        {t("debugger.type")}<span className="text-foreground">{log.type}</span>
                                     </div>
                                 </div>
                             ))}

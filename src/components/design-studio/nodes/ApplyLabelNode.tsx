@@ -2,8 +2,10 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Tag } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function ApplyLabelNode({ data, selected }: NodeProps) {
+    const t = useTranslations("designStudio");
     const nodeData = data as Record<string, any>;
 
     return (
@@ -23,9 +25,16 @@ export function ApplyLabelNode({ data, selected }: NodeProps) {
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-pink-500/10">
                     <Tag className="h-3.5 w-3.5 text-pink-500" />
                 </div>
-                <span className="text-xs font-semibold">
-                    {nodeData.label || "Apply Label"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate leading-tight">
+                        {t("blocks.applyLabel.name")}
+                    </span>
+                    {nodeData.label && (
+                        <span className="text-[10px] text-muted-foreground truncate leading-tight">
+                            {nodeData.label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className="px-4 py-3">
@@ -37,12 +46,12 @@ export function ApplyLabelNode({ data, selected }: NodeProps) {
                             </span>
                         </div>
                         <p className="text-[10px] text-muted-foreground truncate">
-                            Label applied to conversation
+                            {t("nodes.labelApplied")}
                         </p>
                     </div>
                 ) : (
                     <p className="text-xs italic text-muted-foreground/50">
-                        Click to configure...
+                        {t("nodes.clickToConfigure")}
                     </p>
                 )}
             </div>

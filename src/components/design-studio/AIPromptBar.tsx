@@ -12,41 +12,43 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface AIPromptBarProps {
     onGenerate: (nodes: Node[], edges: Edge[]) => void;
     visible?: boolean;
 }
 
-// Examples built from the actual node types available in the Design Studio
-const EXAMPLES = [
-    {
-        label: "Greeting with buttons",
-        prompt: "Greet the visitor with 2 buttons: Sales and Support, then hand off to an agent.",
-    },
-    {
-        label: "Lead capture",
-        prompt: "Welcome the visitor, ask for their name, then ask for their email, then close the conversation with a thank-you message.",
-    },
-    {
-        label: "Customer check",
-        prompt: "Greet the user, ask for their name, then check if the attribute 'is_customer' equals 'yes' — if yes hand off to an agent, if no close the conversation.",
-    },
-    {
-        label: "Knowledge base lookup",
-        prompt: "Ask the visitor their question and search the knowledge base — if an answer is found, reply with it and close; if not, hand off to a human agent.",
-    },
-    {
-        label: "AI assistant flow",
-        prompt: "Greet the visitor, then let an AI assistant handle the conversation for up to 5 turns and save the reply, then close the conversation.",
-    },
-];
-
 export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
+    const t = useTranslations("designStudio");
     const [prompt, setPrompt] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
     const [examplesOpen, setExamplesOpen] = useState(false);
     const generateFlow = useAction(api.aiFlowBuilder.generateFlow);
+
+    // Examples built from the actual node types available in the Design Studio
+    const EXAMPLES = [
+        {
+            label: t("aiPromptBar.examples.greeting.label"),
+            prompt: t("aiPromptBar.examples.greeting.prompt"),
+        },
+        {
+            label: t("aiPromptBar.examples.leadCapture.label"),
+            prompt: t("aiPromptBar.examples.leadCapture.prompt"),
+        },
+        {
+            label: t("aiPromptBar.examples.customerCheck.label"),
+            prompt: t("aiPromptBar.examples.customerCheck.prompt"),
+        },
+        {
+            label: t("aiPromptBar.examples.kbLookup.label"),
+            prompt: t("aiPromptBar.examples.kbLookup.prompt"),
+        },
+        {
+            label: t("aiPromptBar.examples.aiAssistant.label"),
+            prompt: t("aiPromptBar.examples.aiAssistant.prompt"),
+        },
+    ];
 
     const handleGenerate = async () => {
         const trimmed = prompt.trim();
@@ -57,8 +59,8 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
             const result = await generateFlow({ prompt: trimmed });
             onGenerate(result.nodes as Node[], result.edges as Edge[]);
             setPrompt("");
-            toast.success("Flow generated!", {
-                description: "Canvas updated — review and tweak as needed.",
+            toast.success(t("aiPromptBar.toasts.generated"), {
+                description: t("aiPromptBar.toasts.generatedDesc"),
             });
         } catch (err: unknown) {
             // Convex wraps errors with "[CONVEX A(...)] Server Error Uncaught Error: ..."
@@ -68,20 +70,20 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
             if (match) raw = match[1].trim();
 
             // Map known patterns to friendly copy
-            let title = "Generation failed";
+            let title = t("aiPromptBar.toasts.failed");
             let description = raw;
             if (raw.toLowerCase().includes("timed out")) {
-                title = "Request timed out";
-                description = "The AI took too long to respond. Try again in a moment.";
+                title = t("aiPromptBar.toasts.timeout");
+                description = t("aiPromptBar.toasts.timeoutDesc");
             } else if (raw.toLowerCase().includes("invalid json")) {
-                title = "Unexpected AI response";
-                description = "The AI returned an unreadable format. Try rephrasing your prompt.";
+                title = t("aiPromptBar.toasts.badFormat");
+                description = t("aiPromptBar.toasts.badFormatDesc");
             } else if (raw.toLowerCase().includes("provider returned error")) {
-                title = "AI provider error";
-                description = "The model returned an error. Try again or rephrase your prompt.";
+                title = t("aiPromptBar.toasts.providerError");
+                description = t("aiPromptBar.toasts.providerErrorDesc");
             } else if (raw.toLowerCase().includes("missing required nodes")) {
-                title = "Incomplete response";
-                description = "The AI didn't return a valid flow. Try a more specific description.";
+                title = t("aiPromptBar.toasts.incomplete");
+                description = t("aiPromptBar.toasts.incompleteDesc");
             }
 
             toast.error(title, { description });
@@ -104,7 +106,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
             {/* Beta badge */}
             <div className="absolute -top-5 right-2 flex items-center gap-1">
                 <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30">
-                    Beta
+                    {t("aiPromptBar.beta")}
                 </span>
             </div>
 
@@ -117,7 +119,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-                            title="Show example prompts"
+                            title={t("aiPromptBar.showExamples")}
                         >
                             <BookOpen className="h-3.5 w-3.5" />
                         </Button>
@@ -129,7 +131,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
                         sideOffset={10}
                     >
                         <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Example prompts
+                            {t("aiPromptBar.examplesTitle")}
                         </p>
                         <div className="space-y-1">
                             {EXAMPLES.map((ex) => (
@@ -163,7 +165,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isGenerating}
-                    placeholder="Describe a flow to generate… Each submission replaces the canvas"
+                    placeholder={t("aiPromptBar.placeholder")}
                     className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60 disabled:opacity-50"
                 />
 
@@ -179,7 +181,7 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
                     ) : (
                         <Sparkles className="h-3.5 w-3.5" />
                     )}
-                    {isGenerating ? "Generating…" : "Generate"}
+                    {isGenerating ? t("aiPromptBar.generating") : t("aiPromptBar.generate")}
                 </Button>
             </div>
         </div>

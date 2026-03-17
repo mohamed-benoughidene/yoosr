@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
+
 
 export interface CannedResponseItem {
     _id: string
@@ -24,7 +26,9 @@ export function CannedResponsePicker({
     onSelect,
     onClose,
 }: CannedResponsePickerProps) {
+    const t = useTranslations()
     const [selectedIndex, setSelectedIndex] = useState(0)
+
     const listRef = useRef<HTMLDivElement>(null)
 
     const filteredResponses = responses.filter((r) =>
@@ -75,8 +79,9 @@ export function CannedResponsePicker({
             <ScrollArea className="max-h-[250px] py-1">
                 {filteredResponses.length === 0 ? (
                     <div className="p-3 text-sm text-center text-muted-foreground">
-                        No responses found
+                        {t("monitor.canned_no_results")}
                     </div>
+
                 ) : (
                     <div ref={listRef} className="flex flex-col">
                         {filteredResponses.map((res, idx) => (

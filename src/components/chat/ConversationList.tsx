@@ -18,6 +18,7 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 type ChatTab = "all" | "unread"
 
@@ -31,6 +32,11 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
     const currentConversationId = searchParams.get("conversationId")
     const [activeTab, setActiveTab] = useState<ChatTab>("all")
     const [searchQuery, setSearchQuery] = useState("")
+
+    const t = useTranslations("chat")
+    const tMonitor = useTranslations("monitor")
+    const tVisitor = useTranslations("visitor")
+    const tCommon = useTranslations("common")
 
     // Real-time conversations — only show assigned to me
     const allConversations = useQuery(
@@ -49,7 +55,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
         try {
             const conversationId = await createConversation({
                 projectId: activeProject._id,
-                visitorName: "New Visitor",
+                visitorName: t("new_visitor_label"),
             })
             router.push(`/dashboard/chat?conversationId=${conversationId}`)
         } catch (error) {
@@ -86,20 +92,20 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
     const unreadCount = conversations.filter((c: any) => (c.unreadCount ?? 0) > 0).length
 
     const tabs: { key: ChatTab; label: string; count?: number }[] = [
-        { key: "all", label: "All" },
-        { key: "unread", label: "Unread", count: unreadCount },
+        { key: "all", label: tMonitor("filter_status_all") },
+        { key: "unread", label: t("tab_unread"), count: unreadCount },
     ]
 
     return (
         <div className="flex flex-col h-full bg-background border-r">
             <div className="p-4 border-b space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">Conversations</h2>
+                    <h2 className="text-xl font-semibold">{t("conversations_title")}</h2>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search..."
+                        placeholder={tCommon("search")}
                         className="pl-8"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -141,7 +147,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                             <div className="flex w-full flex-col gap-1">
                                 <div className="flex items-center">
                                     <div className="flex items-center gap-2">
-                                        <div className="font-semibold">{conv.visitorName || "Visitor"}</div>
+                                        <div className="font-semibold">{conv.visitorName || tVisitor("name_fallback")}</div>
                                         {conv.channel === "messenger" && (
                                             <TooltipProvider>
                                                 <Tooltip>
@@ -150,7 +156,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                                                             <MessageCircle className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500/10" />
                                                         </div>
                                                     </TooltipTrigger>
-                                                    <TooltipContent side="right">Messenger</TooltipContent>
+                                                    <TooltipContent side="right">{tMonitor("channel_messenger")}</TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         )}
@@ -162,7 +168,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                                                             IG
                                                         </div>
                                                     </TooltipTrigger>
-                                                    <TooltipContent side="right">Instagram</TooltipContent>
+                                                    <TooltipContent side="right">{tMonitor("channel_instagram")}</TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         )}
@@ -176,11 +182,11 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="text-xs text-muted-foreground line-clamp-2 flex-1">
-                                        {conv.lastMessage || "No messages yet"}
+                                        {conv.lastMessage || tMonitor("no_conversations_yet")}
                                     </div>
                                     {conv.status === 1000 && (
                                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-green-500/10 text-green-600 border-green-500/20">
-                                            Resolved
+                                            {t("status_resolved")}
                                         </Badge>
                                     )}
                                 </div>
@@ -189,7 +195,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                     ))}
                     {filteredConversations.length === 0 && (
                         <div className="p-4 text-center text-muted-foreground text-sm">
-                            No conversations found.
+                            {tMonitor("no_conversations_found")}
                         </div>
                     )}
                 </div>

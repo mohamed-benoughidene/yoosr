@@ -31,6 +31,7 @@ import { useProject } from "@/context/ProjectContext"
 import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picker"
 
 import { Suspense } from "react"
+import { useTranslations } from "next-intl"
 
 interface ChatAreaProps {
     conversationId?: string | null
@@ -42,6 +43,10 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     const searchParams = useSearchParams()
     const conversationIdFromParams = searchParams.get("conversationId") as Id<"conversations"> | null
     const conversationId = (propConversationId || conversationIdFromParams) as Id<"conversations"> | null
+
+    const t = useTranslations("chat")
+    const tMonitor = useTranslations("monitor")
+    const tVisitor = useTranslations("visitor")
 
     const { user } = useUser()
     const [inputValue, setInputValue] = useState("")
@@ -69,7 +74,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     const projectMembers = (memberships?.data ?? []).map(m => ({
         userId: m.publicUserData?.userId ?? "",
         profile: {
-            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || 'Agent',
+            fullName: `${m.publicUserData?.firstName ?? ''} ${m.publicUserData?.lastName ?? ''}`.trim() || m.publicUserData?.identifier || t("agent_fallback"),
             avatarUrl: m.publicUserData?.imageUrl,
         },
         role: m.role,
@@ -187,7 +192,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             });
             await sendSystemMessage({
                 conversationId,
-                content: `Conversation assigned to ${user.fullName || "agent"}`,
+                content: t("system_assigned_to", { name: user.fullName || t("agent_fallback") }),
                 senderType: "bot",
             });
         } catch (error) {
@@ -205,7 +210,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             });
             await sendSystemMessage({
                 conversationId,
-                content: `Conversation transferred to ${agentName}`,
+                content: t("system_transferred_to_agent", { name: agentName }),
                 senderType: "bot",
             });
             setAgentSearch("");
@@ -224,7 +229,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             });
             await sendSystemMessage({
                 conversationId,
-                content: `Conversation transferred to ${departmentName}`,
+                content: t("system_transferred_to_dept", { name: departmentName }),
                 senderType: "bot",
             });
             setDepartmentSearch("");
@@ -271,8 +276,8 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
 
         let processedMessage = message;
 
-        const visitorName = conversation.visitorName || "there";
-        const agentName = user?.fullName || "Agent";
+        const visitorName = conversation.visitorName || t("visitor_fallback");
+        const agentName = user?.fullName || t("agent_fallback");
         const projectName = activeProject?.name || "";
         const visitorEmail = conversation.visitorEmail || "";
         const ticketId = conversation._id || "";
@@ -299,7 +304,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     if (!conversationId) {
         return (
             <div className="flex h-full items-center justify-center bg-muted/10 text-muted-foreground">
-                Select a conversation to start chatting
+                {tMonitor("select_conversation")}
             </div>
         )
     }
@@ -323,9 +328,9 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                         </AvatarFallback>
                     </Avatar>
                     <div className="overflow-hidden">
-                        <div className="font-semibold truncate">{conversation?.visitorName || "Visitor"}</div>
+                        <div className="font-semibold truncate">{conversation?.visitorName || tVisitor("name_fallback")}</div>
                         <div className="text-xs text-muted-foreground truncate">
-                            {isResolved ? "Resolved" : "Online"}
+                            {isResolved ? t("status_resolved") : t("status_online")}
                         </div>
                     </div>
                 </div>
@@ -338,7 +343,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                     {isResolved ? (
                         <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 hidden sm:flex">
                             <CheckCircle className="mr-1 h-3 w-3" />
-                            Resolved
+                            {t("status_resolved")}
                         </Badge>
                     ) : (
                         <Button
@@ -348,7 +353,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                             className="text-green-600 border-green-500/30 hover:bg-green-500/10 hidden sm:flex"
                         >
                             <CheckCircle className="mr-1.5 h-4 w-4" />
-                            Resolve
+                            {t("resolve_button")}
                         </Button>
                     )}
                     <DropdownMenu>
@@ -362,19 +367,19 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                 onClick={handleAssignToMe}
                                 disabled={isResolved || conversation?.assignedTo === user?.id}
                             >
-                                Assign to me
+                                {tMonitor("menu_assign_me")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsTransferDialogOpen(true)}
                                 disabled={isResolved}
                             >
-                                Transfer to agent
+                                {tMonitor("menu_transfer_agent")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsDepartmentTransferDialogOpen(true)}
                                 disabled={isResolved}
                             >
-                                Transfer to department
+                                {tMonitor("menu_transfer_dept")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -385,19 +390,19 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Transfer Conversation</DialogTitle>
+                        <DialogTitle>{t("transfer_dialog_title")}</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-4">
                         <Input
-                            placeholder="Search agents..."
+                            placeholder={t("search_agents_placeholder")}
                             value={agentSearch}
                             onChange={(e) => setAgentSearch(e.target.value)}
                         />
                         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
                             {projectMembers === undefined ? (
-                                <div className="text-sm text-muted-foreground text-center py-4">Loading agents...</div>
+                                <div className="text-sm text-muted-foreground text-center py-4">{tMonitor("filter_agent_loading")}</div>
                             ) : projectMembers.length === 0 ? (
-                                <div className="text-sm text-muted-foreground text-center py-4">No agents found.</div>
+                                <div className="text-sm text-muted-foreground text-center py-4">{t("no_agents_found")}</div>
                             ) : (
                                 projectMembers
                                     .filter(m => m.userId !== conversation?.assignedTo)
@@ -409,7 +414,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                     .map(m => (
                                         <div
                                             key={m.userId}
-                                            onClick={() => handleTransfer(m.userId!, m.profile?.fullName || 'Agent')}
+                                            onClick={() => handleTransfer(m.userId!, m.profile?.fullName || t("agent_fallback"))}
                                             className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                                         >
                                             <Avatar className="h-8 w-8">
@@ -417,7 +422,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                                 <AvatarFallback>{m.profile?.fullName?.charAt(0) || 'A'}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium">{m.profile?.fullName || 'Unknown Agent'}</span>
+                                                <span className="text-sm font-medium">{m.profile?.fullName || t("unknown_agent")}</span>
                                                 <span className="text-xs text-muted-foreground capitalize">{m.role}</span>
                                             </div>
                                         </div>
@@ -432,19 +437,19 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             <Dialog open={isDepartmentTransferDialogOpen} onOpenChange={setIsDepartmentTransferDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Transfer to Department</DialogTitle>
+                        <DialogTitle>{t("transfer_to_dept_dialog_title")}</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-4">
                         <Input
-                            placeholder="Search departments..."
+                            placeholder={t("search_departments_placeholder")}
                             value={departmentSearch}
                             onChange={(e) => setDepartmentSearch(e.target.value)}
                         />
                         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
                             {departments === undefined ? (
-                                <div className="text-sm text-muted-foreground text-center py-4">Loading departments...</div>
+                                <div className="text-sm text-muted-foreground text-center py-4">{t("loading_departments")}</div>
                             ) : departments.length === 0 ? (
-                                <div className="text-sm text-muted-foreground text-center py-4">No departments found.</div>
+                                <div className="text-sm text-muted-foreground text-center py-4">{tMonitor("filter_dept_none")}</div>
                             ) : (
                                 departments
                                     .filter(d => {
@@ -458,7 +463,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                             className="flex items-center gap-3 p-3 rounded-md hover:bg-muted cursor-pointer transition-colors border"
                                         >
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium">{d.name} {d.isDefault && <span className="text-xs text-muted-foreground ml-1">(Default)</span>}</span>
+                                                <span className="text-sm font-medium">{d.name} {d.isDefault && <span className="text-xs text-muted-foreground ml-1">({t("default_dept_label")})</span>}</span>
                                                 {d.description && <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{d.description}</span>}
                                             </div>
                                         </div>
@@ -477,7 +482,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                     </div>
                 ) : (messages ?? []).length === 0 ? (
                     <div className="text-center text-sm text-muted-foreground mt-10">
-                        No messages yet. Say hello!
+                        {t("no_messages_prompt")}
                     </div>
                 ) : (
                     <>
@@ -486,7 +491,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                 onClick={() => loadMore(30)}
                                 className="mx-auto block w-fit text-xs text-muted-foreground hover:underline my-2"
                             >
-                                Load older messages
+                                {t("load_older_messages")}
                             </button>
                         )}
                         {[...messages].reverse().map((msg) => (
@@ -503,7 +508,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                     msg.type === "internal" ? (
                                         <div className="p-3 rounded-lg max-w-[70%] bg-yellow-50/80 border border-yellow-200 text-yellow-900">
                                             <div className="flex items-center gap-1 mb-1">
-                                                <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">Internal Note</span>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">{t("internal_note_badge")}</span>
                                             </div>
                                             <p className="text-sm">{msg.content}</p>
                                             <span className="text-[10px] mt-1 block text-yellow-700/70">
@@ -522,12 +527,12 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                     <div className="flex gap-2 max-w-[70%]">
                                         <Avatar className="h-8 w-8 mt-1">
                                             <AvatarFallback className={cn("text-xs", msg.senderType === "bot" && "bg-primary/20 text-primary")}>
-                                                {msg.senderType === "bot" ? "AI" : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
+                                                {msg.senderType === "bot" ? t("ai_fallback") : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <span className="text-xs text-muted-foreground ml-1 mb-1 block">
-                                                {msg.senderFullname || (msg.senderType === "bot" ? "AI Assistant" : "Visitor")}
+                                                {msg.senderFullname || (msg.senderType === "bot" ? t("ai_assistant_name") : tVisitor("name_fallback"))}
                                             </span>
                                             <div className="p-3 rounded-lg bg-muted">
                                                 <p className="text-sm">{msg.content}</p>
@@ -549,8 +554,8 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                 <div className="mb-3 flex items-center justify-between">
                     <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as any)} className="w-[200px]">
                         <TabsList className="h-8 w-full grid grid-cols-2">
-                            <TabsTrigger value="public" className="text-xs">Public</TabsTrigger>
-                            <TabsTrigger value="internal" className="text-xs">Internal</TabsTrigger>
+                            <TabsTrigger value="public" className="text-xs">{t("mode_public")}</TabsTrigger>
+                            <TabsTrigger value="internal" className="text-xs">{t("mode_internal")}</TabsTrigger>
                         </TabsList>
                     </Tabs>
                 </div>
@@ -572,7 +577,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         disabled={isResolved}
-                        placeholder={isResolved ? "This conversation is resolved" : (messageMode === "internal" ? "Leave an internal note..." : "Type your message...")}
+                        placeholder={isResolved ? t("resolved_placeholder") : (messageMode === "internal" ? t("internal_note_placeholder") : t("type_message_placeholder"))}
                         className={cn("min-h-[100px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", isResolved && "cursor-not-allowed opacity-50")}
                     />
                     <div className="flex items-center justify-between p-2">
@@ -619,7 +624,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                             className={cn("gap-2", messageMode === "internal" ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "")}
                         >
                             {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {messageMode === "internal" ? "Save Note" : "Send Message"}
+                            {messageMode === "internal" ? t("save_note_button") : t("send_message_button")}
                             <Send className="h-4 w-4" />
                         </Button>
                     </div>
