@@ -65,14 +65,14 @@ function NodePropertiesPanelContent({
             {/* Header */}
             <div className="flex items-center justify-between border-b px-4 py-3">
                 <div>
-                    <h3 className="text-sm font-semibold">{t(`blocks.${toCamelCase(node.type)}.name`) as string}</h3>
+                    <h3 className="text-sm font-semibold">{t(`blocks.${toCamelCase(node.type ?? "")}.name`) ?? ""}</h3>
                     {typeof data.label === "string" && data.label.trim() !== "" && (
                         <p className="text-xs text-muted-foreground mt-0.5">
                             {data.label}
                         </p>
                     )}
                     <p className="text-[10px] text-muted-foreground capitalize mt-0.5">
-                        {t(`blocks.${toCamelCase(node.type)}.name`)} {t("properties.blockSuffix")}
+                        {t(`blocks.${toCamelCase(node.type ?? "")}.name`)} {t("properties.blockSuffix")}
                     </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
