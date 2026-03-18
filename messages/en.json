@@ -155,29 +155,100 @@
       "blockSuffix": "block"
     },
     "blocks": {
-      "start": { "name": "Start", "description": "Entry point for the flow" },
-      "reply": { "name": "Reply", "description": "Send text, buttons, or media" },
-      "setAttribute": { "name": "Set Attribute", "description": "Save a value to context" },
-      "condition": { "name": "Condition", "description": "Branch based on a variable" },
-      "webRequest": { "name": "Web Request", "description": "Call an external HTTP API" },
-      "aiTask": { "name": "AI Task", "description": "Execute an LLM prompt" },
-      "aiAssistant": { "name": "AI Assistant", "description": "Autonomous multi-turn LLM" },
-      "hitlHandoff": { "name": "HITL Handoff", "description": "Escalate to a human agent", "defaultMessage": "Connecting you with a human agent..." },
-      "close": { "name": "Close", "description": "End the conversation", "defaultMessage": "Thank you! This conversation has been closed." },
-      "ifOperatingHours": { "name": "If Operating Hours", "description": "Branch by schedule" },
-      "ifOnlineAgent": { "name": "If Online Agent", "description": "Branch by agent availability" },
-      "captureReply": { "name": "Capture Reply", "description": "Wait for user input" },
-      "captureUserReply": { "name": "Capture Reply", "description": "Wait for user input" },
-      "wait": { "name": "Wait", "description": "Pause execution" },
-      "askKnowledgeBase": { "name": "Ask Knowledge Base", "description": "Query document embeddings" },
-      "askKb": { "name": "Ask Knowledge Base", "description": "Query document embeddings" },
-      "replaceBot": { "name": "Replace Bot", "description": "Switch to another bot" },
-      "changeDept": { "name": "Change Dept", "description": "Route to department" },
-      "changeDepartment": { "name": "Change Dept", "description": "Route to department" },
-      "codeAction": { "name": "Code Action", "description": "Run safe JS expressions" },
-      "clearTranscript": { "name": "Clear Transcript", "description": "Reset conversation memory" },
-      "applyLabel": { "name": "Apply Label", "description": "Tag the conversation" },
-      "setPriority": { "name": "Set Priority", "description": "Set conversation urgency" }
+      "start": {
+        "name": "Start",
+        "description": "Entry point for the flow"
+      },
+      "reply": {
+        "name": "Reply",
+        "description": "Send text, buttons, or media"
+      },
+      "setAttribute": {
+        "name": "Set Attribute",
+        "description": "Save a value to context"
+      },
+      "condition": {
+        "name": "Condition",
+        "description": "Branch based on a variable"
+      },
+      "webRequest": {
+        "name": "Web Request",
+        "description": "Call an external HTTP API"
+      },
+      "aiTask": {
+        "name": "AI Task",
+        "description": "Execute an LLM prompt"
+      },
+      "aiAssistant": {
+        "name": "AI Assistant",
+        "description": "Autonomous multi-turn LLM"
+      },
+      "hitlHandoff": {
+        "name": "HITL Handoff",
+        "description": "Escalate to a human agent",
+        "defaultMessage": "Connecting you with a human agent..."
+      },
+      "close": {
+        "name": "Close",
+        "description": "End the conversation",
+        "defaultMessage": "Thank you! This conversation has been closed."
+      },
+      "ifOperatingHours": {
+        "name": "If Operating Hours",
+        "description": "Branch by schedule"
+      },
+      "ifOnlineAgent": {
+        "name": "If Online Agent",
+        "description": "Branch by agent availability"
+      },
+      "captureReply": {
+        "name": "Capture Reply",
+        "description": "Wait for user input"
+      },
+      "captureUserReply": {
+        "name": "Capture Reply",
+        "description": "Wait for user input"
+      },
+      "wait": {
+        "name": "Wait",
+        "description": "Pause execution"
+      },
+      "askKnowledgeBase": {
+        "name": "Ask Knowledge Base",
+        "description": "Query document embeddings"
+      },
+      "askKb": {
+        "name": "Ask Knowledge Base",
+        "description": "Query document embeddings"
+      },
+      "replaceBot": {
+        "name": "Replace Bot",
+        "description": "Switch to another bot"
+      },
+      "changeDept": {
+        "name": "Change Dept",
+        "description": "Route to department"
+      },
+      "changeDepartment": {
+        "name": "Change Dept",
+        "description": "Route to department"
+      },
+      "codeAction": {
+        "name": "Code Action",
+        "description": "Run safe JS expressions"
+      },
+      "clearTranscript": {
+        "name": "Clear Transcript",
+        "description": "Reset conversation memory"
+      },
+      "applyLabel": {
+        "name": "Apply Label",
+        "description": "Tag the conversation"
+      },
+      "setPriority": {
+        "name": "Set Priority",
+        "description": "Set conversation urgency"
+      }
     },
     "nodes": {
       "randomFrom": "Random From:",
@@ -806,7 +877,7 @@
       "select_platform_placeholder": "Select a platform",
       "copy_code": "Copy code",
       "install_code_hint": "Paste this before the closing </body> tag.",
-      "paste_before_body": "Paste this before the closing </body> tag.",
+      "paste_before_body": "Paste this before the closing body tag.",
       "save": "Save Configuration",
       "save_config": "Save Configuration",
       "test_widget": "Test Widget",
@@ -1203,5 +1274,43 @@
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "Product name or description",
     "order_form_notes_placeholder": "Order notes, specifications..."
+  },
+  "widget": {
+    "noProjectId": "No project ID provided",
+    "connecting": "Connecting...",
+    "failedToConnect": "Failed to connect. Please refresh the page.",
+    "visitor": "Visitor",
+    "startPrompt": "Send a message to start the conversation!",
+    "aiAssistant": "AI Assistant",
+    "supportAgent": "Support Agent",
+    "inputPlaceholder": "Type a message...",
+    "send": "Send",
+    "preChatForm": {
+      "welcome": "Welcome!",
+      "subtitle": "Please fill in your details to start the chat.",
+      "nameLabel": "Name",
+      "namePlaceholder": "John Doe",
+      "emailLabel": "Email",
+      "emailPlaceholder": "your@email.com",
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "startChat": "Start Chat"
+    },
+    "rating": {
+      "thankYou": "Thank you!",
+      "feedbackHelps": "Your feedback helps us improve.",
+      "prompt": "How would you rate our support?",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting..."
+    }
+  },
+  "testWidget": {
+    "preparing": "Preparing Preview...",
+    "projectNotFound": "Project Not Found",
+    "returnToDashboard": "Return to Dashboard",
+    "tagline": "Engineering the Future of Scale",
+    "feature1": "Lightning Fast",
+    "feature2": "Military Grade",
+    "feature3": "Global Scale"
   }
 }

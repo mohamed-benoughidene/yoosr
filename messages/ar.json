@@ -155,29 +155,100 @@
       "blockSuffix": "كتلة"
     },
     "blocks": {
-      "start": { "name": "البداية", "description": "نقطة الدخول للتدفق" },
-      "reply": { "name": "رد", "description": "إرسال نص أو أزرار أو وسائط" },
-      "setAttribute": { "name": "تعيين سمة", "description": "حفظ قيمة في السياق" },
-      "condition": { "name": "شرط", "description": "التفرع بناءً على متغير" },
-      "webRequest": { "name": "طلب ويب", "description": "استدعاء API خارجي" },
-      "aiTask": { "name": "مهمة ذكاء اصطناعي", "description": "تنفيذ مطالبة LLM" },
-      "aiAssistant": { "name": "مساعد ذكي", "description": "LLM ذاتي القيادة متعدد الجولات" },
-      "hitlHandoff": { "name": "تحويل لبشري", "description": "التصعيد لوكيل بشري", "defaultMessage": "جاري توصيلك بوكيل بشري..." },
-      "close": { "name": "إغلاق", "description": "إنهاء المحادثة", "defaultMessage": "شكراً لك! تم إغلاق هذه المحادثة." },
-      "ifOperatingHours": { "name": "فحص ساعات العمل", "description": "التفرع حسب الجدول" },
-      "ifOnlineAgent": { "name": "فحص تواجد وكيل", "description": "التفرع حسب توفر الوكلاء" },
-      "captureReply": { "name": "التقاط رد", "description": "انتظار إدخال المستخدم" },
-      "captureUserReply": { "name": "التقاط رد", "description": "انتظار إدخال المستخدم" },
-      "wait": { "name": "انتظار", "description": "إيقاف التنفيذ مؤقتاً" },
-      "askKnowledgeBase": { "name": "سؤال قاعدة المعرفة", "description": "البحث في مستنداتك" },
-      "askKb": { "name": "سؤال قاعدة المعرفة", "description": "البحث في مستنداتك" },
-      "replaceBot": { "name": "استبدال البوت", "description": "التبديل لبوت آخر" },
-      "changeDept": { "name": "تغيير القسم", "description": "التوجيه لقسم معين" },
-      "changeDepartment": { "name": "تغيير القسم", "description": "التوجيه لقسم معين" },
-      "codeAction": { "name": "إجراء برمجى", "description": "تشغيل تعبيرات JS آمنة" },
-      "clearTranscript": { "name": "مسح السجل", "description": "إعادة ضبط ذاكرة المحادثة" },
-      "applyLabel": { "name": "تطبيق تسمية", "description": "وسم المحادثة" },
-      "setPriority": { "name": "تعيين أولوية", "description": "تعيين استعجال المحادثة" }
+      "start": {
+        "name": "البداية",
+        "description": "نقطة الدخول للتدفق"
+      },
+      "reply": {
+        "name": "رد",
+        "description": "إرسال نص أو أزرار أو وسائط"
+      },
+      "setAttribute": {
+        "name": "تعيين سمة",
+        "description": "حفظ قيمة في السياق"
+      },
+      "condition": {
+        "name": "شرط",
+        "description": "التفرع بناءً على متغير"
+      },
+      "webRequest": {
+        "name": "طلب ويب",
+        "description": "استدعاء API خارجي"
+      },
+      "aiTask": {
+        "name": "مهمة ذكاء اصطناعي",
+        "description": "تنفيذ مطالبة LLM"
+      },
+      "aiAssistant": {
+        "name": "مساعد ذكي",
+        "description": "LLM ذاتي القيادة متعدد الجولات"
+      },
+      "hitlHandoff": {
+        "name": "تحويل لبشري",
+        "description": "التصعيد لوكيل بشري",
+        "defaultMessage": "جاري توصيلك بوكيل بشري..."
+      },
+      "close": {
+        "name": "إغلاق",
+        "description": "إنهاء المحادثة",
+        "defaultMessage": "شكراً لك! تم إغلاق هذه المحادثة."
+      },
+      "ifOperatingHours": {
+        "name": "فحص ساعات العمل",
+        "description": "التفرع حسب الجدول"
+      },
+      "ifOnlineAgent": {
+        "name": "فحص تواجد وكيل",
+        "description": "التفرع حسب توفر الوكلاء"
+      },
+      "captureReply": {
+        "name": "التقاط رد",
+        "description": "انتظار إدخال المستخدم"
+      },
+      "captureUserReply": {
+        "name": "التقاط رد",
+        "description": "انتظار إدخال المستخدم"
+      },
+      "wait": {
+        "name": "انتظار",
+        "description": "إيقاف التنفيذ مؤقتاً"
+      },
+      "askKnowledgeBase": {
+        "name": "سؤال قاعدة المعرفة",
+        "description": "البحث في مستنداتك"
+      },
+      "askKb": {
+        "name": "سؤال قاعدة المعرفة",
+        "description": "البحث في مستنداتك"
+      },
+      "replaceBot": {
+        "name": "استبدال البوت",
+        "description": "التبديل لبوت آخر"
+      },
+      "changeDept": {
+        "name": "تغيير القسم",
+        "description": "التوجيه لقسم معين"
+      },
+      "changeDepartment": {
+        "name": "تغيير القسم",
+        "description": "التوجيه لقسم معين"
+      },
+      "codeAction": {
+        "name": "إجراء برمجى",
+        "description": "تشغيل تعبيرات JS آمنة"
+      },
+      "clearTranscript": {
+        "name": "مسح السجل",
+        "description": "إعادة ضبط ذاكرة المحادثة"
+      },
+      "applyLabel": {
+        "name": "تطبيق تسمية",
+        "description": "وسم المحادثة"
+      },
+      "setPriority": {
+        "name": "تعيين أولوية",
+        "description": "تعيين استعجال المحادثة"
+      }
     },
     "nodes": {
       "randomFrom": "عشوائي من:",
@@ -814,7 +885,7 @@
       "select_platform_placeholder": "اختر منصة",
       "copy_code": "نسخ الكود",
       "install_code_hint": "الصق هذا قبل وسم الإغلاق </body>.",
-      "paste_before_body": "الصق هذا قبل وسم الإغلاق </body>.",
+      "paste_before_body": "الصق هذا قبل وسم إغلاق body.",
       "save": "حفظ التكوين",
       "save_config": "حفظ التكوين",
       "test_widget": "اختبار الويدجت",
@@ -1203,5 +1274,43 @@
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "اسم المنتج أو وصفه",
     "order_form_notes_placeholder": "ملاحظات الطلب، المواصفات..."
+  },
+  "widget": {
+    "noProjectId": "لم يتم تقديم معرّف المشروع",
+    "connecting": "جارٍ الاتصال...",
+    "failedToConnect": "فشل الاتصال. يرجى تحديث الصفحة.",
+    "visitor": "زائر",
+    "startPrompt": "أرسل رسالة لبدء المحادثة!",
+    "aiAssistant": "مساعد ذكاء اصطناعي",
+    "supportAgent": "وكيل الدعم",
+    "inputPlaceholder": "اكتب رسالة...",
+    "send": "إرسال",
+    "preChatForm": {
+      "welcome": "مرحباً!",
+      "subtitle": "يرجى ملء بياناتك لبدء المحادثة.",
+      "nameLabel": "الاسم",
+      "namePlaceholder": "محمد علي",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "your@email.com",
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "startChat": "بدء المحادثة"
+    },
+    "rating": {
+      "thankYou": "شكراً لك!",
+      "feedbackHelps": "ملاحظاتك تساعدنا على التحسين.",
+      "prompt": "كيف تقيّم دعمنا؟",
+      "submit": "إرسال التقييم",
+      "submitting": "جارٍ الإرسال..."
+    }
+  },
+  "testWidget": {
+    "preparing": "جارٍ تحضير المعاينة...",
+    "projectNotFound": "المشروع غير موجود",
+    "returnToDashboard": "العودة إلى لوحة التحكم",
+    "tagline": "نهندس مستقبل النمو",
+    "feature1": "سريع البرق",
+    "feature2": "أمان عسكري",
+    "feature3": "نطاق عالمي"
   }
 }

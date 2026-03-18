@@ -155,29 +155,100 @@
       "blockSuffix": "bloc"
     },
     "blocks": {
-      "start": { "name": "Démarrer", "description": "Point d'entrée du flux" },
-      "reply": { "name": "Réponse", "description": "Envoyer texte, boutons ou médias" },
-      "setAttribute": { "name": "Définir Attribut", "description": "Sauvegarder une valeur" },
-      "condition": { "name": "Condition", "description": "Bifurquer selon une variable" },
-      "webRequest": { "name": "Requête Web", "description": "Appeler une API HTTP externe" },
-      "aiTask": { "name": "Tâche IA", "description": "Exécuter un prompt LLM" },
-      "aiAssistant": { "name": "Assistant IA", "description": "LLM autonome multi-tours" },
-      "hitlHandoff": { "name": "Transfert Agent", "description": "Escalader vers un agent humain", "defaultMessage": "Connexion avec un agent humain..." },
-      "close": { "name": "Fermer", "description": "Terminer la conversation", "defaultMessage": "Merci ! Cette conversation a été fermée." },
-      "ifOperatingHours": { "name": "Si ouvert", "description": "Bifurquer selon l'horaire" },
-      "ifOnlineAgent": { "name": "Si agent en ligne", "description": "Bifurquer selon disponibilité" },
-      "captureReply": { "name": "Capturer Réponse", "description": "Attendre l'entrée utilisateur" },
-      "captureUserReply": { "name": "Capturer Réponse", "description": "Attendre l'entrée utilisateur" },
-      "wait": { "name": "Attendre", "description": "Pause de l'exécution" },
-      "askKnowledgeBase": { "name": "Interroger la Base", "description": "Rechercher dans les documents" },
-      "askKb": { "name": "Interroger la Base", "description": "Rechercher dans les documents" },
-      "replaceBot": { "name": "Remplacer Bot", "description": "Passer à un autre bot" },
-      "changeDept": { "name": "Changer Dépt", "description": "Router vers un département" },
-      "changeDepartment": { "name": "Changer Dépt", "description": "Router vers un département" },
-      "codeAction": { "name": "Action Code", "description": "Exécuter du JS sécurisé" },
-      "clearTranscript": { "name": "Effacer Historique", "description": "Réinitialiser la mémoire" },
-      "applyLabel": { "name": "Appliquer Étiquette", "description": "Taguer la conversation" },
-      "setPriority": { "name": "Définir Priorité", "description": "Définir l'urgence" }
+      "start": {
+        "name": "Démarrer",
+        "description": "Point d'entrée du flux"
+      },
+      "reply": {
+        "name": "Réponse",
+        "description": "Envoyer texte, boutons ou médias"
+      },
+      "setAttribute": {
+        "name": "Définir Attribut",
+        "description": "Sauvegarder une valeur"
+      },
+      "condition": {
+        "name": "Condition",
+        "description": "Bifurquer selon une variable"
+      },
+      "webRequest": {
+        "name": "Requête Web",
+        "description": "Appeler une API HTTP externe"
+      },
+      "aiTask": {
+        "name": "Tâche IA",
+        "description": "Exécuter un prompt LLM"
+      },
+      "aiAssistant": {
+        "name": "Assistant IA",
+        "description": "LLM autonome multi-tours"
+      },
+      "hitlHandoff": {
+        "name": "Transfert Agent",
+        "description": "Escalader vers un agent humain",
+        "defaultMessage": "Connexion avec un agent humain..."
+      },
+      "close": {
+        "name": "Fermer",
+        "description": "Terminer la conversation",
+        "defaultMessage": "Merci ! Cette conversation a été fermée."
+      },
+      "ifOperatingHours": {
+        "name": "Si ouvert",
+        "description": "Bifurquer selon l'horaire"
+      },
+      "ifOnlineAgent": {
+        "name": "Si agent en ligne",
+        "description": "Bifurquer selon disponibilité"
+      },
+      "captureReply": {
+        "name": "Capturer Réponse",
+        "description": "Attendre l'entrée utilisateur"
+      },
+      "captureUserReply": {
+        "name": "Capturer Réponse",
+        "description": "Attendre l'entrée utilisateur"
+      },
+      "wait": {
+        "name": "Attendre",
+        "description": "Pause de l'exécution"
+      },
+      "askKnowledgeBase": {
+        "name": "Interroger la Base",
+        "description": "Rechercher dans les documents"
+      },
+      "askKb": {
+        "name": "Interroger la Base",
+        "description": "Rechercher dans les documents"
+      },
+      "replaceBot": {
+        "name": "Remplacer Bot",
+        "description": "Passer à un autre bot"
+      },
+      "changeDept": {
+        "name": "Changer Dépt",
+        "description": "Router vers un département"
+      },
+      "changeDepartment": {
+        "name": "Changer Dépt",
+        "description": "Router vers un département"
+      },
+      "codeAction": {
+        "name": "Action Code",
+        "description": "Exécuter du JS sécurisé"
+      },
+      "clearTranscript": {
+        "name": "Effacer Historique",
+        "description": "Réinitialiser la mémoire"
+      },
+      "applyLabel": {
+        "name": "Appliquer Étiquette",
+        "description": "Taguer la conversation"
+      },
+      "setPriority": {
+        "name": "Définir Priorité",
+        "description": "Définir l'urgence"
+      }
     },
     "nodes": {
       "randomFrom": "Aléatoire parmi:",
@@ -779,7 +850,7 @@
       "select_platform_placeholder": "Sélectionner une plateforme",
       "copy_code": "Copier le code",
       "install_code_hint": "Collez ceci avant la balise de fermeture </body>.",
-      "paste_before_body": "Collez ceci avant la balise de fermeture </body>.",
+      "paste_before_body": "Collez ceci avant la balise de fermeture body.",
       "save": "Enregistrer la configuration",
       "save_config": "Enregistrer la configuration",
       "test_widget": "Tester le Widget",
@@ -1165,5 +1236,43 @@
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "Nom du produit ou description",
     "order_form_notes_placeholder": "Notes de commande, spécifications..."
+  },
+  "widget": {
+    "noProjectId": "Aucun identifiant de projet fourni",
+    "connecting": "Connexion en cours...",
+    "failedToConnect": "Échec de la connexion. Veuillez actualiser la page.",
+    "visitor": "Visiteur",
+    "startPrompt": "Envoyez un message pour démarrer la conversation !",
+    "aiAssistant": "Assistant IA",
+    "supportAgent": "Agent de support",
+    "inputPlaceholder": "Tapez un message...",
+    "send": "Envoyer",
+    "preChatForm": {
+      "welcome": "Bienvenue !",
+      "subtitle": "Veuillez remplir vos informations pour démarrer le chat.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Jean Dupont",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "votre@email.com",
+      "nameRequired": "Le nom est requis",
+      "emailRequired": "L'e-mail est requis",
+      "startChat": "Démarrer le chat"
+    },
+    "rating": {
+      "thankYou": "Merci !",
+      "feedbackHelps": "Vos retours nous aident à nous améliorer.",
+      "prompt": "Comment évalueriez-vous notre support ?",
+      "submit": "Soumettre l'avis",
+      "submitting": "Envoi en cours..."
+    }
+  },
+  "testWidget": {
+    "preparing": "Préparation de l'aperçu...",
+    "projectNotFound": "Projet introuvable",
+    "returnToDashboard": "Retour au tableau de bord",
+    "tagline": "Ingénierie du futur à grande échelle",
+    "feature1": "Ultra rapide",
+    "feature2": "Sécurité militaire",
+    "feature3": "Échelle mondiale"
   }
 }
