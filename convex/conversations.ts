@@ -321,7 +321,7 @@ export const createFromWidget = internalMutation({
         // Read project settings to optionally inject welcome message into history permanently
         const widgetConfig = (project?.widgetConfig as any) || {};
         const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
-        const welcomeMsg = widgetConfig.translations?.welcomeMessage || "Hi there! How can we help you?";
+        const welcomeMsg = widgetConfig.translations?.welcomeMessage || "system.welcome";
 
         if (enableWelcome) {
             await ctx.db.insert("messages", {
@@ -329,6 +329,7 @@ export const createFromWidget = internalMutation({
                 projectId: args.projectId,
                 senderType: "bot",
                 content: welcomeMsg,
+                type: "system",
             });
         }
 
@@ -434,7 +435,8 @@ export const resolve = mutation({
             conversationId: args.id,
             projectId: conversation.projectId,
             senderType: "bot",
-            content: "This conversation has been resolved. Thank you!",
+            content: "system.resolved",
+            type: "system",
         });
 
         if (conversation.channel === "telegram") {
@@ -498,8 +500,8 @@ export const join = mutation({
                 conversationId: args.id,
                 projectId: conversation.projectId,
                 senderType: "bot",
-                content: "You are now connected with an agent.",
-                type: "text",
+                content: "system.agentConnected",
+                type: "system",
             });
 
             if (conversation.channel === "telegram") {
@@ -731,7 +733,8 @@ export const autoCloseInactive = internalMutation({
                     conversationId: conv._id,
                     projectId: conv.projectId,
                     senderType: "bot",
-                    content: "This conversation was automatically closed due to inactivity.",
+                    content: "system.inactiveClosed",
+                    type: "system",
                 });
 
                 if (conv.channel === "telegram") {

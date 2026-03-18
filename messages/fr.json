@@ -1552,6 +1552,13 @@
     "order_form_notes_placeholder": "Notes de commande, spécifications..."
   },
   "widget": {
+    "system": {
+      "welcome": "Bonjour ! Comment pouvons-nous vous aider ?",
+      "resolved": "Cette conversation a été résolue. Merci !",
+      "agentConnected": "Vous êtes maintenant connecté à un agent.",
+      "inactiveClosed": "Cette conversation a été automatiquement fermée pour inactivité.",
+      "agentJoined": "Un agent a rejoint la conversation."
+    },
     "noProjectId": "Aucun identifiant de projet fourni",
     "connecting": "Connexion en cours...",
     "failedToConnect": "Échec de la connexion. Veuillez actualiser la page.",
@@ -1581,6 +1588,9 @@
     }
   },
   "testWidget": {
+    "embedCopied": "Code d'intégration copié !",
+    "sessionReset": "Session visiteur réinitialisée",
+    "sessionResetDesc": "Vous pouvez maintenant tester le formulaire de pré-chat à nouveau.",
     "preparing": "Préparation de l'aperçu...",
     "projectNotFound": "Projet introuvable",
     "returnToDashboard": "Retour au tableau de bord",

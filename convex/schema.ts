@@ -23,6 +23,7 @@ export default defineSchema({
         orgId: v.string(), // Clerk Organization ID
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
         widgetConfig: v.optional(v.any()), // JSON config for widget appearance
+        widgetLocale: v.optional(v.union(v.literal("en"), v.literal("ar"), v.literal("fr"))),
         defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
         openRouterApiKey: v.optional(v.string()),
         slaHours: v.optional(v.number()),

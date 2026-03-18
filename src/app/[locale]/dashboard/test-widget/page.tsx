@@ -5,10 +5,12 @@ import { useProject } from "@/context/ProjectContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 import { Copy, RefreshCw, Eye, Code } from "lucide-react"
 
 export default function TestWidgetPage() {
     const { activeProject, isLoading } = useProject()
+    const t = useTranslations("testWidget")
     const [iframeKey, setIframeKey] = useState(0)
     const [baseUrl, setBaseUrl] = useState("")
 
@@ -45,13 +47,13 @@ export default function TestWidgetPage() {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(embedCode)
-        toast.success("Embed code copied to clipboard")
+        toast.success(t("embedCopied"))
     }
 
     const handleResetVisitor = () => {
         localStorage.removeItem("yoosr_visitor_id")
         setIframeKey(prev => prev + 1)
-        toast.success("Visitor session reset")
+        toast.success(t("sessionReset"), { description: t("sessionResetDesc") })
     }
 
     return (

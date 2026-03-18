@@ -1606,6 +1606,13 @@
     "order_form_notes_placeholder": "Order notes, specifications..."
   },
   "widget": {
+    "system": {
+      "welcome": "Hi there! How can we help you?",
+      "resolved": "This conversation has been resolved. Thank you!",
+      "agentConnected": "You are now connected with an agent.",
+      "inactiveClosed": "This conversation was automatically closed due to inactivity.",
+      "agentJoined": "An agent has joined the conversation."
+    },
     "noProjectId": "No project ID provided",
     "connecting": "Connecting...",
     "failedToConnect": "Failed to connect. Please refresh the page.",
@@ -1635,6 +1642,9 @@
     }
   },
   "testWidget": {
+    "embedCopied": "Embed code copied!",
+    "sessionReset": "Visitor session reset",
+    "sessionResetDesc": "You can now test the pre-chat form again.",
     "preparing": "Preparing Preview...",
     "projectNotFound": "Project Not Found",
     "returnToDashboard": "Return to Dashboard",

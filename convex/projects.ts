@@ -19,7 +19,7 @@ export const getPublic = internalQuery({
 
         const project = await ctx.db.get(id);
         if (!project) return null;
-        return { name: project.name, widgetConfig: project.widgetConfig };
+        return { name: project.name, widgetConfig: project.widgetConfig, widgetLocale: project.widgetLocale };
     },
 });
 
@@ -261,5 +261,28 @@ export const remove = mutation({
         for (const r of webhooks) await ctx.db.delete(r._id);
 
         await ctx.db.delete(projectId);
+    },
+});
+
+export const updateWidgetLocale = mutation({
+    args: {
+        projectId: v.id("projects"),
+        locale: v.union(v.literal("en"), v.literal("ar"), v.literal("fr")),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+        await ctx.db.patch(args.projectId, { widgetLocale: args.locale });
+    },
+});
+
+export const clearWidgetLocale = mutation({
+    args: {
+        projectId: v.id("projects"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthenticated");
+        await ctx.db.patch(args.projectId, { widgetLocale: undefined });
     },
 });

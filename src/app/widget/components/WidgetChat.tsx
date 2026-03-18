@@ -30,6 +30,7 @@ interface Message {
     _id: string
     content: string
     senderType: string
+    type?: string
     senderId?: string
     senderName?: string
     attachments?: any
@@ -540,7 +541,7 @@ export default function WidgetChat() {
                                                 : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
                                         }
                                     >
-                                        {msg.content}
+                                        {msg.type === "system" ? t(msg.content) : msg.content}
                                     </div>
                                     {!isVisitor && msg.attachments?.payload?.buttons && (
                                         <div className="flex flex-col gap-2 mt-2">

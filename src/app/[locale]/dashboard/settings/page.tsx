@@ -59,6 +59,25 @@ function SettingsContent() {
 
 
     const updateProject = useMutation(api.projects.update)
+    const updateWidgetLocale = useMutation(api.projects.updateWidgetLocale)
+    const clearWidgetLocale = useMutation(api.projects.clearWidgetLocale)
+
+    const handleLocaleChange = async (value: string) => {
+        if (!activeProject) return
+        try {
+            if (value === "auto") {
+                await clearWidgetLocale({ projectId: activeProject._id })
+            } else {
+                await updateWidgetLocale({
+                    projectId: activeProject._id,
+                    locale: value as "en" | "ar" | "fr"
+                })
+            }
+            toast.success("Language saved.")
+        } catch {
+            toast.error("Failed to save language.")
+        }
+    }
 
     const handleSave = async () => {
         if (!activeProject) return
@@ -117,6 +136,31 @@ function SettingsContent() {
 
                 {/* ──────── GENERAL TAB ──────── */}
                 <TabsContent value="general" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Project Language</CardTitle>
+                            <CardDescription>
+                                Controls the language of the chat widget and all system messages shown to visitors.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Select
+                                value={activeProject?.widgetLocale || "auto"}
+                                onValueChange={handleLocaleChange}
+                            >
+                                <SelectTrigger className="w-full md:w-[280px]">
+                                    <SelectValue placeholder="Select Language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="auto">Auto-detect (visitor's browser)</SelectItem>
+                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="ar">Arabic / العربية</SelectItem>
+                                    <SelectItem value="fr">French / Français</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader>
                             <CardTitle>{t("details_title")}</CardTitle>

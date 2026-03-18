@@ -147,7 +147,8 @@ export const routeConversation = internalMutation({
                 conversationId: args.conversationId,
                 projectId: args.projectId,
                 senderType: "bot",
-                content: "An agent has joined the conversation.",
+                content: "system.agentJoined",
+                type: "system",
             });
         } else {
             // 3. No Bot and No Agents -> Leave in Unassigned Queue
