@@ -124,6 +124,7 @@
     "orders": {
       "badge": "Orders",
       "headline": "Capture and manage leads from every conversation",
+      "description": "Turn every conversation into a lead. Track status and notify the team instantly.",
       "items": [
         {
           "title": "Create from Chat",
@@ -170,6 +171,12 @@
     "pricing": {
       "badge": "Pricing",
       "headline": "Pricing plans for teams of all sizes",
+      "description": "Choose the right plan for your business. No hidden fees.",
+      "mostPopular": "Most Popular",
+      "toggle": {
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      },
       "plans": [
         {
           "name": "Free",
