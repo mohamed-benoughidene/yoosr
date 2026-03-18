@@ -1,29 +1,24 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 
 const channelsFeatures = [
     {
         icon: "🌐",
-        title: "Web Chat",
-        desc: "Embed a widget on any website with a single script tag. Fully customizable colors, position, and behavior.",
     },
     {
         icon: "✈️",
-        title: "Telegram",
-        desc: "Connect your Telegram bot in minutes. Full two-way messaging with file and media support.",
     },
     {
         icon: "📘",
-        title: "Facebook Messenger",
-        desc: "Handle Messenger conversations from the same unified inbox alongside all other channels.",
     },
     {
         icon: "📸",
-        title: "Instagram DMs",
-        desc: "Manage Instagram direct messages with the same bot flows and agent tools as every other channel.",
     },
 ];
 
-export function ChannelsSection() {
+export async function ChannelsSection() {
+    const t = await getTranslations("landing");
+
     return (
         <section className="border-t border-border py-24">
             <div className="container mx-auto px-4">
@@ -32,15 +27,14 @@ export function ChannelsSection() {
                     <div className="flex items-center justify-center gap-3 mb-4">
                         <div className="w-8 h-px bg-primary" />
                         <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-                            Channels
+                            {t("channels.badge")}
                         </span>
                     </div>
                     <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                        Meet your customers where they already are
+                        {t("channels.headline")}
                     </h2>
                     <p className="text-lg text-muted-foreground mt-3 leading-relaxed">
-                        One inbox. Every channel. Conversations from Telegram, Facebook,
-                        Instagram, and your website — managed in one place.
+                        {t("channels.description")}
                     </p>
                 </div>
 
@@ -56,10 +50,10 @@ export function ChannelsSection() {
                             </div>
                             <div>
                                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                                    {feature.title}
+                                    {t(`channels.items.${index}.title`)}
                                 </h3>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    {feature.desc}
+                                    {t(`channels.items.${index}.description`)}
                                 </p>
                             </div>
                         </div>

@@ -56,7 +56,7 @@ export default function ActivitiesPage() {
                         {t("recent")}
                     </CardTitle>
                     <CardDescription>
-                        Audit log of actions taken in this project, sorted by newest first.
+                        {t("description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">

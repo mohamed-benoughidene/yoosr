@@ -1,34 +1,24 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { getTranslations } from "next-intl/server";
 
-const testimonials = [
-  {
-    quote:
-      "The bot handles 70% of our tickets automatically. Our team finally spends time on real problems instead of answering the same questions every day.",
-    author: "Sara Al-Amri",
-    role: "Head of Support · Riyadh Store",
-    initials: "SA",
-    avatarStyles: "bg-primary text-primary-foreground",
-  },
-  {
-    quote:
-      "Finally a platform built for our region. Arabic routing, MENA-friendly channels, and SLA tracking that actually works. Switched from a European tool and won't go back.",
-    author: "Karim Mansouri",
-    role: "CTO · Algiers Tech",
-    initials: "KM",
-    avatarStyles: "bg-muted text-foreground",
-  },
-  {
-    quote:
-      "The Design Studio is genuinely different. Our ops team built and deployed a full order-tracking bot in an afternoon — no developers involved.",
-    author: "Nour Rahmani",
-    role: "Operations Lead · Dubai Boutique",
-    initials: "NR",
-    avatarStyles: "bg-muted text-foreground",
-  },
-];
+export async function Testimonials() {
+  const t = await getTranslations("landing");
+  const items = t.raw("testimonials.items") as {
+    quote: string;
+    author: string;
+    role: string;
+    company: string;
+  }[];
 
-export function Testimonials() {
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
   return (
     <section className="border-t border-border py-24">
       <div className="container mx-auto px-4">
@@ -36,16 +26,16 @@ export function Testimonials() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-px bg-primary" />
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-              Customer stories
+              {t("testimonials.badge")}
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            Support teams across MENA choose Yoosr
+            {t("testimonials.headline")}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-14">
-          {testimonials.map((t, idx) => (
+          {items.map((item, idx) => (
             <div
               key={idx}
               className="border border-border rounded-2xl bg-card p-7 flex flex-col justify-between hover:bg-muted/30 transition-all group"
@@ -57,7 +47,7 @@ export function Testimonials() {
                   ))}
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground mb-6 flex-1">
-                  {t.quote}
+                  {item.quote}
                 </p>
               </div>
 
@@ -65,17 +55,17 @@ export function Testimonials() {
                 <div
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0",
-                    t.avatarStyles
+                    idx === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
                   )}
                 >
-                  {t.initials}
+                  {getInitials(item.author)}
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">
-                    {t.author}
+                    {item.author}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {t.role}
+                    {item.role} · {item.company}
                   </div>
                 </div>
               </div>

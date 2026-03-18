@@ -1,4 +1,317 @@
 {
+  "landing": {
+    "header": {
+      "badge": "Accès Anticipé",
+      "logo": "Yoosr",
+      "nav": {
+        "features": "Fonctionnalités",
+        "solutions": "Solutions",
+        "howItWorks": "Comment ça marche",
+        "customers": "Clients",
+        "pricing": "Tarifs"
+      },
+      "dropdowns": {
+        "products": "Produits",
+        "resources": "Ressources"
+      }
+    },
+    "footer": {
+      "tagline": "La plateforme open-source sans-code pour créer des agents IA et automatiser vos conversations clients.",
+      "newsletter": {
+        "label": "Abonnez-vous à notre newsletter",
+        "placeholder": "Entrez votre e-mail",
+        "button": "S'abonner"
+      },
+      "categories": {
+        "product": "Produit",
+        "solutions": "Solutions",
+        "developers": "Développeurs",
+        "company": "Entreprise"
+      },
+      "legal": {
+        "privacy": "Politique de Confidentialité",
+        "terms": "Conditions d'Utilisation"
+      },
+      "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement — attendez-vous à des mises à jour fréquentes.",
+      "copyright": "Yoosr, Inc. Open Source. Licence MIT."
+    },
+    "meta": {
+      "title": "Yoosr — Support Client pour les Entreprises de la région MENA",
+      "description": "Chat en direct, automatisation par bot et boîte de réception d'équipe conçus pour les entreprises MENA. Commencez gratuitement."
+    },
+    "page": {
+      "tagline": "Propulsez vos équipes de support dans toute la région",
+      "industries": [
+        "E-commerce",
+        "Logistique",
+        "Commerce de détail",
+        "Fintech",
+        "Santé",
+        "SaaS"
+      ]
+    },
+    "hero": {
+      "badge": "Maintenant disponible — Web, Telegram, Facebook & Instagram",
+      "headline": "La plateforme de support client conçue pour la région MENA",
+      "description": "Automatisez les conversations avec des bots IA, gérez la boîte de réception de votre équipe en temps réel et clôturez chaque ticket — en arabe ou en anglais — sur tous les canaux.",
+      "cta": {
+        "primary": "Commencer gratuitement",
+        "secondary": "Voir une démo en direct"
+      },
+      "stats": {
+        "botBlocks": "19+",
+        "botBlocksLabel": "Types de blocs de bot",
+        "liveChannels": "4",
+        "liveChannelsLabel": "Chaînes en direct",
+        "toGoLive": "5min",
+        "toGoLiveLabel": "Pour être en direct",
+        "realtime": "100%",
+        "realtimeLabel": "Temps réel"
+      }
+    },
+    "cta": {
+      "headline": "Votre équipe de support mérite de meilleurs outils.",
+      "description": "Configurez votre espace de travail, intégrez le widget et lancez votre premier bot dès aujourd'hui — aucune carte de crédit requise.",
+      "primary": "Commencer gratuitement →",
+      "secondary": "Nous contacter"
+    },
+    "channels": {
+      "badge": "Canaux",
+      "headline": "Rencontrez vos clients là où ils se trouvent déjà",
+      "description": "Une seule boîte de réception. Chaque canal. Les conversations de Telegram, Facebook, Instagram et votre site web — gérées en un seul endroit.",
+      "items": [
+        {
+          "title": "Web Chat",
+          "description": "Intégrez un widget sur n'importe quel site web avec une simple balise script. Couleurs, position et comportement entièrement personnalisables."
+        },
+        {
+          "title": "Telegram",
+          "description": "Connectez votre bot Telegram en quelques minutes. Messagerie bidirectionnelle complète avec prise en charge des fichiers et médias."
+        },
+        {
+          "title": "Facebook Messenger",
+          "description": "Gérez les conversations Messenger depuis la même boîte de réception unifiée, aux côtés de tous les autres canaux."
+        },
+        {
+          "title": "Instagram DMs",
+          "description": "Gérez les messages directs Instagram avec les mêmes flux de bot et outils d'agent que pour tous les autres canaux."
+        }
+      ]
+    },
+    "analytics": {
+      "badge": "Analyses",
+      "headline": "Tout voir, tout améliorer",
+      "description": "Chaque conversation génère des données. Yoosr transforme ces données en décisions.",
+      "items": [
+        {
+          "title": "Suivi CSAT",
+          "description": "Collectez les notes de satisfaction après chaque conversation résolue. Visualisez la répartition des scores et les tendances dans le temps."
+        },
+        {
+          "title": "Usage des Tokens",
+          "description": "Surveillez la consommation de tokens IA par modèle. Comprenez le coût par conversation et optimisez votre sélection de modèles."
+        },
+        {
+          "title": "Questions Sans Réponse",
+          "description": "Voyez exactement quelles questions votre bot n'a pas pu traiter. Utilisez ces données pour combler les lacunes de votre base de connaissances."
+        },
+        {
+          "title": "Taux de Violation SLA",
+          "description": "Suivez le respect des délais de réponse par département avec des alertes de violation en temps réel avant qu'il ne soit trop tard."
+        }
+      ]
+    },
+    "orders": {
+      "badge": "Commandes",
+      "headline": "Capturez et gérez les leads de chaque conversation",
+      "description": "Convertissez chaque conversation en prospect. Suivez le statut et informez l'équipe instantanément.",
+      "items": [
+        {
+          "title": "Créer depuis le Chat",
+          "description": "Un clic dans le Panneau Visiteur ouvre un nouveau formulaire de commande pré-rempli avec le nom et le canal du visiteur."
+        },
+        {
+          "title": "Suivi de Statut",
+          "description": "Mettez à jour les commandes de Nouveau à Confirmé puis à Expédié. Chaque changement est enregistré dans le journal d'activité."
+        },
+        {
+          "title": "Export CSV",
+          "description": "Téléchargez votre liste complète de commandes filtrée par date, statut ou département. Prêt pour n'importe quel CRM ou entrepôt de données."
+        },
+        {
+          "title": "Notifications d'Équipe",
+          "description": "Les agents sont notifiés à chaque mise à jour de commande. Rien ne passe à travers les mailles du filet au sein de votre équipe."
+        }
+      ]
+    },
+    "testimonials": {
+      "badge": "Témoignages clients",
+      "headline": "Les équipes de support dans toute la région MENA choisissent Yoosr",
+      "items": [
+        {
+          "quote": "Le bot gère 70 % de nos tickets automatiquement. Notre équipe peut enfin se consacrer aux problèmes complexes au lieu de répondre aux mêmes questions tous les jours.",
+          "author": "Sara Al-Amri",
+          "role": "Responsable Support",
+          "company": "Riyadh Store"
+        },
+        {
+          "quote": "Enfin une plateforme conçue pour notre région. Routage en arabe, canaux adaptés à la région MENA et un suivi SLA qui fonctionne vraiment. Nous avons quitté un outil européen et ne reviendrons pas en arrière.",
+          "author": "Karim Mansouri",
+          "role": "CTO",
+          "company": "Algiers Tech"
+        },
+        {
+          "quote": "Le Design Studio est vraiment différent. Notre équipe opérationnelle a construit et déployé un bot complet de suivi de commande en un après-midi — sans l'aide de développeurs.",
+          "author": "Nour Rahmani",
+          "role": "Responsable Opérations",
+          "company": "Dubai Boutique"
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Tarifs",
+      "headline": "Des forfaits pour les équipes de toutes tailles",
+      "description": "Choisissez le forfait qui convient à votre entreprise. Pas de frais cachés.",
+      "mostPopular": "Le plus populaire",
+      "toggle": {
+        "monthly": "Mensuel",
+        "yearly": "Annuel"
+      },
+      "plans": [
+        {
+          "name": "Gratuit",
+          "description": "Parfait pour tester et les petits projets personnels.",
+          "price": "0",
+          "cta": "Commencer gratuitement",
+          "features": [
+            "1 Siège",
+            "200 Conversations/mois",
+            "Analyses de base",
+            "Support communautaire",
+            "Marquage Yoosr"
+          ]
+        },
+        {
+          "name": "Pro",
+          "description": "Pour les entreprises en croissance ayant besoin de fonctionnalités avancées.",
+          "price": "29",
+          "cta": "Essai gratuit",
+          "features": [
+            "3 Sièges",
+            "2 000 Conversations/mois",
+            "Analyses avancées",
+            "Support par e-mail",
+            "Retrait du marquage",
+            "Départements",
+            "Réponses prédéfinies"
+          ]
+        },
+        {
+          "name": "Business",
+          "description": "Passez à l'échelle supérieure avec plus de sièges et de puissance.",
+          "price": "99",
+          "cta": "Essai gratuit",
+          "features": [
+            "10 Sièges",
+            "15 000 Conversations/mois",
+            "Tout ce qui est dans Pro",
+            "Support e-mail prioritaire",
+            "Heures d'ouverture",
+            "Intégration Zapier",
+            "Webhooks"
+          ]
+        },
+        {
+          "name": "Enterprise",
+          "description": "Pour les grandes organisations avec des besoins personnalisés.",
+          "price": "Sur mesure",
+          "cta": "Contacter les Ventes",
+          "features": [
+            "Sièges illimités",
+            "Conversations illimitées",
+            "Gestionnaire de succès dédié",
+            "Support SLA",
+            "Déploiement sur site",
+            "SSO & 2FA",
+            "Intégrations sur mesure"
+          ]
+        }
+      ]
+    },
+    "features": {
+      "badge": "Plateforme centrale",
+      "headline": "Tous les outils dont votre équipe de support a réellement besoin",
+      "description": "De la première réponse automatisée au ticket final résolu — tout au même endroit.",
+      "items": [
+        {
+          "title": "Moniteur en direct",
+          "description": "Supervisez chaque conversation ouverte en temps réel. Filtrez par département, agent, étiquette, statut ou urgence SLA. Rejoignez n'importe quelle conversation instantanément."
+        },
+        {
+          "title": "AI Bot Studio",
+          "description": "Construisez des flux avec 19 types de blocs — réponse IA, recherche en base de connaissances, requêtes web, conditions, minuteurs et transfert humain. Sans code."
+        },
+        {
+          "title": "Base de connaissances",
+          "description": "Téléchargez vos documents et FAQ. Les bots récupèrent les réponses via recherche vectorielle — pas par simple correspondance de mots-clés. Réponses précises et sourcées."
+        },
+        {
+          "title": "Analyses",
+          "description": "Suivez les scores CSAT, l'usage des tokens par modèle et les questions sans réponse. Filtres par date. Voyez exactement où votre bot atteint ses limites."
+        },
+        {
+          "title": "Suivi SLA",
+          "description": "Définissez des délais de réponse par département. Surveillez le risque de violation en temps réel. Alertes automatiques avant l'expiration du SLA."
+        },
+        {
+          "title": "Multi-canal",
+          "description": "Web chat, Telegram, Facebook Messenger et Instagram DMs. Une seule boîte de réception pour tous les canaux utilisés par vos clients."
+        }
+      ]
+    },
+    "designStudio": {
+      "badge": "Design Studio",
+      "headline": "Construisez n'importe quel flux de conversation sans code",
+      "description": "Connectez les blocs visuellement. Chaque flux est exécuté côté serveur en temps réel — pas de délais, pas de messages perdus.",
+      "items": [
+        {
+          "title": "Constructeur Visuel",
+          "description": "Glissez-déposez des blocs pour construire n'importe quel flux de conversation. Aucune connaissance en programmation requise."
+        },
+        {
+          "title": "19 Types de Blocs",
+          "description": "Réponse, Condition, Tâche IA, Interroger KB, Requête Web, Attente, Transfert Agent, Appliquer Étiquette et plus encore."
+        },
+        {
+          "title": "Exécution en Direct",
+          "description": "Les flux s'exécutent côté serveur en temps réel. Pas de retards, pas de messages perdus, pas de polling."
+        },
+        {
+          "title": "Débogueur Intégré",
+          "description": "Suivez l'exécution de chaque bloc et inspectez l'état à chaque nœud pendant son fonctionnement."
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Comment ça marche",
+      "headline": "Opérationnel en quelques minutes, pas en semaines",
+      "description": "Pas d'infrastructure à gérer. Pas d'onboarding interminable. Construisez simplement votre bot et lancez-vous.",
+      "steps": [
+        {
+          "title": "Créez votre espace de travail",
+          "description": "Inscrivez-vous, créez une organisation Clerk et votre projet Convex est provisionné instantanément. Invitez votre équipe en quelques secondes."
+        },
+        {
+          "title": "Construisez votre bot",
+          "description": "Ouvrez le Design Studio. Glissez des blocs, définissez des conditions, connectez votre base de connaissances. Publiez quand vous êtes prêt."
+        },
+        {
+          "title": "Lancez-vous partout",
+          "description": "Collez une seule balise script sur votre site. Connectez Telegram, Facebook ou Instagram depuis la page Intégrations. Terminé."
+        }
+      ]
+    }
+  },
   "designStudio": {
     "meta": {
       "title": "Design Studio — Yoosr",
@@ -535,7 +848,8 @@
     "title": "Journal d'activité",
     "subtitle": "Piste d'audit des actions administratives",
     "recent": "Activité récente",
-    "no_activity": "Aucune activité pour le moment. Les actions des administrateurs apparaîtront ici."
+    "no_activity": "Aucune activité pour le moment. Les actions des administrateurs apparaîtront ici.",
+    "description": "Journal d'audit des actions effectuées dans ce projet, triées de la plus récente à la plus ancienne."
   },
   "history": {
     "title": "Historique des conversations",

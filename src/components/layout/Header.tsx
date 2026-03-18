@@ -11,34 +11,40 @@ import {
 import { NavbarCTA } from "./NavbarCTA"
 import { MobileNav } from "./MobileNav"
 import { cn } from "@/lib/utils"
+import { getTranslations } from "next-intl/server"
 
-export function Header() {
+export async function Header() {
+    const t = await getTranslations("landing.header")
+
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
                 <div className="flex items-center gap-6 md:gap-10">
                     <Link href="/" className="flex items-center gap-2">
-                        <span className="text-xl font-bold">Yoosr</span>
+                        <span className="text-xl font-bold">{t("logo")}</span>
                         <span className="hidden sm:inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground tracking-wide">
-                            Early Access
+                            {t("badge")}
                         </span>
                     </Link>
                     <nav className="hidden md:flex gap-6">
                         <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
-                            Features
+                            {t("nav.features")}
                         </Link>
                         <Link href="#solutions" className="text-sm font-medium hover:text-primary transition-colors">
-                            Solutions
+                            {t("nav.solutions")}
                         </Link>
                         <Link href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
-                            How it Works
+                            {t("nav.howItWorks")}
                         </Link>
                         <Link href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">
-                            Customers
+                            {t("nav.customers")}
                         </Link>
-                        <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
-                            Pricing
-                        </Link>
+                        <div className="flex items-center gap-2 opacity-50 cursor-not-allowed group relative">
+                            <span className="text-sm font-medium">{t("nav.pricing")}</span>
+                            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full border border-border">
+                                {t("badge") || "Early Access"}
+                            </span>
+                        </div>
                     </nav>
                 </div>
                 <div className="flex items-center gap-4">
@@ -52,13 +58,14 @@ export function Header() {
     )
 }
 
-function BasicNav() {
+async function BasicNav() {
+    const t = await getTranslations("landing.header")
     return (
         <NavigationMenu>
             {/* Products */}
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+                    <NavigationMenuTrigger>{t("dropdowns.products")}</NavigationMenuTrigger>
                     <NavigationMenuContent>
                         <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                             <li className="row-span-3">
@@ -91,7 +98,7 @@ function BasicNav() {
 
                 {/* Solutions */}
                 <NavigationMenuItem>
-                    <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
+                    <NavigationMenuTrigger>{t("nav.solutions")}</NavigationMenuTrigger>
                     <NavigationMenuContent>
                         <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
                             <ListItem href="/solutions/customer-service" title="Customer Service">
@@ -112,18 +119,19 @@ function BasicNav() {
 
                 {/* Pricing */}
                 <NavigationMenuItem>
-                    <Link href="/pricing" legacyBehavior passHref>
-                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                            Pricing
-                        </NavigationMenuLink>
-                    </Link>
+                    <div className={cn(navigationMenuTriggerStyle(), "opacity-50 cursor-not-allowed flex items-center gap-2")}>
+                        {t("nav.pricing")}
+                        <span className="text-[10px] bg-muted px-1 py-0.5 rounded border border-border whitespace-nowrap">
+                            Early Access
+                        </span>
+                    </div>
                 </NavigationMenuItem>
 
                 {/* Resources */}
                 <NavigationMenuItem>
                     <Link href="/resources" legacyBehavior passHref>
                         <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                            Resources
+                            {t("dropdowns.resources")}
                         </NavigationMenuLink>
                     </Link>
                 </NavigationMenuItem>

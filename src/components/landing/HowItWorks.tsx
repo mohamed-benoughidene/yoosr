@@ -1,30 +1,24 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 
-const steps = [
+const stepsData = [
   {
     number: "01",
-    title: "Create your workspace",
-    description:
-      "Sign up, create a Clerk organization, and your Convex project is provisioned instantly. Invite your team in seconds.",
     code: 'workspace.create({ name: "Acme Support" })',
   },
   {
     number: "02",
-    title: "Build your bot",
-    description:
-      "Open the Design Studio. Drag blocks, set conditions, connect your knowledge base. Publish when ready.",
     code: 'bot.publish({ channel: "web", flow: "main" })',
   },
   {
     number: "03",
-    title: "Go live everywhere",
-    description:
-      "Paste one script tag on your site. Connect Telegram, Facebook, or Instagram from the Integrations page. Done.",
     code: 'channels.connect(["web","telegram","meta"])',
   },
 ];
 
-export function HowItWorks() {
+export async function HowItWorks() {
+  const t = await getTranslations("landing");
+
   return (
     <section className="border-t border-border py-24">
       <div className="container mx-auto px-4">
@@ -33,21 +27,20 @@ export function HowItWorks() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-px bg-primary" />
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-              How it works
+              {t("howItWorks.badge")}
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Live in minutes, not weeks
+            {t("howItWorks.headline")}
           </h2>
           <p className="text-lg text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            No infrastructure to manage. No long onboarding. Just build your bot
-            and go live.
+            {t("howItWorks.description")}
           </p>
         </div>
 
         {/* Steps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-16">
-          {steps.map((step, index) => (
+          {stepsData.map((step, index) => (
             <div key={index} className="relative group">
               {/* Step number label */}
               <div className="font-mono text-primary text-xs tracking-widest mb-5 font-semibold">
@@ -55,9 +48,11 @@ export function HowItWorks() {
               </div>
 
               {/* Title & Description */}
-              <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+              <h3 className="text-xl font-bold mb-3">
+                {t(`howItWorks.steps.${index}.title`)}
+              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed min-h-[4rem]">
-                {step.description}
+                {t(`howItWorks.steps.${index}.description`)}
               </p>
 
               {/* Code block */}
@@ -66,7 +61,7 @@ export function HowItWorks() {
               </div>
 
               {/* Connector line for desktop only */}
-              {index < steps.length - 1 && (
+              {index < stepsData.length - 1 && (
                 <div className="hidden md:block absolute w-full h-px bg-border top-[6px] left-1/2 translate-x-1/2 -z-10" />
               )}
             </div>

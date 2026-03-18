@@ -44,11 +44,12 @@ export function MobileNav() {
                                 Customers
                             </Link>
                         </SheetClose>
-                        <SheetClose asChild>
-                            <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors py-2">
-                                Pricing
-                            </Link>
-                        </SheetClose>
+                        <div className="flex items-center gap-2 py-2 opacity-50 cursor-not-allowed">
+                            <span className="text-sm font-medium">Pricing</span>
+                            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full border border-border whitespace-nowrap">
+                                Early Access
+                            </span>
+                        </div>
                     </div>
 
                     <div className="mt-8 flex flex-col gap-2">

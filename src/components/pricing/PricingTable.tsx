@@ -5,78 +5,33 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
-const plans = [
-  {
-    name: "Free",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    description: "Perfect for testing and small personal projects.",
-    features: [
-      "1 Seat",
-      "200 Conversations/mo",
-      "Basic Analytics",
-      "Community Support",
-      "Yoosr Branding",
-    ],
-    cta: "Start for free",
-    popular: false,
-  },
-  {
-    name: "Pro",
-    monthlyPrice: 29,
-    yearlyPrice: 290,
-    description: "For growing businesses that need advanced features.",
-    features: [
-      "3 Seats",
-      "2,000 Conversations/mo",
-      "Advanced Analytics",
-      "Email Support",
-      "Remove Branding",
-      "Departments",
-      "Canned Responses",
-    ],
-    cta: "Start free trial",
-    popular: true,
-  },
-  {
-    name: "Business",
-    monthlyPrice: 99,
-    yearlyPrice: 990,
-    description: "Scale your customer support with more seats and power.",
-    features: [
-      "10 Seats",
-      "15,000 Conversations/mo",
-      "Everything in Pro",
-      "Priority Email Support",
-      "Operating Hours",
-      "Zapier Integration",
-      "Webhooks",
-    ],
-    cta: "Start free trial",
-    popular: false,
-  },
-  {
-    name: "Enterprise",
-    monthlyPrice: null,
-    yearlyPrice: null,
-    description: "For large organizations with custom requirements.",
-    features: [
-      "Unlimited Seats",
-      "Unlimited Conversations",
-      "Dedicated Success Manager",
-      "SLA Support",
-      "On-premise Deployment",
-      "SSO & 2FA",
-      "Custom Integrations",
-    ],
-    cta: "Contact Sales",
-    popular: false,
-  },
-];
+type PlanTranslation = {
+  name: string;
+  description: string;
+  price: string;
+  cta: string;
+  features: string[];
+};
 
 export function PricingTable() {
+  const t = useTranslations("landing");
+  const translatedPlans = t.raw("pricing.plans") as PlanTranslation[];
   const [isYearly, setIsYearly] = useState(false);
+
+  // Local configuration for prices and popular flags
+  const planConfigs = [
+    { monthlyPrice: 0, yearlyPrice: 0, popular: false },
+    { monthlyPrice: 29, yearlyPrice: 290, popular: true },
+    { monthlyPrice: 99, yearlyPrice: 990, popular: false },
+    { monthlyPrice: null, yearlyPrice: null, popular: false },
+  ];
+
+  const plans = translatedPlans.map((translatedPlan, index) => ({
+    ...translatedPlan,
+    ...planConfigs[index],
+  }));
 
   return (
     <section className="border-t border-border py-24">
@@ -86,14 +41,16 @@ export function PricingTable() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-px bg-primary" />
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-              Pricing
+              {t("pricing.badge")}
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            Pricing plans for teams of all sizes
+            {t("pricing.headline")}
           </h2>
           <p className="text-lg text-muted-foreground mt-3 max-w-2xl">
-            Choose the plan that's right for your business. No hidden fees.
+            {t("pricing.description" as any) === "pricing.description" 
+              ? "Choose the plan that's right for your business. No hidden fees."
+              : t("pricing.description" as any)}
           </p>
 
           {/* Toggle Section */}
@@ -108,7 +65,7 @@ export function PricingTable() {
                 )}
                 onClick={() => setIsYearly(false)}
               >
-                Monthly
+                {t("pricing.toggle.monthly" as any) === "pricing.toggle.monthly" ? "Monthly" : t("pricing.toggle.monthly" as any)}
               </span>
               <Switch checked={isYearly} onCheckedChange={setIsYearly} />
               <div className="flex items-center">
@@ -121,7 +78,7 @@ export function PricingTable() {
                   )}
                   onClick={() => setIsYearly(true)}
                 >
-                  Yearly
+                  {t("pricing.toggle.yearly" as any) === "pricing.toggle.yearly" ? "Yearly" : t("pricing.toggle.yearly" as any)}
                 </span>
                 <span className="font-mono text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1.5">
                   -20%
@@ -143,7 +100,7 @@ export function PricingTable() {
             >
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
-                  Most Popular
+                  {t("pricing.mostPopular" as any) === "pricing.mostPopular" ? "Most Popular" : t("pricing.mostPopular" as any)}
                 </div>
               )}
 
@@ -168,7 +125,7 @@ export function PricingTable() {
                   </div>
                 ) : (
                   <span className="text-4xl font-extrabold tracking-tight text-foreground">
-                    Custom
+                    {plan.price}
                   </span>
                 )}
               </div>

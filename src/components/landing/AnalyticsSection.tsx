@@ -1,29 +1,24 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 
 const analyticsFeatures = [
   {
     icon: "📈",
-    title: "CSAT Tracking",
-    desc: "Collect satisfaction ratings after every resolved conversation. See score distribution and trends over time.",
   },
   {
     icon: "🪙",
-    title: "Token Usage",
-    desc: "Monitor AI token consumption per model. Understand cost per conversation and optimize your model selection.",
   },
   {
     icon: "❓",
-    title: "Unanswered Queries",
-    desc: "See exactly what questions your bot failed to answer. Use it to fill gaps in your knowledge base.",
   },
   {
     icon: "⏱️",
-    title: "SLA Breach Rate",
-    desc: "Track response deadline compliance per department with real-time breach alerts before it's too late.",
   },
 ];
 
-export function AnalyticsSection() {
+export async function AnalyticsSection() {
+  const t = await getTranslations("landing");
+
   return (
     <section className="border-t border-border py-24">
       <div className="container mx-auto px-4">
@@ -32,15 +27,14 @@ export function AnalyticsSection() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-8 h-px bg-primary" />
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-              Analytics
+              {t("analytics.badge")}
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            See everything, improve everything
+            {t("analytics.headline")}
           </h2>
           <p className="text-lg text-muted-foreground mt-3 leading-relaxed">
-            Every conversation generates data. Yoosr turns that data into
-            decisions.
+            {t("analytics.description")}
           </p>
         </div>
 
@@ -56,10 +50,10 @@ export function AnalyticsSection() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                  {feature.title}
+                  {t(`analytics.items.${index}.title`)}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {feature.desc}
+                  {t(`analytics.items.${index}.description`)}
                 </p>
               </div>
             </div>

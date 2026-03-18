@@ -1,8 +1,11 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Monitor, MessageSquare, Bot, BarChart3, Database, Settings, ShieldAlert, Globe, MessageCircle } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
-export function Hero() {
+export async function Hero() {
+    const t = await getTranslations("landing")
+
     return (
         <section className="relative overflow-hidden pt-24 md:pt-32 lg:pt-40 pb-32 flex flex-col items-center">
             {/* 1. Animated Badge */}
@@ -11,31 +14,35 @@ export function Hero() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                Now live — Web, Telegram, Facebook & Instagram
+                {t("hero.badge")}
             </div>
 
             {/* 2. H1 Heading */}
             <h1 className="animate-fade-in [animation-delay:200ms] text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl max-w-5xl text-center leading-[1.05] mb-8 text-foreground">
-                The customer support platform <br />
-                <span className="text-primary italic">built for MENA</span>
+                {t.rich("hero.headline", {
+                    br: () => <br />,
+                    italic: (chunks) => <span className="text-primary italic">{chunks}</span>
+                })}
             </h1>
 
             {/* 3. Subtext */}
             <p className="animate-fade-in [animation-delay:400ms] max-w-[52rem] text-center text-muted-foreground sm:text-lg md:text-xl leading-relaxed mb-10 px-4">
-                Automate conversations with AI bots, manage your team&apos;s inbox in real time, and close every ticket — <span className="text-foreground font-medium underline decoration-primary/30 underline-offset-4">in Arabic or English</span> — across every channel.
+                {t.rich("hero.description", {
+                    highlight: (chunks) => <span className="text-foreground font-medium underline decoration-primary/30 underline-offset-4">{chunks}</span>
+                })}
             </p>
 
             {/* 4. Buttons */}
             <div className="animate-fade-in [animation-delay:600ms] flex flex-wrap justify-center gap-4 mb-20 px-4">
                 <Button size="lg" className="h-14 px-8 text-lg font-semibold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all" asChild>
                     <Link href="/signup">
-                        Start for free
+                        {t("hero.cta.primary")}
                         <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-medium border-border bg-transparent text-foreground hover:bg-muted/50 transition-colors" asChild>
                     <Link href="/demo">
-                        See a live demo
+                        {t("hero.cta.secondary")}
                     </Link>
                 </Button>
             </div>
@@ -43,20 +50,20 @@ export function Hero() {
             {/* 5. Stats Row */}
             <div className="animate-fade-in [animation-delay:800ms] grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16 items-center justify-center mb-24 px-4 w-full max-w-5xl">
                 <div className="flex flex-col items-center text-center">
-                    <span className="text-3xl md:text-4xl font-bold text-foreground">19+</span>
-                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">Bot block types</span>
+                    <span className="text-3xl md:text-4xl font-bold text-foreground">{t("hero.stats.botBlocks")}</span>
+                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">{t("hero.stats.botBlocksLabel")}</span>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                    <span className="text-3xl md:text-4xl font-bold text-foreground">4</span>
-                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">Live channels</span>
+                    <span className="text-3xl md:text-4xl font-bold text-foreground">{t("hero.stats.liveChannels")}</span>
+                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">{t("hero.stats.liveChannelsLabel")}</span>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                    <span className="text-3xl md:text-4xl font-bold text-foreground">5min</span>
-                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">To go live</span>
+                    <span className="text-3xl md:text-4xl font-bold text-foreground">{t("hero.stats.toGoLive")}</span>
+                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">{t("hero.stats.toGoLiveLabel")}</span>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                    <span className="text-3xl md:text-4xl font-bold text-foreground">100%</span>
-                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">Realtime</span>
+                    <span className="text-3xl md:text-4xl font-bold text-foreground">{t("hero.stats.realtime")}</span>
+                    <span className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest font-mono mt-2">{t("hero.stats.realtimeLabel")}</span>
                 </div>
             </div>
 

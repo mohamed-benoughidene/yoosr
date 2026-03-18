@@ -3,7 +3,11 @@ import { Facebook, Twitter, Instagram, Linkedin, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-export function Footer() {
+import { getTranslations } from "next-intl/server"
+
+export async function Footer() {
+    const t = await getTranslations("landing.footer")
+
     return (
         <footer className="bg-muted/30 border-t">
             <div className="container py-12 md:py-16 lg:py-20">
@@ -16,7 +20,7 @@ export function Footer() {
                             Yoosr
                         </Link>
                         <p className="text-sm leading-relaxed text-muted-foreground max-w-sm">
-                            The open-source, no-code platform to build AI agents and automate customer conversations.
+                            {t("tagline")}
                         </p>
                         <div className="mt-8 flex space-x-4">
                             <SocialLink href="#" icon={Twitter} label="Twitter" />
@@ -28,20 +32,25 @@ export function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">Product</h3>
+                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">{t("categories.product")}</h3>
                         <ul className="space-y-3 text-sm text-muted-foreground">
                             <FooterLink href="/products/design-studio">Design Studio</FooterLink>
                             <FooterLink href="/products/knowledge-base">Knowledge Base</FooterLink>
                             <FooterLink href="/products/integrations">Integrations</FooterLink>
                             <FooterLink href="/features">Features</FooterLink>
-                            <FooterLink href="/pricing">Pricing</FooterLink>
+                            <li className="flex items-center gap-2 opacity-50 cursor-default">
+                                <span className="text-sm">Pricing</span>
+                                <span className="text-[10px] bg-muted px-1 py-0.5 rounded border border-border whitespace-nowrap">
+                                    Early Access
+                                </span>
+                            </li>
                             <FooterLink href="/changelog">Changelog</FooterLink>
                             <FooterLink href="/roadmap">Roadmap</FooterLink>
                         </ul>
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">Solutions</h3>
+                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">{t("categories.solutions")}</h3>
                         <ul className="space-y-3 text-sm text-muted-foreground">
                             <FooterLink href="/solutions/customer-service">Customer Service</FooterLink>
                             <FooterLink href="/solutions/marketing">Marketing & Sales</FooterLink>
@@ -51,7 +60,7 @@ export function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">Developers</h3>
+                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">{t("categories.developers")}</h3>
                         <ul className="space-y-3 text-sm text-muted-foreground">
                             <FooterLink href="/docs">Documentation</FooterLink>
                             <FooterLink href="/api">API Reference</FooterLink>
@@ -63,14 +72,14 @@ export function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">Company</h3>
+                        <h3 className="text-sm font-bold tracking-wide uppercase text-foreground mb-4">{t("categories.company")}</h3>
                         <ul className="space-y-3 text-sm text-muted-foreground">
                             <FooterLink href="/about">About Us</FooterLink>
                             <FooterLink href="/careers">Careers</FooterLink>
                             <FooterLink href="/contact">Contact</FooterLink>
                             <FooterLink href="/partners">Partners</FooterLink>
-                            <FooterLink href="/legal/privacy">Privacy Policy</FooterLink>
-                            <FooterLink href="/legal/terms">Terms of Service</FooterLink>
+                            <FooterLink href="/legal/privacy">{t("legal.privacy")}</FooterLink>
+                            <FooterLink href="/legal/terms">{t("legal.terms")}</FooterLink>
                         </ul>
                     </div>
                 </div>
@@ -78,19 +87,18 @@ export function Footer() {
                 <div className="mt-16 border-t pt-8">
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 items-end">
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-sm font-semibold">Subscribe to our newsletter</h3>
-                            <p className="text-sm text-muted-foreground max-w-md">Get the latest updates on AI agents, automation trends, and Yoosr platform news.</p>
+                            <h3 className="text-sm font-semibold">{t("newsletter.label")}</h3>
+                            <p className="text-sm text-muted-foreground max-w-md">{t("tagline")}</p>
                             <div className="flex gap-2 max-w-md">
-                                <Input placeholder="Enter your email" className="bg-background" />
-                                <Button>Subscribe</Button>
+                                <Input placeholder={t("newsletter.placeholder")} className="bg-background" />
+                                <Button>{t("newsletter.button")}</Button>
                             </div>
                         </div>
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground lg:justify-end">
                             <div className="flex flex-col gap-1 items-center sm:items-end">
-                                <p>&copy; {new Date().getFullYear()} Yoosr, Inc. Open Source. MIT License.</p>
+                                <p>&copy; {new Date().getFullYear()} {t("copyright")}</p>
                                 <p className="text-xs text-muted-foreground text-center sm:text-right">
-                                    Yoosr is currently in early access. Some features are still
-                                    in development — expect frequent updates.
+                                    {t("disclaimer")}
                                 </p>
                             </div>
                         </div>

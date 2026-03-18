@@ -1,29 +1,12 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 
-const ordersFeatures = [
-  {
-    icon: "🛒",
-    title: "Create from Chat",
-    desc: "One click in the VisitorPanel opens a new order form pre-filled with the visitor's name and channel.",
-  },
-  {
-    icon: "📦",
-    title: "Status Tracking",
-    desc: "Update orders from New to Confirmed to Shipped. Every change is logged in the activity timeline.",
-  },
-  {
-    icon: "📤",
-    title: "CSV Export",
-    desc: "Download your full orders list filtered by date, status, or department. Ready for any CRM or warehouse.",
-  },
-  {
-    icon: "🔔",
-    title: "Team Notifications",
-    desc: "Agents are notified on every order update. Nothing falls through the cracks across your team.",
-  },
-];
+const icons = ["🛒", "📦", "📤", "🔔"];
 
-export function OrdersSection() {
+export async function OrdersSection() {
+  const t = await getTranslations("landing");
+  const items = t.raw("orders.items") as { title: string; description: string }[];
+
   return (
     <section className="border-t border-border py-24">
       <div className="container mx-auto px-4">
@@ -32,34 +15,33 @@ export function OrdersSection() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-8 h-px bg-primary" />
             <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-              Orders
+              {t("orders.badge")}
             </span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            Capture and manage leads from every conversation
+            {t("orders.headline")}
           </h2>
           <p className="text-lg text-muted-foreground mt-3 leading-relaxed">
-            Agents create orders directly from the chat window. Track status,
-            update details, and export — without leaving Yoosr.
+            {t("orders.description" as any)}
           </p>
         </div>
 
         {/* 4-card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {ordersFeatures.map((feature, index) => (
+          {items.map((feature, index) => (
             <div
               key={index}
               className="border border-border rounded-xl bg-card p-6 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300"
             >
               <div className="w-10 h-10 rounded-lg bg-muted border border-border flex items-center justify-center text-lg flex-shrink-0 mb-1">
-                {feature.icon}
+                {icons[index] || "✨"}
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-1">
                   {feature.title}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {feature.desc}
+                  {feature.description}
                 </p>
               </div>
             </div>

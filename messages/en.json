@@ -1,4 +1,326 @@
 {
+  "landing": {
+    "header": {
+      "badge": "Early Access",
+      "logo": "Yoosr",
+      "nav": {
+        "features": "Features",
+        "solutions": "Solutions",
+        "howItWorks": "How it Works",
+        "customers": "Customers",
+        "pricing": "Pricing"
+      },
+      "dropdowns": {
+        "products": "Products",
+        "resources": "Resources"
+      }
+    },
+    "footer": {
+      "tagline": "The open-source, no-code platform to build AI agents and automate customer conversations.",
+      "newsletter": {
+        "label": "Subscribe to our newsletter",
+        "placeholder": "Enter your email",
+        "button": "Subscribe"
+      },
+      "categories": {
+        "product": "Product",
+        "solutions": "Solutions",
+        "developers": "Developers",
+        "company": "Company"
+      },
+      "legal": {
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service"
+      },
+      "disclaimer": "Yoosr is currently in early access. Some features are still in development — expect frequent updates.",
+      "copyright": "Yoosr, Inc. Open Source. MIT License."
+    },
+    "meta": {
+      "title": "Yoosr — Customer Support for MENA Businesses",
+      "description": "Live chat, bot automation, and team inbox built for MENA businesses. Start for free."
+    },
+    "page": {
+      "tagline": "Powering support teams across the region",
+      "industries": [
+        "E-commerce",
+        "Logistics",
+        "Retail",
+        "Fintech",
+        "Healthcare",
+        "SaaS"
+      ]
+    },
+    "hero": {
+      "badge": "Now live — Web, Telegram, Facebook & Instagram",
+      "headline": "The customer support platform <br/> <italic>built for MENA</italic>",
+      "description": "Automate conversations with AI bots, manage your team's inbox in real time, and close every ticket — <highlight>in Arabic or English</highlight> — across every channel.",
+      "cta": {
+        "primary": "Start for free",
+        "secondary": "See a live demo"
+      },
+      "stats": {
+        "botBlocks": "19+",
+        "botBlocksLabel": "Bot block types",
+        "liveChannels": "4",
+        "liveChannelsLabel": "Live channels",
+        "toGoLive": "5min",
+        "toGoLiveLabel": "To go live",
+        "realtime": "100%",
+        "realtimeLabel": "Realtime"
+      }
+    },
+    "cta": {
+      "headline": "Your support team deserves better tools.",
+      "description": "Set up your workspace, embed the widget, and have your first bot live today — no credit card required.",
+      "primary": "Start for free →",
+      "secondary": "Talk to us"
+    },
+    "channels": {
+      "badge": "Channels",
+      "headline": "Meet your customers where they already are",
+      "description": "One inbox. Every channel. Conversations from Telegram, Facebook, Instagram, and your website — managed in one place.",
+      "items": [
+        {
+          "title": "Web Chat",
+          "description": "Embed a widget on any website with a single script tag. Fully customizable colors, position, and behavior."
+        },
+        {
+          "title": "Telegram",
+          "description": "Connect your Telegram bot in minutes. Full two-way messaging with file and media support."
+        },
+        {
+          "title": "Facebook Messenger",
+          "description": "Handle Messenger conversations from the same unified inbox alongside all other channels."
+        },
+        {
+          "title": "Instagram DMs",
+          "description": "Manage Instagram direct messages with the same bot flows and agent tools as every other channel."
+        }
+      ]
+    },
+    "analytics": {
+      "badge": "Analytics",
+      "headline": "See everything, improve everything",
+      "description": "Every conversation generates data. Yoosr turns that data into decisions.",
+      "items": [
+        {
+          "title": "CSAT Tracking",
+          "description": "Collect satisfaction ratings after every resolved conversation. See score distribution and trends over time."
+        },
+        {
+          "title": "Token Usage",
+          "description": "Monitor AI token consumption per model. Understand cost per conversation and optimize your model selection."
+        },
+        {
+          "title": "Unanswered Queries",
+          "description": "See exactly what questions your bot failed to answer. Use it to fill gaps in your knowledge base."
+        },
+        {
+          "title": "SLA Breach Rate",
+          "description": "Track response deadline compliance per department with real-time breach alerts before it's too late."
+        }
+      ]
+    },
+    "orders": {
+      "badge": "Orders",
+      "headline": "Capture and manage leads from every conversation",
+      "items": [
+        {
+          "title": "Create from Chat",
+          "description": "One click in the VisitorPanel opens a new order form pre-filled with the visitor's name and channel."
+        },
+        {
+          "title": "Status Tracking",
+          "description": "Update orders from New to Confirmed to Shipped. Every change is logged in the activity timeline."
+        },
+        {
+          "title": "CSV Export",
+          "description": "Download your full orders list filtered by date, status, or department. Ready for any CRM or warehouse."
+        },
+        {
+          "title": "Team Notifications",
+          "description": "Agents are notified on every order update. Nothing falls through the cracks across your team."
+        }
+      ]
+    },
+    "testimonials": {
+      "badge": "Customer stories",
+      "headline": "Support teams across MENA choose Yoosr",
+      "items": [
+        {
+          "quote": "The bot handles 70% of our tickets automatically. Our team finally spends time on real problems instead of answering the same questions every day.",
+          "author": "Sara Al-Amri",
+          "role": "Head of Support",
+          "company": "Riyadh Store"
+        },
+        {
+          "quote": "Finally a platform built for our region. Arabic routing, MENA-friendly channels, and SLA tracking that actually works. Switched from a European tool and won't go back.",
+          "author": "Karim Mansouri",
+          "role": "CTO",
+          "company": "Algiers Tech"
+        },
+        {
+          "quote": "The Design Studio is genuinely different. Our ops team built and deployed a full order-tracking bot in an afternoon — no developers involved.",
+          "author": "Nour Rahmani",
+          "role": "Operations Lead",
+          "company": "Dubai Boutique"
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Pricing",
+      "headline": "Pricing plans for teams of all sizes",
+      "plans": [
+        {
+          "name": "Free",
+          "description": "Perfect for testing and small personal projects.",
+          "price": "0",
+          "cta": "Start for free",
+          "features": [
+            "1 Seat",
+            "200 Conversations/mo",
+            "Basic Analytics",
+            "Community Support",
+            "Yoosr Branding"
+          ]
+        },
+        {
+          "name": "Pro",
+          "description": "For growing businesses that need advanced features.",
+          "price": "29",
+          "cta": "Start free trial",
+          "features": [
+            "3 Seats",
+            "2,000 Conversations/mo",
+            "Advanced Analytics",
+            "Email Support",
+            "Remove Branding",
+            "Departments",
+            "Canned Responses"
+          ]
+        },
+        {
+          "name": "Business",
+          "description": "Scale your customer support with more seats and power.",
+          "price": "99",
+          "cta": "Start free trial",
+          "features": [
+            "10 Seats",
+            "15,000 Conversations/mo",
+            "Everything in Pro",
+            "Priority Email Support",
+            "Operating Hours",
+            "Zapier Integration",
+            "Webhooks"
+          ]
+        },
+        {
+          "name": "Enterprise",
+          "description": "For large organizations with custom requirements.",
+          "price": "Custom",
+          "cta": "Contact Sales",
+          "features": [
+            "Unlimited Seats",
+            "Unlimited Conversations",
+            "Dedicated Success Manager",
+            "SLA Support",
+            "On-premise Deployment",
+            "SSO & 2FA",
+            "Custom Integrations"
+          ]
+        }
+      ]
+    },
+    "features": {
+      "badge": "Core platform",
+      "headline": "Every tool your support team actually needs",
+      "description": "From the first automated reply to the final resolved ticket — everything in one place.",
+      "items": [
+        {
+          "title": "Live Monitor",
+          "description": "Supervise every open conversation in real time. Filter by department, agent, label, status, or SLA urgency. Join any conversation instantly.",
+          "tag": "REAL-TIME",
+          "emoji": "📡"
+        },
+        {
+          "title": "AI Bot Studio",
+          "description": "Build flows with 19 block types — AI reply, knowledge base lookup, web requests, conditions, wait timers, and human handoff. No code required.",
+          "tag": "NO-CODE",
+          "emoji": "🤖"
+        },
+        {
+          "title": "Knowledge Base",
+          "description": "Upload your docs and FAQs. Bots retrieve answers via vector search — not keyword matching. Accurate, source-grounded replies.",
+          "tag": "VECTOR SEARCH",
+          "emoji": "🧠"
+        },
+        {
+          "title": "Analytics",
+          "description": "Track CSAT scores, token usage per model, and unanswered queries. Date range filters. See exactly where your bot falls short.",
+          "tag": "INSIGHTS",
+          "emoji": "📊"
+        },
+        {
+          "title": "SLA Tracking",
+          "description": "Set response deadlines per department. Monitor breach risk in real time. Automatic alerts before SLA expires.",
+          "tag": "SLA",
+          "emoji": "⏱️"
+        },
+        {
+          "title": "Multi-channel",
+          "description": "Web chat, Telegram, Facebook Messenger, and Instagram DMs. One inbox for every channel your customers use.",
+          "tag": "CHANNELS",
+          "emoji": "💬"
+        }
+      ]
+    },
+    "designStudio": {
+      "badge": "Design Studio",
+      "headline": "Build any conversation flow without code",
+      "description": "Connect blocks visually. Every flow is executed server-side in real time — no delays, no dropped messages.",
+      "items": [
+        {
+          "title": "Visual Builder",
+          "description": "Drag and drop blocks to build any conversation flow. No coding knowledge required.",
+          "icon": "🎨"
+        },
+        {
+          "title": "19 Block Types",
+          "description": "Reply, Condition, AI Task, Ask KB, Web Request, Wait, HITL Handoff, Apply Label and more.",
+          "icon": "🔀"
+        },
+        {
+          "title": "Live Execution",
+          "description": "Flows run server-side in real time. No delays, no dropped messages, no polling.",
+          "icon": "⚡"
+        },
+        {
+          "title": "Built-in Debugger",
+          "description": "Step through every block execution and inspect state at each node as it runs.",
+          "icon": "🧪"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "How it works",
+      "headline": "Live in minutes, not weeks",
+      "description": "No infrastructure to manage. No long onboarding. Just build your bot and go live.",
+      "steps": [
+        {
+          "title": "Create your workspace",
+          "description": "Sign up, create a Clerk organization, and your Convex project is provisioned instantly. Invite your team in seconds."
+        },
+        {
+          "title": "Build your bot",
+          "description": "Open the Design Studio. Drag blocks, set conditions, connect your knowledge base. Publish when ready."
+        },
+        {
+          "title": "Go live everywhere",
+          "description": "Paste one script tag on your site. Connect Telegram, Facebook, or Instagram from the Integrations page. Done."
+        }
+      ]
+    }
+  },
   "designStudio": {
     "meta": {
       "title": "Design Studio — Yoosr",
@@ -535,7 +857,8 @@
     "title": "Activity Log",
     "subtitle": "Audit trail of administrative actions",
     "recent": "Recent Activity",
-    "no_activity": "No activity yet. Actions taken by admin users will appear here."
+    "no_activity": "No activity yet. Actions taken by admin users will appear here.",
+    "description": "Audit log of actions taken in this project, sorted by newest first."
   },
   "history": {
     "title": "Conversation History",

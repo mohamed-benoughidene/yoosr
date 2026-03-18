@@ -1,8 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getTranslations } from "next-intl/server";
 
-export function CtaSection() {
+export async function CtaSection() {
+  const t = await getTranslations("landing");
+
   return (
     <section className="border-t border-border py-24">
       <div className="container mx-auto px-4">
@@ -16,17 +19,16 @@ export function CtaSection() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-px bg-primary-foreground/30" />
               <span className="text-xs font-mono uppercase tracking-widest text-primary-foreground/60 font-medium">
-                Get started
+                {t("footer.categories.product")}
               </span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-primary-foreground max-w-2xl mx-auto">
-              Your support team deserves better tools.
+              {t("cta.headline")}
             </h2>
 
             <p className="text-lg text-primary-foreground/80 mt-5 mb-10 max-w-xl mx-auto leading-relaxed">
-              Set up your workspace, embed the widget, and have your first bot
-              live today — no credit card required.
+              {t("cta.description")}
             </p>
 
             <div className="flex justify-center gap-4 flex-wrap">
@@ -36,7 +38,7 @@ export function CtaSection() {
                 className="bg-background text-foreground font-semibold hover:bg-muted transition-colors px-8"
                 asChild
               >
-                <Link href="/signup">Start for free →</Link>
+                <Link href="/signup">{t("cta.primary")}</Link>
               </Button>
 
               <Button
@@ -45,7 +47,7 @@ export function CtaSection() {
                 className="bg-transparent border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors px-8"
                 asChild
               >
-                <Link href="/demo">Talk to us</Link>
+                <Link href="/demo">{t("cta.secondary")}</Link>
               </Button>
             </div>
           </div>

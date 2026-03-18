@@ -1,59 +1,29 @@
 import React from "react"
+import { getTranslations } from "next-intl/server"
 
-const features = [
-    {
-        title: "Live Monitor",
-        description: "Supervise every open conversation in real time. Filter by department, agent, label, status, or SLA urgency. Join any conversation instantly.",
-        tag: "REAL-TIME",
-        emoji: "📡"
-    },
-    {
-        title: "AI Bot Studio",
-        description: "Build flows with 19 block types — AI reply, knowledge base lookup, web requests, conditions, wait timers, and human handoff. No code required.",
-        tag: "NO-CODE",
-        emoji: "🤖"
-    },
-    {
-        title: "Knowledge Base",
-        description: "Upload your docs and FAQs. Bots retrieve answers via vector search — not keyword matching. Accurate, source-grounded replies.",
-        tag: "VECTOR SEARCH",
-        emoji: "🧠"
-    },
-    {
-        title: "Analytics",
-        description: "Track CSAT scores, token usage per model, and unanswered queries. Date range filters. See exactly where your bot falls short.",
-        tag: "INSIGHTS",
-        emoji: "📊"
-    },
-    {
-        title: "SLA Tracking",
-        description: "Set response deadlines per department. Monitor breach risk in real time. Automatic alerts before SLA expires.",
-        tag: "SLA",
-        emoji: "⏱️"
-    },
-    {
-        title: "Multi-channel",
-        description: "Web chat, Telegram, Facebook Messenger, and Instagram DMs. One inbox for every channel your customers use.",
-        tag: "CHANNELS",
-        emoji: "💬"
-    }
-]
+export async function FeaturesGrid() {
+    const t = await getTranslations("landing")
+    const features = t.raw("features.items") as Array<{
+        title: string
+        description: string
+        tag: string
+        emoji: string
+    }>
 
-export function FeaturesGrid() {
     return (
         <section className="container py-12 md:py-24">
             <div className="flex flex-col items-center text-center mb-16">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-[1px] bg-primary"></div>
                     <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-primary">
-                        Core platform
+                        {t("features.badge")}
                     </span>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                    Every tool your support team actually needs
+                    {t("features.headline")}
                 </h2>
                 <p className="max-w-2xl text-muted-foreground text-lg">
-                    From the first automated reply to the final resolved ticket — everything in one place.
+                    {t("features.description")}
                 </p>
             </div>
 

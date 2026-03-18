@@ -1,29 +1,14 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 
-const studioFeatures = [
-    {
-        icon: "🎨",
-        title: "Visual Builder",
-        desc: "Drag and drop blocks to build any conversation flow. No coding knowledge required.",
-    },
-    {
-        icon: "🔀",
-        title: "19 Block Types",
-        desc: "Reply, Condition, AI Task, Ask KB, Web Request, Wait, HITL Handoff, Apply Label and more.",
-    },
-    {
-        icon: "⚡",
-        title: "Live Execution",
-        desc: "Flows run server-side in real time. No delays, no dropped messages, no polling.",
-    },
-    {
-        icon: "🧪",
-        title: "Built-in Debugger",
-        desc: "Step through every block execution and inspect state at each node as it runs.",
-    },
-];
+export async function DesignStudioSection() {
+    const t = await getTranslations("landing");
+    const studioFeatures = t.raw("designStudio.items") as Array<{
+        title: string;
+        description: string;
+        icon: string;
+    }>;
 
-export function DesignStudioSection() {
     return (
         <section className="border-t border-border py-24">
             <div className="container mx-auto px-4">
@@ -32,14 +17,14 @@ export function DesignStudioSection() {
                     <div className="flex items-center justify-center gap-3 mb-4">
                         <div className="w-8 h-px bg-primary" />
                         <span className="text-xs font-mono uppercase tracking-widest text-primary font-medium">
-                            Design Studio
+                            {t("designStudio.badge")}
                         </span>
                     </div>
                     <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                        Build any conversation flow without code
+                        {t("designStudio.headline")}
                     </h2>
                     <p className="text-lg text-muted-foreground mt-3 leading-relaxed">
-                        Connect blocks visually. Every flow is executed server-side in real time — no delays, no dropped messages.
+                        {t("designStudio.description")}
                     </p>
                 </div>
 
@@ -58,7 +43,7 @@ export function DesignStudioSection() {
                                     {feature.title}
                                 </h3>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    {feature.desc}
+                                    {feature.description}
                                 </p>
                             </div>
                         </div>
