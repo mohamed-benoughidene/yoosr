@@ -1740,5 +1740,11 @@
     "feature1": "Lightning Fast",
     "feature2": "Military Grade",
     "feature3": "Global Scale"
+  },
+  "auth": {
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Enter your details below to create your account"
+    }
   }
 }

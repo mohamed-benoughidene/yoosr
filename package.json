@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.2.2",
     "@clerk/nextjs": "^6.37.5",
     "@faker-js/faker": "^10.3.0",
     "@hookform/resolvers": "^5.2.2",

@@ -1686,5 +1686,11 @@
     "feature1": "Ultra rapide",
     "feature2": "Sécurité militaire",
     "feature3": "Échelle mondiale"
+  },
+  "auth": {
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Entrez vos coordonnées ci-dessous pour créer votre compte"
+    }
   }
 }

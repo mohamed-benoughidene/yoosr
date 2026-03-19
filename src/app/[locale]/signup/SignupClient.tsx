@@ -2,8 +2,10 @@
 
 import Link from "next/link"
 import { SignUp } from "@clerk/nextjs"
+import { useTranslations } from "next-intl"
 
 export function SignupClient() {
+    const t = useTranslations("auth.signup")
     return (
         <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
 
@@ -28,10 +30,10 @@ export function SignupClient() {
                 <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
                     <div className="flex flex-col space-y-2 text-center">
                         <h1 className="text-2xl font-semibold tracking-tight">
-                            Create an account
+                            {t("title")}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Enter your details below to create your account
+                            {t("subtitle")}
                         </p>
                     </div>
                     <div className="flex justify-center">
