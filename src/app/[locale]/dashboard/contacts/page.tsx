@@ -1,5 +1,5 @@
 "use client"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { ContactsList } from "@/components/dashboard/contacts/contacts-list"
 import { useQuery } from "convex/react"
 import { format } from "date-fns"
@@ -79,6 +79,7 @@ function importReducer(state: ImportState, action: ImportAction): ImportState {
 
 export default function ContactsPage() {
     const t = useTranslations("contacts")
+    const locale = useLocale()
     const { activeProject } = useProject()
     const contacts = useQuery(
         api.contacts.list,
@@ -309,14 +310,14 @@ export default function ContactsPage() {
     }
 
     return (
-        <div className="flex flex-col gap-4">
+        <div dir={locale === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold">{t("title")}</h1>
                 <div className="flex flex-wrap gap-2">
                     <Dialog open={importOpen} onOpenChange={(val) => importDispatch({ type: val ? "OPEN_IMPORT" : "CLOSE_IMPORT" })}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
-                                <Upload className="mr-2 h-4 w-4" />
+                                <Upload className="me-2 h-4 w-4" />
                                 {t("import")}
                             </Button>
                         </DialogTrigger>
@@ -379,7 +380,7 @@ export default function ContactsPage() {
                                     importDispatch({ type: "RESET" })
                                 }}>{t("cancel")}</Button>
                                 <Button onClick={handleImportConfirm} disabled={parsedContacts.length === 0 || importLoading}>
-                                    {importLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {importLoading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
                                     {t("import_contacts")}
                                 </Button>
                             </DialogFooter>
@@ -389,7 +390,7 @@ export default function ContactsPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
-                                <Download className="mr-2 h-4 w-4" />
+                                <Download className="me-2 h-4 w-4" />
                                 {t("export")}
                             </Button>
                         </DropdownMenuTrigger>
@@ -409,7 +410,7 @@ export default function ContactsPage() {
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" />
+                                <Plus className="me-2 h-4 w-4" />
                                 {t("add_contact")}
                             </Button>
                         </DialogTrigger>
@@ -423,7 +424,7 @@ export default function ContactsPage() {
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="name" className="text-right">
+                                        <Label htmlFor="name" className="text-end">
                                             {t("name")}
                                         </Label>
                                         <Input
@@ -435,7 +436,7 @@ export default function ContactsPage() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="email" className="text-right">
+                                        <Label htmlFor="email" className="text-end">
                                             {t("email")}
                                         </Label>
                                         <Input
@@ -447,7 +448,7 @@ export default function ContactsPage() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="phone" className="text-right">
+                                        <Label htmlFor="phone" className="text-end">
                                             {t("phone")}
                                         </Label>
                                         <Input
@@ -459,7 +460,7 @@ export default function ContactsPage() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="address" className="text-right">
+                                        <Label htmlFor="address" className="text-end">
                                             {t("address")}
                                         </Label>
                                         <Input
@@ -470,7 +471,7 @@ export default function ContactsPage() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="note" className="text-right">
+                                        <Label htmlFor="note" className="text-end">
                                             {t("note")}
                                         </Label>
                                         <Textarea
@@ -484,7 +485,7 @@ export default function ContactsPage() {
                                 </div>
                                 <DialogFooter>
                                     <Button type="submit" disabled={loading}>
-                                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
                                         {t("create_contact")}
                                     </Button>
                                 </DialogFooter>

@@ -15,6 +15,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, MoreHorizontal, Trash2 } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -66,6 +67,7 @@ export type Contact = {
 }
 
 export function ContactsList() {
+    const t = useTranslations('contacts')
     const { activeProject } = useProject()
     const contacts = useQuery(
         api.contacts.list,
@@ -85,9 +87,9 @@ export function ContactsList() {
     const handleDelete = async (id: Id<"contacts">) => {
         try {
             await removeContact({ id })
-            toast.success("Contact deleted")
+            toast.success(t('deleted_success'))
         } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || "Failed to delete contact"
+            const errorMessage = error.data?.message || error.message || t('deleted_failed')
             toast.error(errorMessage)
         }
     }
@@ -102,14 +104,14 @@ export function ContactsList() {
                         (table.getIsSomePageRowsSelected() && "indeterminate")
                     }
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all"
+                    aria-label={t('select_all')}
                 />
             ),
             cell: ({ row }) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
+                    aria-label={t('select_row')}
                 />
             ),
             enableSorting: false,
@@ -117,7 +119,7 @@ export function ContactsList() {
         },
         {
             accessorKey: "name",
-            header: "Name",
+            header: t('name'),
             cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
         },
         {
@@ -127,20 +129,20 @@ export function ContactsList() {
                     variant="ghost"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    Email
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    {t('email')}
+                    <ArrowUpDown className="ms-2 h-4 w-4" />
                 </Button>
             ),
             cell: ({ row }) => <div className="lowercase">{row.getValue("email") || "—"}</div>,
         },
         {
             accessorKey: "phone",
-            header: "Phone",
+            header: t('phone'),
             cell: ({ row }) => <div>{row.getValue("phone") || "—"}</div>,
         },
         {
             accessorKey: "tags",
-            header: "Tags",
+            header: t('tags'),
             cell: ({ row }) => {
                 const tags = (row.getValue("tags") as string[]) || []
                 return (
@@ -161,24 +163,24 @@ export function ContactsList() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">{t('open_menu')}</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
                             <DropdownMenuItem
                                 onClick={() => navigator.clipboard.writeText(contact.email || "")}
                             >
-                                Copy Email
+                                {t('copy_email')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => setContactPendingDelete(contact._id)}
                             >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                <Trash2 className="me-2 h-4 w-4" />
+                                {t('delete')}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -210,7 +212,7 @@ export function ContactsList() {
         <div className="w-full">
             <div className="flex items-center py-4">
                 <Input
-                    placeholder="Filter by name..."
+                    placeholder={t('filter_by_name')}
                     value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
                         table.getColumn("name")?.setFilterValue(event.target.value)
@@ -219,8 +221,8 @@ export function ContactsList() {
                 />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        <Button variant="outline" className="ms-auto">
+                            {t('columns')} <ChevronDown className="ms-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -231,13 +233,12 @@ export function ContactsList() {
                                 return (
                                     <DropdownMenuCheckboxItem
                                         key={column.id}
-                                        className="capitalize"
                                         checked={column.getIsVisible()}
                                         onCheckedChange={(value) =>
                                             column.toggleVisibility(!!value)
                                         }
                                     >
-                                        {column.id}
+                                        {t(column.id as any)}
                                     </DropdownMenuCheckboxItem>
                                 )
                             })}
@@ -300,7 +301,7 @@ export function ContactsList() {
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    No contacts yet. Add contacts from the chat contact panel.
+                                    {t('no_contacts_empty')}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -309,8 +310,7 @@ export function ContactsList() {
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                    {t('rows_selected', { count: table.getFilteredSelectedRowModel().rows.length })}
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -319,7 +319,7 @@ export function ContactsList() {
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        Previous
+                        {t('previous')}
                     </Button>
                     <Button
                         variant="outline"
@@ -327,7 +327,7 @@ export function ContactsList() {
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Next
+                        {t('next')}
                     </Button>
                 </div>
             </div>
@@ -343,13 +343,13 @@ export function ContactsList() {
             <AlertDialog open={contactPendingDelete !== null} onOpenChange={(open) => { if (!open) setContactPendingDelete(null) }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+                        <AlertDialogTitle>{t('delete_contact')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This contact will be permanently deleted. This action cannot be undone.
+                            {t('delete_confirm')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-white hover:bg-destructive/90"
                             onClick={async () => {
@@ -359,7 +359,7 @@ export function ContactsList() {
                                 }
                             }}
                         >
-                            Delete
+                            {t('delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
@@ -36,6 +37,7 @@ interface EditContactDialogProps {
 }
 
 export function EditContactDialog({ contact, open, onOpenChange }: EditContactDialogProps) {
+    const t = useTranslations('contacts')
     const updateContact = useMutation(api.contacts.update)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -61,9 +63,9 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
                 note: formData.note || undefined,
             })
             onOpenChange(false)
-            toast.success("Contact updated successfully")
+            toast.success(t("updated_success"))
         } catch (error) {
-            toast.error("Failed to update contact")
+            toast.error(t("updated_failed"))
             console.error(error)
         } finally {
             setLoading(false)
@@ -75,15 +77,15 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit Contact</DialogTitle>
+                        <DialogTitle>{t('edit_contact')}</DialogTitle>
                         <DialogDescription>
-                            Update contact information.
+                            {t('edit_description')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-name" className="text-right">
-                                Name
+                                {t('name')}
                             </Label>
                             <Input
                                 id="edit-name"
@@ -95,7 +97,7 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-email" className="text-right">
-                                Email
+                                {t('email')}
                             </Label>
                             <Input
                                 id="edit-email"
@@ -107,7 +109,7 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-phone" className="text-right">
-                                Phone
+                                {t('phone')}
                             </Label>
                             <Input
                                 id="edit-phone"
@@ -119,7 +121,7 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-address" className="text-right">
-                                Address
+                                {t('address')}
                             </Label>
                             <Input
                                 id="edit-address"
@@ -130,21 +132,21 @@ export function EditContactDialog({ contact, open, onOpenChange }: EditContactDi
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-note" className="text-right">
-                                Note
+                                {t('note')}
                             </Label>
                             <Textarea
                                 id="edit-note"
                                 value={formData.note}
                                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                                 className="col-span-3"
-                                placeholder="Add any notes here..."
+                                placeholder={t('add_notes_placeholder_edit')}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
+                            {t('save_changes')}
                         </Button>
                     </DialogFooter>
                 </form>
