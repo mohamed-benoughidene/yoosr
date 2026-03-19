@@ -178,7 +178,7 @@ export default function WidgetChat() {
         const config = projectConfig?.widgetConfig
         const enableWelcome = config?.enableWelcomeNotification ?? true
         const delay = (config?.welcomeDelay ?? 3) * 1000
-        const welcomeMsg = config?.translations?.welcomeMessage || "Hi there! How can we help you?"
+        const welcomeMsg = t("system.welcome") || config?.translations?.welcomeMessage
 
         if (!enableWelcome) return
 
@@ -322,7 +322,7 @@ export default function WidgetChat() {
             dispatch({ type: "SET_CONVERSATION_ID", payload: newId })
             return newId
         } catch {
-            dispatch({ type: "SET_ERROR", payload: "Failed to create conversation" })
+            dispatch({ type: "SET_ERROR", payload: t("failedToCreateConversation") })
             return null
         }
     }
@@ -374,7 +374,7 @@ export default function WidgetChat() {
             }
         } catch {
             dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
-            dispatch({ type: "SET_ERROR", payload: "Failed to send message" })
+            dispatch({ type: "SET_ERROR", payload: t("failedToSendMessage") })
         }
     }
 
@@ -418,7 +418,7 @@ export default function WidgetChat() {
                 fetchMessages()
             }
         } catch {
-            dispatch({ type: "SET_ERROR", payload: "Failed to send attachment" })
+            dispatch({ type: "SET_ERROR", payload: t("failedToSendAttachment") })
         }
 
         // Reset file input
@@ -437,7 +437,7 @@ export default function WidgetChat() {
             dispatch({ type: "SET_SHOW_RATING", payload: false })
         } catch (error) {
             console.error("Failed to submit rating", error)
-            dispatch({ type: "SET_ERROR", payload: "Failed to submit rating" })
+            dispatch({ type: "SET_ERROR", payload: t("rating.failedToSubmit") })
         }
     }
 
@@ -451,8 +451,8 @@ export default function WidgetChat() {
     // Read widget config
     const widgetConfig = projectConfig?.widgetConfig
     const widgetColor = widgetConfig?.primaryColor || "#6366f1"
-    const widgetTitle = widgetConfig?.translations?.headerTitle || projectConfig?.name || "Chat with us"
-    const onlineStatus = widgetConfig?.translations?.onlineStatus || "We typically reply within a few minutes"
+    const widgetTitle = t("headerTitle") || widgetConfig?.translations?.headerTitle || projectConfig?.name
+    const onlineStatus = t("onlineStatus") || widgetConfig?.translations?.onlineStatus
     const logoUrl = widgetConfig?.logoUrl || ""
 
     if (error && !conversationId) {
@@ -471,8 +471,8 @@ export default function WidgetChat() {
                     dispatch({ type: "SET_SHOW_PRE_CHAT", payload: false })
                 }}
                 primaryColor={widgetColor}
-                title={widgetConfig?.translations?.preChatTitle}
-                subtitle={widgetConfig?.translations?.preChatSubtitle}
+                title={t("preChatForm.welcome") || widgetConfig?.translations?.preChatTitle}
+                subtitle={t("preChatForm.subtitle") || widgetConfig?.translations?.preChatSubtitle}
                 contactMethod={widgetConfig?.contactMethod || "email"}
             />
         )
@@ -520,7 +520,7 @@ export default function WidgetChat() {
                                             <Image src={logoUrl} width={32} height={32} className="w-full h-full object-cover" alt="Avatar" />
                                         ) : (
                                             <span className="text-xs font-semibold text-gray-500">
-                                                {msg.senderType === "bot" ? "AI" : "A"}
+                                                {msg.senderType === "bot" ? t("avatarBot") : t("avatarAgent")}
                                             </span>
                                         )}
                                     </div>
@@ -585,7 +585,7 @@ export default function WidgetChat() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={loading}
                     className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
-                    title="Attach file"
+                    title={t("attachFile")}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
@@ -594,7 +594,7 @@ export default function WidgetChat() {
                 <input
                     type="text"
                     className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
-                    placeholder={conversationStatus === 1000 ? "This conversation is resolved" : t("inputPlaceholder")}
+                    placeholder={conversationStatus === 1000 ? t("conversationResolved") : t("inputPlaceholder")}
                     value={input}
                     onChange={(e) => dispatch({ type: "SET_INPUT", payload: e.target.value })}
                     onKeyDown={handleKeyDown}

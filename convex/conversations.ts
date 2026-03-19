@@ -321,7 +321,7 @@ export const createFromWidget = internalMutation({
         // Read project settings to optionally inject welcome message into history permanently
         const widgetConfig = (project?.widgetConfig as any) || {};
         const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
-        const welcomeMsg = widgetConfig.translations?.welcomeMessage || "system.welcome";
+        const welcomeMsg = "widget.system.welcome";
 
         if (enableWelcome) {
             await ctx.db.insert("messages", {

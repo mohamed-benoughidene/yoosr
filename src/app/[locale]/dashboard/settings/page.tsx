@@ -138,9 +138,9 @@ function SettingsContent() {
                 <TabsContent value="general" className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Project Language</CardTitle>
+                            <CardTitle>{t("settings_project_language")}</CardTitle>
                             <CardDescription>
-                                Controls the language of the chat widget and all system messages shown to visitors.
+                                {t("settings_project_language_desc")}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -152,10 +152,10 @@ function SettingsContent() {
                                     <SelectValue placeholder="Select Language" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="auto">Auto-detect (visitor's browser)</SelectItem>
-                                    <SelectItem value="en">English</SelectItem>
-                                    <SelectItem value="ar">Arabic / العربية</SelectItem>
-                                    <SelectItem value="fr">French / Français</SelectItem>
+                                    <SelectItem value="auto">{t("settings_language_auto")}</SelectItem>
+                                    <SelectItem value="en">{t("settings_language_en")}</SelectItem>
+                                    <SelectItem value="ar">{t("settings_language_ar")}</SelectItem>
+                                    <SelectItem value="fr">{t("settings_language_fr")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </CardContent>

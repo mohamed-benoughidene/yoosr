@@ -1131,6 +1131,12 @@
       "description": "إدارة تكوين المشروع الخاص بك.",
       "general": "عام",
       "tab_general": "عام",
+      "settings_project_language": "لغة المشروع",
+      "settings_project_language_desc": "يحدد اللغة الافتراضية لنافذة الدردشة",
+      "settings_language_auto": "اكتشاف تلقائي (متصفح الزائر)",
+      "settings_language_en": "الإنجليزية",
+      "settings_language_ar": "العربية / Arabic",
+      "settings_language_fr": "الفرنسية / Français",
       "project_details": "تفاصيل المشروع",
       "details_title": "تفاصيل المشروع",
       "project_details_desc": "تُستخدم لتحديد مشروعك في لوحة القيادة.",
@@ -1633,6 +1639,15 @@
     "noProjectId": "لم يتم تقديم معرّف المشروع",
     "connecting": "جارٍ الاتصال...",
     "failedToConnect": "فشل الاتصال. يرجى تحديث الصفحة.",
+    "failedToCreateConversation": "فشل إنشاء المحادثة",
+    "failedToSendMessage": "فشل إرسال الرسالة",
+    "failedToSendAttachment": "فشل إرسال المرفق",
+    "headerTitle": "تحدث معنا",
+    "onlineStatus": "عادت ما نرد خلال بضع دقائق",
+    "avatarBot": "AI",
+    "avatarAgent": "A",
+    "attachFile": "إرفاق ملف",
+    "conversationResolved": "هذه المحادثة منتهية",
     "visitor": "زائر",
     "startPrompt": "أرسل رسالة لبدء المحادثة!",
     "aiAssistant": "مساعد ذكاء اصطناعي",
@@ -1655,7 +1670,8 @@
       "feedbackHelps": "ملاحظاتك تساعدنا على التحسين.",
       "prompt": "كيف تقيّم دعمنا؟",
       "submit": "إرسال التقييم",
-      "submitting": "جارٍ الإرسال..."
+      "submitting": "جارٍ الإرسال...",
+      "failedToSubmit": "فشل إرسال التقييم"
     }
   },
   "testWidget": {

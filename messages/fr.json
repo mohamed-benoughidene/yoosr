@@ -1096,6 +1096,12 @@
       "description": "Gérez la configuration de votre projet.",
       "general": "Général",
       "tab_general": "Général",
+      "settings_project_language": "Langue du projet",
+      "settings_project_language_desc": "Définit la langue par défaut du widget de chat",
+      "settings_language_auto": "Détection automatique (navigateur du visiteur)",
+      "settings_language_en": "Anglais",
+      "settings_language_ar": "Arabe / العربية",
+      "settings_language_fr": "Français",
       "project_details": "Détails du projet",
       "details_title": "Détails du projet",
       "project_details_desc": "Utilisé pour identifier votre projet dans le tableau de bord.",
@@ -1595,6 +1601,15 @@
     "noProjectId": "Aucun identifiant de projet fourni",
     "connecting": "Connexion en cours...",
     "failedToConnect": "Échec de la connexion. Veuillez actualiser la page.",
+    "failedToCreateConversation": "Échec de la création de la conversation",
+    "failedToSendMessage": "Échec de l'envoi du message",
+    "failedToSendAttachment": "Échec de l'envoi de la pièce jointe",
+    "headerTitle": "Discutez avec nous",
+    "onlineStatus": "Nous répondons généralement en quelques minutes",
+    "avatarBot": "IA",
+    "avatarAgent": "A",
+    "attachFile": "Joindre un fichier",
+    "conversationResolved": "Cette conversation est résolue",
     "visitor": "Visiteur",
     "startPrompt": "Envoyez un message pour démarrer la conversation !",
     "aiAssistant": "Assistant IA",
@@ -1617,7 +1632,8 @@
       "feedbackHelps": "Vos retours nous aident à nous améliorer.",
       "prompt": "Comment évalueriez-vous notre support ?",
       "submit": "Soumettre l'avis",
-      "submitting": "Envoi en cours..."
+      "submitting": "Envoi en cours...",
+      "failedToSubmit": "Échec de l'envoi de l'avis"
     }
   },
   "testWidget": {

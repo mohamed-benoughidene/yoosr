@@ -14,14 +14,19 @@ export default async function WidgetPage(props: {
     if (projectId) {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-            const response = await fetch(`${baseUrl}/api/widget/project?projectId=${projectId}`, {
-                next: { revalidate: 60 },
+            const fetchUrl = `${baseUrl}/api/widget/project?projectId=${projectId}`;
+            const response = await fetch(fetchUrl, {
+                cache: "no-store",
             });
             if (response.ok) {
                 const project = await response.json();
                 if (["en", "ar", "fr"].includes(project?.widgetLocale)) {
                     projectLocale = project.widgetLocale;
+                } else {
+                    console.error(`widgetLocale not found in response for ${fetchUrl}. Status: ${response.status}`);
                 }
+            } else {
+                console.error(`Fetch failed for ${fetchUrl}. Status: ${response.status}`);
             }
         } catch (error) {
             console.error("Error fetching project locale:", error);

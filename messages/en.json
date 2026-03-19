@@ -1150,6 +1150,12 @@
       "description": "Manage your project configuration.",
       "general": "General",
       "tab_general": "General",
+      "settings_project_language": "Project Language",
+      "settings_project_language_desc": "Sets the default language for the chat widget",
+      "settings_language_auto": "Auto-detect (visitor's browser)",
+      "settings_language_en": "English",
+      "settings_language_ar": "Arabic / العربية",
+      "settings_language_fr": "French / Français",
       "project_details": "Project Details",
       "details_title": "Project Details",
       "project_details_desc": "Used to identify your project in the dashboard.",
@@ -1649,6 +1655,15 @@
     "noProjectId": "No project ID provided",
     "connecting": "Connecting...",
     "failedToConnect": "Failed to connect. Please refresh the page.",
+    "failedToCreateConversation": "Failed to create conversation",
+    "failedToSendMessage": "Failed to send message",
+    "failedToSendAttachment": "Failed to send attachment",
+    "headerTitle": "Chat with us",
+    "onlineStatus": "We typically reply within a few minutes",
+    "avatarBot": "AI",
+    "avatarAgent": "A",
+    "attachFile": "Attach file",
+    "conversationResolved": "This conversation is resolved",
     "visitor": "Visitor",
     "startPrompt": "Send a message to start the conversation!",
     "aiAssistant": "AI Assistant",
@@ -1671,7 +1686,8 @@
       "feedbackHelps": "Your feedback helps us improve.",
       "prompt": "How would you rate our support?",
       "submit": "Submit Feedback",
-      "submitting": "Submitting..."
+      "submitting": "Submitting...",
+      "failedToSubmit": "Failed to submit rating"
     }
   },
   "testWidget": {
