@@ -337,4 +337,17 @@ export default defineSchema({
         .index("by_projectId", ["projectId"])
         .index("by_conversationId", ["conversationId"])
         .index("by_projectId_status", ["projectId", "status"]),
+
+    // Early Access Feedback & Feature Requests
+    feedback: defineTable({
+        orgId: v.string(),
+        submittedBy: v.string(),
+        submitterName: v.string(),
+        submitterEmail: v.optional(v.string()),
+        type: v.union(v.literal("bug"), v.literal("feature"), v.literal("general")),
+        message: v.string(),
+        createdAt: v.number(),
+    })
+        .index("by_org", ["orgId"])
+        .index("by_created", ["createdAt"]),
 });

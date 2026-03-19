@@ -690,7 +690,24 @@
     "snapshot_from_yesterday": "من أمس",
     "snapshot_bot_resolved": "تم حلها بالبوت اليوم",
     "snapshot_automated": "آلي",
-    "snapshot_avg_wait": "متوسط وقت الانتظار اليوم"
+    "snapshot_avg_wait": "متوسط وقت الانتظار اليوم",
+    "feedback": {
+      "menuItem": "إرسال ملاحظات",
+      "title": "إرسال ملاحظات",
+      "typeBug": "خلل تقني",
+      "typeFeature": "طلب ميزة",
+      "typeGeneral": "ملاحظة عامة",
+      "placeholder": "اكتب ملاحظتك هنا...",
+      "characterCount": "{count}/1000",
+      "validationMin": "يرجى إضافة المزيد من التفاصيل (20 حرفًا على الأقل)",
+      "submit": "إرسال",
+      "submitting": "جارٍ الإرسال...",
+      "successMessage": "شكرًا! سنراجع ملاحظتك.",
+      "errorMessage": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+      "subtitle": "نحب أن نسمع منك. ساعدنا في تحسين يُسر.",
+      "whatsOnYourMind": "ما الذي يدور في ذهنك؟",
+      "messageLabel": "الرسالة"
+    }
   },
   "monitor": {
     "search": "بحث في المحادثات",

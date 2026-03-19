@@ -690,6 +690,23 @@
       "canned_response_updated": "Réponse préenregistrée mise à jour",
       "canned_response_deleted": "Réponse préenregistrée supprimée",
       "operating_hours_updated": "Horaires de travail mis à jour"
+    },
+    "feedback": {
+      "menuItem": "Envoyer un avis",
+      "title": "Envoyer un avis",
+      "typeBug": "Bug",
+      "typeFeature": "Demande de fonctionnalité",
+      "typeGeneral": "Avis général",
+      "placeholder": "Décrivez votre retour...",
+      "characterCount": "{count}/1000",
+      "validationMin": "Veuillez ajouter plus de détails (20 caractères minimum)",
+      "submit": "Envoyer",
+      "submitting": "Envoi en cours...",
+      "successMessage": "Merci ! Nous examinerons votre avis.",
+      "errorMessage": "Une erreur est survenue. Veuillez réessayer.",
+      "subtitle": "Nous aimerions avoir votre avis. Aidez-nous à améliorer Yoosr.",
+      "whatsOnYourMind": "Qu'avez-vous à l'esprit ?",
+      "messageLabel": "Message"
     }
   },
   "monitor": {

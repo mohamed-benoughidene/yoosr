@@ -6,6 +6,7 @@ import {
   MonitorPlay, Settings, Ticket, Users, ShoppingBag
 } from "lucide-react"
 import * as React from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { usePathname, useRouter } from "next/navigation"
@@ -23,6 +24,7 @@ import {
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail,
 } from "@/components/ui/sidebar"
+import { FeedbackModal } from "@/components/feedback/FeedbackModal"
 
 const navGroups = [
   {
@@ -81,63 +83,73 @@ function OrgSwitcher() {
 
 function NavUser() {
   const t = useTranslations("nav")
+  const tFeedback = useTranslations("dashboard.feedback")
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
   const { activeProject } = useProject()
   const router = useRouter()
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  
   const isAdmin = activeProject?.userRole === "org:admin"
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
   const fullName = user?.fullName ?? user?.firstName ?? "Account"
   const email = user?.emailAddresses?.[0]?.emailAddress ?? ""
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <Avatar className="size-8 rounded-lg">
-                <AvatarImage src={user?.imageUrl} alt={fullName} />
-                <AvatarFallback className="rounded-lg text-xs font-semibold">{initial}</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{fullName}</span>
-                <span className="truncate text-xs text-muted-foreground">{email}</span>
-              </div>
-              <ChevronsUpDown className="ms-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div
-                className="flex items-center gap-2 px-1 py-1.5 text-sm cursor-pointer hover:bg-sidebar-accent transition-colors rounded-t-lg"
-                onClick={() => openUserProfile()}
-              >
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <Avatar className="size-8 rounded-lg">
                   <AvatarImage src={user?.imageUrl} alt={fullName} />
-                  <AvatarFallback className="rounded-lg text-xs">{initial}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg text-xs font-semibold">{initial}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{fullName}</span>
                   <span className="truncate text-xs text-muted-foreground">{email}</span>
                 </div>
+                <ChevronsUpDown className="ms-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div
+                  className="flex items-center gap-2 px-1 py-1.5 text-sm cursor-pointer hover:bg-sidebar-accent transition-colors rounded-t-lg"
+                  onClick={() => openUserProfile()}
+                >
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarImage src={user?.imageUrl} alt={fullName} />
+                    <AvatarFallback className="rounded-lg text-xs">{initial}</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{fullName}</span>
+                    <span className="truncate text-xs text-muted-foreground">{email}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className={isAdmin ? "" : "hidden"}>
+                <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+                  <Settings className="me-2 size-4" />{t("settings")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className={isAdmin ? "" : "hidden"}>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-                <Settings className="me-2 size-4" />{t("settings")}
+              <LanguageSwitcher />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                <MessageSquare className="me-2 size-4" />{tFeedback("menuItem")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-            </div>
-            <LanguageSwitcher />
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
-              <LogOut className="me-2 size-4" />Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
+                <LogOut className="me-2 size-4" />Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    </>
   )
 }
 

@@ -709,6 +709,23 @@
       "canned_response_updated": "Updated canned response",
       "canned_response_deleted": "Deleted canned response",
       "operating_hours_updated": "Updated operating hours"
+    },
+    "feedback": {
+      "menuItem": "Send Feedback",
+      "title": "Send Feedback",
+      "typeBug": "Bug",
+      "typeFeature": "Feature Request",
+      "typeGeneral": "General",
+      "placeholder": "Describe your feedback...",
+      "characterCount": "{count}/1000",
+      "validationMin": "Please add a bit more detail (min 20 characters)",
+      "submit": "Submit",
+      "submitting": "Submitting...",
+      "successMessage": "Thanks! We'll review your feedback.",
+      "errorMessage": "Something went wrong. Please try again.",
+      "subtitle": "We'd love to hear from you. Help us improve Yoosr.",
+      "whatsOnYourMind": "What's on your mind?",
+      "messageLabel": "Message"
     }
   },
   "monitor": {
