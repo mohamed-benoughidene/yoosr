@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useProject } from "@/context/ProjectContext";
 import { ActivitiesDataTable } from "@/components/activities/ActivitiesDataTable";
-import { columns, type ActivityLog } from "@/components/activities/columns";
+import { getColumns, type ActivityLog } from "@/components/activities/columns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Activity } from "lucide-react";
@@ -16,7 +16,9 @@ const PAGE_SIZE = 25;
 
 export default function ActivitiesPage() {
     const t = useTranslations("activities");
+    const tLog = useTranslations();
     const { activeProject } = useProject();
+    const columns = getColumns(tLog);
 
     const { results: logs, status, loadMore } = usePaginatedQuery(
         api.activityLogs.getActivityLog,

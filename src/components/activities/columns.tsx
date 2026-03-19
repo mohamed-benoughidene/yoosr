@@ -15,30 +15,16 @@ export type ActivityLog = {
     _creationTime: number;
 };
 
-const ACTION_LABELS: Record<string, string> = {
-    teammate_invited: "Invited teammate",
-    teammate_removed: "Removed teammate",
-    teammate_accepted: "Accepted invitation",
-    teammate_rejected: "Declined invitation",
-    role_changed: "Changed role",
-    status_changed: "Changed status",
-    operating_hours_updated: "Updated operating hours",
-    bot_created: "Created bot",
-    bot_updated: "Updated bot",
-    department_updated: "Updated department",
-    other: "Other action",
-};
-
 const TARGET_COLORS: Record<string, "default" | "secondary" | "outline"> = {
     teammate: "default",
     department: "secondary",
     bot: "outline",
 };
 
-export const columns: ColumnDef<ActivityLog>[] = [
+export const getColumns = (t: any): ColumnDef<ActivityLog>[] => [
     {
         accessorKey: "createdAt",
-        header: "Date",
+        header: t("activity_log.date"),
         cell: ({ row }) => {
             const ts = row.original.createdAt ?? row.original._creationTime;
             return (
@@ -53,7 +39,7 @@ export const columns: ColumnDef<ActivityLog>[] = [
     },
     {
         accessorKey: "actorName",
-        header: "Actor",
+        header: t("activity_log.actor"),
         cell: ({ row }) => (
             <span className="text-sm font-medium">
                 {row.original.actorName ?? "System"}
@@ -62,19 +48,19 @@ export const columns: ColumnDef<ActivityLog>[] = [
     },
     {
         accessorKey: "action",
-        header: "Action",
+        header: t("activity_log.action"),
         cell: ({ row }) => {
             const key = row.original.action ?? row.original.actionType;
             return (
                 <span className="text-sm">
-                    {ACTION_LABELS[key] ?? key}
+                    {t(`dashboard.activity_actions.${key}`)}
                 </span>
             );
         },
     },
     {
         accessorKey: "targetType",
-        header: "Target",
+        header: t("activity_log.target"),
         cell: ({ row }) => {
             const { targetType, targetId } = row.original;
             if (!targetType) return <span className="text-muted-foreground text-sm">—</span>;

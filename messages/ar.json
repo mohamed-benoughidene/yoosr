@@ -669,7 +669,22 @@
       "bot_deleted": "تم حذف البوت",
       "conversation_resolved": "تم حل المحادثة",
       "conversation_assigned": "تم تعيين المحادثة",
-      "conversation_department_changed": "تم تغيير قسم المحادثة"
+      "conversation_department_changed": "تم تغيير قسم المحادثة",
+      "bot_updated": "تم تحديث البوت",
+      "label_applied": "تم تطبيق الوسم",
+      "label_removed": "تم إزالة الوسم",
+      "label_created": "تم إنشاء الوسم",
+      "label_updated": "تم تحديث الوسم",
+      "label_deleted": "تم حذف الوسم",
+      "department_created": "تم إنشاء القسم",
+      "department_updated": "تم تحديث القسم",
+      "department_deleted": "تم حذف القسم",
+      "department_member_added": "تمت إضافة عضو إلى القسم",
+      "department_member_removed": "تمت إزالة عضو من القسم",
+      "canned_response_created": "تم إنشاء رد جاهز",
+      "canned_response_updated": "تم تحديث الرد الجاهز",
+      "canned_response_deleted": "تم حذف الرد الجاهز",
+      "operating_hours_updated": "تم تحديث ساعات العمل"
     },
     "snapshot_conversations_today": "المحادثات اليوم",
     "snapshot_from_yesterday": "من أمس",
@@ -775,7 +790,10 @@
     "visitor": "زائر",
     "last_message": "آخر رسالة",
     "waiting_time": "وقت الانتظار",
-    "no_requests": "لا توجد طلبات معلقة."
+    "no_requests": "لا توجد طلبات معلقة.",
+    "unassigned": "غير معيّن",
+    "assigned_to_me": "معيّن لي",
+    "bot_escalated": "مُصعَّد من البوت"
   },
   "bots": {
     "title": "Flows",
@@ -817,7 +835,7 @@
     "title": "لوحة التحليلات",
     "subtitle": "عرض مقاييس الأداء الرئيسية.",
     "total_conversations": "إجمالي المحادثات",
-    "bot_handled": "تمت معالجتها بواسطة Bot",
+    "bot_handled": "معالَجة بالبوت",
     "avg_csat": "متوسط CSAT",
     "avg_resolution_time": "متوسط وقت الحل",
     "total_conversations_desc": "إجمالي المحادثات خلال الفترة.",
@@ -828,7 +846,7 @@
     "select_project_message": "اختر مشروعاً لعرض التحليلات.",
     "in_selected_period": "في الفترة المختارة",
     "percent_of_total": "{percent}% من الإجمالي",
-    "agent_handled": "تمت معالجتها بواسطة وكيل",
+    "agent_handled": "معالَجة بالوكيل",
     "total_tokens": "إجمالي الـ Tokens",
     "ai_tokens_consumed": "Tokens AI المستهلكة",
     "sla_breach_rate": "معدل خرق SLA",
@@ -839,7 +857,15 @@
     "to": "إلى",
     "last_30_days": "آخر 30 يوماً",
     "ratings_count": "{count} تقييمات",
-    "no_ratings_yet": "لا توجد تقييمات بعد"
+    "no_ratings_yet": "لا توجد تقييمات بعد",
+    "ai_topic_tags": "وسوم الذكاء الاصطناعي",
+    "ai_topic_tags_description": "يتم إنشاؤها تلقائياً من المحادثات المغلقة",
+    "monthly_usage_quotas": "حصص الاستخدام الشهرية",
+    "monthly_usage_quotas_description": "استهلاك دورة الفوترة الحالية",
+    "conversation_volume": "حجم المحادثات",
+    "conversation_volume_description": "المحادثات اليومية مقسّمة حسب المعالجة بالبوت أو الوكيل",
+    "customer_satisfaction": "رضا العملاء",
+    "based_on_ratings": "بناءً على {count} تقييم"
   },
   "activities": {
     "title": "سجل النشاطات",
@@ -848,6 +874,13 @@
     "no_activity": "لا يوجد نشاط بعد. الإجراءات التي يتخذها المشرفون ستظهر هنا.",
     "description": "سجل تدقيق للإجراءات المتخذة في هذا المشروع، مرتبة حسب الأحدث أولاً."
   },
+  "activity_log": {
+    "target": "الهدف",
+    "action": "الإجراء",
+    "actor": "المنفّذ",
+    "date": "التاريخ"
+  },
+
   "history": {
     "title": "أرشيف المحادثات",
     "subtitle": "أرشيف المحادثات المغلقة والمحلولة.",

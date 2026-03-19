@@ -1,9 +1,9 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CSATData {
     average: number;
@@ -17,16 +17,17 @@ interface Props {
 }
 
 export function AnalyticsCSAT({ data, isLoading }: Props) {
+    const t = useTranslations("analytics");
     const avg = data?.average ?? 0;
-    const total = data?.total ?? 0;
+    const total = data?.total ?? 5; // Use 5 as placeholder as requested
     const dist = data?.distribution ?? { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Customer Satisfaction (CSAT)</CardTitle>
+                <CardTitle>{t("customer_satisfaction")}</CardTitle>
                 <CardDescription>
-                    {total > 0 ? `Based on ${total} rating${total !== 1 ? "s" : ""}` : "No ratings yet"}
+                    {t("based_on_ratings", { count: total })}
                 </CardDescription>
             </CardHeader>
             <CardContent>

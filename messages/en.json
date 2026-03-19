@@ -693,7 +693,22 @@
       "bot_deleted": "bot deleted",
       "conversation_resolved": "conversation resolved",
       "conversation_assigned": "conversation assigned",
-      "conversation_department_changed": "conversation department changed"
+      "conversation_department_changed": "conversation department changed",
+      "bot_updated": "Updated bot",
+      "label_applied": "Applied label",
+      "label_removed": "Removed label",
+      "label_created": "Created label",
+      "label_updated": "Updated label",
+      "label_deleted": "Deleted label",
+      "department_created": "Created department",
+      "department_updated": "Updated department",
+      "department_deleted": "Deleted department",
+      "department_member_added": "Added member to department",
+      "department_member_removed": "Removed member from department",
+      "canned_response_created": "Created canned response",
+      "canned_response_updated": "Updated canned response",
+      "canned_response_deleted": "Deleted canned response",
+      "operating_hours_updated": "Updated operating hours"
     }
   },
   "monitor": {
@@ -794,7 +809,10 @@
     "visitor": "Visitor",
     "last_message": "Last Message",
     "waiting_time": "Waiting Time",
-    "no_requests": "No pending requests."
+    "no_requests": "No pending requests.",
+    "unassigned": "Unassigned",
+    "assigned_to_me": "Assigned to me",
+    "bot_escalated": "Bot Escalated"
   },
   "bots": {
     "title": "Flows",
@@ -858,7 +876,15 @@
     "to": "To",
     "last_30_days": "Last 30 days",
     "ratings_count": "{count} ratings",
-    "no_ratings_yet": "No ratings yet"
+    "no_ratings_yet": "No ratings yet",
+    "ai_topic_tags": "AI Topic Tags",
+    "ai_topic_tags_description": "Generated automatically from closed conversations",
+    "monthly_usage_quotas": "Monthly Usage Quotas",
+    "monthly_usage_quotas_description": "Current billing cycle consumption",
+    "conversation_volume": "Conversation Volume",
+    "conversation_volume_description": "Daily conversations split by bot vs agent handling",
+    "customer_satisfaction": "Customer Satisfaction",
+    "based_on_ratings": "Based on {count} ratings"
   },
   "activities": {
     "title": "Activity Log",
@@ -867,6 +893,13 @@
     "no_activity": "No activity yet. Actions taken by admin users will appear here.",
     "description": "Audit log of actions taken in this project, sorted by newest first."
   },
+  "activity_log": {
+    "target": "Target",
+    "action": "Action",
+    "actor": "Actor",
+    "date": "Date"
+  },
+
   "history": {
     "title": "Conversation History",
     "subtitle": "Archive of closed and solved conversations.",

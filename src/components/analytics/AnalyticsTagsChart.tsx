@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Tag } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface TagData {
     name: string;
@@ -36,14 +37,16 @@ const COLORS = [
 ];
 
 export function AnalyticsTagsChart({ data, isLoading }: Props) {
+    const t = useTranslations("analytics");
+
     return (
         <Card className="flex flex-col">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Tag className="h-4 w-4" />
-                    AI Topic Tags
+                    {t("ai_topic_tags")}
                 </CardTitle>
-                <CardDescription>Generated automatically from closed conversations</CardDescription>
+                <CardDescription>{t("ai_topic_tags_description")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
                 {isLoading ? (

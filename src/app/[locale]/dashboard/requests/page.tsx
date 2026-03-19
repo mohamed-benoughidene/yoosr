@@ -129,7 +129,7 @@ export default function RequestsPage() {
                             onClick={() => setFilter("unassigned")}
                         >
                             <User className="mr-2 h-4 w-4" />
-                            Unassigned
+                            {t("unassigned")}
                             {unassignedCount > 0 && (
                                 <Badge
                                     variant="secondary"
@@ -145,7 +145,7 @@ export default function RequestsPage() {
                             onClick={() => setFilter("mine")}
                         >
                             <UserCheck className="mr-2 h-4 w-4" />
-                            Assigned to me
+                            {t("assigned_to_me")}
                             {myCount > 0 && (
                                 <Badge
                                     variant="secondary"
@@ -161,7 +161,7 @@ export default function RequestsPage() {
                             onClick={() => setFilter("bot_escalated")}
                         >
                             <Bot className="mr-2 h-4 w-4 text-orange-500" />
-                            Bot Escalated
+                            {t("bot_escalated")}
                             {botEscalatedCount > 0 && (
                                 <Badge
                                     variant="secondary"
@@ -257,14 +257,14 @@ export default function RequestsPage() {
                                         <TableCell>
                                             {(req as any).handoffSource === "bot" ? (
                                                 <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
-                                                    Bot Escalated
+                                                    {t("bot_escalated")}
                                                 </Badge>
                                             ) : req.status === 200 || req.assignedTo ? (
                                                 <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
                                                     Ongoing
                                                 </Badge>
                                             ) : (
-                                                <Badge variant="secondary">Unassigned</Badge>
+                                                <Badge variant="secondary">{t("unassigned")}</Badge>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">

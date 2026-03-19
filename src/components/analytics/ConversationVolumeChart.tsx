@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface DailyPoint {
     date: string;
@@ -26,11 +27,13 @@ interface Props {
 }
 
 export function ConversationVolumeChart({ data, isLoading }: Props) {
+    const t = useTranslations("analytics");
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Conversation Volume</CardTitle>
-                <CardDescription>Daily conversations split by bot vs agent handling</CardDescription>
+                <CardTitle>{t("conversation_volume")}</CardTitle>
+                <CardDescription>{t("conversation_volume_description")}</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -61,12 +64,12 @@ export function ConversationVolumeChart({ data, isLoading }: Props) {
                             <Legend wrapperStyle={{ fontSize: 12 }} />
                             <Bar
                                 dataKey="bot"
-                                name="Bot Handled"
+                                name={t("bot_handled")}
                                 fill="#3b82f6"
                             />
                             <Bar
                                 dataKey="agent"
-                                name="Agent Handled"
+                                name={t("agent_handled")}
                                 fill="#22c55e"
                             />
                         </BarChart>

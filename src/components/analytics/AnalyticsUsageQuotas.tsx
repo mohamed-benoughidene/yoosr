@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Zap, MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface UsageData {
     tokensConsumed: number;
@@ -18,6 +19,8 @@ interface Props {
 }
 
 export function AnalyticsUsageQuotas({ data, isLoading, maxTokens = 500000, maxConversations = 1000 }: Props) {
+    const t = useTranslations("analytics");
+
     if (isLoading) {
         return (
             <Card>
@@ -40,8 +43,8 @@ export function AnalyticsUsageQuotas({ data, isLoading, maxTokens = 500000, maxC
     return (
         <Card>
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Usage Quotas</CardTitle>
-                <CardDescription>Current billing cycle consumption</CardDescription>
+                <CardTitle className="text-sm font-medium">{t("monthly_usage_quotas")}</CardTitle>
+                <CardDescription>{t("monthly_usage_quotas_description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
                 <div className="space-y-2">

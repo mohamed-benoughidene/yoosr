@@ -674,7 +674,22 @@
       "bot_deleted": "bot supprimé",
       "conversation_resolved": "conversation résolue",
       "conversation_assigned": "conversation assignée",
-      "conversation_department_changed": "département de conversation modifié"
+      "conversation_department_changed": "département de conversation modifié",
+      "bot_updated": "Bot mis à jour",
+      "label_applied": "Étiquette appliquée",
+      "label_removed": "Étiquette retirée",
+      "label_created": "Étiquette créée",
+      "label_updated": "Étiquette mise à jour",
+      "label_deleted": "Étiquette supprimée",
+      "department_created": "Département créé",
+      "department_updated": "Département mis à jour",
+      "department_deleted": "Département supprimé",
+      "department_member_added": "Membre ajouté au département",
+      "department_member_removed": "Membre retiré du département",
+      "canned_response_created": "Réponse préenregistrée créée",
+      "canned_response_updated": "Réponse préenregistrée mise à jour",
+      "canned_response_deleted": "Réponse préenregistrée supprimée",
+      "operating_hours_updated": "Horaires de travail mis à jour"
     }
   },
   "monitor": {
@@ -778,7 +793,10 @@
     "visitor": "Visiteur",
     "last_message": "Dernier message",
     "waiting_time": "Temps d'attente",
-    "no_requests": "Aucune demande en attente."
+    "no_requests": "Aucune demande en attente.",
+    "unassigned": "Non assigné",
+    "assigned_to_me": "Assigné à moi",
+    "bot_escalated": "Escaladé par le bot"
   },
   "bots": {
     "title": "Flux",
@@ -820,7 +838,7 @@
     "title": "Tableau de bord analytique",
     "subtitle": "Visualisez les indicateurs de performance clés.",
     "total_conversations": "Total des conversations",
-    "bot_handled": "Traitées par robot",
+    "bot_handled": "Traitées par bot",
     "avg_csat": "CSAT moyen",
     "avg_resolution_time": "Temps de résolution moyen",
     "total_conversations_desc": "Total des conversations sur la période.",
@@ -842,7 +860,15 @@
     "to": "Au",
     "last_30_days": "30 derniers jours",
     "ratings_count": "{count} évaluations",
-    "no_ratings_yet": "Aucune évaluation pour le moment"
+    "no_ratings_yet": "Aucune évaluation pour le moment",
+    "ai_topic_tags": "Étiquettes IA",
+    "ai_topic_tags_description": "Générées automatiquement à partir des conversations fermées",
+    "monthly_usage_quotas": "Quotas d'utilisation mensuels",
+    "monthly_usage_quotas_description": "Consommation du cycle de facturation en cours",
+    "conversation_volume": "Volume des conversations",
+    "conversation_volume_description": "Conversations quotidiennes réparties entre bot et agent",
+    "customer_satisfaction": "Satisfaction client",
+    "based_on_ratings": "Basé sur {count} avis"
   },
   "activities": {
     "title": "Journal d'activité",
@@ -851,6 +877,13 @@
     "no_activity": "Aucune activité pour le moment. Les actions des administrateurs apparaîtront ici.",
     "description": "Journal d'audit des actions effectuées dans ce projet, triées de la plus récente à la plus ancienne."
   },
+  "activity_log": {
+    "target": "Cible",
+    "action": "Action",
+    "actor": "Acteur",
+    "date": "Date"
+  },
+
   "history": {
     "title": "Historique des conversations",
     "subtitle": "Archive des conversations clôturées et résolues.",
