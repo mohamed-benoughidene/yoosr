@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useProject } from "@/context/ProjectContext";
@@ -45,8 +45,17 @@ function NodePropertiesPanelContent({
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
     const labels = useQuery(api.settings.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
-
     const data = (node?.data || {}) as Record<string, any>;
+    const [localVariations, setLocalVariations] = useState<string[]>(() => 
+        data.textVariations || (data.text ? [data.text] : [""])
+    );
+
+    useEffect(() => {
+        if (node?.id) {
+            const dataV = (node?.data || {}) as Record<string, any>;
+            setLocalVariations(dataV.textVariations || (dataV.text ? [dataV.text] : [""]));
+        }
+    }, [node?.id]);
     const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     const update = useCallback(
@@ -100,22 +109,22 @@ function NodePropertiesPanelContent({
                             <div className="flex items-center justify-between pointer-events-auto">
                                 <Label className="text-xs">{t("properties.messageVariations")}</Label>
                                 <Button variant="ghost" size="sm" onClick={() => {
-                                    const textVariations = [...(data.textVariations || (data.text ? [data.text] : [""]))];
-                                    if (!data.textVariations && !data.text) textVariations[0] = "";
-                                    textVariations.push("");
-                                    update("textVariations", textVariations);
+                                    const next = [...localVariations, ""];
+                                    setLocalVariations(next);
+                                    update("textVariations", next);
+                                    update("text", next[0]);
                                 }} className="h-6 px-2 text-xs">
                                     <Plus className="mr-1 h-3 w-3" /> {t("properties.addVariation")}
                                 </Button>
                             </div>
-                            {(data.textVariations || (data.text ? [data.text] : [""])).map((text: string, i: number) => (
+                            {localVariations.map((text: string, i: number) => (
                                 <div key={`variation-${i}`} className="flex flex-col gap-1 relative border p-2 rounded-md bg-muted/30 pointer-events-auto">
-                                    {((data.textVariations || [data.text]).length > 1) && (
+                                    {localVariations.length > 1 && (
                                         <Button variant="ghost" size="icon" onClick={() => {
-                                            const textVariations = [...(data.textVariations || [data.text])];
-                                            textVariations.splice(i, 1);
-                                            update("textVariations", textVariations);
-                                            if (i === 0 && textVariations.length > 0) update("text", textVariations[0]);
+                                            const next = localVariations.filter((_, idx) => idx !== i);
+                                            setLocalVariations(next);
+                                            update("textVariations", next);
+                                            if (i === 0 && next.length > 0) update("text", next[0]);
                                         }} className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-background border shadow-sm">
                                             <X className="h-3 w-3" />
                                         </Button>
@@ -123,10 +132,12 @@ function NodePropertiesPanelContent({
                                     <Textarea
                                         value={text}
                                         onChange={(e) => {
-                                            const textVariations = [...(data.textVariations || (data.text ? [data.text] : [""]))];
-                                            textVariations[i] = e.target.value;
-                                            update("textVariations", textVariations);
-                                            if (i === 0) update("text", e.target.value);
+                                            const newVal = e.target.value;
+                                            const next = [...localVariations];
+                                            next[i] = newVal;
+                                            setLocalVariations(next);
+                                            update("textVariations", next);
+                                            if (i === 0) update("text", newVal);
                                         }}
                                         className="min-h-[60px] text-xs resize-none"
                                         placeholder={t("properties.variationPlaceholder")}
