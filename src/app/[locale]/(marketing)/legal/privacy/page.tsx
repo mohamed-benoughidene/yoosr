@@ -13,7 +13,7 @@ export default async function PrivacyPolicy({ params }: { params: Promise<{ loca
   const lastUpdated = "March 2025";
 
   return (
-    <div className="py-16 md:py-24">
+    <div dir="ltr" className="py-16 md:py-24 text-left">
       <div className="container max-w-3xl mx-auto px-6">
         {/* Header */}
         <div className="mb-12">
