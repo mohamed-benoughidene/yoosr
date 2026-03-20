@@ -88,6 +88,16 @@ export const getByOrgId = query({
     },
 });
 
+export const getByOrgIdInternal = internalQuery({
+    args: { orgId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("projects")
+            .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+            .first();
+    },
+});
+
 // Create a default project if it doesn't exist for this active organization
 export const ensureProject = mutation({
     args: { orgId: v.string() },

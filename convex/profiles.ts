@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Get the current user's profile
 export const getMe = query({
@@ -217,6 +218,12 @@ export const setAvailability = mutation({
                 orgId: (identity as any).org_id,
                 updatedAt: Date.now(),
                 lastSeenAt: Date.now(),
+            });
+        }
+
+        if (args.isAvailable && (identity as any).org_id) {
+            await ctx.scheduler.runAfter(0, internal.routing.retryRoutingForAgent, {
+                orgId: (identity as any).org_id,
             });
         }
     },

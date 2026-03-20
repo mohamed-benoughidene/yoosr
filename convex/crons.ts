@@ -23,4 +23,11 @@ crons.interval(
     internal.profiles.cleanupStalePresence,
 );
 
+// Retry routing for unassigned conversations every 5 minutes
+crons.interval(
+    "retry unassigned conversations",
+    { minutes: 5 },
+    internal.routing.retryUnassignedConversations,
+);
+
 export default crons;

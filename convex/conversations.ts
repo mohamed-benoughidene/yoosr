@@ -42,6 +42,31 @@ export const get = query({
     },
 });
 
+export const listUnassignedInternal = internalQuery({
+    args: { projectId: v.id("projects"), limit: v.number() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId_status", (q) => q.eq("projectId", args.projectId).eq("status", 100))
+            .filter((q) => q.eq(q.field("assignedTo"), undefined))
+            .take(args.limit);
+    },
+});
+
+export const listStaleUnassignedInternal = internalQuery({
+    args: { projectId: v.id("projects"), limit: v.number(), threshold: v.number() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId_status", (q) => q.eq("projectId", args.projectId).eq("status", 100))
+            .filter((q) => q.and(
+                q.eq(q.field("assignedTo"), undefined),
+                q.lt(q.field("updatedAt"), args.threshold)
+            ))
+            .take(args.limit);
+    },
+});
+
 // Get the real-time bot state for the design studio debugger
 export const getBotState = query({
     args: { conversationId: v.id("conversations") },

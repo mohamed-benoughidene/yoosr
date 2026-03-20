@@ -155,6 +155,74 @@ export const routeConversation = internalMutation({
                 status: 100, // pooled
                 updatedAt: Date.now(),
             });
+
+            // Notify all agents in the organization about the unassigned conversation
+            if (project.orgId) {
+                const profiles = await ctx.db
+                    .query("profiles")
+                    .withIndex("by_orgId", (q) => q.eq("orgId", project.orgId!))
+                    .take(100);
+
+                for (const profile of profiles) {
+                    await ctx.scheduler.runAfter(0, internal.notifications.createNotification, {
+                        projectId: args.projectId,
+                        recipientId: profile.userId,
+                        type: "unassigned_conversation",
+                        title: "New unassigned conversation",
+                        body: conversation.visitorName || "Anonymous visitor",
+                        conversationId: args.conversationId,
+                    });
+                }
+            }
         }
     },
+});
+
+export const retryRoutingForAgent = internalAction({
+    args: { orgId: v.string() },
+    handler: async (ctx, args) => {
+        const project = await ctx.runQuery(internal.projects.getByOrgIdInternal, { orgId: args.orgId });
+        if (!project) return;
+
+        const conversations = await ctx.runQuery(internal.conversations.listUnassignedInternal, {
+            projectId: project._id,
+            limit: 20
+        });
+
+        for (const conv of conversations) {
+            try {
+                await ctx.runMutation(internal.routing.routeConversation, {
+                    conversationId: conv._id,
+                    projectId: conv.projectId,
+                });
+            } catch (e) {
+                console.error("Error retrying routing for conversation", conv._id, e);
+            }
+        }
+    }
+});
+
+export const retryUnassignedConversations = internalMutation({
+    args: {},
+    handler: async (ctx) => {
+        const projects = await ctx.db.query("projects").take(100);
+        const threshold = Date.now() - 300000;
+        for (const project of projects) {
+            const conversations = await ctx.db
+                .query("conversations")
+                .withIndex("by_projectId_status", (q) => q.eq("projectId", project._id).eq("status", 100))
+                .filter((q) => q.and(
+                    q.eq(q.field("assignedTo"), undefined),
+                    q.lt(q.field("updatedAt"), threshold)
+                ))
+                .take(50);
+
+            for (const conv of conversations) {
+                await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
+                    conversationId: conv._id,
+                    projectId: project._id,
+                });
+            }
+        }
+    }
 });

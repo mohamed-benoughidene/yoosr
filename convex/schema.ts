@@ -313,6 +313,7 @@ export default defineSchema({
         type: v.union(
             v.literal("new_message"),
             v.literal("assigned"),
+            v.literal("unassigned_conversation"),
             v.literal("escalation"),
             v.literal("resolved")
         ),
