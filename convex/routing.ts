@@ -76,7 +76,7 @@ export const routeConversation = internalMutation({
         let availableAgents = await ctx.db
             .query("profiles")
             .withIndex("by_orgId_isAvailable", (q) => q.eq("orgId", project.orgId).eq("isAvailable", true))
-            .collect();
+            .take(50);
 
 
 
@@ -107,7 +107,7 @@ export const routeConversation = internalMutation({
             const activeConversations = await ctx.db
                 .query("conversations")
                 .withIndex("by_projectId_status", (q) => q.eq("projectId", args.projectId).eq("status", 200))
-                .collect();
+                .take(500);
 
             const agentLoads = new Map<string, number>();
             availableAgents.forEach(a => agentLoads.set(a.userId!, 0));
