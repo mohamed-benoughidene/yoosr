@@ -106,7 +106,7 @@ export const unreadCount = query({
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
             .filter((q) => q.eq(q.field("read"), false))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(50); // TODO: replace with paginated aggregation
 
         return notifications.length;
     },
@@ -153,7 +153,7 @@ export const markAllRead = mutation({
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
             .filter((q) => q.eq(q.field("read"), false))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(50); // TODO: replace with paginated aggregation
 
         for (const notif of notifications) {
             await ctx.db.patch(notif._id, { read: true });
@@ -184,7 +184,7 @@ export const clearAll = mutation({
             .withIndex("by_project_recipient", (q) =>
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
-            .take(500); // TODO: replace with paginated aggregation
+            .take(50); // TODO: replace with paginated aggregation
 
         for (const notif of notifications) {
             await ctx.db.delete(notif._id);
@@ -198,7 +198,7 @@ export const cleanupOldNotifications = internalMutation({
         const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         const oldNotifications = await ctx.db
             .query("notifications")
-            .filter((q) => q.lt(q.field("createdAt"), sevenDaysAgo))
+            .withIndex("by_createdAt", (q) => q.lt("createdAt", sevenDaysAgo))
             .take(500); // TODO: replace with paginated aggregation
 
         for (const notif of oldNotifications) {

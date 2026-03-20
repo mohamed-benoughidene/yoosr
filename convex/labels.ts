@@ -10,6 +10,6 @@ export const listLabels = query({
         return await ctx.db
             .query("labels")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(200); // TODO: replace with paginated aggregation
     },
 });

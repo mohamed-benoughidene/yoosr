@@ -23,11 +23,17 @@ export const getHomeStats = query({
         const botsCount = bots.length;
 
         // 2. Fetch active and recent conversations (exclude resolved)
-        const allConversations = await ctx.db
+        const unassignedConversations = await ctx.db
             .query("conversations")
-            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .filter(q => q.neq(q.field("status"), 1000))
-            .take(500); // TODO: replace with paginated aggregation
+            .withIndex("by_projectId_status", q => q.eq("projectId", args.projectId).eq("status", 100))
+            .take(250);
+            
+        const assignedConversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId_status", q => q.eq("projectId", args.projectId).eq("status", 200))
+            .take(250);
+
+        const allConversations = [...unassignedConversations, ...assignedConversations];
 
         // Live Stats Row
         const openConversations = allConversations.filter(c => c.status === 100 || c.status === 200);

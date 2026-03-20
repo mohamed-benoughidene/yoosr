@@ -77,7 +77,9 @@ export default defineSchema({
         channelSenderId: v.optional(v.string()),
     })
         .index("by_projectId", ["projectId"])
-        .index("by_projectId_status", ["projectId", "status"]),
+        .index("by_projectId_status", ["projectId", "status"])
+        .index("by_projectId_visitorId", ["projectId", "visitorId"])
+        .index("by_projectId_channelSenderId", ["projectId", "channelSenderId"]),
 
     // Bot execution state — separated from conversations to avoid OCC write conflicts
     conversation_bot_state: defineTable({
@@ -229,7 +231,8 @@ export default defineSchema({
         conversationId: v.optional(v.id("conversations")),
     })
         .index("by_projectId", ["projectId"])
-        .index("by_conversationId", ["conversationId"]),
+        .index("by_conversationId", ["conversationId"])
+        .index("by_projectId_email", ["projectId", "email"]),
 
     // Knowledge base document chunks + embeddings
     knowledge_base_chunks: defineTable({
@@ -324,7 +327,8 @@ export default defineSchema({
         createdAt: v.number(),
     })
         .index("by_recipient", ["recipientId", "createdAt"])
-        .index("by_project_recipient", ["projectId", "recipientId"]),
+        .index("by_project_recipient", ["projectId", "recipientId"])
+        .index("by_createdAt", ["createdAt"]),
 
     // Orders placed through chat or agents
     orders: defineTable({

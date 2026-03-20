@@ -313,17 +313,23 @@ export const createFromWidget = internalMutation({
         }
         // Sync to Contacts table if we have contact info
         if (args.visitorEmail || args.visitorPhone) {
-            // Check if contact exists by email or phone (simple scan for now)
-            // Ideally we'd have an index, but for now we iterate or just create
-            const existingContacts = await ctx.db
-                .query("contacts")
-                .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-                .take(500); // TODO: replace with paginated aggregation
-
-            let contactId = existingContacts.find(c =>
-                (args.visitorEmail && c.email === args.visitorEmail) ||
-                (args.visitorPhone && c.phone === args.visitorPhone)
-            )?._id;
+            // Check if contact exists by email or phone
+            let contactId;
+            if (args.visitorEmail) {
+                const byEmail = await ctx.db
+                    .query("contacts")
+                    .withIndex("by_projectId_email", (q) => q.eq("projectId", args.projectId).eq("email", args.visitorEmail!))
+                    .first();
+                if (byEmail) contactId = byEmail._id;
+            }
+            if (!contactId && args.visitorPhone) {
+                const byPhone = await ctx.db
+                    .query("contacts")
+                    .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+                    .filter((q) => q.eq(q.field("phone"), args.visitorPhone))
+                    .first();
+                if (byPhone) contactId = byPhone._id;
+            }
 
             if (contactId) {
                 // Update existing
@@ -951,14 +957,13 @@ export const createOrUpdateFromMeta = internalMutation({
 
         // 3. Find or create the conversation
         let conversationId;
-        const existingConversations = await ctx.db
+        const openConversation = await ctx.db
             .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
-            .take(500); // TODO: replace with paginated aggregation
-
-        const openConversation = existingConversations.find(
-            (c) => c.channelSenderId === args.senderId && c.status !== 1000
-        );
+            .withIndex("by_projectId_channelSenderId", (q) => 
+                q.eq("projectId", integration.projectId).eq("channelSenderId", args.senderId)
+            )
+            .filter((q) => q.neq(q.field("status"), 1000))
+            .first();
 
         const isNew = !openConversation;
 
@@ -1186,14 +1191,13 @@ export const createOrUpdateFromTelegram = internalMutation({
 
         // 3. Find or create the conversation
         let conversationId;
-        const existingConversations = await ctx.db
+        const openConversation = await ctx.db
             .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", integration.projectId))
-            .take(500); // TODO: replace with paginated aggregation
-
-        const openConversation = existingConversations.find(
-            (c) => c.channelSenderId === args.chatId && c.status !== 1000
-        );
+            .withIndex("by_projectId_channelSenderId", (q) => 
+                q.eq("projectId", integration.projectId).eq("channelSenderId", args.chatId)
+            )
+            .filter((q) => q.neq(q.field("status"), 1000))
+            .first();
 
         const isNew = !openConversation;
 

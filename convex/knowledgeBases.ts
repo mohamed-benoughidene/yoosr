@@ -78,7 +78,7 @@ export const listSources = query({
         return await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(100); // TODO: replace with paginated aggregation
     },
 });
 

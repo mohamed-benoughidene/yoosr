@@ -115,7 +115,7 @@ export const remove = mutation({
         const flows = await ctx.db
             .query("bot_flows")
             .withIndex("by_botId", (q) => q.eq("botId", args.id))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(500);
 
         for (const flow of flows) {
             await ctx.db.delete(flow._id);
