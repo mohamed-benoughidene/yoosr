@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle, Send, Loader2 } from "lucide-react"
+import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle, Send, Loader2, Phone } from "lucide-react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
 
@@ -22,7 +22,7 @@ interface IntegrationField {
 }
 
 interface IntegrationDef {
-    id: "telegram" | "messenger" | "instagram"
+    id: "telegram" | "messenger" | "instagram" | "whatsapp"
     name: string
     description: string
     category: "channel"
@@ -83,6 +83,17 @@ export default function IntegrationsPage() {
             ], 
             instructions: t("instagram_instructions") 
         },
+        { 
+            id: "whatsapp", 
+            name: "WhatsApp", 
+            description: t("whatsapp_description"), 
+            category: "channel", 
+            icon: <Phone className="h-5 w-5" />, 
+            color: "bg-green-100 text-green-700", 
+            locked: false, 
+            fields: [], 
+            instructions: t("whatsapp_instructions") 
+        },
     ]
 
     const { activeProject } = useProject()
@@ -98,6 +109,13 @@ export default function IntegrationsPage() {
     const [testResult, setTestResult] = useState<{ ok: boolean, model?: string, message?: string, error?: string } | null>(null)
     const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "")
     const [savingModel, setSavingModel] = useState(false)
+    
+    // WhatsApp Specific States
+    const [phoneNumberId, setPhoneNumberId] = useState("")
+    const [accessToken, setAccessToken] = useState("")
+    const [verifyToken, setVerifyToken] = useState("")
+    const [whatsappEnabled, setWhatsappEnabled] = useState(false)
+    const [hasExistingToken, setHasExistingToken] = useState(false)
 
     const updateProject = useMutation(api.projects.update)
 
@@ -110,6 +128,24 @@ export default function IntegrationsPage() {
     }, [activeProject?._id, activeProject?.defaultModel])
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
+    
+    useEffect(() => {
+        if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
+            const saved = (integrations ?? []).find((r: any) => r.provider === "whatsapp")
+            if (saved) {
+                setPhoneNumberId(saved.credentials?.phone_number_id || "")
+                setVerifyToken(saved.credentials?.verify_token || "")
+                setWhatsappEnabled(saved.enabled || false)
+                setHasExistingToken(!!saved.credentials?.access_token)
+            } else {
+                setPhoneNumberId("")
+                setVerifyToken("")
+                setWhatsappEnabled(false)
+                setHasExistingToken(false)
+            }
+            setAccessToken("")
+        }
+    }, [activeConfig, integrations])
     const upsertIntegration = useMutation(api.integrations.upsert)
     const saveChannelIntegration = useAction(api.integrations.saveChannelIntegration)
     const registerWebhook = useAction(api.integrations.registerTelegramWebhook)
@@ -138,7 +174,19 @@ export default function IntegrationsPage() {
         if (!activeProject || !activeConfig || activeConfig === "openrouter") return
         setSaving(true)
         try {
-            if (activeConfig.category === "channel") {
+            if (activeConfig.id === "whatsapp") {
+                await saveChannelIntegration({
+                    projectId: activeProject._id,
+                    provider: "whatsapp",
+                    credentials: {
+                        phone_number_id: phoneNumberId,
+                        access_token: accessToken,
+                        verify_token: verifyToken
+                    },
+                    enabled: whatsappEnabled
+                })
+                toast.success(t("whatsapp_connected"))
+            } else if (activeConfig.category === "channel") {
                 await saveChannelIntegration({ projectId: activeProject._id, provider: activeConfig.id, credentials: formValues, enabled: formEnabled })
             } else {
                 await upsertIntegration({ projectId: activeProject._id, provider: activeConfig.id, credentials: formValues, enabled: formEnabled })
@@ -341,6 +389,105 @@ export default function IntegrationsPage() {
                         )}
                     </Button>
                 </Card>
+            </div>
+        )
+    }
+
+    // WhatsApp Specific Detail View
+    if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={() => setActiveConfig(null)} className="h-8 w-8">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h3 className="text-lg font-medium flex items-center gap-2">
+                            <span className={`inline-flex items-center justify-center h-8 w-8 rounded-lg text-sm ${activeConfig.color}`}>
+                                {activeConfig.icon}
+                            </span>
+                            {activeConfig.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{activeConfig.description}</p>
+                    </div>
+                </div>
+                <Separator />
+                <Card className="p-5">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-sm font-medium">{t("enable_integration", { name: activeConfig.name })}</Label>
+                            <p className="text-xs text-muted-foreground">{t("enable_desc")}</p>
+                        </div>
+                        <Switch checked={whatsappEnabled} onCheckedChange={setWhatsappEnabled} />
+                    </div>
+                </Card>
+                <Card className="p-5 space-y-4">
+                    <h4 className="text-sm font-medium">{t("credentials")}</h4>
+                    
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="phoneNumberId" className="text-sm">{t("phone_number_id_label")}</Label>
+                        <Input 
+                            id="phoneNumberId" 
+                            type="text" 
+                            placeholder={t("phone_number_id_label")} 
+                            value={phoneNumberId} 
+                            onChange={e => setPhoneNumberId(e.target.value)} 
+                        />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="accessToken" className="text-sm">{t("access_token_label")}</Label>
+                        <Input 
+                            id="accessToken" 
+                            type="password" 
+                            placeholder={hasExistingToken ? t("token_saved_placeholder") : t("token_placeholder")} 
+                            value={accessToken} 
+                            onChange={e => setAccessToken(e.target.value)} 
+                        />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="verifyToken" className="text-sm">{t("verify_token_label")}</Label>
+                        <div className="flex gap-2">
+                            <Input 
+                                id="verifyToken" 
+                                type="text" 
+                                placeholder={t("verify_token_label")} 
+                                value={verifyToken} 
+                                onChange={e => setVerifyToken(e.target.value)} 
+                            />
+                            <Button variant="outline" onClick={() => setVerifyToken(crypto.randomUUID())}>
+                                {t("generate_token")}
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="p-5 bg-muted/30">
+                    <details className="group">
+                        <summary className="text-sm font-medium cursor-pointer list-none flex items-center gap-2">
+                            <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+                            {t("setup_guide_title")}
+                        </summary>
+                        <div className="mt-4 text-sm text-muted-foreground">
+                            <a 
+                                href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                            >
+                                {t("setup_guide_link")}
+                            </a>
+                        </div>
+                    </details>
+                </Card>
+
+                <div className="flex justify-end">
+                    <Button onClick={handleSave} disabled={saving}>
+                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {saving ? t("saving") : t("save_config")}
+                    </Button>
+                </div>
             </div>
         )
     }

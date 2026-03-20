@@ -72,7 +72,7 @@ export default defineSchema({
         firstResponseAt: v.optional(v.number()),
         slaDeadline: v.optional(v.number()),
         // External channels
-        channel: v.optional(v.union(v.literal("widget"), v.literal("messenger"), v.literal("instagram"), v.literal("telegram"))),
+        channel: v.optional(v.union(v.literal("widget"), v.literal("messenger"), v.literal("instagram"), v.literal("telegram"), v.literal("whatsapp"))),
         channelSenderId: v.optional(v.string()),
     })
         .index("by_projectId", ["projectId"])

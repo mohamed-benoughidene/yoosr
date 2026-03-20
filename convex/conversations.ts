@@ -4,6 +4,8 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { decryptSecret } from "./lib/crypto";
 
+const GRAPH_API_VERSION = "v24.0";
+
 // List conversations for a project
 export const list = query({
     args: {
@@ -877,11 +879,13 @@ export const listResolved = query({
 // Create or update conversation from Meta (Messenger / Instagram)
 export const createOrUpdateFromMeta = internalMutation({
     args: {
-        pageId: v.string(),
+        pageId: v.optional(v.string()),
+        phoneNumberId: v.optional(v.string()),
         senderId: v.string(),
+        senderName: v.optional(v.string()),
         messageText: v.optional(v.string()),
         messageId: v.string(),
-        channel: v.union(v.literal("messenger"), v.literal("instagram"))
+        channel: v.union(v.literal("messenger"), v.literal("instagram"), v.literal("whatsapp"))
     },
     handler: async (ctx, args) => {
         // 1. Deduplicate
@@ -895,15 +899,26 @@ export const createOrUpdateFromMeta = internalMutation({
         }
 
         // 2. Find the project integration
-        const integrations = await ctx.db
-            .query("integrations")
-            .filter((q) => q.eq(q.field("provider"), args.channel))
-            .filter((q) => q.eq(q.field("enabled"), true))
-            .take(100);
-
-        const integration = integrations.find(
-            (i) => i.credentials && i.credentials.page_id === args.pageId
-        );
+        let integration: any;
+        if (args.channel === "whatsapp") {
+            const rows = await ctx.db
+                .query("integrations")
+                .filter((q) => q.eq(q.field("provider"), "whatsapp"))
+                .filter((q) => q.eq(q.field("enabled"), true))
+                .take(500);
+            integration = rows.find(
+                (i) => i.credentials && i.credentials.phone_number_id === args.phoneNumberId
+            );
+        } else {
+            const integrations = await ctx.db
+                .query("integrations")
+                .filter((q) => q.eq(q.field("provider"), args.channel))
+                .filter((q) => q.eq(q.field("enabled"), true))
+                .take(100);
+            integration = integrations.find(
+                (i) => i.credentials && i.credentials.page_id === args.pageId
+            );
+        }
 
         if (!integration) {
             return;
@@ -929,7 +944,7 @@ export const createOrUpdateFromMeta = internalMutation({
             conversationId = await ctx.db.insert("conversations", {
                 projectId: integration.projectId,
                 visitorId: args.senderId,
-                visitorName: args.channel === "messenger" ? "Messenger User" : "Instagram User",
+                visitorName: args.senderName ?? (args.channel === "messenger" ? "Messenger User" : args.channel === "instagram" ? "Instagram User" : "WhatsApp User"),
                 channel: args.channel,
                 channelSenderId: args.senderId,
                 status: 100,
@@ -990,11 +1005,53 @@ export const sendMetaMessage = internalAction({
     args: {
         conversationId: v.id("conversations"),
         content: v.string(),
+        channel: v.optional(v.string()),
     },
     handler: async (ctx, args): Promise<string | undefined> => {
         // 1. Fetch the conversation
         const conversation: any = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
         if (!conversation) return undefined;
+
+        if (args.channel === "whatsapp" || conversation.channel === "whatsapp") {
+            const creds = await ctx.runQuery(internal.integrations.getDecryptedWhatsAppCredentials, {
+                projectId: conversation.projectId,
+            });
+            if (!creds || !creds.enabled) {
+                console.log("[sendMetaMessage] WhatsApp integration not found or disabled");
+                return undefined;
+            }
+            const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${creds.phoneNumberId}/messages`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${creds.accessToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: conversation.channelSenderId,
+                    type: "text",
+                    text: { preview_url: false, body: args.content },
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                const code = err?.error?.code;
+                const msg = err?.error?.message;
+                const labels: Record<number, string> = {
+                    131047: "session expired (24h window closed)",
+                    130429: "rate limit hit",
+                    131048: "spam rate limit",
+                    131056: "per-recipient rate limit",
+                    190: "access token expired or invalid",
+                };
+                console.error(`[sendMetaMessage] WhatsApp error ${code}: ${labels[code] ?? ""} — ${msg}`);
+                return undefined;
+            }
+            const data = await res.json();
+            return data?.messages?.[0]?.id;
+        }
 
         // 2. Only proceed for Meta channels
         if (conversation.channel !== "messenger" && conversation.channel !== "instagram") return undefined;

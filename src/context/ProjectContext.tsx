@@ -17,6 +17,7 @@ interface Project {
     widgetConfig?: any
     userRole?: string
     slaHours?: number
+    widgetLocale?: "en" | "ar" | "fr"
 }
 
 interface ProjectContextType {

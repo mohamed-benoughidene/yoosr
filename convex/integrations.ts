@@ -148,6 +148,10 @@ export const saveChannelIntegration = action({
             encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
         }
 
+        if (args.provider === "whatsapp" && args.credentials.access_token) {
+            encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
+        }
+
         await ctx.runMutation(internal.integrations.patchCredentials, {
             projectId: args.projectId,
             provider: args.provider,
@@ -201,5 +205,47 @@ export const registerTelegramWebhook = action({
         return { success: true };
     },
 });
+export const getDecryptedWhatsAppCredentials = internalQuery({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const row = await ctx.db
+            .query("integrations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("provider"), "whatsapp"))
+            .first();
 
+        if (!row) return null;
 
+        const key = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        if (!key) throw new Error("Encryption key not configured");
+
+        const credentials = row.credentials as any;
+        const decryptedToken = await decryptSecret(credentials.access_token, key);
+
+        return {
+            phoneNumberId: credentials.phone_number_id,
+            accessToken: decryptedToken,
+            verifyToken: credentials.verify_token,
+            enabled: row.enabled ?? false,
+        };
+    },
+});
+
+export const getWhatsAppIntegrationByPhoneNumberId = internalQuery({
+    args: { phoneNumberId: v.string() },
+    handler: async (ctx, args) => {
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) => 
+                q.and(
+                    q.eq(q.field("provider"), "whatsapp"),
+                    q.eq(q.field("enabled"), true)
+                )
+            )
+            .take(500);
+
+        return integrations.find(
+            (i) => (i.credentials as any)?.phone_number_id === args.phoneNumberId
+        );
+    },
+});

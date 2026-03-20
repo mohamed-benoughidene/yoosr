@@ -331,7 +331,82 @@ http.route({
     method: "POST",
     handler: httpAction(async (ctx, request) => {
         try {
-            const body = await request.json();
+            const rawBody = await request.text();
+            const body = JSON.parse(rawBody);
+            const signature = request.headers.get("X-Hub-Signature-256");
+            const appSecret = process.env.META_APP_SECRET;
+
+            if (appSecret) {
+                const encoder = new TextEncoder();
+                const key = await crypto.subtle.importKey(
+                    "raw",
+                    encoder.encode(appSecret),
+                    { name: "HMAC", hash: "SHA-256" },
+                    false,
+                    ["sign"]
+                );
+                const signatureBuffer = await crypto.subtle.sign(
+                    "HMAC",
+                    key,
+                    encoder.encode(rawBody)
+                );
+                const hashArray = Array.from(new Uint8Array(signatureBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                const expectedSignature = `sha256=${hashHex}`;
+
+                if (!signature || signature !== expectedSignature) {
+                    return new Response("Forbidden", { status: 403 });
+                }
+            } else {
+                console.warn("META_APP_SECRET not set, skipping signature validation");
+            }
+
+            if (body.object === "whatsapp_business_account") {
+                if (body.entry && Array.isArray(body.entry)) {
+                    for (const entry of body.entry) {
+                        if (entry.changes && Array.isArray(entry.changes)) {
+                            for (const change of entry.changes) {
+                                if (change.field === "messages") {
+                                    const phoneNumberId = change.value.metadata.phone_number_id;
+                                    const integration = await ctx.runQuery(internal.integrations.getWhatsAppIntegrationByPhoneNumberId, {
+                                        phoneNumberId: phoneNumberId,
+                                    });
+
+                                    if (!integration) continue;
+                                    
+                                    if (change.value.messages && Array.isArray(change.value.messages)) {
+                                        for (const message of change.value.messages) {
+                                            if (message.type !== "text") continue;
+
+                                            let senderId = message.from;
+                                            let senderName = message.from;
+
+                                            if (change.value.contacts && Array.isArray(change.value.contacts)) {
+                                                const contact = change.value.contacts.find((c: any) => c.wa_id === message.from);
+                                                if (contact) {
+                                                    senderId = contact.wa_id;
+                                                    senderName = contact.profile?.name || senderId;
+                                                }
+                                            }
+
+                                            await ctx.runMutation(internal.conversations.createOrUpdateFromMeta, {
+                                                channel: "whatsapp",
+                                                pageId: undefined,
+                                                phoneNumberId: phoneNumberId,
+                                                senderId: senderId,
+                                                senderName: senderName,
+                                                messageText: message.text.body,
+                                                messageId: message.id,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return new Response("OK", { status: 200 });
+            }
 
             if (body.object !== "page" && body.object !== "instagram") {
                 return new Response("Not Found", { status: 404 });
@@ -351,7 +426,6 @@ http.route({
                             const messageId = messaging.message.mid;
                             const channel = body.object === "instagram" ? "instagram" : "messenger";
 
-                            // @ts-ignore - Will be implemented later
                             await ctx.runMutation(internal.conversations.createOrUpdateFromMeta, {
                                 pageId,
                                 senderId,

@@ -1535,7 +1535,17 @@
       "messenger_instructions": "Create an app at developers.facebook.com.",
       "instagram_description": "Instagram DMs via Meta Graph API",
       "account_id_label": "Account ID",
-      "instagram_instructions": "Connect your Professional Account."
+      "instagram_instructions": "Connect your Professional Account.",
+      "whatsapp_description": "WhatsApp Business via Meta Cloud API",
+      "whatsapp_instructions": "Connect your WhatsApp Business Account.",
+      "phone_number_id_label": "Phone Number ID",
+      "verify_token_label": "Verify Token",
+      "generate_token": "Generate",
+      "whatsapp_connected": "WhatsApp connected",
+      "token_saved_placeholder": "Token saved — enter a new value to replace it",
+      "token_placeholder": "Paste your access token",
+      "setup_guide_title": "How to set this up",
+      "setup_guide_link": "Meta Cloud API setup guide"
     },
     "webhooks": {
       "title": "Webhooks & RestHooks",
