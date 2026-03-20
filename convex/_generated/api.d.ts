@@ -12,7 +12,6 @@ import type * as activityLogs from "../activityLogs.js";
 import type * as aiFlowBuilder from "../aiFlowBuilder.js";
 import type * as analytics from "../analytics.js";
 import type * as bot from "../bot.js";
-import type * as botEngine from "../botEngine.js";
 import type * as botFlows from "../botFlows.js";
 import type * as bots from "../bots.js";
 import type * as contacts from "../contacts.js";
@@ -56,7 +55,6 @@ declare const fullApi: ApiFromModules<{
   aiFlowBuilder: typeof aiFlowBuilder;
   analytics: typeof analytics;
   bot: typeof bot;
-  botEngine: typeof botEngine;
   botFlows: typeof botFlows;
   bots: typeof bots;
   contacts: typeof contacts;

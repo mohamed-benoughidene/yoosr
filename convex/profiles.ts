@@ -253,10 +253,13 @@ export const cleanupStalePresence = internalMutation({
     args: {},
     handler: async (ctx) => {
         const threshold = Date.now() - 90000;
+        // Known limitation: This is a global cron that runs across all orgs.
+        // We use .take(500) to prevent runaway bandwidth.
+        // Revisit this when per-org cron scheduling is available.
         const onlineProfiles = await ctx.db
             .query("profiles")
             .filter((q) => q.eq(q.field("isAvailable"), true))
-            .collect();
+            .take(500);
 
         for (const profile of onlineProfiles) {
             if (profile.lastSeenAt && profile.lastSeenAt < threshold) {

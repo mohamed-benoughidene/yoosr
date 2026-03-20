@@ -75,8 +75,7 @@ export const routeConversation = internalMutation({
 
         let availableAgents = await ctx.db
             .query("profiles")
-            .withIndex("by_orgId", (q) => q.eq("orgId", project.orgId))
-            .filter((q) => q.eq(q.field("isAvailable"), true))
+            .withIndex("by_orgId_isAvailable", (q) => q.eq("orgId", project.orgId).eq("isAvailable", true))
             .collect();
 
 

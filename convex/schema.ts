@@ -14,7 +14,8 @@ export default defineSchema({
         orgId: v.optional(v.string()), // Added for multi-tenancy support
         updatedAt: v.optional(v.number()),
     }).index("by_userId", ["userId"])
-        .index("by_orgId", ["orgId"]),
+        .index("by_orgId", ["orgId"])
+        .index("by_orgId_isAvailable", ["orgId", "isAvailable"]),
 
     // Projects
     projects: defineTable({
