@@ -129,6 +129,9 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
             case "ask_kb":
                 actions.push({
                     _type: "ask_kb",
+                    knowledgeBaseId: data.knowledgeBaseId,
+                    systemPrompt: data.systemPrompt || "",
+                    maxTurns: data.maxTurns ?? 5,
                     query: data.query || "",
                     assignTo: data.assignTo || "kb_reply",
                     truePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target,

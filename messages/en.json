@@ -32,11 +32,11 @@
         "privacy": "Privacy Policy",
         "terms": "Terms of Service"
       },
-      "disclaimer": "Yoosr is currently in early access. Some features are still in development — expect frequent updates.",
+      "disclaimer": "Yoosr is currently in early access. Some features are still in development expect frequent updates.",
       "copyright": "Yoosr, Inc. Open Source. MIT License."
     },
     "meta": {
-      "title": "Yoosr — Customer Support for MENA Businesses",
+      "title": "Yoosr Customer Support for MENA Businesses",
       "description": "Live chat, bot automation, and team inbox built for MENA businesses. Start for free."
     },
     "page": {
@@ -51,9 +51,9 @@
       ]
     },
     "hero": {
-      "badge": "Now live — Web, Telegram, Facebook & Instagram",
+      "badge": "Now live Web, Telegram, Facebook & Instagram",
       "headline": "The customer support platform <br/> <italic>built for MENA</italic>",
-      "description": "Automate conversations with AI bots, manage your team's inbox in real time, and close every ticket — <highlight>in Arabic or English</highlight> — across every channel.",
+      "description": "Automate conversations with AI bots, manage your team's inbox in real time, and close every ticket <highlight>in Arabic or English</highlight> across every channel.",
       "cta": {
         "primary": "Start for free",
         "secondary": "See a live demo"
@@ -71,14 +71,14 @@
     },
     "cta": {
       "headline": "Your support team deserves better tools.",
-      "description": "Set up your workspace, embed the widget, and have your first bot live today — no credit card required.",
+      "description": "Set up your workspace, embed the widget, and have your first bot live today no credit card required.",
       "primary": "Start for free →",
       "secondary": "Talk to us"
     },
     "channels": {
       "badge": "Channels",
       "headline": "Meet your customers where they already are",
-      "description": "One inbox. Every channel. Conversations from Telegram, Facebook, Instagram, and your website — managed in one place.",
+      "description": "One inbox. Every channel. Conversations from Telegram, Facebook, Instagram, and your website managed in one place.",
       "items": [
         {
           "title": "Web Chat",
@@ -161,7 +161,7 @@
           "company": "Algiers Tech"
         },
         {
-          "quote": "The Design Studio is genuinely different. Our ops team built and deployed a full order-tracking bot in an afternoon — no developers involved.",
+          "quote": "The Design Studio is genuinely different. Our ops team built and deployed a full order-tracking bot in an afternoon no developers involved.",
           "author": "Nour Rahmani",
           "role": "Operations Lead",
           "company": "Dubai Boutique"
@@ -241,7 +241,7 @@
     "features": {
       "badge": "Core platform",
       "headline": "Every tool your support team actually needs",
-      "description": "From the first automated reply to the final resolved ticket — everything in one place.",
+      "description": "From the first automated reply to the final resolved ticket everything in one place.",
       "items": [
         {
           "title": "Live Monitor",
@@ -251,13 +251,13 @@
         },
         {
           "title": "AI Bot Studio",
-          "description": "Build flows with 19 block types — AI reply, knowledge base lookup, web requests, conditions, wait timers, and human handoff. No code required.",
+          "description": "Build flows with 19 block types AI reply, knowledge base lookup, web requests, conditions, wait timers, and human handoff. No code required.",
           "tag": "NO-CODE",
           "emoji": "🤖"
         },
         {
           "title": "Knowledge Base",
-          "description": "Upload your docs and FAQs. Bots retrieve answers via vector search — not keyword matching. Accurate, source-grounded replies.",
+          "description": "Upload your docs and FAQs. Bots retrieve answers via vector search not keyword matching. Accurate, source-grounded replies.",
           "tag": "VECTOR SEARCH",
           "emoji": "🧠"
         },
@@ -284,7 +284,7 @@
     "designStudio": {
       "badge": "Design Studio",
       "headline": "Build any conversation flow without code",
-      "description": "Connect blocks visually. Every flow is executed server-side in real time — no delays, no dropped messages.",
+      "description": "Connect blocks visually. Every flow is executed server-side in real time no delays, no dropped messages.",
       "items": [
         {
           "title": "Visual Builder",
@@ -330,7 +330,7 @@
   },
   "designStudio": {
     "meta": {
-      "title": "Design Studio — Yoosr",
+      "title": "Design Studio Yoosr",
       "description": "Build and configure your bot flows visually."
     },
     "editor": {
@@ -368,7 +368,7 @@
       "generate": "Generate",
       "toasts": {
         "generated": "Flow generated!",
-        "generatedDesc": "Canvas updated — review and tweak as needed.",
+        "generatedDesc": "Canvas updated review and tweak as needed.",
         "failed": "Generation failed",
         "timeout": "Request timed out",
         "timeoutDesc": "The AI took too long to respond. Try again in a moment.",
@@ -440,17 +440,18 @@
       "jsonHint": "If the LLM returns valid JSON, keys are auto-mapped to context attributes.",
       "aiAssistantPromptPlaceholder": "Define your AI assistant persona and guardrails...",
       "maxTurns": "Max Turns",
+      "maxTurnsHelper": "How many user messages this block handles before exiting via Success.",
       "saveFinalReplyTo": "Save final reply to variable",
-      "finalReplyPlaceholder": "e.g., assistant_reply",
+      "finalReplyPlaceholder": "e.g. assistant_reply",
       "multiTurnHint": "Suspends flow and gives full control to the LLM for multi-turn reasoning.",
       "delaySeconds": "Delay in Seconds",
       "operatingHoursHint": "This block checks your project's operating hours schedule at runtime.",
       "configureOperatingHours": "Configure Operating Hours →",
       "outputPaths": "Output Paths",
-      "withinHours": "TRUE — Within operating hours",
-      "outsideHours": "FALSE — Outside operating hours or disabled",
+      "withinHours": "TRUE Within operating hours",
+      "outsideHours": "FALSE Outside operating hours or disabled",
       "searchQuery": "Search Query",
-      "searchQueryPlaceholder": "e.g. {{user_message}}",
+      "searchQueryPlaceholder": "e.g. user_message",
       "assignResultTo": "Assign Result To Variable",
       "assignResultPlaceholder": "e.g. kb_reply",
       "labelName": "Label Name",
@@ -916,7 +917,6 @@
     "actor": "Actor",
     "date": "Date"
   },
-
   "history": {
     "title": "Conversation History",
     "subtitle": "Archive of closed and solved conversations.",
@@ -958,7 +958,7 @@
     "created_success": "Contact created successfully",
     "created_failed": "Failed to create contact",
     "imported": "Imported {count} contacts. {skipped} skipped.",
-    "skipped_rows": "rows skipped — missing name.",
+    "skipped_rows": "rows skipped missing name.",
     "contact_created": "Contact created successfully",
     "contact_create_failed": "Failed to create contact",
     "no_contacts_export": "No contacts to export.",
@@ -982,7 +982,7 @@
     "ready_to_import": "{count} contacts ready to import",
     "showing_contacts": "Showing {visible} of {total} contacts",
     "cancel": "Cancel",
-    "skipped_rows_count": "{count} rows skipped — missing name.",
+    "skipped_rows_count": "{count} rows skipped missing name.",
     "filter_by_name": "Filter by name...",
     "columns": "Columns",
     "select_all": "Select all",
@@ -1068,7 +1068,7 @@
     "delete": "Delete",
     "no_orders_message": "No orders found.",
     "ready_to_import": "{count} orders ready to import",
-    "skipped_rows": "{count} rows skipped — missing required fields.",
+    "skipped_rows": "{count} rows skipped missing required fields.",
     "showing_orders": "Showing {visible} of {total} orders",
     "cancel": "Cancel"
   },
@@ -1121,7 +1121,7 @@
     "added_to_kb": "Added to knowledge base",
     "failed_to_save_kb": "Failed to save to knowledge base",
     "unanswered_queries": "Unanswered Queries",
-    "unanswered_queries_desc": "Questions the bot couldn't answer — create KB entries to fill the gaps",
+    "unanswered_queries_desc": "Questions the bot couldn't answer create KB entries to fill the gaps",
     "no_unanswered": "No unanswered queries yet. 🎉",
     "query_col": "Query",
     "asked_col": "Asked",
@@ -1219,7 +1219,7 @@
       "sla_save_failed": "Failed to save SLA setting",
       "id_copied": "Project ID copied to clipboard",
       "copied_to_clipboard": "{label} copied to clipboard",
-      "openrouter_free_desc": "Free tier — uses community-shared API credits, may have rate limits.",
+      "openrouter_free_desc": "Free tier uses community-shared API credits, may have rate limits.",
       "save_changes": "Save Changes"
     },
     "widget": {
@@ -1345,8 +1345,8 @@
       "select_bot_placeholder": "Select a bot",
       "no_active_bots": "No active bots available",
       "routing_rules": "Routing Rules",
-      "mode_pooled": "Pooled — any available agent picks up",
-      "mode_assigned": "Assigned — route to specific agents",
+      "mode_pooled": "Pooled any available agent picks up",
+      "mode_assigned": "Assigned route to specific agents",
       "routing_mode_pooled": "Pooled",
       "tags": "Tags",
       "tag_placeholder": "Add a tag...",
@@ -1550,8 +1550,8 @@
       "select_events": "Select Events to Subscribe",
       "select_events_hint": "Select at least one event",
       "select_one_event": "Select at least one event",
-      "secret_notice": "Save your webhook secret — it will not be shown again",
-      "save_secret_title": "Save your webhook secret — it will not be shown again",
+      "secret_notice": "Save your webhook secret it will not be shown again",
+      "save_secret_title": "Save your webhook secret it will not be shown again",
       "secret_desc": "Use this secret to verify that webhook requests actually came from Yoosr.",
       "save_secret_desc": "Use this secret to verify that webhook requests actually came from Yoosr.",
       "secret_saved": "I've saved my secret",

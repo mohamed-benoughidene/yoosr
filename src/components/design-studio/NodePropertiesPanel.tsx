@@ -380,53 +380,11 @@ function NodePropertiesPanelContent({
                     </>
                 )}
 
-                {/* AI Assistant Node */}
+                {/* AI Assistant Node (Removed) */}
                 {node.type === "ai_assistant" && (
-                    <>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">{t("properties.systemPrompt")}</Label>
-                            <Textarea
-                                value={data.systemPrompt || ""}
-                                onChange={(e) => update("systemPrompt", e.target.value)}
-                                className="min-h-[120px] text-sm resize-none"
-                                placeholder={t("properties.aiAssistantPromptPlaceholder")}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">{t("properties.model")}</Label>
-                            <Input
-                                value={data.model || ""}
-                                onChange={(e) => update("model", e.target.value)}
-                                className="h-8 text-sm font-mono"
-                                placeholder={fallbackModel}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">{t("properties.maxTurns")}</Label>
-                            <Input
-                                type="number"
-                                value={data.maxTurns || 3}
-                                onChange={(e) => update("maxTurns", parseInt(e.target.value) || 3)}
-                                className="h-8 text-sm"
-                                min={1}
-                                max={10}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">
-                                {t("properties.saveFinalReplyTo")}
-                            </Label>
-                            <Input
-                                value={data.assignTo || ""}
-                                onChange={(e) => update("assignTo", e.target.value)}
-                                className="h-8 text-sm font-mono"
-                                placeholder={t("properties.finalReplyPlaceholder")}
-                            />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                            {t("properties.multiTurnHint")}
-                        </p>
-                    </>
+                    <p className="text-sm text-destructive font-medium p-3 bg-destructive/10 rounded-md border border-destructive/20">
+                        This block has been removed. Replace it with the Knowledge Base block.
+                    </p>
                 )}
 
                 {/* Wait Node fields */}
@@ -472,6 +430,28 @@ function NodePropertiesPanelContent({
                 {/* Ask KB Node fields */}
                 {node.type === "ask_kb" && (
                     <>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">{t("properties.systemPrompt")}</Label>
+                            <Textarea
+                                value={data.systemPrompt || ""}
+                                onChange={(e) => update("systemPrompt", e.target.value)}
+                                className="min-h-[80px] text-sm resize-none"
+                                placeholder="You are a helpful support assistant. Answer only based on the provided context. Be concise and friendly."
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">{t("properties.maxTurns")}</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                value={data.maxTurns || 1}
+                                onChange={(e) => update("maxTurns", parseInt(e.target.value) || 1)}
+                                className="h-8 text-sm"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                {t("properties.maxTurnsHelper")}
+                            </p>
+                        </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs">{t("properties.searchQuery")}</Label>
                             <Input

@@ -32,11 +32,11 @@
         "privacy": "Politique de Confidentialité",
         "terms": "Conditions d'Utilisation"
       },
-      "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement — attendez-vous à des mises à jour fréquentes.",
+      "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement  attendez-vous à des mises à jour fréquentes.",
       "copyright": "Yoosr, Inc. Open Source. Licence MIT."
     },
     "meta": {
-      "title": "Yoosr — Support Client pour les Entreprises de la région MENA",
+      "title": "Yoosr  Support Client pour les Entreprises de la région MENA",
       "description": "Chat en direct, automatisation par bot et boîte de réception d'équipe conçus pour les entreprises MENA. Commencez gratuitement."
     },
     "page": {
@@ -51,9 +51,9 @@
       ]
     },
     "hero": {
-      "badge": "Maintenant disponible — Web, Telegram, Facebook & Instagram",
+      "badge": "Maintenant disponible  Web, Telegram, Facebook & Instagram",
       "headline": "La plateforme de support client conçue pour la région MENA",
-      "description": "Automatisez les conversations avec des bots IA, gérez la boîte de réception de votre équipe en temps réel et clôturez chaque ticket — en arabe ou en anglais — sur tous les canaux.",
+      "description": "Automatisez les conversations avec des bots IA, gérez la boîte de réception de votre équipe en temps réel et clôturez chaque ticket  en arabe ou en anglais  sur tous les canaux.",
       "cta": {
         "primary": "Commencer gratuitement",
         "secondary": "Voir une démo en direct"
@@ -71,14 +71,14 @@
     },
     "cta": {
       "headline": "Votre équipe de support mérite de meilleurs outils.",
-      "description": "Configurez votre espace de travail, intégrez le widget et lancez votre premier bot dès aujourd'hui — aucune carte de crédit requise.",
+      "description": "Configurez votre espace de travail, intégrez le widget et lancez votre premier bot dès aujourd'hui  aucune carte de crédit requise.",
       "primary": "Commencer gratuitement →",
       "secondary": "Nous contacter"
     },
     "channels": {
       "badge": "Canaux",
       "headline": "Rencontrez vos clients là où ils se trouvent déjà",
-      "description": "Une seule boîte de réception. Chaque canal. Les conversations de Telegram, Facebook, Instagram et votre site web — gérées en un seul endroit.",
+      "description": "Une seule boîte de réception. Chaque canal. Les conversations de Telegram, Facebook, Instagram et votre site web  gérées en un seul endroit.",
       "items": [
         {
           "title": "Web Chat",
@@ -161,7 +161,7 @@
           "company": "Algiers Tech"
         },
         {
-          "quote": "Le Design Studio est vraiment différent. Notre équipe opérationnelle a construit et déployé un bot complet de suivi de commande en un après-midi — sans l'aide de développeurs.",
+          "quote": "Le Design Studio est vraiment différent. Notre équipe opérationnelle a construit et déployé un bot complet de suivi de commande en un après-midi  sans l'aide de développeurs.",
           "author": "Nour Rahmani",
           "role": "Responsable Opérations",
           "company": "Dubai Boutique"
@@ -241,7 +241,7 @@
     "features": {
       "badge": "Plateforme centrale",
       "headline": "Tous les outils dont votre équipe de support a réellement besoin",
-      "description": "De la première réponse automatisée au ticket final résolu — tout au même endroit.",
+      "description": "De la première réponse automatisée au ticket final résolu  tout au même endroit.",
       "items": [
         {
           "title": "Moniteur en direct",
@@ -249,11 +249,11 @@
         },
         {
           "title": "AI Bot Studio",
-          "description": "Construisez des flux avec 19 types de blocs — réponse IA, recherche en base de connaissances, requêtes web, conditions, minuteurs et transfert humain. Sans code."
+          "description": "Construisez des flux avec 19 types de blocs  réponse IA, recherche en base de connaissances, requêtes web, conditions, minuteurs et transfert humain. Sans code."
         },
         {
           "title": "Base de connaissances",
-          "description": "Téléchargez vos documents et FAQ. Les bots récupèrent les réponses via recherche vectorielle — pas par simple correspondance de mots-clés. Réponses précises et sourcées."
+          "description": "Téléchargez vos documents et FAQ. Les bots récupèrent les réponses via recherche vectorielle  pas par simple correspondance de mots-clés. Réponses précises et sourcées."
         },
         {
           "title": "Analyses",
@@ -272,7 +272,7 @@
     "designStudio": {
       "badge": "Design Studio",
       "headline": "Construisez n'importe quel flux de conversation sans code",
-      "description": "Connectez les blocs visuellement. Chaque flux est exécuté côté serveur en temps réel — pas de délais, pas de messages perdus.",
+      "description": "Connectez les blocs visuellement. Chaque flux est exécuté côté serveur en temps réel  pas de délais, pas de messages perdus.",
       "items": [
         {
           "title": "Constructeur Visuel",
@@ -314,7 +314,7 @@
   },
   "designStudio": {
     "meta": {
-      "title": "Design Studio — Yoosr",
+      "title": "Design Studio  Yoosr",
       "description": "Créez et configurez vos flux de bot visuellement."
     },
     "editor": {
@@ -352,7 +352,7 @@
       "generate": "Générer",
       "toasts": {
         "generated": "Flux généré !",
-        "generatedDesc": "Canvas mis à jour — vérifiez et ajustez au besoin.",
+        "generatedDesc": "Canvas mis à jour  vérifiez et ajustez au besoin.",
         "failed": "Échec de la génération",
         "timeout": "Délai d'attente dépassé",
         "timeoutDesc": "L'IA a mis trop de temps à répondre. Réessayez dans un instant.",
@@ -431,8 +431,8 @@
       "operatingHoursHint": "Ce bloc vérifie vos horaires d'ouverture au moment de l'exécution.",
       "configureOperatingHours": "Configuré les horaires d'ouverture →",
       "outputPaths": "Chemins de sortie",
-      "withinHours": "VRAI — Pendant les horaires d'ouverture",
-      "outsideHours": "FAUX — En dehors des horaires ou désactivé",
+      "withinHours": "VRAI  Pendant les horaires d'ouverture",
+      "outsideHours": "FAUX  En dehors des horaires ou désactivé",
       "searchQuery": "Requête de recherche",
       "searchQueryPlaceholder": "ex: {{user_message}}",
       "assignResultTo": "Assigner le résultat à la variable",
@@ -941,7 +941,7 @@
     "created_success": "Contact créé avec succès",
     "created_failed": "Échec de la création du contact",
     "imported": "{count} contacts importés. {skipped} ignorés.",
-    "skipped_rows": "lignes ignorées — nom manquant.",
+    "skipped_rows": "lignes ignorées  nom manquant.",
     "contact_created": "Contact créé avec succès",
     "contact_create_failed": "Échec de la création du contact",
     "no_contacts_export": "Aucun contact à exporter.",
@@ -965,7 +965,7 @@
     "ready_to_import": "{count} contacts prêts à importer",
     "showing_contacts": "Affichage de {visible} sur {total} contacts",
     "cancel": "Annuler",
-    "skipped_rows_count": "{count} lignes ignorées — nom manquant.",
+    "skipped_rows_count": "{count} lignes ignorées nom manquant.",
     "filter_by_name": "Filtrer par nom...",
     "columns": "Colonnes",
     "select_all": "Tout sélectionner",
@@ -1051,7 +1051,7 @@
     "delete": "Supprimer",
     "no_orders_message": "Aucune commande trouvée.",
     "ready_to_import": "{count} commandes prêtes à importer",
-    "skipped_rows": "{count} lignes ignorées — champs requis manquants.",
+    "skipped_rows": "{count} lignes ignorées champs requis manquants.",
     "showing_orders": "Affichage de {visible} sur {total} commandes",
     "cancel": "Annuler"
   },
@@ -1115,7 +1115,7 @@
     "select_files": "Sélectionner des fichiers",
     "text_placeholder": "Collez votre contenu ici...",
     "unanswered_queries": "Requêtes sans réponse",
-    "unanswered_queries_desc": "Questions auxquelles le bot n'a pas pu répondre — créez des entrées KB pour les couvrir.",
+    "unanswered_queries_desc": "Questions auxquelles le bot n'a pas pu répondre créez des entrées KB pour les couvrir.",
     "unanswered_query_label": "Requête sans réponse",
     "upload_files": "Importer des fichiers",
     "uploading": "Importation en cours...",
@@ -1202,7 +1202,7 @@
       "sla_save_failed": "Échec de l'enregistrement du paramètre SLA",
       "id_copied": "ID du projet copié dans le presse-papiers",
       "copied_to_clipboard": "{label} copié dans le presse-papiers",
-      "openrouter_free_desc": "Niveau gratuit — utilise des crédits API partagés par la communauté, peut avoir des limites de débit.",
+      "openrouter_free_desc": "Niveau gratuit  utilise des crédits API partagés par la communauté, peut avoir des limites de débit.",
       "save_changes": "Enregistrer les modifications"
     },
     "widget": {
@@ -1328,8 +1328,8 @@
       "select_bot_placeholder": "Sélectionner un bot",
       "no_active_bots": "Aucun bot actif disponible",
       "routing_rules": "Règles de routage",
-      "mode_pooled": "Mutualisé — tout agent disponible prend en charge",
-      "mode_assigned": "Assigné — routage vers des agents spécifiques",
+      "mode_pooled": "Mutualisé tout agent disponible prend en charge",
+      "mode_assigned": "Assigné routage vers des agents spécifiques",
       "tags": "Tags",
       "tag_placeholder": "Ajouter un tag...",
       "add_btn": "Ajouter",
@@ -1533,8 +1533,8 @@
       "select_events": "Sélectionner les événements",
       "select_events_hint": "Sélectionnez au moins un événement",
       "select_one_event": "Sélectionnez au moins un événement",
-      "secret_notice": "Enregistrez votre secret de webhook — il ne sera plus affiché",
-      "save_secret_title": "Enregistrez votre secret de webhook — il ne sera plus affiché",
+      "secret_notice": "Enregistrez votre secret de webhook  il ne sera plus affiché",
+      "save_secret_title": "Enregistrez votre secret de webhook il ne sera plus affiché",
       "secret_desc": "Utilisez ce secret pour vérifier que les requêtes webhook proviennent bien de Yoosr.",
       "save_secret_desc": "Utilisez ce secret pour vérifier que les requêtes webhook proviennent bien de Yoosr.",
       "secret_saved": "J'ai enregistré mon secret",

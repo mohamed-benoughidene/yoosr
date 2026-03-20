@@ -97,59 +97,113 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
         }
 
         case "ask_kb": {
-            const kbQuery = interpolate(action.query, attributes);
+            if (attributes?.__kbDone === true) {
+                return {
+                    newAttributes: { ...attributes, __kbDone: false },
+                    nextNodeId: action.truePath
+                };
+            }
+
+            // Turn counter: stored as attributes.__kbTurns in the conversation bot state attributes bag.
+            // Read it on entry. Default to 0 if absent.
+            let kbTurns = attributes?.__kbTurns ?? 0;
+
+            // 1. If incomingMessage is absent or empty: return { suspend: true }.
+            if (!incomingMessage || incomingMessage.trim() === "") {
+                return { suspend: true };
+            }
+
+            // 2. Run KB search with incomingMessage as query.
             const kbConversation = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-            // @ts-ignore - type may not be generated yet
-            let kbResult: any[] = [];
+            // @ts-ignore
+            let kbResults: any[] = [];
             try {
-                kbResult = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
+                // Using existing searchSimilarChunks action as the KB search pipeline.
+                kbResults = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
                     projectId: kbConversation.projectId,
-                    query: kbQuery,
+                    query: incomingMessage,
                 });
             } catch (e: any) {
-                console.error("[BOT ENGINE] searchSimilarChunks failed:", e.message);
-                // kbResult stays [] → block will route to elsePath
+                console.error("[BOT ENGINE] KB search failed:", e.message);
             }
-            let kbAnswer = "";
-            if (kbResult.length > 0) {
-                const contextStr = kbResult.map((r: any) => r.text).join("\n").slice(0, 3000);
-                const kbPrompt = `Context:\n${contextStr}\n\nQuestion: ${kbQuery}\nAnswer based only on context.`;
-                try {
-                    let kbProjectApiKey: string | undefined;
-                    if (kbConversation) {
-                        const kbProjectInfo = await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: kbConversation.projectId });
-                        if (kbProjectInfo?.openRouterApiKey) {
-                            const encryptionKey = process.env.ENCRYPTION_KEY;
-                            if (encryptionKey) {
-                                kbProjectApiKey = await decryptSecret(kbProjectInfo.openRouterApiKey, encryptionKey);
-                            }
-                        }
-                    }
-                    const kbLlmResult = await callAITask(kbPrompt, kbQuery, undefined, undefined, kbProjectApiKey);
-                    kbAnswer = kbLlmResult.text;
-                    // Log token usage
-                    if (kbConversation) {
-                        await ctx.runMutation(internal.analytics.logTokenUsage, {
-                            projectId: kbConversation.projectId,
-                            model: kbLlmResult.model,
-                            tokensUsed: kbLlmResult.tokensUsed,
-                            operation: "ask_kb",
-                        });
-                    }
-                } catch (e: any) {
-                    console.error("[BOT ENGINE] KB answer generation failed:", e.message);
-                }
-            } else {
-                // No KB results — log unanswered query
-                if (kbConversation) {
-                    await ctx.runMutation(internal.analytics.logUnansweredQuery, {
-                        projectId: kbConversation.projectId,
-                        query: kbQuery,
-                    });
+
+            // 3. If no result above threshold: return { nextNodeId: action.elsePath }. No reply.
+            if (!kbResults || kbResults.length === 0) {
+                return { nextNodeId: action.elsePath };
+            }
+
+            // 4. If results found:
+            // a. systemPrompt = action.systemPrompt or fallback
+            let systemPrompt = action.systemPrompt || "You are a helpful support assistant. Answer only based on the provided context.";
+
+            // b. Append chunks joined and capped at 3000 chars.
+            const contextText = kbResults.map((r: any) => r.text).join("\n").slice(0, 3000);
+            systemPrompt += "\n\nUse the following context to answer:\n" + contextText;
+
+            // c. Fetch conversation history as ChatMessage[]
+            const messageDocs = await ctx.runQuery(internal.messages.listPublic, { conversationId });
+            const history: ChatMessage[] = messageDocs.map((m: any) => ({
+                role: (m.senderType === "visitor" ? "user" : "assistant") as any,
+                content: m.content
+            })).slice(-10);
+
+            // d. Call callAIAssistant with history and project settings
+            const projectInfo = await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: kbConversation.projectId });
+            let apiKey: string | undefined;
+            if (projectInfo?.openRouterApiKey) {
+                const encryptionKey = process.env.ENCRYPTION_KEY;
+                if (encryptionKey) {
+                    apiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
                 }
             }
-            if (!kbAnswer) return { nextNodeId: action.elsePath };
-            return { newAttributes: { [action.assignTo ?? "kb_reply"]: kbAnswer }, nextNodeId: action.truePath };
+
+            const result = await callAIAssistant(
+                systemPrompt,
+                history,
+                action.model,
+                projectInfo?.defaultModel,
+                apiKey
+            );
+
+            // e. Send reply via createBotMessage
+            await ctx.runMutation(internal.bot.createBotMessage, {
+                conversationId,
+                projectId: kbConversation.projectId,
+                channel: channel || "widget",
+                content: result.text
+            });
+
+            // f. Log token usage
+            await ctx.runMutation(internal.analytics.logTokenUsage, {
+                projectId: kbConversation.projectId,
+                model: result.model,
+                tokensUsed: result.tokensUsed,
+                operation: "ask_kb",
+            });
+
+            // g. Increment __kbTurns by 1.
+            const nextTurns = kbTurns + 1;
+
+            // h. Persist via updated attributes returned to the engine.
+            const updatedAttributes = {
+                ...attributes,
+                __kbTurns: nextTurns,
+                [action.assignTo ?? "kb_reply"]: result.text
+            };
+
+            // 5. If __kbTurns >= (action.maxTurns ?? 5): reset __kbTurns to 0, return { nextNodeId: action.truePath }.
+            if (nextTurns >= (action.maxTurns ?? 5)) {
+                return {
+                    newAttributes: { ...updatedAttributes, __kbTurns: 0, __kbDone: true },
+                    suspend: true
+                };
+            }
+
+            // 6. Else: return { suspend: true }.
+            return {
+                newAttributes: updatedAttributes,
+                suspend: true
+            };
         }
 
         case "web_request":
@@ -251,94 +305,6 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
         case "clear_transcript":
             return { newAttributes: {}, clearAttributes: true };
-
-        case "ai_assistant": {
-            const assistantPrompt = interpolate(action.systemPrompt || "", attributes);
-            const maxTurns = action.maxTurns || 3;
-
-            try {
-                // Fetch conversation history from messages table
-                const msgHistory = await ctx.runQuery(internal.messages.listPublic, {
-                    conversationId,
-                });
-
-                // Build chat history for the LLM
-                const chatHistory: ChatMessage[] = (msgHistory || []).map((m: any) => ({
-                    role: m.senderType === "visitor" ? "user" as const : "assistant" as const,
-                    content: m.content || "",
-                }));
-
-                // Fetch project ID for token logging
-                const assistantConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-                const assistantProjectInfo = assistantConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: assistantConv.projectId }) : undefined;
-                const projectDefaultModel = assistantProjectInfo?.defaultModel;
-                let assistantApiKey: string | undefined;
-                if (assistantProjectInfo?.openRouterApiKey) {
-                    const encryptionKey = process.env.ENCRYPTION_KEY;
-                    if (encryptionKey) {
-                        assistantApiKey = await decryptSecret(assistantProjectInfo.openRouterApiKey, encryptionKey);
-                    }
-                }
-                let lastReply = "";
-                for (let turn = 0; turn < maxTurns; turn++) {
-                    console.log("[BOT DEBUG] Executing AI block, model:", action.model, "projectDefault:", projectDefaultModel, "hasProjectKey:", !!assistantApiKey)
-                    const llmResult = await callAIAssistant(assistantPrompt, chatHistory, action.model, projectDefaultModel, assistantApiKey);
-                    if (!llmResult.text) break;
-
-                    lastReply = llmResult.text;
-
-                    // Log token usage
-                    if (assistantConv) {
-                        try {
-                            await ctx.runMutation(internal.analytics.logTokenUsage, {
-                                projectId: assistantConv.projectId,
-                                model: llmResult.model,
-                                tokensUsed: llmResult.tokensUsed,
-                                operation: "ai_assistant",
-                            });
-                        } catch (e: any) {
-                            console.warn("[BOT ENGINE] Failed to log token usage:", e.message);
-                        }
-                    }
-
-                    // Send the reply as a bot message
-                    await ctx.runMutation(internal.bot.createBotMessage, {
-                        conversationId,
-                        projectId,
-                        channel,
-                        content: llmResult.text,
-                    });
-
-                    // If it's the last allowed turn, break
-                    if (turn >= maxTurns - 1) break;
-
-                    // Check if the assistant signals completion (ends with a question = keep going)
-                    const endsWithQuestion = llmResult.text.trim().endsWith("?");
-                    if (!endsWithQuestion) break;
-
-                    // Add the assistant reply to history for the next turn
-                    chatHistory.push({ role: "assistant", content: llmResult.text });
-
-                    // Suspend and wait for user reply before next turn
-                    return {
-                        newAttributes: { [action.assignTo ?? "assistant_reply"]: lastReply },
-                        suspend: true,
-                    };
-                }
-
-                // Assistant finished — route to success path
-                return {
-                    newAttributes: { [action.assignTo ?? "assistant_reply"]: lastReply },
-                    nextNodeId: action.successPath,
-                };
-            } catch (e: any) {
-                console.error("[BOT ENGINE] AI Assistant failed:", e.message);
-                return {
-                    newAttributes: { ai_error: e.message },
-                    nextNodeId: action.failurePath,
-                };
-            }
-        }
 
         case "applyLabel": {
             const labelName = interpolate(action.labelName || "", attributes);
@@ -518,7 +484,7 @@ export const executeNextBlock = internalAction({
                 console.log(`[BOT ENGINE] Auto-continuing to next block.`);
                 await ctx.runAction(internal.bot.executeNextBlock, {
                     conversationId: args.conversationId,
-                    incomingMessage: "",
+                    incomingMessage: args.incomingMessage,
                 });
             }
         } else if (newBotId) {

@@ -179,14 +179,6 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         defaultData: { prompt: "", systemPrompt: "", model: "", outputVariable: "gpt_reply" },
     },
     {
-        type: "ai_assistant",
-        label: "AI Assistant",
-        description: "Autonomous multi-turn LLM",
-        icon: "Bot",
-        color: "text-fuchsia-500",
-        defaultData: { systemPrompt: "", model: "", maxTurns: 3, assignTo: "assistant_reply" },
-    },
-    {
         type: "hitlHandoff",
         label: "HITL Handoff",
         description: "Escalate to a human agent",
@@ -244,7 +236,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Query document embeddings",
         icon: "BookOpen",
         color: "text-indigo-500",
-        defaultData: { query: "", assignTo: "kb_reply" },
+        defaultData: { query: "", assignTo: "kb_reply", systemPrompt: "", maxTurns: 5 },
     },
     {
         type: "replace_bot",
