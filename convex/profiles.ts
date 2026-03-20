@@ -29,7 +29,20 @@ export const getByUserId = query({
 export const list = query({
     args: {},
     handler: async (ctx) => {
-        return await ctx.db.query("profiles").collect();
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthenticated");
+        }
+
+        const orgId = (identity as any).org_id;
+        if (!orgId) {
+            throw new Error("No organization context");
+        }
+
+        return await ctx.db
+            .query("profiles")
+            .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+            .take(100);
     },
 });
 
