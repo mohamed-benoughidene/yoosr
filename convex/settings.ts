@@ -16,7 +16,7 @@ export const listDepartments = query({
         const departments = await ctx.db
             .query("departments")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
 
         return departments.map(dept => ({
             ...dept,
@@ -36,7 +36,7 @@ export const getMyDepartments = query({
         const departments = await ctx.db
             .query("departments")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
 
         return departments.filter(d => d.memberIds?.includes(userId));
     },
@@ -214,7 +214,7 @@ export const listCannedResponses = query({
         return await ctx.db
             .query("canned_responses")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(200);
     },
 });
 
@@ -311,7 +311,7 @@ export const listLabels = query({
         return await ctx.db
             .query("labels")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
     },
 });
 
@@ -390,7 +390,7 @@ export const removeLabel = mutation({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", label.projectId))
-            .collect();
+            .take(500);
 
         for (const conv of conversations) {
             if (conv.tags && conv.tags.includes(label.name)) {

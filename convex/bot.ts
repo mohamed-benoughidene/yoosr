@@ -676,9 +676,8 @@ export const getOnlineAgentsInternal = internalQuery({
 
         const onlineProfiles = await ctx.db
             .query("profiles")
-            .withIndex("by_orgId", (q) => q.eq("orgId", project.orgId))
-            .filter((q) => q.eq(q.field("isAvailable"), true))
-            .collect();
+            .withIndex("by_orgId_isAvailable", (q) => q.eq("orgId", project.orgId).eq("isAvailable", true))
+            .take(50);
 
         return onlineProfiles;
     }
