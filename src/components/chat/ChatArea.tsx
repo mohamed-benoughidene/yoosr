@@ -32,11 +32,31 @@ import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picke
 
 import { Suspense } from "react"
 import { useTranslations } from "next-intl"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface ChatAreaProps {
     conversationId?: string | null
     onBack?: () => void
     onOpenContact?: () => void
+}
+
+function MessageImage({ fileId, fileName }: { fileId: string; fileName?: string }) {
+    const url = useQuery(api.messages.getStorageUrl, { storageId: fileId });
+
+    if (url === undefined) {
+        return <Skeleton className="w-[240px] h-[160px] rounded-lg mt-1" />;
+    }
+
+    if (!url) return null;
+
+    return (
+        <img
+            src={url}
+            alt={fileName || "Shared image"}
+            className="max-w-[240px] rounded-lg cursor-pointer mt-1 hover:opacity-90 transition-opacity border bg-muted/20"
+            onClick={() => window.open(url, "_blank")}
+        />
+    );
 }
 
 function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenContact }: ChatAreaProps) {
@@ -506,19 +526,29 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                             >
                                 {msg.senderType === "agent" ? (
                                     msg.type === "internal" ? (
-                                        <div className="p-3 rounded-lg max-w-[70%] bg-yellow-50/80 border border-yellow-200 text-yellow-900">
-                                            <div className="flex items-center gap-1 mb-1">
-                                                <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">{t("internal_note_badge")}</span>
-                                            </div>
-                                            <p className="text-sm">{msg.content}</p>
-                                            <span className="text-[10px] mt-1 block text-yellow-700/70">
+                                        <div className="flex flex-col items-end gap-1 max-w-[70%]">
+                                            {msg.content && (
+                                                <div className="p-3 rounded-lg bg-yellow-50/80 border border-yellow-200 text-yellow-900">
+                                                    <div className="flex items-center gap-1 mb-1">
+                                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">{t("internal_note_badge")}</span>
+                                                    </div>
+                                                    <p className="text-sm">{msg.content}</p>
+                                                </div>
+                                            )}
+                                            {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}
+                                            <span className="text-[10px] block text-yellow-700/70">
                                                 {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
                                             </span>
                                         </div>
                                     ) : (
-                                        <div className="p-3 rounded-lg max-w-[70%] bg-primary text-primary-foreground">
-                                            <p className="text-sm">{msg.content}</p>
-                                            <span className="text-[10px] mt-1 block text-primary-foreground/70">
+                                        <div className="flex flex-col items-end gap-1 max-w-[70%]">
+                                            {msg.content && (
+                                                <div className="p-3 rounded-lg bg-primary text-primary-foreground">
+                                                    <p className="text-sm">{msg.content}</p>
+                                                </div>
+                                            )}
+                                            {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}
+                                            <span className="text-[10px] block text-muted-foreground/70">
                                                 {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
                                             </span>
                                         </div>
@@ -530,16 +560,19 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                                 {msg.senderType === "bot" ? t("ai_fallback") : (msg.senderFullname ?? "V").substring(0, 2).toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <div>
+                                        <div className="flex flex-col gap-1">
                                             <span className="text-xs text-muted-foreground ml-1 mb-1 block">
                                                 {msg.senderFullname || (msg.senderType === "bot" ? t("ai_assistant_name") : tVisitor("name_fallback"))}
                                             </span>
-                                            <div className="p-3 rounded-lg bg-muted">
-                                                <p className="text-sm">{msg.content}</p>
-                                                <span className="text-[10px] mt-1 block text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
-                                                </span>
-                                            </div>
+                                            {msg.content && (
+                                                <div className="p-3 rounded-lg bg-muted">
+                                                    <p className="text-sm">{msg.content}</p>
+                                                </div>
+                                            )}
+                                            {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}
+                                            <span className="text-[10px] block text-muted-foreground">
+                                                {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
+                                            </span>
                                         </div>
                                     </div>
                                 )}

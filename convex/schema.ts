@@ -100,6 +100,8 @@ export default defineSchema({
         senderId: v.optional(v.string()),
         content: v.string(),
         attachments: v.optional(v.any()), // JSON array
+        fileId: v.optional(v.string()), // Convex storage ID
+        fileName: v.optional(v.string()), // Original filename for display
         // Legacy fields
         channel: v.optional(v.string()),
         senderFullname: v.optional(v.string()),

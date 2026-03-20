@@ -260,9 +260,8 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const ohCnv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             const hours = await ctx.runQuery(internal.bot.getOperatingHoursInternal, { projectId: ohCnv.projectId });
             let isOpen = true;
-            if (hours && hours.enabled) {
-                // Placeholder for actual schedule checking
-                isOpen = true;
+            if (hours && hours.enabled && hours.schedule && hours.timezone) {
+                isOpen = isOpenNow(hours.schedule, hours.timezone);
             }
             return { nextNodeId: isOpen ? action.truePath : action.falsePath };
 
@@ -807,6 +806,45 @@ function tryParseJSON(str: string) {
         return null;
     } catch {
         return null;
+    }
+}
+
+function isOpenNow(schedule: any[], timezone: string): boolean {
+    const now = new Date();
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+        });
+
+        const parts = formatter.formatToParts(now);
+        const dayPart = parts.find(p => p.type === 'weekday');
+        const hourPart = parts.find(p => p.type === 'hour');
+        const minutePart = parts.find(p => p.type === 'minute');
+
+        if (!dayPart || !hourPart || !minutePart) {
+            console.warn("[BOT ENGINE] Date parts missing for timezone:", timezone);
+            return true;
+        }
+
+        const dayName = dayPart.value.toLowerCase();
+        const currentTimeStr = `${hourPart.value}:${minutePart.value}`;
+
+        const dayEntry = schedule.find(s => s.day?.toLowerCase() === dayName);
+
+        if (!dayEntry || (dayEntry.open === false) || !dayEntry.slots || dayEntry.slots.length === 0) {
+            return false;
+        }
+
+        return dayEntry.slots.some((slot: { start: string, end: string }) => {
+            return currentTimeStr >= slot.start && currentTimeStr < slot.end;
+        });
+    } catch (e) {
+        console.error("[BOT ENGINE] Error evaluating operating hours:", e);
+        return true;
     }
 }
 

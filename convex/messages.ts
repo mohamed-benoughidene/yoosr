@@ -97,12 +97,22 @@ export const send = mutation({
     },
 });
 
+// Internal: generate upload URL for widget file attachments (no auth required)
+export const generateWidgetUploadUrl = internalMutation({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.storage.generateUploadUrl();
+    },
+});
+
 // Internal: send message from widget (no auth required)
 export const sendFromWidget = internalMutation({
     args: {
         conversationId: v.id("conversations"),
         content: v.string(),
         senderId: v.optional(v.string()),
+        fileId: v.optional(v.string()),
+        fileName: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         let conversationId = args.conversationId;
@@ -137,6 +147,8 @@ export const sendFromWidget = internalMutation({
             senderType: "visitor",
             senderId: args.senderId,
             content: args.content,
+            ...(args.fileId ? { fileId: args.fileId } : {}),
+            ...(args.fileName ? { fileName: args.fileName } : {}),
         });
 
         // Only force status to 100 if it hasn't been assigned yet, to prevent booting agents/bots
@@ -350,6 +362,14 @@ export const listPublic = internalQuery({
                 senderName
             };
         });
+    },
+});
+
+// Public query to get a storage URL (used instead of non-existent useStorageUrl)
+export const getStorageUrl = query({
+    args: { storageId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.storage.getUrl(args.storageId);
     },
 });
 

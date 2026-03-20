@@ -5,6 +5,10 @@ import Image from "next/image"
 import { RatingComponent } from "../rating-component"
 import { PreChatForm } from "./PreChatForm"
 import { useTranslations } from "next-intl"
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Paperclip, Loader2 } from "lucide-react"
 
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
 
@@ -34,6 +38,8 @@ interface Message {
     senderId?: string
     senderName?: string
     attachments?: any
+    fileId?: string
+    fileName?: string
     _creationTime: number
 }
 
@@ -67,6 +73,7 @@ interface ChatState {
     showRating: boolean;
     showPreChat: boolean;
     preChatData: { name: string, email?: string, phone?: string } | null;
+    isUploading: boolean;
 }
 
 type ChatAction = 
@@ -82,6 +89,7 @@ type ChatAction =
     | { type: "SET_SHOW_RATING", payload: boolean }
     | { type: "SET_SHOW_PRE_CHAT", payload: boolean }
     | { type: "SET_PRE_CHAT_DATA", payload: { name: string, email?: string, phone?: string } | null }
+    | { type: "SET_UPLOADING", payload: boolean }
 
 const initialState: ChatState = {
     projectId: null,
@@ -96,6 +104,7 @@ const initialState: ChatState = {
     showRating: false,
     showPreChat: false,
     preChatData: null,
+    isUploading: false,
 }
 
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
@@ -115,8 +124,32 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         case "SET_SHOW_RATING": return { ...state, showRating: action.payload }
         case "SET_SHOW_PRE_CHAT": return { ...state, showPreChat: action.payload }
         case "SET_PRE_CHAT_DATA": return { ...state, preChatData: action.payload }
+        case "SET_UPLOADING": return { ...state, isUploading: action.payload }
         default: return state;
     }
+}
+
+function MessageImage({ fileId, fileName }: { fileId: string; fileName?: string }) {
+    const url = useQuery(api.messages.getStorageUrl, { storageId: fileId })
+
+    if (url === undefined) {
+        return (
+            <div className="w-[200px]">
+                <Skeleton className="h-[150px] w-full rounded-lg" />
+            </div>
+        )
+    }
+
+    if (!url) return null
+
+    return (
+        <img
+            src={url}
+            alt={fileName || "Image"}
+            className="max-w-[200px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm border border-gray-100"
+            onClick={() => window.open(url, "_blank")}
+        />
+    )
 }
 
 export default function WidgetChat() {
@@ -124,7 +157,7 @@ export default function WidgetChat() {
     const [state, dispatch] = useReducer(chatReducer, initialState)
     const {
         projectId, visitorId, conversationId, messages, input, loading, error,
-        projectConfig, conversationStatus, showRating, showPreChat, preChatData
+        projectConfig, conversationStatus, showRating, showPreChat, preChatData, isUploading
     } = state
 
     const chatEndRef = useRef<HTMLDivElement>(null)
@@ -389,40 +422,61 @@ export default function WidgetChat() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        // Validate type
+        const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+        if (!allowedTypes.includes(file.type)) {
+            dispatch({ type: "SET_ERROR", payload: "Only images (JPG, PNG, GIF, WEBP) are allowed" })
+            if (fileInputRef.current) fileInputRef.current.value = ""
+            return
+        }
+
+        // Validate size (< 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            dispatch({ type: "SET_ERROR", payload: "File size should be less than 5MB" })
+            if (fileInputRef.current) fileInputRef.current.value = ""
+            return
+        }
+
         const convId = await ensureConversation()
         if (!convId) return
 
-        // For now, send file name as message (full upload requires Convex file storage endpoint)
-        const text = `📎 ${file.name}`
-        dispatch({ type: "SET_MESSAGES", payload: (prev) => [
-            ...prev,
-            {
-                _id: "temp_file_" + Date.now(),
-                content: text,
-                senderType: "visitor",
-                senderId: visitorId,
-                _creationTime: Date.now(),
-            },
-        ]})
+        dispatch({ type: "SET_UPLOADING", payload: true })
+        dispatch({ type: "SET_ERROR", payload: null })
 
         try {
-            const res = await apiPost("/widget/messages", {
+            // Get upload URL
+            const { uploadUrl } = await apiPost("/widget/upload-url", {})
+            if (!uploadUrl) throw new Error("Could not get upload URL")
+
+            // Upload binary
+            const uploadRes = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": file.type },
+                body: file,
+            })
+            if (!uploadRes.ok) throw new Error("Upload failed")
+
+            const { storageId } = await uploadRes.json()
+            if (!storageId) throw new Error("No storageId returned")
+
+            // Send message
+            await apiPost("/widget/messages", {
                 conversationId: convId,
-                content: text,
+                content: "",
+                fileId: storageId,
+                fileName: file.name,
                 visitorId,
             })
 
-            if (res.conversationId && res.conversationId !== convId) {
-                dispatch({ type: "SET_CONVERSATION_ID", payload: res.conversationId })
-            } else {
-                fetchMessages()
-            }
-        } catch {
+            fetchMessages()
+        } catch (error) {
+            console.error("Upload failed", error)
             dispatch({ type: "SET_ERROR", payload: t("failedToSendAttachment") })
+        } finally {
+            dispatch({ type: "SET_UPLOADING", payload: false })
+            // Reset file input
+            if (fileInputRef.current) fileInputRef.current.value = ""
         }
-
-        // Reset file input
-        if (fileInputRef.current) fileInputRef.current.value = ""
     }
 
     const handleRatingSubmit = async (rating: number, feedback: string) => {
@@ -526,23 +580,29 @@ export default function WidgetChat() {
                                     </div>
                                 )}
 
-                                <div className="flex flex-col gap-1 max-w-[80%]">
+                                <div className={`flex flex-col gap-1 max-w-[80%] ${isVisitor ? "items-end" : "items-start"}`}>
                                     {!isVisitor && (
                                         <span className="text-[10px] text-gray-500 ml-1">
                                             {msg.senderName ?? (msg.senderType === "bot" ? t("aiAssistant") : t("supportAgent"))}
                                         </span>
                                     )}
 
-                                    <div
-                                        className="rounded-2xl px-4 py-2 text-sm shadow-sm"
-                                        style={
-                                            isVisitor
-                                                ? { backgroundColor: widgetColor, color: "#fff", borderBottomRightRadius: "4px" }
-                                                : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
-                                        }
-                                    >
-                                        {msg.type === "system" ? t(msg.content) : msg.content}
-                                    </div>
+                                    {msg.fileId && (
+                                        <MessageImage fileId={msg.fileId} fileName={msg.fileName} />
+                                    )}
+
+                                    {msg.content && (
+                                        <div
+                                            className="rounded-2xl px-4 py-2 text-sm shadow-sm"
+                                            style={
+                                                isVisitor
+                                                    ? { backgroundColor: widgetColor, color: "#fff", borderBottomRightRadius: "4px" }
+                                                    : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
+                                            }
+                                        >
+                                            {msg.type === "system" ? t(msg.content) : msg.content}
+                                        </div>
+                                    )}
                                     {!isVisitor && msg.attachments?.payload?.buttons && (
                                         <div className="flex flex-col gap-2 mt-2">
                                             {msg.attachments.payload.buttons.map((btn: any, i: number) => (
@@ -579,17 +639,20 @@ export default function WidgetChat() {
                     ref={fileInputRef}
                     type="file"
                     className="hidden"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     onChange={handleFileSelect}
                 />
                 <button
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={loading}
+                    disabled={loading || isUploading}
                     className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
                     title={t("attachFile")}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                    </svg>
+                    {isUploading ? (
+                        <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                    ) : (
+                        <Paperclip className="h-[18px] w-[18px]" />
+                    )}
                 </button>
                 <input
                     type="text"
@@ -602,7 +665,7 @@ export default function WidgetChat() {
                 />
                 <button
                     onClick={handleSend}
-                    disabled={loading || !input.trim() || conversationStatus === 1000}
+                    disabled={loading || !input.trim() || conversationStatus === 1000 || isUploading}
                     style={{ backgroundColor: widgetColor }}
                     className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

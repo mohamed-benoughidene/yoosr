@@ -62,7 +62,7 @@ http.route({
         const body = await request.json();
         const { conversationId, content, visitorId } = body;
 
-        if (!conversationId || !content) {
+        if (!conversationId || (!content && !body.fileId)) {
             return new Response(
                 JSON.stringify({ error: "conversationId and content are required" }),
                 {
@@ -74,7 +74,13 @@ http.route({
 
         const { messageId, conversationId: newConversationId } = await ctx.runMutation(
             internal.messages.sendFromWidget,
-            { conversationId, content, senderId: visitorId }
+            { 
+                conversationId, 
+                content, 
+                senderId: visitorId,
+                fileId: body.fileId,
+                fileName: body.fileName
+            }
         );
 
         return new Response(JSON.stringify({ messageId, conversationId: newConversationId }), {
@@ -109,6 +115,14 @@ http.route({
 
 http.route({
     path: "/widget/project",
+    method: "OPTIONS",
+    handler: httpAction(async () => {
+        return new Response(null, { status: 204, headers: corsHeaders });
+    }),
+});
+
+http.route({
+    path: "/widget/upload-url",
     method: "OPTIONS",
     handler: httpAction(async () => {
         return new Response(null, { status: 204, headers: corsHeaders });
@@ -271,6 +285,20 @@ http.route({
         });
 
         return new Response(JSON.stringify(messages ?? []), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+    }),
+});
+
+// POST /widget/upload-url — Generate upload URL for widget file attachments
+http.route({
+    path: "/widget/upload-url",
+    method: "POST",
+    handler: httpAction(async (ctx) => {
+        const uploadUrl = await ctx.runMutation(internal.messages.generateWidgetUploadUrl);
+
+        return new Response(JSON.stringify({ uploadUrl }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
         });
