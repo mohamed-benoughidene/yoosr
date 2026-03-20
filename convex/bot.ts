@@ -141,7 +141,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             systemPrompt += "\n\nUse the following context to answer:\n" + contextText;
 
             // c. Fetch conversation history as ChatMessage[]
-            const messageDocs = await ctx.runQuery(internal.messages.listPublic, { conversationId });
+            const messageDocs = await ctx.runQuery(internal.messages.listPublic, { conversationId, limit: 20 });
             const history: ChatMessage[] = messageDocs.map((m: any) => ({
                 role: (m.senderType === "visitor" ? "user" : "assistant") as any,
                 content: m.content

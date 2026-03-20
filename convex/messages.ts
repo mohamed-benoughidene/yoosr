@@ -313,15 +313,19 @@ export const sendMessage = mutation({
 
 // Internal: list messages for widget (no auth required)
 export const listPublic = internalQuery({
-    args: { conversationId: v.id("conversations") },
+    args: { 
+        conversationId: v.id("conversations"),
+        limit: v.optional(v.number()),
+    },
     handler: async (ctx, args) => {
+        const limit = args.limit ?? 100;
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_conversationId", (q) =>
                 q.eq("conversationId", args.conversationId)
             )
             .filter((q) => q.neq(q.field("type"), "internal"))
-            .collect();
+            .take(limit);
 
         // 1. Collect unique senderIds where senderType is "agent"
         const agentIds = [...new Set(

@@ -14,7 +14,8 @@ export const extractGenerativeTags = internalAction({
     handler: async (ctx, args) => {
         // Fetch all messages for the conversation
         const messages = await ctx.runQuery(internal.messages.listPublic, {
-            conversationId: args.conversationId
+            conversationId: args.conversationId,
+            limit: 200,
         });
 
         if (!messages || messages.length === 0) return;
@@ -114,7 +115,7 @@ export const getProjectLabels = internalQuery({
     handler: async (ctx, args) => {
         return await ctx.db.query("labels")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
     }
 });
 

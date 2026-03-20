@@ -282,6 +282,7 @@ http.route({
 
         const messages = await ctx.runQuery(internal.messages.listPublic, {
             conversationId: conversationId as any,
+            limit: 100,
         });
 
         return new Response(JSON.stringify(messages ?? []), {
