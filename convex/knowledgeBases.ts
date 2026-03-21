@@ -1,5 +1,5 @@
 import { query, mutation, action } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 
 // List knowledge bases for a project
@@ -131,5 +131,33 @@ export const generateKbUploadUrl = action({
         if (!identity) throw new Error("Not authenticated");
 
         return await ctx.storage.generateUploadUrl();
+    },
+});
+
+// Remove a knowledge base and all its sources
+export const remove = mutation({
+    args: { kbId: v.id("knowledge_bases") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new ConvexError("Not authenticated");
+
+        const kb = await ctx.db.get(args.kbId);
+        if (!kb) throw new ConvexError("Not found");
+
+        const project = await ctx.db.get(kb.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new ConvexError("Unauthorized");
+        }
+
+        const sources = await ctx.db
+            .query("knowledge_base_sources")
+            .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
+            .collect();
+
+        for (const source of sources) {
+            await ctx.db.delete(source._id);
+        }
+
+        await ctx.db.delete(args.kbId);
     },
 });
