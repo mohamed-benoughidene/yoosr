@@ -1,7 +1,8 @@
 import { internalAction, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { callAITask } from "./openrouter";
+import { assertProjectOwnership } from "./utils";
 
 /**
  * Scheduled action to extract Generative AI tags from closed conversations
@@ -129,9 +130,12 @@ export const assignTagToConversation = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new ConvexError("Not authenticated");
 
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) return;
+        if (!conversation) throw new ConvexError("Conversation not found");
+
+        await assertProjectOwnership(ctx, conversation.projectId, identity as any);
 
         const existingTags = conversation.tags || [];
         if (!existingTags.includes(args.tagName)) {
@@ -140,17 +144,15 @@ export const assignTagToConversation = mutation({
             });
         }
 
-        if (identity) {
-            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
-                projectId: conversation.projectId,
-                actorId: identity.subject,
-                actorName: identity.name ?? identity.email ?? "Unknown",
-                action: "label_applied",
-                targetType: "conversation",
-                targetId: args.conversationId,
-                metadata: { labelId: args.tagName },
-            });
-        }
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: conversation.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "label_applied",
+            targetType: "conversation",
+            targetId: args.conversationId,
+            metadata: { labelId: args.tagName },
+        });
     }
 });
 
@@ -164,9 +166,12 @@ export const removeTagFromConversation = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new ConvexError("Not authenticated");
 
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) return;
+        if (!conversation) throw new ConvexError("Conversation not found");
+
+        await assertProjectOwnership(ctx, conversation.projectId, identity as any);
 
         const existingTags = conversation.tags || [];
         const newTags = existingTags.filter(t => t !== args.tagName);
@@ -175,16 +180,14 @@ export const removeTagFromConversation = mutation({
             tags: newTags
         });
 
-        if (identity) {
-            await ctx.runMutation(internal.activityLogs.logActivityInternal, {
-                projectId: conversation.projectId,
-                actorId: identity.subject,
-                actorName: identity.name ?? identity.email ?? "Unknown",
-                action: "label_removed",
-                targetType: "conversation",
-                targetId: args.conversationId,
-                metadata: { labelId: args.tagName },
-            });
-        }
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: conversation.projectId,
+            actorId: identity.subject,
+            actorName: identity.name ?? identity.email ?? "Unknown",
+            action: "label_removed",
+            targetType: "conversation",
+            targetId: args.conversationId,
+            metadata: { labelId: args.tagName },
+        });
     }
 });

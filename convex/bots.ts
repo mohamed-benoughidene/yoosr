@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { requireAdmin } from "./utils";
+import { requireAdmin, checkProjectOwnership } from "./utils";
 
 // List bots for a project
 export const list = query({
@@ -24,7 +24,13 @@ export const get = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
-        return await ctx.db.get(args.id);
+        const bot = await ctx.db.get(args.id);
+        if (bot === null) return null;
+
+        const project = await checkProjectOwnership(ctx, bot.projectId, identity as any);
+        if (project === null) return null;
+
+        return bot;
     },
 });
 

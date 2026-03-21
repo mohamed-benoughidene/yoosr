@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { v, ConvexError } from "convex/values";
 
 // List contacts for a project
@@ -28,7 +29,12 @@ export const findByConversation = query({
             .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
             .first();
 
-        return contact ?? null;
+        if (!contact) return null;
+
+        const project = await checkProjectOwnership(ctx, contact.projectId, identity as any);
+        if (!project) return null;
+
+        return contact;
     },
 });
 
@@ -75,6 +81,11 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const contact = await ctx.db.get(args.id);
+        if (!contact) throw new ConvexError("Contact not found");
+
+        await assertProjectOwnership(ctx, contact.projectId, identity as any);
 
         const { id, ...updates } = args;
         const cleanUpdates: Record<string, any> = {};

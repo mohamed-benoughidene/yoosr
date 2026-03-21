@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { checkProjectOwnership } from "./utils";
 
 // ---------------------------------------------------------------------------
 // Existing queries (kept for backward compat)
@@ -14,6 +15,9 @@ export const getConversationStats = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, open: 0, closed: 0 };
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { total: 0, open: 0, closed: 0 };
 
         const conversations = await ctx.db
             .query("conversations")
@@ -40,6 +44,9 @@ export const getVisitorStats = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { totalVisitors: 0 };
 
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { totalVisitors: 0 };
+
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -55,6 +62,9 @@ export const getMessageStats = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, visitorMessages: 0, agentMessages: 0 };
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { total: 0, visitorMessages: 0, agentMessages: 0 };
 
         const messages = await ctx.db
             .query("messages")
@@ -85,6 +95,9 @@ export const getConversationVolume = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, botHandled: 0, agentHandled: 0, daily: [] };
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { total: 0, botHandled: 0, agentHandled: 0, daily: [] };
 
         const conversations = await ctx.db
             .query("conversations")
@@ -140,6 +153,9 @@ export const getTokenUsage = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { totalTokens: 0, byModel: [] };
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { totalTokens: 0, byModel: [] };
 
         const rows = await ctx.db
             .query("token_usage")
@@ -204,6 +220,9 @@ export const getCSATSummary = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -244,6 +263,9 @@ export const getProjectUsage = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { tokensConsumed: 0, conversationsCount: 0 };
 
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return { tokensConsumed: 0, conversationsCount: 0 };
+
         const usage = await ctx.db
             .query("project_usage")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
@@ -265,6 +287,9 @@ export const getTagsSummary = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return [];
 
         const conversations = await ctx.db
             .query("conversations")

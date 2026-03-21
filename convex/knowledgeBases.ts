@@ -1,6 +1,7 @@
 import { query, mutation, action } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
+import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 
 // List knowledge bases for a project
 export const list = query({
@@ -23,7 +24,13 @@ export const get = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
-        return await ctx.db.get(args.id);
+        const kb = await ctx.db.get(args.id);
+        if (!kb) return null;
+
+        const check = await checkProjectOwnership(ctx, kb.projectId, identity as any);
+        if (!check) return null;
+
+        return kb;
     },
 });
 
@@ -64,6 +71,8 @@ export const create = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        await assertProjectOwnership(ctx, args.projectId, identity as any);
+
         return await ctx.db.insert("knowledge_bases", args);
     },
 });
@@ -93,6 +102,11 @@ export const addSource = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const kb = await ctx.db.get(args.kbId);
+        if (!kb) throw new ConvexError("Knowledge base not found");
+
+        await assertProjectOwnership(ctx, kb.projectId, identity as any);
+
         const sourceId = await ctx.db.insert("knowledge_base_sources", {
             kbId: args.kbId,
             type: args.type,
@@ -100,13 +114,10 @@ export const addSource = mutation({
             status: "indexing",
         });
 
-        const kb = await ctx.db.get(args.kbId);
-        if (kb) {
-            await ctx.scheduler.runAfter(0, internal.knowledge.indexSource, {
-                sourceId,
-                projectId: kb.projectId,
-            });
-        }
+        await ctx.scheduler.runAfter(0, internal.knowledge.indexSource, {
+            sourceId,
+            projectId: kb.projectId,
+        });
 
         return sourceId;
     },
@@ -118,6 +129,14 @@ export const removeSource = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+
+        const source = await ctx.db.get(args.id);
+        if (!source) throw new ConvexError("Source not found");
+
+        const kb = await ctx.db.get(source.kbId);
+        if (!kb) throw new ConvexError("Knowledge base not found");
+
+        await assertProjectOwnership(ctx, kb.projectId, identity as any);
 
         await ctx.db.delete(args.id);
     },
