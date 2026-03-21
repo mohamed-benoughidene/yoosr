@@ -86,7 +86,7 @@ export const getActiveSubscriptions = internalQuery({
             .withIndex("by_projectId_isActive", q =>
                 q.eq("projectId", args.projectId).eq("isActive", true)
             )
-            .collect();
+            .take(50);
 
         return subs.filter(sub => sub.events.includes(args.event));
     }
@@ -105,7 +105,7 @@ export const list = query({
         return await ctx.db
             .query("webhook_subscriptions")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .collect();
+            .take(100);
     }
 });
 
