@@ -100,7 +100,7 @@ function NavUser() {
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground" suppressHydrationWarning>
                 <Avatar className="size-8 rounded-lg">
                   <AvatarImage src={user?.imageUrl} alt={fullName} />
                   <AvatarFallback className="rounded-lg text-xs font-semibold">{initial}</AvatarFallback>
