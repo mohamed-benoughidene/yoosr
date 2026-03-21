@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, MessageSquare, UserCheck, Bot, CheckCircle } from "lucide-react"
+import { Bell, MessageSquare, UserCheck, Bot, CheckCircle, UserX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { formatDistanceToNow } from "date-fns"
@@ -114,6 +114,10 @@ export function NotificationBell() {
                                     Icon = UserCheck;
                                     iconColor = "text-purple-500";
                                     iconBg = "bg-purple-500/10";
+                                } else if (notif.type === "unassigned_conversation") {
+                                    Icon = UserX;
+                                    iconColor = "text-yellow-500";
+                                    iconBg = "bg-yellow-500/10";
                                 } else if (notif.type === "escalation") {
                                     Icon = Bot;
                                     iconColor = "text-orange-500";
