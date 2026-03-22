@@ -261,6 +261,39 @@ export const getCSATSummary = query({
 });
 
 /**
+ * Fetches recent CSAT comments for a project.
+ */
+export const getCSATComments = query({
+    args: {
+        projectId: v.id("projects"),
+        limit: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthenticated: identity required");
+        }
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) return [];
+
+        const ratings = await ctx.db
+            .query("csat_ratings")
+            .withIndex("by_projectId_createdAt", (q) => q.eq("projectId", args.projectId))
+            .order("desc")
+            .take(args.limit ?? 10);
+
+        return ratings
+            .filter((r) => r.comment !== undefined && r.comment !== "")
+            .map((r) => ({
+                rating: r.rating,
+                comment: r.comment,
+                createdAt: r.createdAt,
+            }));
+    },
+});
+
+/**
  * Fetches the real-time project usage quotas (tokens and conversations).
  */
 export const getProjectUsage = query({

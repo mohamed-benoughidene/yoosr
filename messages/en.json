@@ -902,7 +902,8 @@
     "conversation_volume": "Conversation Volume",
     "conversation_volume_description": "Daily conversations split by bot vs agent handling",
     "customer_satisfaction": "Customer Satisfaction",
-    "based_on_ratings": "Based on {count} ratings"
+    "based_on_ratings": "Based on {count} ratings",
+    "recent_feedback": "Recent Feedback"
   },
   "activities": {
     "title": "Activity Log",

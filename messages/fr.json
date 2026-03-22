@@ -885,7 +885,8 @@
     "conversation_volume": "Volume des conversations",
     "conversation_volume_description": "Conversations quotidiennes réparties entre bot et agent",
     "customer_satisfaction": "Satisfaction client",
-    "based_on_ratings": "Basé sur {count} avis"
+    "based_on_ratings": "Basé sur {count} avis",
+    "recent_feedback": "Commentaires récents"
   },
   "activities": {
     "title": "Journal d'activité",

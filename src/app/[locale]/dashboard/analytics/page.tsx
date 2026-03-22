@@ -78,6 +78,10 @@ export default function AnalyticsPage() {
         api.analytics.getCSATSummary,
         activeProject ? { projectId: activeProject._id, from, to } : "skip"
     );
+    const csatCommentsData = useQuery(
+        api.analytics.getCSATComments,
+        activeProject ? { projectId: activeProject._id, limit: 5 } : "skip"
+    );
     const unansweredData = useQuery(
         api.analytics.getUnansweredQueries,
         activeProject ? { projectId: activeProject._id, limit: 20, from, to } : "skip"
@@ -237,8 +241,9 @@ export default function AnalyticsPage() {
                     isLoading={unansweredData === undefined}
                 />
                 <AnalyticsCSAT
-                    data={csatData as any}
+                    data={csatData}
                     isLoading={csatData === undefined}
+                    comments={csatCommentsData}
                 />
             </div>
         </div>

@@ -883,7 +883,8 @@
     "conversation_volume": "حجم المحادثات",
     "conversation_volume_description": "المحادثات اليومية مقسّمة حسب المعالجة بالبوت أو الوكيل",
     "customer_satisfaction": "رضا العملاء",
-    "based_on_ratings": "بناءً على {count} تقييم"
+    "based_on_ratings": "بناءً على {count} تقييم",
+    "recent_feedback": "الملاحظات الأخيرة"
   },
   "activities": {
     "title": "سجل النشاطات",
