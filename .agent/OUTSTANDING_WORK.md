@@ -40,8 +40,8 @@
 | Done | # | Severity | File | Function(s) | Issue | Fix |
 |---|---|---|---|---|---|---|
 | [ ] | P-1 | 🟠 High | `convex/projects.ts` | `remove` | Cascade delete calls `.collect()` on 15+ tables sequentially — will timeout on projects with real data | Rewrite as a scheduled job: on delete, set `project.status = "deleting"`, then batch-delete tables in separate scheduled mutations using `.take(100)` loops |
-| [ ] | P-2 | 🟡 Medium | `convex/analytics.ts` | All stat queries | All queries use `.take(500)` as a hard cap — analytics will silently undercount once a project has >500 records in any window | Replace with Convex paginated aggregation or server-side aggregation actions that loop until exhausted. Mark with `TODO: paginated` comment in the meantime |
-| [ ] | P-3 | 🟡 Medium | `convex/knowledgeBases.ts` | `remove` | `.collect()` on KB sources — moderate risk on KBs with many sources | Replace with `.take(100)` loop inside a scheduled deletion job |
+| [X] | P-2 | 🟡 Medium | `convex/analytics.ts` | All stat queries | All queries use `.take(500)` as a hard cap — analytics will silently undercount once a project has >500 records in any window | Replace with Convex paginated aggregation or server-side aggregation actions that loop until exhausted. Mark with `TODO: paginated` comment in the meantime |
+| [X] | P-3 | 🟡 Medium | `convex/knowledgeBases.ts` | `remove` | `.collect()` on KB sources — moderate risk on KBs with many sources | Replace with `.take(100)` loop inside a scheduled deletion job |
 | [ ] | P-4 | 🔵 Low | `convex/projects.ts` | `list` | `.collect()` on all projects for an org — low risk now but unbounded | Replace with `.take(50)` — no org will have more than a handful of projects |
 
 ---
@@ -103,7 +103,7 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 
 | Category | Total | Done |
 |---|---|---|
-| Security issues | 9 | 0 |
+| Security issues | 9 | 9 |
 | Performance issues | 4 | 0 |
 | Code quality | 3 | 0 |
 | Partial features | 6 | 0 |

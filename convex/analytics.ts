@@ -22,6 +22,7 @@ export const getConversationStats = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const filtered = conversations.filter(c => {
@@ -50,6 +51,7 @@ export const getVisitorStats = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const uniqueVisitors = new Set(conversations.map((c) => c.visitorId ?? "unknown"));
@@ -69,6 +71,7 @@ export const getMessageStats = query({
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const visitorMessages = messages.filter((m) => m.senderType === "visitor").length;
@@ -103,6 +106,7 @@ export const getConversationVolume = query({
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .order("desc")
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const filtered = conversations.filter(c => {
@@ -164,6 +168,7 @@ export const getTokenUsage = query({
                 q.gte(q.field("createdAt"), args.from),
                 q.lte(q.field("createdAt"), args.to)
             ))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const grouped: Record<string, number> = {};
@@ -226,6 +231,7 @@ export const getCSATSummary = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const ratings = conversations.filter(c =>
@@ -294,6 +300,7 @@ export const getTagsSummary = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const tagCounts: Record<string, number> = {};
@@ -485,6 +492,7 @@ export const getSLABreachRate = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
             .take(500); // TODO: replace with paginated aggregation
 
         const inRange = conversations.filter(c =>
