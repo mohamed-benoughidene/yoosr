@@ -600,7 +600,7 @@ export default function WidgetChat() {
                                                     : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
                                             }
                                         >
-                                            {msg.type === "system" ? t(msg.content) : msg.content}
+                                            {msg.type === "system" ? t((msg.content.startsWith("widget.") ? msg.content.replace("widget.", "") : msg.content) as any) : msg.content}
                                         </div>
                                     )}
                                     {!isVisitor && msg.attachments?.payload?.buttons && (

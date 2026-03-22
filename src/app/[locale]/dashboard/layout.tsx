@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server"
 import DashboardShell from "./DashboardShell"
+import { PushNotificationInit } from "@/components/PushNotificationInit"
 
 export default async function DashboardLayout({
     children,
@@ -11,5 +12,10 @@ export default async function DashboardLayout({
     const { locale } = await params;
     setRequestLocale(locale)
 
-    return <DashboardShell>{children}</DashboardShell>
+    return (
+        <DashboardShell>
+            {children}
+            <PushNotificationInit />
+        </DashboardShell>
+    )
 }

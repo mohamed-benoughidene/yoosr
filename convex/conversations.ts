@@ -174,6 +174,12 @@ export const update = mutation({
                     body: conversation.visitorName || args.id,
                 });
 
+                await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToAgent, {
+                    userId: args.assignedTo,
+                    title: "Conversation assigned to you",
+                    body: conversation.visitorName || "A visitor needs your help",
+                });
+
                 await ctx.runMutation(internal.activityLogs.logActivityInternal, {
                     projectId: conversation.projectId,
                     actorId: identity.subject,
@@ -354,7 +360,7 @@ export const createFromWidget = internalMutation({
         // Read project settings to optionally inject welcome message into history permanently
         const widgetConfig = (project?.widgetConfig as any) || {};
         const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
-        const welcomeMsg = "widget.system.welcome";
+        const welcomeMsg = "system.welcome";
 
         if (enableWelcome) {
             await ctx.db.insert("messages", {
@@ -393,6 +399,12 @@ export const createFromWidget = internalMutation({
             projectId: args.projectId,
             event: "conversation.opened",
             payload: { conversationId, projectId: args.projectId },
+        });
+
+        await ctx.scheduler.runAfter(0, internal.pushActions.sendPushToOrg, {
+            orgId: project?.orgId ?? "",
+            title: "New conversation",
+            body: args.visitorName ?? "A visitor started a conversation",
         });
 
         // Trigger smart routing engine

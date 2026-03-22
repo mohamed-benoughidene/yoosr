@@ -358,4 +358,14 @@ export default defineSchema({
     })
         .index("by_org", ["orgId"])
         .index("by_created", ["createdAt"]),
+
+    push_subscriptions: defineTable({
+        userId: v.string(),
+        orgId: v.string(),
+        subscription: v.string(),
+        createdAt: v.number(),
+    })
+        .index("by_userId", ["userId"])
+        .index("by_orgId", ["orgId"]),
 });
+

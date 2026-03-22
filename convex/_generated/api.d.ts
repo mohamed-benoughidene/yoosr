@@ -35,6 +35,8 @@ import type * as openrouter_api from "../openrouter_api.js";
 import type * as orders from "../orders.js";
 import type * as profiles from "../profiles.js";
 import type * as projects from "../projects.js";
+import type * as pushActions from "../pushActions.js";
+import type * as pushMutations from "../pushMutations.js";
 import type * as routing from "../routing.js";
 import type * as settings from "../settings.js";
 import type * as tags from "../tags.js";
@@ -75,6 +77,8 @@ declare const fullApi: ApiFromModules<{
   orders: typeof orders;
   profiles: typeof profiles;
   projects: typeof projects;
+  pushActions: typeof pushActions;
+  pushMutations: typeof pushMutations;
   routing: typeof routing;
   settings: typeof settings;
   tags: typeof tags;
