@@ -20,10 +20,25 @@ export const getMe = query({
 export const getByUserId = query({
     args: { userId: v.string() },
     handler: async (ctx, args) => {
-        return await ctx.db
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthenticated");
+        }
+
+        const profile = await ctx.db
             .query("profiles")
             .withIndex("by_userId", (q) => q.eq("userId", args.userId))
             .first();
+
+        if (profile === null) {
+            return null;
+        }
+
+        if (profile.orgId !== (identity as any).org_id) {
+            throw new Error("Unauthorized");
+        }
+
+        return profile;
     },
 });
 

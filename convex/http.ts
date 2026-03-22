@@ -1,9 +1,15 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { RateLimiter } from "@convex-dev/rate-limiter";
 
 const http = httpRouter();
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  createConversation: { kind: "fixed window", rate: 5, period: 60000 },
+  sendMessage: { kind: "token bucket", rate: 20, period: 60000, capacity: 5 },
+});
 
 // Clerk webhook to sync user data
 http.route({
@@ -42,6 +48,14 @@ http.route({
             });
         }
 
+        const { ok } = await rateLimiter.limit(ctx, "createConversation", { key: visitorId ?? projectId, throws: false });
+        if (!ok) {
+            return new Response(JSON.stringify({ error: "Too many requests" }), {
+                status: 429,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+        }
+
         const conversationId = await ctx.runMutation(
             internal.conversations.createFromWidget,
             { projectId, visitorName, visitorEmail, visitorPhone, visitorId, initialMessage }
@@ -70,6 +84,14 @@ http.route({
                     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
                 }
             );
+        }
+
+        const { ok } = await rateLimiter.limit(ctx, "sendMessage", { key: visitorId ?? conversationId, throws: false });
+        if (!ok) {
+            return new Response(JSON.stringify({ error: "Too many requests" }), {
+                status: 429,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
         }
 
         const { messageId, conversationId: newConversationId } = await ctx.runMutation(
