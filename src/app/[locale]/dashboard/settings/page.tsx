@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
+import { UsageCard } from "@/components/settings/UsageCard"
 
 
 
@@ -252,7 +253,7 @@ function SettingsContent() {
                         </CardFooter>
                     </Card>
 
-
+                    {activeProject && <UsageCard projectId={activeProject._id} />}
                 </TabsContent>
 
 

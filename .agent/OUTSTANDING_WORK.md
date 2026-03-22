@@ -67,7 +67,7 @@ These features have backend logic but are missing functionality or a UI layer.
 | [X] | F-3 | Notifications — push + email | 🟤 Partial | In-app notification system fully built (create/list/read/clear, auto-trim, 7-day cron). | No push notification delivery (browser push or mobile). No email notification on new conversation or assignment. | New action in `convex/notifications.ts` or a dedicated `convex/notificationDelivery.ts`. Requires choosing a push/email provider. |
 | [ ] | F-4 | Feedback admin view | 🟤 Partial | Feedback submission form at `/feedback`. `feedback` table stores all submissions (orgId, type, message, submitter). | No dashboard page to read submitted feedback. Agents and admins have no way to view submissions from inside the app. | Add a read-only page under `app/dashboard/settings/feedback` (or similar). Wire to a new `list` query in a `feedback.ts` Convex file. |
 | [ ] | F-5 | PDF source in Knowledge Base | 🟤 Partial | KB source pipeline supports `type: "file"`. Text is extracted and chunked for embedding. | PDF files are read as raw bytes — no PDF text extraction. Only plain text files work correctly. | Add `pdf-parse` (or `pdfjs-dist`) to extract text from PDF buffers before chunking. Handle in the KB source processing action in `convex/knowledgeBases.ts`. |
-| [ ] | F-6 | CSAT analytics UI | 🟤 Partial | `csat_ratings` table exists. `submitCSAT` mutation is called from the widget. `getCSATSummary` query exists in `analytics.ts`. | No CSAT breakdown UI on the analytics dashboard page. CSAT data is collected but never displayed. | Add a CSAT section to `app/dashboard/analytics/page.tsx`. Display average rating, distribution bar (1–5 stars), and recent comments. |
+| [X] | F-6 | CSAT analytics UI | 🟤 Partial | `csat_ratings` table exists. `submitCSAT` mutation is called from the widget. `getCSATSummary` query exists in `analytics.ts`. | No CSAT breakdown UI on the analytics dashboard page. CSAT data is collected but never displayed. | Add a CSAT section to `app/dashboard/analytics/page.tsx`. Display average rating, distribution bar (1–5 stars), and recent comments. |
 
 ---
 
@@ -78,7 +78,7 @@ These have a fully defined schema but no backend mutations/queries and no UI bui
 | Done | # | Feature | Tables | What's Needed | Priority |
 |---|---|---|---|---|---|
 | [ ] | O-1 | Conversation Events logging | `conversation_events` (`projectId`, `conversationId`, `handledBy`, `closed`, `createdAt`) | Mutations to log events on conversation resolve and HITL handoff. Query to retrieve events per conversation for timeline view. | Medium — needed for accurate bot vs agent analytics split |
-| [ ] | O-2 | Project usage / billing quotas | `project_usage` (`projectId`, `tokensConsumed`, `conversationsCount`, `billingCycleStart`) | Mutations to increment `tokensConsumed` after every OpenRouter call and `conversationsCount` on new conversation. Query for usage dashboard. Enforcement logic when quota is exceeded. | Medium — needed before charging customers |
+| [X] | O-2 | Project usage / billing quotas | `project_usage` (`projectId`, `tokensConsumed`, `conversationsCount`, `billingCycleStart`) | Mutations to increment `tokensConsumed` after every OpenRouter call and `conversationsCount` on new conversation. Query for usage dashboard. Enforcement logic when quota is exceeded. | Medium — needed before charging customers |
 
 ---
 
@@ -106,10 +106,10 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 | Security issues | 9 | 9 |
 | Performance issues | 4 | 3 |
 | Code quality | 3 | 3 |
-| Partial features | 6 | 1 |
-| Schema-only features | 2 | 0 |
+| Partial features | 6 | 2 |
+| Schema-only features | 2 | 1 |
 | Deferred aggregation TODOs | 8 | 0 |
-| **Total** | **32** | **16** |
+| **Total** | **32** | **18** |
 
 ---
 

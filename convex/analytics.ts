@@ -353,6 +353,56 @@ export const getTagsSummary = query({
     }
 });
 
+/**
+ * Fetches a summary of project usage (conversations, bots, KBs, tokens) for the current billing cycle.
+ */
+export const getProjectUsageSummary = query({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        if (!project) throw new Error("Unauthorized: Project does not belong to your organization");
+
+        // 1. Fetch project_usage record
+        const usage = await ctx.db
+            .query("project_usage")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .first();
+
+        const billingCycleStart = usage?.billingCycleStart ?? project._creationTime;
+        const tokensConsumed = usage?.tokensConsumed ?? 0;
+
+        // 2. Count conversations in the current billing cycle
+        const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.gte(q.field("_creationTime"), billingCycleStart))
+            .collect();
+
+        // 3. Count bots
+        const bots = await ctx.db
+            .query("bots")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        // 4. Count knowledge bases
+        const knowledgeBases = await ctx.db
+            .query("knowledge_bases")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .collect();
+
+        return {
+            conversations: conversations.length,
+            bots: bots.length,
+            knowledgeBases: knowledgeBases.length,
+            tokensConsumed,
+            billingCycleStart,
+        };
+    },
+});
+
 // ---------------------------------------------------------------------------
 // Mutations
 // ---------------------------------------------------------------------------
