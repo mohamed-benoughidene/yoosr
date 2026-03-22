@@ -33,7 +33,7 @@ export const list = query({
         const orgProjects = await ctx.db
             .query("projects")
             .withIndex("by_orgId", (q) => q.eq("orgId", identity.org_id!))
-            .collect();
+            .take(50);
 
         // Include the role from the token so the frontend knows their permissions
         return orgProjects.map(p => ({
