@@ -1,4 +1,4 @@
-import { query, mutation, action } from "./_generated/server";
+import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
@@ -168,15 +168,34 @@ export const remove = mutation({
             throw new ConvexError("Unauthorized");
         }
 
+        // Schedule the batched deletion job
+        await ctx.scheduler.runAfter(0, internal.knowledgeBases.deleteSourcesBatch, {
+            kbId: args.kbId,
+        });
+    },
+});
+
+// Internal mutation to delete sources in batches to avoid timeouts
+export const deleteSourcesBatch = internalMutation({
+    args: { kbId: v.id("knowledge_bases") },
+    handler: async (ctx, args) => {
         const sources = await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
-            .collect();
+            .take(100);
 
         for (const source of sources) {
             await ctx.db.delete(source._id);
         }
 
-        await ctx.db.delete(args.kbId);
+        if (sources.length === 100) {
+            // Schedule another batch
+            await ctx.scheduler.runAfter(0, internal.knowledgeBases.deleteSourcesBatch, {
+                kbId: args.kbId,
+            });
+        } else {
+            // All sources deleted, remove the knowledge base record itself
+            await ctx.db.delete(args.kbId);
+        }
     },
 });
