@@ -1,22 +1,15 @@
 import { internalMutation } from "./_generated/server";
 
+// ONE-TIME MIGRATION — DISABLED. Do not re-enable. See handler comment for details.
 export const migrateStatuses = internalMutation({
     args: {},
-    handler: async (ctx) => {
-        const conversations = await ctx.db.query("conversations").collect();
-        let changed = 0;
-        for (const conv of conversations) {
-            if (typeof conv.status === "string") {
-                let newStatus: 100 | 200 | 1000 = 100;
-                if (conv.status === "assigned" || conv.status === "open") {
-                    newStatus = conv.assignedTo ? 200 : 100;
-                } else if (conv.status === "resolved" || conv.status === "closed") {
-                    newStatus = 1000;
-                }
-                await ctx.db.patch(conv._id, { status: newStatus });
-                changed++;
-            }
-        }
-        return `Migrated ${changed} conversations`;
-    }
+    handler: async (_ctx, _args) => {
+        // Migration complete as of March 2026 — all conversation statuses are now numeric (100/200/1000).
+        // This function has been permanently disabled to prevent accidental re-execution.
+        // To confirm: search the conversations table — no record should have typeof status === "string".
+        // If you need to re-run data migrations, create a new function in this file.
+        throw new Error(
+            "migrateStatuses has been disabled. Migration was completed in March 2026."
+        );
+    },
 });

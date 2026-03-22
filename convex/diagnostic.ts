@@ -1,3 +1,7 @@
+// DIAGNOSTIC ONLY — never call from production code.
+// This file exists for local debugging only.
+// getBotFlow runs .collect() on all bot_flows globally and will OOM on real data.
+
 import { internalQuery } from "./_generated/server";
 
 export const getRecentMessages = internalQuery({
@@ -30,6 +34,9 @@ export const getConvoPointer = internalQuery({
 export const getBotFlow = internalQuery({
     args: {},
     handler: async (ctx) => {
+        if (process.env.NODE_ENV !== "development") {
+            throw new Error("diagnostic.getBotFlow is disabled outside development");
+        }
         const flows = await ctx.db.query("bot_flows").order("desc").collect();
         return flows.length > 0 ? { nodes: flows[0].nodes, edges: flows[0].edges } : null;
     }

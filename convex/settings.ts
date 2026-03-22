@@ -299,22 +299,10 @@ export const removeCannedResponse = mutation({
     },
 });
 
-// ========================
-// LABELS
-// ========================
 
-export const listLabels = query({
-    args: { projectId: v.id("projects") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
-        return await ctx.db
-            .query("labels")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .take(100);
-    },
-});
-
+// TODO: move createLabel and removeLabel to convex/labels.ts for consistency.
+// All label logic (query + mutations) should live in one file.
+// Update imports in the labels settings page after moving.
 export const createLabel = mutation({
     args: {
         projectId: v.id("projects"),

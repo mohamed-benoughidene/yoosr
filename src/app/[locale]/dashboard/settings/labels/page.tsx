@@ -50,7 +50,7 @@ export default function LabelsPage() {
     const [creating, setCreating] = useState(false)
 
     const labels = useQuery(
-        api.settings.listLabels,
+        api.labels.listLabels,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 

@@ -43,7 +43,7 @@ function NodePropertiesPanelContent({
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project") as Id<"projects"> | null;
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
-    const labels = useQuery(api.settings.listLabels, projectId ? { projectId } : "skip") || [];
+    const labels = useQuery(api.labels.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
     const data = (node?.data || {}) as Record<string, any>;
     const [localVariations, setLocalVariations] = useState<string[]>(() => 
