@@ -1,4 +1,4 @@
-import { internalAction, internalQuery, query, mutation } from "./_generated/server";
+import { internalAction, internalQuery, internalMutation, query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { requireAdmin } from "./utils";
@@ -21,55 +21,148 @@ export const fireWebhookEvent = internalAction({
 
         if (!subscriptions || subscriptions.length === 0) return;
 
-        // Fire HTTP POSTs
-        const fetchPromises = subscriptions.map(async (sub: any) => {
-            try {
-                const bodyString = JSON.stringify({
-                    event: args.event,
-                    projectId: args.projectId,
-                    timestamp: Date.now(),
-                    data: args.payload,
-                });
+        // Fan-out delivery tasks
+        for (const sub of subscriptions) {
+            await ctx.scheduler.runAfter(0, internal.webhooks.deliverWebhook, {
+                subscriptionId: sub._id,
+                projectId: args.projectId,
+                event: args.event,
+                payload: args.payload,
+                attempt: 1,
+            });
+        }
+    },
+});
 
-                const encoder = new TextEncoder();
-                const key = await crypto.subtle.importKey(
-                    "raw",
-                    encoder.encode(sub.secret),
-                    { name: "HMAC", hash: "SHA-256" },
-                    false,
-                    ["sign"]
-                );
+export const getSubscriptionById = internalQuery({
+    args: { subscriptionId: v.id("webhook_subscriptions") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.subscriptionId);
+    }
+});
 
-                const signatureBuffer = await crypto.subtle.sign(
-                    "HMAC",
-                    key,
-                    encoder.encode(bodyString)
-                );
+export const logDelivery = internalMutation({
+    args: {
+        subscriptionId: v.id("webhook_subscriptions"),
+        projectId: v.id("projects"),
+        event: v.string(),
+        url: v.string(),
+        attempt: v.number(),
+        success: v.boolean(),
+        statusCode: v.optional(v.number()),
+        error: v.optional(v.string()),
+        timestamp: v.number(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("webhook_deliveries", {
+            subscriptionId: args.subscriptionId,
+            projectId: args.projectId,
+            event: args.event,
+            url: args.url,
+            attempt: args.attempt,
+            success: args.success,
+            statusCode: args.statusCode,
+            error: args.error,
+            timestamp: args.timestamp,
+        });
+    }
+});
 
-                const signatureHex = Array.from(new Uint8Array(signatureBuffer))
-                    .map((b) => b.toString(16).padStart(2, "0"))
-                    .join("");
-
-                const response = await fetch(sub.url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Yoosr-Event": args.event,
-                        "X-Yoosr-Signature": `sha256=${signatureHex}`
-                    },
-                    body: bodyString,
-                });
-
-                if (!response.ok) {
-                    console.error(`Webhook ${sub.url} failed with status ${response.status}`);
-                }
-            } catch (error) {
-                console.error(`Error firing webhook to ${sub.url}:`, error);
-            }
+export const deliverWebhook = internalAction({
+    args: {
+        subscriptionId: v.id("webhook_subscriptions"),
+        projectId: v.id("projects"),
+        event: v.string(),
+        payload: v.any(),
+        attempt: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const sub = await ctx.runQuery(internal.webhooks.getSubscriptionById, {
+            subscriptionId: args.subscriptionId,
         });
 
-        await Promise.allSettled(fetchPromises);
-    },
+        if (!sub || !sub.isActive) return;
+
+        let success = false;
+        let statusCode: number | undefined;
+        let errorMessage: string | undefined;
+
+        try {
+            const bodyString = JSON.stringify({
+                event: args.event,
+                projectId: args.projectId,
+                timestamp: Date.now(),
+                data: args.payload,
+            });
+
+            const encoder = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                "raw",
+                encoder.encode(sub.secret),
+                { name: "HMAC", hash: "SHA-256" },
+                false,
+                ["sign"]
+            );
+
+            const signatureBuffer = await crypto.subtle.sign(
+                "HMAC",
+                key,
+                encoder.encode(bodyString)
+            );
+
+            const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("");
+
+            const response = await fetch(sub.url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Yoosr-Event": args.event,
+                    "X-Yoosr-Signature": `sha256=${signatureHex}`
+                },
+                body: bodyString,
+                signal: AbortSignal.timeout(10000),
+            });
+
+            statusCode = response.status;
+            success = response.ok;
+            
+            if (!response.ok) {
+                errorMessage = `Webhook failed with status ${response.status}`;
+            }
+        } catch (error: any) {
+            success = false;
+            errorMessage = error.message || String(error);
+        }
+
+        // Log the delivery attempt
+        await ctx.runMutation(internal.webhooks.logDelivery, {
+            subscriptionId: args.subscriptionId,
+            projectId: args.projectId,
+            event: args.event,
+            url: sub.url,
+            attempt: args.attempt,
+            success,
+            statusCode,
+            error: errorMessage,
+            timestamp: Date.now(),
+        });
+
+        // Retry logic
+        if (!success && args.attempt < 3) {
+            const nextAttempt = args.attempt + 1;
+            const delayMs = nextAttempt === 2 ? 60000 : 300000;
+            
+            await ctx.scheduler.runAfter(delayMs, internal.webhooks.deliverWebhook, {
+                subscriptionId: args.subscriptionId,
+                projectId: args.projectId,
+                event: args.event,
+                payload: args.payload,
+                attempt: nextAttempt,
+            });
+        }
+    }
 });
 
 /**

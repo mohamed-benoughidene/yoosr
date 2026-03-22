@@ -310,6 +310,21 @@ export default defineSchema({
         .index("by_projectId", ["projectId"])
         .index("by_projectId_isActive", ["projectId", "isActive"]),
 
+    webhook_deliveries: defineTable({
+        subscriptionId: v.id("webhook_subscriptions"),
+        projectId: v.id("projects"),
+        event: v.string(),
+        url: v.string(),
+        attempt: v.number(),         // 1, 2, or 3
+        success: v.boolean(),
+        statusCode: v.optional(v.number()),
+        error: v.optional(v.string()),
+        timestamp: v.number(),       // Date.now()
+    })
+        .index("by_subscriptionId", ["subscriptionId"])
+        .index("by_projectId", ["projectId"])
+        .index("by_projectId_event", ["projectId", "event"]),
+
     // Notifications for agents
     notifications: defineTable({
         projectId: v.id("projects"),

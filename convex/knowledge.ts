@@ -1,9 +1,8 @@
-"use node";
 import { action, internalAction, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-const pdfParse = require("pdf-parse");
+import { extractText } from "unpdf";
 
 export const getChunkInternal = internalQuery({
     args: { id: v.id("knowledge_base_chunks") },
@@ -185,9 +184,9 @@ export const indexSource = internalAction({
 
                 if (blob.type === "application/pdf") {
                     const arrayBuffer = await blob.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-                    const pdfData = await pdfParse(buffer);
-                    const cleanedText = pdfData.text.trim();
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    const { text } = await extractText(uint8Array, { mergePages: true });
+                    const cleanedText = (text as string).trim();
                     if (!cleanedText) {
                         throw new Error("PDF text extraction returned empty content");
                     }
