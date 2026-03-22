@@ -23,7 +23,7 @@ export default async function WidgetPage(props: {
                 if (["en", "ar", "fr"].includes(project?.widgetLocale)) {
                     projectLocale = project.widgetLocale;
                 } else {
-                    console.error(`widgetLocale not found in response for ${fetchUrl}. Status: ${response.status}`);
+                    projectLocale = "en";
                 }
             } else {
                 console.error(`Fetch failed for ${fetchUrl}. Status: ${response.status}`);
