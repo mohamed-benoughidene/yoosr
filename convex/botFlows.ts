@@ -1,12 +1,26 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+ 
+// Extend the Identity type to include custom claims from Clerk
+type ClerkIdentity = {
+    subject: string;
+    org_id?: string;
+    org_role?: string;
+    [key: string]: any;
+};
 
 // Get flow for a bot
 export const get = query({
     args: { botId: v.id("bots") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         if (!identity) return null;
+
+        const bot = await ctx.db.get(args.botId);
+        if (!bot) return null;
+
+        const project = await ctx.db.get(bot.projectId);
+        if (!project || project.orgId !== identity.org_id) return null;
 
         return await ctx.db
             .query("bot_flows")
@@ -208,8 +222,15 @@ export const save = mutation({
         variables: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        // if (!identity) throw new Error("Not authenticated");
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity) throw new Error("Not authenticated");
+
+        const bot = await ctx.db.get(args.botId);
+        if (!bot) throw new Error("Not found");
+
+        const project = await ctx.db.get(bot.projectId);
+        if (!project) throw new Error("Not found");
+        if (project.orgId !== identity.org_id) throw new Error("Unauthorized");
 
         const executionNodes = compileToExecutionNodes(args.nodes, args.edges);
 
