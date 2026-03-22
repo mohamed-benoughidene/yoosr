@@ -1,7 +1,9 @@
+"use node";
 import { action, internalAction, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+const pdfParse = require("pdf-parse");
 
 export const getChunkInternal = internalQuery({
     args: { id: v.id("knowledge_base_chunks") },
@@ -176,15 +178,32 @@ export const indexSource = internalAction({
                     throw new Error("File blob not found");
                 }
 
-                const fileText = await blob.text();
-                const cleanedText = fileText.trim();
-
-                if (!cleanedText) {
-                    throw new Error("Content is empty after trimming");
+                const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15MB
+                if (blob.size > MAX_FILE_BYTES) {
+                    throw new Error(`File too large: ${blob.size} bytes. Maximum allowed is 15MB.`);
                 }
 
-                const chunks = splitIntoChunks(cleanedText);
-                await processAndStoreChunks(ctx, args, chunks);
+                if (blob.type === "application/pdf") {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    const pdfData = await pdfParse(buffer);
+                    const cleanedText = pdfData.text.trim();
+                    if (!cleanedText) {
+                        throw new Error("PDF text extraction returned empty content");
+                    }
+                    const chunks = splitIntoChunks(cleanedText);
+                    await processAndStoreChunks(ctx, args, chunks);
+                } else {
+                    const fileText = await blob.text();
+                    const cleanedText = fileText.trim();
+
+                    if (!cleanedText) {
+                        throw new Error("Content is empty after trimming");
+                    }
+
+                    const chunks = splitIntoChunks(cleanedText);
+                    await processAndStoreChunks(ctx, args, chunks);
+                }
             } catch (e: any) {
                 console.error("Failed to process file source:", e.message);
                 await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });

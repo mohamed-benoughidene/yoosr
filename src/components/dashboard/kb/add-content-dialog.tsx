@@ -41,7 +41,7 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
         e.preventDefault()
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const droppedFile = e.dataTransfer.files[0]
-            if (droppedFile.name.match(/\.(txt|md|csv)$/i)) {
+            if (droppedFile.name.match(/\.(txt|md|csv|pdf)$/i)) {
                 setFile(droppedFile)
             }
         }
@@ -162,7 +162,7 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                                 type="file"
                                 ref={fileInputRef}
                                 className="hidden"
-                                accept=".txt,.md,.csv"
+                                accept=".txt,.md,.csv,.pdf"
                                 onChange={handleFileChange}
                             />
                             <Upload className="h-10 w-10 text-muted-foreground mb-4" />
