@@ -46,7 +46,8 @@ import {
     Instagram,
     Pencil,
     CircleDot,
-    ChevronLeft
+    ChevronLeft,
+    Bot,
 } from "lucide-react"
 import {
     Select,
@@ -212,6 +213,10 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
     const assignedProfile = useQuery(
         api.profiles.getByUserId,
         conversation?.assignedTo ? { userId: conversation.assignedTo } : "skip"
+    )
+    const conversationEvents = useQuery(
+        api.conversations.getConversationEvents,
+        conversationId ? { conversationId } : "skip"
     )
 
     const updateVisitorInfo = useMutation(api.conversations.updateVisitorInfo)
@@ -791,6 +796,50 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
+
+            {/* 6. Activity History */}
+            {conversationEvents && conversationEvents.length > 0 && (
+                <div className="space-y-3 px-2">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        {t("section_activity") || "Activity"}
+                    </h3>
+                    <div className="space-y-3">
+                        {conversationEvents.map((event, idx) => {
+                            const eventDate = new Date(event.createdAt);
+                            const timeStr = eventDate.toLocaleDateString(locale, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: false
+                            });
+
+                            let label = "";
+                            if (event.handledBy === "bot") {
+                                label = event.closed ? (t("event_resolved_bot") || "Resolved by bot") : (t("event_handoff_bot") || "Handed off to agent");
+                            } else {
+                                label = event.closed ? (t("event_resolved_agent") || "Resolved by agent") : (t("event_active_agent") || "Active with agent");
+                            }
+
+                            return (
+                                <div key={idx} className="flex items-start gap-3 text-sm group">
+                                    <div className="mt-0.5 p-1 rounded-full bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                        {event.handledBy === "bot" ? (
+                                            <Bot className="h-3 w-3" />
+                                        ) : (
+                                            <User className="h-3 w-3" />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-medium text-foreground leading-none mb-1">{label}</span>
+                                        <span className="text-[11px] text-muted-foreground">{timeStr}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             <div className="flex-1" />
 

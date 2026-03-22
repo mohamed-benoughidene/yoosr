@@ -1677,7 +1677,12 @@
     "order_form_contact_placeholder": "جون دو",
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "اسم المنتج أو وصفه",
-    "order_form_notes_placeholder": "ملاحظات الطلب، المواصفات..."
+    "order_form_notes_placeholder": "ملاحظات الطلب، المواصفات...",
+    "section_activity": "النشاط",
+    "event_resolved_bot": "تم الحل بواسطة البوت",
+    "event_handoff_bot": "تم التحويل إلى وكيل",
+    "event_resolved_agent": "تم الحل بواسطة وكيل",
+    "event_active_agent": "نشط مع وكيل"
   },
   "widget": {
     "system": {

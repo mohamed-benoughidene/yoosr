@@ -69,7 +69,7 @@ function ChatLayoutContent({
 
             {/* Desktop View */}
             <div className="hidden lg:flex h-full w-full">
-                <ResizablePanelGroup direction="horizontal">
+                <ResizablePanelGroup direction="horizontal" autoSaveId="dashboard-chat-layout">
                     <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
                         <Suspense fallback={
                             <div className="flex h-full items-center justify-center">

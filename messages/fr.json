@@ -1675,7 +1675,12 @@
     "order_form_contact_placeholder": "Jean Dupont",
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "Nom du produit ou description",
-    "order_form_notes_placeholder": "Notes de commande, spécifications..."
+    "order_form_notes_placeholder": "Notes de commande, spécifications...",
+    "section_activity": "Activité",
+    "event_resolved_bot": "Résolue par le bot",
+    "event_handoff_bot": "Transférée à un agent",
+    "event_resolved_agent": "Résolue par un agent",
+    "event_active_agent": "Active avec un agent"
   },
   "widget": {
     "system": {

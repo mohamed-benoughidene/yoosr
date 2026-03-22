@@ -255,7 +255,8 @@ export default defineSchema({
         createdAt: v.number(),
     })
         .index("by_projectId", ["projectId"])
-        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
+        .index("by_projectId_createdAt", ["projectId", "createdAt"])
+        .index("by_conversationId", ["conversationId"]),
 
     // CSAT ratings (submitted from chat widget)
     csat_ratings: defineTable({

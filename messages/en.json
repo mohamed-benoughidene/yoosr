@@ -1692,7 +1692,12 @@
     "order_form_contact_placeholder": "John Doe",
     "order_form_phone_placeholder": "+1 234 567 890",
     "order_form_product_placeholder": "Product name or description",
-    "order_form_notes_placeholder": "Order notes, specifications..."
+    "order_form_notes_placeholder": "Order notes, specifications...",
+    "section_activity": "Activity",
+    "event_resolved_bot": "Resolved by bot",
+    "event_handoff_bot": "Handed off to agent",
+    "event_resolved_agent": "Resolved by agent",
+    "event_active_agent": "Active with agent"
   },
   "widget": {
     "system": {

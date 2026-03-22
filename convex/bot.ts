@@ -237,6 +237,13 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 deptId: action.deptId,
             });
 
+            await ctx.runMutation(internal.conversations.logConversationEvent, {
+                projectId: convState.projectId,
+                conversationId,
+                handledBy: "bot",
+                closed: false,
+            });
+
             if (convState?.assignedTo) {
                 await ctx.runMutation(internal.notifications.createNotification, {
                     projectId: convState.projectId,
@@ -328,6 +335,17 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 id: conversationId,
                 status: 1000,
             });
+            const resolveConvState = await ctx.runQuery(
+                internal.bot.getConversationState, { id: conversationId }
+            );
+            if (resolveConvState) {
+                await ctx.runMutation(internal.conversations.logConversationEvent, {
+                    projectId: resolveConvState.projectId,
+                    conversationId,
+                    handledBy: "bot",
+                    closed: true,
+                });
+            }
             return { newAttributes: {}, nextNodeId: null };
 
         default:

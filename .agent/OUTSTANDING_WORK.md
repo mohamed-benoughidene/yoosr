@@ -77,7 +77,7 @@ These have a fully defined schema but no backend mutations/queries and no UI bui
 
 | Done | # | Feature | Tables | What's Needed | Priority |
 |---|---|---|---|---|---|
-| [ ] | O-1 | Conversation Events logging | `conversation_events` (`projectId`, `conversationId`, `handledBy`, `closed`, `createdAt`) | Mutations to log events on conversation resolve and HITL handoff. Query to retrieve events per conversation for timeline view. | Medium — needed for accurate bot vs agent analytics split |
+| [X] | O-1 | Conversation Events logging | `conversation_events` (`projectId`, `conversationId`, `handledBy`, `closed`, `createdAt`) | Mutations to log events on conversation resolve and HITL handoff. Query to retrieve events per conversation for timeline view. | Medium — needed for accurate bot vs agent analytics split |
 | [X] | O-2 | Project usage / billing quotas | `project_usage` (`projectId`, `tokensConsumed`, `conversationsCount`, `billingCycleStart`) | Mutations to increment `tokensConsumed` after every OpenRouter call and `conversationsCount` on new conversation. Query for usage dashboard. Enforcement logic when quota is exceeded. | Medium — needed before charging customers |
 
 ---
@@ -107,9 +107,9 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 | Performance issues | 4 | 3 |
 | Code quality | 3 | 3 |
 | Partial features | 6 | 2 |
-| Schema-only features | 2 | 1 |
+| Schema-only features | 2 | 2 |
 | Deferred aggregation TODOs | 8 | 0 |
-| **Total** | **32** | **18** |
+| **Total** | **32** | **19** |
 
 ---
 

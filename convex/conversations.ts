@@ -451,6 +451,13 @@ export const resolve = mutation({
             resolvedBy: identity.subject,
         });
 
+        await ctx.scheduler.runAfter(0, internal.conversations.logConversationEvent, {
+            projectId: conversation.projectId,
+            conversationId: args.id,
+            handledBy: "agent",
+            closed: true,
+        });
+
         // Wire conversation.closed webhook
         await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
             projectId: conversation.projectId,
@@ -759,6 +766,13 @@ export const autoCloseInactive = internalMutation({
                     status: 1000,
                     lastMessage: "Conversation auto-closed due to inactivity",
                     updatedAt: now,
+                });
+
+                await ctx.scheduler.runAfter(0, internal.conversations.logConversationEvent, {
+                    projectId: conv.projectId,
+                    conversationId: conv._id,
+                    handledBy: "agent",
+                    closed: true,
                 });
 
                 // Wire conversation.closed webhook
@@ -1346,5 +1360,43 @@ export const relayToTelegram = mutation({
             conversationId: args.conversationId,
             content: args.content,
         });
+    },
+});
+
+export const logConversationEvent = internalMutation({
+    args: {
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        handledBy: v.union(v.literal("bot"), v.literal("agent")),
+        closed: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("conversation_events", {
+            projectId: args.projectId,
+            conversationId: args.conversationId,
+            handledBy: args.handledBy,
+            closed: args.closed,
+            createdAt: Date.now(),
+        });
+    },
+});
+
+export const getConversationEvents = query({
+    args: { conversationId: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        const events = await ctx.db
+            .query("conversation_events")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .order("asc")
+            .collect();
+
+        return events.map(e => ({
+            handledBy: e.handledBy,
+            closed: e.closed,
+            createdAt: e.createdAt,
+        }));
     },
 });
