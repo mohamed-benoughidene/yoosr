@@ -154,7 +154,29 @@ export const getMessageStats = action({
  * Conversation volume split by handledBy (bot vs agent) over a date range.
  * Returns daily buckets for the chart + totals.
  */
-export const getConversationVolume = query({
+export const _checkProjectOwnership = internalQuery({
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+        return await checkProjectOwnership(ctx, args.projectId, identity as any);
+    }
+});
+
+export const _paginateConversationsForVolume = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getConversationVolume = action({
     args: {
         projectId: v.id("projects"),
         from: v.number(), // Unix ms
@@ -164,37 +186,39 @@ export const getConversationVolume = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, botHandled: 0, agentHandled: 0, daily: [] };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await ctx.runQuery(internal.analytics._checkProjectOwnership, { projectId: args.projectId });
         if (!project) return { total: 0, botHandled: 0, agentHandled: 0, daily: [] };
 
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .order("desc")
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
-
-        const filtered = conversations.filter(c => {
-            if (c._creationTime < args.from) return false;
-            if (c._creationTime > args.to) return false;
-            return true;
-        });
-
+        let total = 0;
         let botHandled = 0;
         let agentHandled = 0;
-
-        // Build daily buckets
         const buckets: Record<string, { bot: number; agent: number }> = {};
-        for (const c of filtered) {
-            const handledBy = (c.assignedTo || c.resolvedBy) ? "agent" : "bot";
-            if (handledBy === "bot") botHandled++;
-            else agentHandled++;
 
-            const day = new Date(c._creationTime).toISOString().slice(0, 10);
-            if (!buckets[day]) buckets[day] = { bot: 0, agent: 0 };
+        let cursor: string | null = null;
+        let isDone = false;
 
-            if (handledBy === "bot") buckets[day].bot++;
-            else buckets[day].agent++;
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForVolume, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const c of pageResult.page) {
+                if (c._creationTime < args.from) continue;
+                if (c._creationTime > args.to) continue;
+
+                total++;
+                const handledBy = (c.assignedTo || c.resolvedBy) ? "agent" : "bot";
+                if (handledBy === "bot") botHandled++;
+                else agentHandled++;
+
+                const day = new Date(c._creationTime).toISOString().slice(0, 10);
+                if (!buckets[day]) buckets[day] = { bot: 0, agent: 0 };
+
+                if (handledBy === "bot") buckets[day].bot++;
+                else buckets[day].agent++;
+            }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
         }
 
         const daily = Object.entries(buckets)
@@ -206,14 +230,27 @@ export const getConversationVolume = query({
                 total: counts.bot + counts.agent,
             }));
 
-        return { total: filtered.length, botHandled, agentHandled, daily };
+        return { total, botHandled, agentHandled, daily };
     },
 });
 
 /**
  * Token usage summed over a date range, grouped by model.
  */
-export const getTokenUsage = query({
+export const _paginateTokenUsage = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("token_usage")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getTokenUsage = action({
     args: {
         projectId: v.id("projects"),
         from: v.number(),
@@ -223,24 +260,28 @@ export const getTokenUsage = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { totalTokens: 0, byModel: [] };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await ctx.runQuery(internal.analytics._checkProjectOwnership, { projectId: args.projectId });
         if (!project) return { totalTokens: 0, byModel: [] };
-
-        const rows = await ctx.db
-            .query("token_usage")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .filter((q) => q.and(
-                q.gte(q.field("createdAt"), args.from),
-                q.lte(q.field("createdAt"), args.to)
-            ))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
 
         const grouped: Record<string, number> = {};
         let totalTokens = 0;
-        for (const row of rows) {
-            grouped[row.model] = (grouped[row.model] ?? 0) + row.tokensUsed;
-            totalTokens += row.tokensUsed;
+
+        let cursor: string | null = null;
+        let isDone = false;
+
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateTokenUsage, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const row of pageResult.page) {
+                if (row.createdAt >= args.from && row.createdAt <= args.to) {
+                    grouped[row.model] = (grouped[row.model] ?? 0) + row.tokensUsed;
+                    totalTokens += row.tokensUsed;
+                }
+            }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
         }
 
         const byModel = Object.entries(grouped).map(([model, tokens]) => ({ model, tokens }));
@@ -382,7 +423,20 @@ export const getProjectUsage = query({
 /**
  * Aggregates semantic tags generated by LLMs on closed conversations.
  */
-export const getTagsSummary = query({
+export const _paginateConversationsForTags = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getTagsSummary = action({
     args: {
         projectId: v.id("projects"),
         from: v.number(),
@@ -392,23 +446,28 @@ export const getTagsSummary = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await ctx.runQuery(internal.analytics._checkProjectOwnership, { projectId: args.projectId });
         if (!project) return [];
-
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
 
         const tagCounts: Record<string, number> = {};
 
-        for (const conv of conversations) {
-            if (conv._creationTime >= args.from && conv._creationTime <= args.to && conv.tags) {
-                for (const tag of conv.tags) {
-                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        let cursor: string | null = null;
+        let isDone = false;
+
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForTags, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const conv of pageResult.page) {
+                if (conv._creationTime >= args.from && conv._creationTime <= args.to && conv.tags) {
+                    for (const tag of conv.tags) {
+                        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                    }
                 }
             }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
         }
 
         return Object.entries(tagCounts)

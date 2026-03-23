@@ -80,14 +80,42 @@ export default function AnalyticsPage() {
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchStats]);
 
-    const volumeData = useQuery(
-        api.analytics.getConversationVolume,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
-    const tokenData = useQuery(
-        api.analytics.getTokenUsage,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
+    const [volumeData, setVolumeData] = useState<{total: number, botHandled: number, agentHandled: number, daily: any[]} | undefined>(undefined);
+    const [loadingVolume, setLoadingVolume] = useState(true);
+    const fetchVolume = useAction(api.analytics.getConversationVolume);
+
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        setLoadingVolume(true);
+        fetchVolume({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setVolumeData(data);
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (isMounted) setLoadingVolume(false);
+            });
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchVolume]);
+    const [tokenData, setTokenData] = useState<{totalTokens: number, byModel: any[]} | undefined>(undefined);
+    const [loadingTokens, setLoadingTokens] = useState(true);
+    const fetchTokens = useAction(api.analytics.getTokenUsage);
+
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        setLoadingTokens(true);
+        fetchTokens({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setTokenData(data);
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (isMounted) setLoadingTokens(false);
+            });
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchTokens]);
     const csatData = useQuery(
         api.analytics.getCSATSummary,
         activeProject ? { projectId: activeProject._id, from, to } : "skip"
@@ -104,10 +132,24 @@ export default function AnalyticsPage() {
         api.analytics.getProjectUsage,
         activeProject ? { projectId: activeProject._id } : "skip"
     );
-    const tagsData = useQuery(
-        api.analytics.getTagsSummary,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
+    const [tagsData, setTagsData] = useState<{name: string, value: number}[] | undefined>(undefined);
+    const [loadingTags, setLoadingTags] = useState(true);
+    const fetchTags = useAction(api.analytics.getTagsSummary);
+
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        setLoadingTags(true);
+        fetchTags({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setTagsData(data);
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (isMounted) setLoadingTags(false);
+            });
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchTags]);
 
     const slaData = useQuery(
         api.analytics.getSLABreachRate,
