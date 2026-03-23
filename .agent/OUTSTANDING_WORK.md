@@ -88,9 +88,9 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 
 | Done | # | File | Function(s) | Issue | Fix |
 |---|---|---|---|---|---|
-| [ ] | A-1 | `convex/analytics.ts` | `getConversationStats` | `.take(500)` cap — undercounts total conversations and by-status breakdown on large projects | Rewrite as an action using `ctx.runQuery` in a paginated loop, accumulating counts until cursor is exhausted |
-| [ ] | A-2 | `convex/analytics.ts` | `getVisitorStats` | `.take(500)` cap — undercounts unique visitors and today's visitors | Same paginated loop pattern as A-1 |
-| [ ] | A-3 | `convex/analytics.ts` | `getMessageStats` | `.take(500)` cap — undercounts total messages and agent/visitor breakdown | Same paginated loop pattern as A-1 |
+| [x] | A-1 | `convex/analytics.ts` | `getConversationStats` | `.take(500)` cap — undercounts total conversations and by-status breakdown on large projects | Rewrite as an action using `ctx.runQuery` in a paginated loop, accumulating counts until cursor is exhausted |
+| [x] | A-2 | `convex/analytics.ts` | `getVisitorStats` | `.take(500)` cap — undercounts unique visitors and today's visitors | Same paginated loop pattern as A-1 |
+| [x] | A-3 | `convex/analytics.ts` | `getMessageStats` | `.take(500)` cap — undercounts total messages and agent/visitor breakdown | Same paginated loop pattern as A-1 |
 | [ ] | A-4 | `convex/analytics.ts` | `getConversationVolume` | `.take(500)` cap — daily volume time-series buckets will miss data beyond 500 conversations | Paginated loop accumulating per-day buckets into a Map before returning |
 | [ ] | A-5 | `convex/analytics.ts` | `getTokenUsage` | `.take(500)` cap — token usage grouped by model undercounts once project exceeds 500 token_usage records | Paginated loop accumulating per-model totals into a Map |
 | [ ] | A-6 | `convex/analytics.ts` | `getTagsSummary` | `.take(500)` cap — top tags chart misses conversations beyond the cap | Paginated loop accumulating tag frequency into a Map, then sort and slice top N |
@@ -108,8 +108,8 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 | Code quality | 3 | 3 |
 | Partial features | 6 | 3 |
 | Schema-only features | 2 | 2 |
-| Deferred aggregation TODOs | 8 | 0 |
-| **Total** | **32** | **20** |
+| Deferred aggregation TODOs | 8 | 3 |
+| **Total** | **32** | **23** |
 
 ---
 
