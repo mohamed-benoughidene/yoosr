@@ -27,6 +27,12 @@ http.route({
                 email: user.email_addresses?.[0]?.email_address,
                 avatarUrl: user.image_url,
             });
+        } else if (eventType === "organization.deleted") {
+            const orgId = body.data.id;
+            const project = await ctx.runQuery(internal.projects.getByOrgIdInternal, { orgId });
+            if (project) {
+                await ctx.runMutation(internal.projects.remove, { id: project._id });
+            }
         }
 
         return new Response("OK", { status: 200 });

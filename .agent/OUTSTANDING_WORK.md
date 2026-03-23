@@ -39,7 +39,7 @@
 
 | Done | # | Severity | File | Function(s) | Issue | Fix |
 |---|---|---|---|---|---|---|
-| [ ] | P-1 | 🟠 High | `convex/projects.ts` | `remove` | Cascade delete calls `.collect()` on 15+ tables sequentially — will timeout on projects with real data | Rewrite as a scheduled job: on delete, set `project.status = "deleting"`, then batch-delete tables in separate scheduled mutations using `.take(100)` loops |
+| [X] | P-1 | 🟠 High | `convex/projects.ts` | `remove` | Cascade delete calls `.collect()` on 15+ tables sequentially — will timeout on projects with real data | Rewrite as a scheduled job: on delete, set `project.status = "deleting"`, then batch-delete tables in separate scheduled mutations using `.take(100)` loops |
 | [X] | P-2 | 🟡 Medium | `convex/analytics.ts` | All stat queries | All queries use `.take(500)` as a hard cap — analytics will silently undercount once a project has >500 records in any window | Replace with Convex paginated aggregation or server-side aggregation actions that loop until exhausted. Mark with `TODO: paginated` comment in the meantime |
 | [X] | P-3 | 🟡 Medium | `convex/knowledgeBases.ts` | `remove` | `.collect()` on KB sources — moderate risk on KBs with many sources | Replace with `.take(100)` loop inside a scheduled deletion job |
 | [x] | P-4 | 🔵 Low | `convex/projects.ts` | `list` | `.collect()` on all projects for an org — low risk now but unbounded | Replace with `.take(50)` — no org will have more than a handful of projects |
@@ -62,10 +62,10 @@ These features have backend logic but are missing functionality or a UI layer.
 
 | Done | # | Feature | Status | What Exists | What's Missing | Files to Touch |
 |---|---|---|---|---|---|---|
-| [ ] | F-1 | Messenger / Instagram channel | 🟤 Partial | Credentials stored in `integrations` table. Schema and credential save/load exist. | HTTP endpoint for incoming messages (like the Telegram handler in `http.ts`). Message parsing and conversation creation from Messenger/Instagram payloads. | `convex/http.ts` — add POST handler for Messenger webhook. `convex/integrations.ts` — add credential validation action. |
+| [X] | F-1 | Messenger / Instagram channel | 🟤 Partial | Credentials stored in `integrations` table. Schema and credential save/load exist. | HTTP endpoint for incoming messages (like the Telegram handler in `http.ts`). Message parsing and conversation creation from Messenger/Instagram payloads. | `convex/http.ts` — add POST handler for Messenger webhook. `convex/integrations.ts` — add credential validation action. |
 | [X] | F-2 | Webhook delivery — retry + log | 🟤 Partial | Outbound webhook subscriptions exist. HMAC-signed delivery fires on events. | No retry on delivery failure. No delivery log table (`webhook_deliveries`). Failures are silently dropped. | `convex/webhooks.ts` — wrap delivery in try/catch, schedule retry with backoff. Add `webhook_deliveries` table to `schema.ts` to log each attempt (url, statusCode, success, timestamp). |
 | [X] | F-3 | Notifications — push + email | 🟤 Partial | In-app notification system fully built (create/list/read/clear, auto-trim, 7-day cron). | No push notification delivery (browser push or mobile). No email notification on new conversation or assignment. | New action in `convex/notifications.ts` or a dedicated `convex/notificationDelivery.ts`. Requires choosing a push/email provider. |
-| [ ] | F-4 | Feedback admin view | 🟤 Partial | Feedback submission form at `/feedback`. `feedback` table stores all submissions (orgId, type, message, submitter). | No dashboard page to read submitted feedback. Agents and admins have no way to view submissions from inside the app. | Add a read-only page under `app/dashboard/settings/feedback` (or similar). Wire to a new `list` query in a `feedback.ts` Convex file. |
+| [Not doing it] | F-4 | Feedback admin view | 🟤 Partial | Feedback submission form at `/feedback`. `feedback` table stores all submissions (orgId, type, message, submitter). | No dashboard page to read submitted feedback. Agents and admins have no way to view submissions from inside the app. | Add a read-only page under `app/dashboard/settings/feedback` (or similar). Wire to a new `list` query in a `feedback.ts` Convex file. |
 | [X] | F-5 | PDF source in Knowledge Base | 🟤 Partial | KB source pipeline supports `type: "file"`. Text is extracted and chunked for embedding. | PDF files are read as raw bytes — no PDF text extraction. Only plain text files work correctly. | Add `pdf-parse` (or `pdfjs-dist`) to extract text from PDF buffers before chunking. Handle in the KB source processing action in `convex/knowledgeBases.ts`. |
 | [X] | F-6 | CSAT analytics UI | 🟤 Partial | `csat_ratings` table exists. `submitCSAT` mutation is called from the widget. `getCSATSummary` query exists in `analytics.ts`. | No CSAT breakdown UI on the analytics dashboard page. CSAT data is collected but never displayed. | Add a CSAT section to `app/dashboard/analytics/page.tsx`. Display average rating, distribution bar (1–5 stars), and recent comments. |
 
@@ -104,12 +104,12 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 | Category | Total | Done |
 |---|---|---|
 | Security issues | 9 | 9 |
-| Performance issues | 4 | 3 |
+| Performance issues | 4 | 4 |
 | Code quality | 3 | 3 |
-| Partial features | 6 | 3 |
+| Partial features | 6 | 4 |
 | Schema-only features | 2 | 2 |
-| Deferred aggregation TODOs | 8 | 6 |
-| **Total** | **32** | **26** |
+| Deferred aggregation TODOs | 8 | 8 |
+| **Total** | **32** | **32** |
 
 ---
 
