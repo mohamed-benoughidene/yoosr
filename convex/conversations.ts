@@ -741,7 +741,7 @@ export const autoCloseInactive = internalMutation({
         // Get all open conversations
         const openConversations = await ctx.db
             .query("conversations")
-            .take(500); // TODO: replace with paginated aggregation
+            .take(100);
 
         const now = Date.now();
 
@@ -803,6 +803,10 @@ export const autoCloseInactive = internalMutation({
                     });
                 }
             }
+        }
+
+        if (openConversations.length === 100) {
+            await ctx.scheduler.runAfter(0, internal.conversations.autoCloseInactive, {});
         }
     },
 });

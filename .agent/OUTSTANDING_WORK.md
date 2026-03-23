@@ -94,8 +94,8 @@ These were explicitly deferred to post-launch during Audit 4. All are low urgenc
 | [X] | A-4 | `convex/analytics.ts` | `getConversationVolume` | `.take(500)` cap — daily volume time-series buckets will miss data beyond 500 conversations | Paginated loop accumulating per-day buckets into a Map before returning |
 | [X] | A-5 | `convex/analytics.ts` | `getTokenUsage` | `.take(500)` cap — token usage grouped by model undercounts once project exceeds 500 token_usage records | Paginated loop accumulating per-model totals into a Map |
 | [X] | A-6 | `convex/analytics.ts` | `getTagsSummary` | `.take(500)` cap — top tags chart misses conversations beyond the cap | Paginated loop accumulating tag frequency into a Map, then sort and slice top N |
-| [ ] | A-7 | `convex/conversations.ts` | `autoCloseInactive` | Processes at most 500 conversations per cron run — stale conversations beyond the cap are never auto-closed | Add a loop: re-schedule self via `ctx.scheduler.runAfter(0)` if the batch returned a full page |
-| [ ] | A-8 | `convex/bots.ts` | `remove` | Cascade deletion of bot flows may timeout on bots with many flows | Rewrite as a scheduled job: mark bot as `deleting`, then delete flows in batches of 100 via `ctx.scheduler.runAfter` |
+| [X] | A-7 | `convex/conversations.ts` | `autoCloseInactive` | Processes at most 500 conversations per cron run — stale conversations beyond the cap are never auto-closed | Add a loop: re-schedule self via `ctx.scheduler.runAfter(0)` if the batch returned a full page |
+| [X] | A-8 | `convex/bots.ts` | `remove` | Cascade deletion of bot flows may timeout on bots with many flows | Rewrite as a scheduled job: mark bot as `deleting`, then delete flows in batches of 100 via `ctx.scheduler.runAfter` |
 
 ---
 

@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, checkProjectOwnership } from "./utils";
@@ -106,6 +106,45 @@ export const update = mutation({
     },
 });
 
+// Internal batch delete for bot flows and the bot itself
+export const _deleteBotFlowsBatch = internalMutation({
+    args: {
+        botId: v.id("bots"),
+        projectId: v.id("projects"),
+        actorId: v.string(),
+        actorName: v.string(),
+        botName: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const flows = await ctx.db
+            .query("bot_flows")
+            .withIndex("by_botId", (q) => q.eq("botId", args.botId))
+            .take(100);
+
+        for (const flow of flows) {
+            await ctx.db.delete(flow._id);
+        }
+
+        if (flows.length === 100) {
+            await ctx.scheduler.runAfter(0, internal.bots._deleteBotFlowsBatch, args);
+            return;
+        }
+
+        // Final batch - delete the bot record and log activity
+        await ctx.db.delete(args.botId);
+
+        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+            projectId: args.projectId,
+            actorId: args.actorId,
+            actorName: args.actorName,
+            action: "bot_deleted",
+            targetType: "bot",
+            targetId: args.botId,
+            metadata: { name: args.botName },
+        });
+    },
+});
+
 // Delete a bot
 export const remove = mutation({
     args: { id: v.id("bots") },
@@ -117,26 +156,14 @@ export const remove = mutation({
         const bot = await ctx.db.get(args.id);
         if (!bot) throw new Error("Bot not found");
 
-        // Delete associated bot flows
-        const flows = await ctx.db
-            .query("bot_flows")
-            .withIndex("by_botId", (q) => q.eq("botId", args.id))
-            .take(500);
+        await ctx.db.patch(args.id, { status: "deleting" });
 
-        for (const flow of flows) {
-            await ctx.db.delete(flow._id);
-        }
-
-        await ctx.db.delete(args.id);
-
-        await ctx.runMutation(internal.activityLogs.logActivityInternal, {
+        await ctx.scheduler.runAfter(0, internal.bots._deleteBotFlowsBatch, {
+            botId: args.id,
             projectId: bot.projectId,
             actorId: identity.subject,
             actorName: identity.name ?? identity.email ?? "Unknown",
-            action: "bot_deleted",
-            targetType: "bot",
-            targetId: args.id,
-            metadata: { name: bot.name },
+            botName: bot.name,
         });
     },
 });
