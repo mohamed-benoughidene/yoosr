@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
 import dynamic from "next/dynamic";
@@ -61,10 +61,24 @@ export default function AnalyticsPage() {
     const from = toMs(fromDate);
     const to = toMs(toDate) + 86399999; // end of day
 
-    const convStatsData = useQuery(
-        api.analytics.getConversationStats,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
+    const [convStatsData, setConvStatsData] = useState<{total: number, open: number, closed: number} | undefined>(undefined);
+    const [loadingStats, setLoadingStats] = useState(true);
+    const fetchStats = useAction(api.analytics.getConversationStats);
+
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        setLoadingStats(true);
+        fetchStats({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setConvStatsData(data);
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (isMounted) setLoadingStats(false);
+            });
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchStats]);
 
     const volumeData = useQuery(
         api.analytics.getConversationVolume,

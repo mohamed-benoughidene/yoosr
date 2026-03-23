@@ -1,4 +1,6 @@
-import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery, action } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { checkProjectOwnership } from "./utils";
 
@@ -6,7 +8,20 @@ import { checkProjectOwnership } from "./utils";
 // Existing queries (kept for backward compat)
 // ---------------------------------------------------------------------------
 
-export const getConversationStats = query({
+export const _paginateConversationsForStats = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getConversationStats = action({
     args: {
         projectId: v.id("projects"),
         from: v.optional(v.number()),
@@ -16,68 +31,118 @@ export const getConversationStats = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, open: 0, closed: 0 };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
-        if (!project) return { total: 0, open: 0, closed: 0 };
+        let total = 0;
+        let open = 0;
+        let closed = 0;
+        let cursor: string | null = null;
+        let isDone = false;
 
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForStats, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const c of pageResult.page) {
+                if (args.from && c._creationTime < args.from) continue;
+                if (args.to && c._creationTime > args.to) continue;
 
-        const filtered = conversations.filter(c => {
-            if (args.from && c._creationTime < args.from) return false;
-            if (args.to && c._creationTime > args.to) return false;
-            return true;
-        });
-
-        const total = filtered.length;
-        const open = filtered.filter((c) => c.status === 100 || c.status === 200).length;
-        const closed = filtered.filter((c) => c.status === 1000).length;
+                total++;
+                if (c.status === 100 || c.status === 200) {
+                    open++;
+                } else if (c.status === 1000) {
+                    closed++;
+                }
+            }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
+        }
 
         return { total, open, closed };
     },
 });
 
-export const getVisitorStats = query({
+export const _paginateConversationsForVisitors = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getVisitorStats = action({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { totalVisitors: 0 };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
-        if (!project) return { totalVisitors: 0 };
+        const uniqueVisitors = new Set<string>();
+        let cursor: string | null = null;
+        let isDone = false;
 
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForVisitors, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const c of pageResult.page) {
+                uniqueVisitors.add(c.visitorId ?? "unknown");
+            }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
+        }
 
-        const uniqueVisitors = new Set(conversations.map((c) => c.visitorId ?? "unknown"));
         return { totalVisitors: uniqueVisitors.size };
     },
 });
 
-export const getMessageStats = query({
+export const _paginateMessagesForStats = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("messages")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate(args.paginationOpts);
+    },
+});
+
+export const getMessageStats = action({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, visitorMessages: 0, agentMessages: 0 };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
-        if (!project) return { total: 0, visitorMessages: 0, agentMessages: 0 };
+        let total = 0;
+        let visitorMessages = 0;
+        let agentMessages = 0;
+        let cursor: string | null = null;
+        let isDone = false;
 
-        const messages = await ctx.db
-            .query("messages")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
+        while (!isDone) {
+            const pageResult: any = await ctx.runQuery(internal.analytics._paginateMessagesForStats, {
+                projectId: args.projectId,
+                paginationOpts: { cursor, numItems: 200 },
+            });
+            for (const m of pageResult.page) {
+                total++;
+                if (m.senderType === "visitor") {
+                    visitorMessages++;
+                } else if (m.senderType === "agent") {
+                    agentMessages++;
+                }
+            }
+            cursor = pageResult.continueCursor;
+            isDone = pageResult.isDone;
+        }
 
-        const visitorMessages = messages.filter((m) => m.senderType === "visitor").length;
-        const agentMessages = messages.filter((m) => m.senderType === "agent").length;
-
-        return { total: messages.length, visitorMessages, agentMessages };
+        return { total, visitorMessages, agentMessages };
     },
 });
 
@@ -287,7 +352,7 @@ export const getCSATComments = query({
             .filter((r) => r.comment !== undefined && r.comment !== "")
             .map((r) => ({
                 rating: r.rating,
-                comment: r.comment,
+                comment: r.comment as string,
                 createdAt: r.createdAt,
             }));
     },
