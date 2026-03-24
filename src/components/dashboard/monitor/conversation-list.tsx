@@ -523,6 +523,18 @@ export function ConversationList({
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 )}
+                                                {item.channel === "whatsapp" && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <div className="inline-flex items-center ml-1 shrink-0">
+                                                                    <MessageCircle className="h-3.5 w-3.5 text-green-500 fill-green-500/10" />
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="right">WhatsApp</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
                                                 {item.priority === "urgent" && (
                                                     <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">{t("badge_urgent")}</Badge>
                                                 )}

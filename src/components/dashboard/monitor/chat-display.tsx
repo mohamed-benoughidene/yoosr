@@ -112,7 +112,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             // If this is a Meta channel and it's a public message, relay to Meta
             if (
                 messageMode !== "internal" &&
-                (conversation.channel === "messenger" || conversation.channel === "instagram")
+                (conversation.channel === "messenger" || conversation.channel === "instagram" || conversation.channel === "whatsapp")
             ) {
                 try {
                     await sendMetaMsg({

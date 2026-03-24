@@ -634,7 +634,7 @@ export const createBotMessage = internalMutation({
         });
 
         // Relay bot reply to Meta if conversation is on a Meta channel
-        if (args.channel === "messenger" || args.channel === "instagram") {
+        if (args.channel === "messenger" || args.channel === "instagram" || args.channel === "whatsapp") {
             await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
                 conversationId: args.conversationId,
                 content: args.content,

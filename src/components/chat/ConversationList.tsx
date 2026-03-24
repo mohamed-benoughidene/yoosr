@@ -172,6 +172,18 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                                                 </Tooltip>
                                             </TooltipProvider>
                                         )}
+                                        {conv.channel === "whatsapp" && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="inline-flex items-center shrink-0">
+                                                            <MessageCircle className="h-3.5 w-3.5 text-green-500 fill-green-500/10" />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right">WhatsApp</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
                                         {(conv.unreadCount ?? 0) > 0 && (
                                             <span className="flex h-2 w-2 rounded-full bg-blue-600" />
                                         )}
