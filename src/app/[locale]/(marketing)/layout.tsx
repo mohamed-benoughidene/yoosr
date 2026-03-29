@@ -1,5 +1,5 @@
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { LandingHeader } from "@/components/layout/LandingHeader";
+import { LandingFooter } from "@/components/layout/LandingFooter";
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server";
 
 export default async function MarketingLayout({
@@ -14,9 +14,11 @@ export default async function MarketingLayout({
 
     return (
         <div className="flex min-h-screen flex-col">
-            <Header />
+            <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,600&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@700&display=swap" rel="stylesheet" />
+            <LandingHeader />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <LandingFooter />
         </div>
     );
 }

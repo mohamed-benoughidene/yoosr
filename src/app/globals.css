@@ -9,7 +9,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@property --angle { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@keyframes rotate { to { --angle: 360deg; } }
+@keyframes float-card {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -10px, 0); }
+}
+
 :root {
+  --lp-bg:#0C0B0F;
+  --lp-surface:#161420;
+  --lp-surface-2:#1E1C2A;
+  --lp-border:rgba(255,255,255,0.08);
+  --lp-gold:#3B82F6;
+  --lp-gold-glow:rgba(59,130,246,0.15);
+  --lp-violet:#6C63FF;
+  --lp-violet-glow:rgba(108,99,255,0.12);
+  --lp-text:#F2EFE9;
+  --lp-text-secondary:#9E9AA8;
+  --lp-text-muted:#5C5870;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -951,4 +970,17 @@ body[data-scroll-locked] {
   --rdp-weekday-padding: 0.25rem 0;
   --rdp-accent-color: oklch(var(--primary));
   --rdp-accent-background-color: oklch(var(--accent));
+}
+
+.lp-section { max-width:1200px; margin:0 auto; padding:64px 24px; }
+@media(min-width:1024px){ .lp-section { padding-top:96px; padding-bottom:96px; } }
+.lp-label { font-family:Inter,sans-serif; font-size:11px; font-weight:500; color:var(--lp-gold); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px; }
+
+@keyframes driftGold {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, 30px) scale(1.1); }
+}
+@keyframes driftViolet {
+  from { transform: translate(0, 0) scale(1.1); }
+  to   { transform: translate(-30px, 40px) scale(1); }
 }
