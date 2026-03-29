@@ -13,9 +13,11 @@ const isProtectedRoute = createRouteMatcher([
   "/design-studio(.*)",
 ]);
 
-export const proxy = clerkMiddleware(async (auth, req) => {
+export const middleware = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
-    await auth.protect();
+    await auth.protect({
+      unauthenticatedUrl: new URL('/login', req.url).toString(),
+    });
   }
 
   const { pathname } = req.nextUrl;
@@ -36,6 +38,8 @@ export const proxy = clerkMiddleware(async (auth, req) => {
 
   return intlMiddleware(req);
 });
+
+export default middleware;
 
 export const config = {
   matcher: [

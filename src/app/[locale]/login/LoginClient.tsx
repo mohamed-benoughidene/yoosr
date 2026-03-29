@@ -2,13 +2,15 @@
 
 import Link from "next/link"
 import { SignIn } from "@clerk/nextjs"
+import { dark } from "@clerk/themes"
 
 export function LoginClient() {
     return (
-        <div className="container flex h-screen w-screen flex-col items-center justify-center">
+        <div className="flex w-full flex-col items-center justify-center" style={{ backgroundColor: 'var(--lp-bg)', minHeight: '100vh' }}>
             <Link
                 href="/"
                 className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center text-lg font-bold tracking-tight"
+                style={{ color: 'var(--lp-text)' }}
             >
                 <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center mr-2">
                     <span className="text-primary-foreground font-bold text-xs">Y</span>
@@ -17,16 +19,17 @@ export function LoginClient() {
             </Link>
             <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
                 <div className="flex flex-col space-y-2 text-center">
-                    <h1 className="text-2xl font-semibold tracking-tight">
+                    <h1 style={{ fontFamily: "'Cabinet Grotesk', sans-serif", fontWeight: 700, fontSize: 28, color: 'var(--lp-text)' }}>
                         Welcome back
                     </h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: 'var(--lp-text-secondary)', marginBottom: 24 }}>
                         Sign in to your account
                     </p>
                 </div>
                 <div className="flex justify-center">
                     <SignIn
                         appearance={{
+                            baseTheme: dark,
                             elements: {
                                 rootBox: "w-full",
                                 cardBox: "w-full shadow-none",
@@ -35,7 +38,7 @@ export function LoginClient() {
                         }}
                         routing="hash"
                         forceRedirectUrl="/onboarding"
-                        signUpUrl="/signup"
+                        signUpUrl="/waitlist"
                         afterSignInUrl="/dashboard"
                     />
                 </div>

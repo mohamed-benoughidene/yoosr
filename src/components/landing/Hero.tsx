@@ -1,31 +1,17 @@
 "use client"
 
-import React, { useEffect, useState, FormEvent } from "react"
+import React, { useEffect, useState } from "react"
 
 const SUBHEADLINE = "Yoosr gives your business an AI-powered inbox — with a no-code bot builder, smart agent routing, order tracking, and live handoff across Web, Telegram, Messenger, and Instagram."
 
 export function Hero() {
   const [subVisible, setSubVisible] = useState(false)
-  
-  const [email, setEmail] = useState("")
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
 
   useEffect(() => {
     const timer1 = setTimeout(() => setSubVisible(true), 600)
     return () => clearTimeout(timer1)
   }, [])
 
-  const handleWaitlistSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (emailRegex.test(email)) {
-      console.log("Waitlist email submitted:", email)
-      setSubmitStatus("success")
-      setEmail("")
-    } else {
-      setSubmitStatus("error")
-    }
-  }
 
   const sentences = [
     ["Automate", "Support."],
@@ -298,29 +284,32 @@ export function Hero() {
           {SUBHEADLINE}
         </p>
 
-        <form className="hero-form" onSubmit={handleWaitlistSubmit}>
-          <input 
-            type="text" 
-            id="waitlist-input"
-            className="waitlist-input" 
-            placeholder="Enter your email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button type="submit" className="waitlist-button">
-            Get Early Access &rarr;
-          </button>
-        </form>
-        {submitStatus === "success" && (
-          <p className="mt-2 text-sm font-medium" style={{ color: "var(--lp-gold)", marginBottom: "8px" }}>
-            You&apos;re on the list! We&apos;ll be in touch.
-          </p>
-        )}
-        {submitStatus === "error" && (
-          <p className="mt-2 text-sm font-medium text-red-400" style={{ marginBottom: "8px" }}>
-            Please enter a valid email.
-          </p>
-        )}
+        <button 
+          onClick={() => window.location.href = '/waitlist'}
+          style={{
+            height: '48px',
+            padding: '0 24px',
+            background: 'var(--lp-gold)',
+            color: '#0C0B0F',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: "'Cabinet Grotesk', sans-serif",
+            fontWeight: 600,
+            fontSize: '14px',
+            transition: '100ms'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.88'
+            e.currentTarget.style.transform = 'scale(1.02)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+        >
+          Get Early Access →
+        </button>
         
         <div className="hero-microcopy">
           No credit card. No setup fees. Live in under an hour.

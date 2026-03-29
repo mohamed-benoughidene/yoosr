@@ -36,6 +36,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     return (
         <ClerkProvider
             localization={clerkLocalization}
+            waitlistUrl="/waitlist"
             afterSignInUrl="/dashboard"
             afterSignUpUrl="/onboarding"
             afterSignOutUrl="/"

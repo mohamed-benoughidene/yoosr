@@ -1,11 +1,13 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export function SocialProofBar() {
+  const router = useRouter();
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    document.getElementById("waitlist-input")?.focus();
+    router.push('/waitlist');
   };
 
   const Item = () => (

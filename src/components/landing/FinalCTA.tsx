@@ -1,21 +1,8 @@
 "use client"
 
-import React, { useState, FormEvent } from "react"
+import React from "react"
 
 export function FinalCTA() {
-  const [email, setEmail] = useState("")
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
-
-  const handleWaitlistSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (emailRegex.test(email)) {
-      setSubmitStatus("success")
-      setEmail("")
-    } else {
-      setSubmitStatus("error")
-    }
-  }
 
   return (
     <section className="relative flex flex-col items-center justify-center py-20 md:py-32 w-full overflow-hidden" style={{ backgroundColor: "var(--lp-bg)" }}>
@@ -106,69 +93,32 @@ export function FinalCTA() {
           Every unanswered message is a missed sale, a frustrated customer, or a lost relationship. Yoosr makes sure that doesn&apos;t happen — automatically, across every channel, around the clock.
         </p>
 
-        <form 
-          className="w-full flex flex-col md:flex-row gap-3 mb-4 mx-auto"
-          onSubmit={handleWaitlistSubmit}
+        <button 
+          onClick={() => window.location.href = '/waitlist'}
+          style={{
+            height: '48px',
+            padding: '0 24px',
+            background: 'var(--lp-gold)',
+            color: '#0C0B0F',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: "'Cabinet Grotesk', sans-serif",
+            fontWeight: 600,
+            fontSize: '14px',
+            transition: '100ms'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.88'
+            e.currentTarget.style.transform = 'scale(1.02)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
         >
-          <input 
-            type="email" 
-            id="waitlist-input-footer"
-            className="flex-1 h-[48px] px-4 rounded-[8px] outline-none transition-all duration-150" 
-            style={{
-              backgroundColor: "var(--lp-surface-2)",
-              borderColor: "var(--lp-border)",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              color: "var(--lp-text)",
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "15px"
-            }}
-            placeholder="Enter your email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--lp-gold)"
-              e.currentTarget.style.boxShadow = "0 0 0 3px var(--lp-gold-glow)"
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--lp-border)"
-              e.currentTarget.style.boxShadow = "none"
-            }}
-            required
-          />
-          <button 
-            type="submit" 
-            className="h-[48px] px-6 rounded-[8px] transition-all duration-100 w-full md:w-auto hover:opacity-90 whitespace-nowrap"
-            style={{
-              backgroundColor: "var(--lp-gold)",
-              color: "#0C0B0F",
-              fontFamily: "'Cabinet Grotesk', sans-serif",
-              fontWeight: 600,
-              fontSize: "14px",
-              border: "none",
-              cursor: "pointer"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)"
-            }}
-          >
-            Get Early Access - It&apos;s Free
-          </button>
-        </form>
-
-        {submitStatus === "success" && (
-          <p className="mt-1 text-[13px] font-medium mb-3" style={{ color: "var(--lp-gold)" }}>
-            You&apos;re on the list! We&apos;ll be in touch.
-          </p>
-        )}
-        {submitStatus === "error" && (
-          <p className="mt-1 text-[13px] font-medium text-red-400 mb-3">
-            Please enter a valid email.
-          </p>
-        )}
+          Get Early Access →
+        </button>
 
         <div className="flex flex-col gap-1.5 mt-2">
           <p 

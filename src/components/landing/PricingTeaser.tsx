@@ -1,11 +1,13 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export function PricingTeaser() {
+  const router = useRouter();
+
   const scrollToWaitlist = () => {
-    document.getElementById("waitlist-input")?.focus();
-    document.getElementById("waitlist-input")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    router.push('/waitlist');
   };
 
   return (
