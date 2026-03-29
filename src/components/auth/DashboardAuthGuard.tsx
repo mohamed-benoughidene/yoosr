@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 
 export function DashboardAuthGuard({ children }: { children: React.ReactNode }) {
-    const { isLoaded, isSignedIn } = useAuth()
+    const { isLoaded, isSignedIn, orgId } = useAuth()
     const router = useRouter()
 
     useEffect(() => {
@@ -16,6 +16,14 @@ export function DashboardAuthGuard({ children }: { children: React.ReactNode }) 
     }, [isLoaded, isSignedIn, router])
 
     if (!isLoaded) {
+        return (
+            <div className="flex min-h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    if (isSignedIn && !orgId) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

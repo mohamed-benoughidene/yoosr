@@ -21,7 +21,11 @@ export async function Header() {
             <div className="container flex h-16 items-center justify-between">
                 <div className="flex items-center gap-6 md:gap-10">
                     <Link href="/" className="flex items-center gap-2">
-                        <span className="text-xl font-bold">{t("logo")}</span>
+                        <img 
+                            src="/yoosr-light.svg" 
+                            alt="Yoosr" 
+                            className="h-8 w-auto"
+                        />
                         <span className="hidden sm:inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground tracking-wide">
                             {t("badge")}
                         </span>

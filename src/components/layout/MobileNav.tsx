@@ -38,8 +38,12 @@ export function MobileNav() {
                     </SheetDescription>
                 </SheetHeader>
                 <nav className="flex flex-col gap-4">
-                    <Link href="/" className="text-lg font-bold">
-                        Yoosr
+                    <Link href="/" className="flex items-center">
+                        <img 
+                            src="/yoosr-light.svg" 
+                            alt="Yoosr" 
+                            className="h-8 w-auto"
+                        />
                     </Link>
                     <div className="flex flex-col gap-3 mt-4">
                         <SheetClose asChild>

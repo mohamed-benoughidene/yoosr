@@ -16,9 +16,15 @@ export function LandingHeader() {
       <div className="mx-auto h-full flex flex-row items-center justify-between w-full" style={{ maxWidth: '1200px', padding: '0 24px' }}>
         <div
           onClick={() => router.push('/')}
-          style={{ fontFamily: "'Cabinet Grotesk', sans-serif", fontWeight: 700, fontSize: 20, color: 'var(--lp-text)', cursor: 'pointer' }}
+          className="flex items-center"
+          style={{ cursor: 'pointer' }}
         >
-          Yoosr
+          <img 
+            src="/yoosr-light.svg" 
+            alt="Yoosr" 
+            height={32}
+            className="h-8 w-auto"
+          />
         </div>
 
         <div className="flex items-center gap-6">
