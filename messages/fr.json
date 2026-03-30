@@ -32,11 +32,11 @@
         "privacy": "Politique de Confidentialité",
         "terms": "Conditions d'Utilisation"
       },
-      "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement  attendez-vous à des mises à jour fréquentes.",
+      "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement attendez-vous à des mises à jour fréquentes.",
       "copyright": "Yoosr, Inc. Open Source. Licence MIT."
     },
     "meta": {
-      "title": "Yoosr  Support Client pour les Entreprises de la région MENA",
+      "title": "Yoosr Support Client pour les Entreprises de la région MENA",
       "description": "Chat en direct, automatisation par bot et boîte de réception d'équipe conçus pour les entreprises MENA. Commencez gratuitement."
     },
     "page": {
@@ -51,9 +51,9 @@
       ]
     },
     "hero": {
-      "badge": "Maintenant disponible  Web, Telegram, Facebook & Instagram",
+      "badge": "Maintenant disponible Web, Telegram, Facebook & Instagram",
       "headline": "La plateforme de support client conçue pour la région MENA",
-      "description": "Automatisez les conversations avec des bots IA, gérez la boîte de réception de votre équipe en temps réel et clôturez chaque ticket  en arabe ou en anglais  sur tous les canaux.",
+      "description": "Automatisez les conversations avec des bots IA, gérez la boîte de réception de votre équipe en temps réel et clôturez chaque ticket en arabe ou en anglais sur tous les canaux.",
       "cta": {
         "primary": "Commencer gratuitement",
         "secondary": "Voir une démo en direct"
@@ -71,14 +71,14 @@
     },
     "cta": {
       "headline": "Votre équipe de support mérite de meilleurs outils.",
-      "description": "Configurez votre espace de travail, intégrez le widget et lancez votre premier bot dès aujourd'hui  aucune carte de crédit requise.",
+      "description": "Configurez votre espace de travail, intégrez le widget et lancez votre premier bot dès aujourd'hui aucune carte de crédit requise.",
       "primary": "Commencer gratuitement →",
       "secondary": "Nous contacter"
     },
     "channels": {
       "badge": "Canaux",
       "headline": "Rencontrez vos clients là où ils se trouvent déjà",
-      "description": "Une seule boîte de réception. Chaque canal. Les conversations de Telegram, Facebook, Instagram et votre site web  gérées en un seul endroit.",
+      "description": "Une seule boîte de réception. Chaque canal. Les conversations de Telegram, Facebook, Instagram et votre site web gérées en un seul endroit.",
       "items": [
         {
           "title": "Web Chat",
@@ -161,7 +161,7 @@
           "company": "Algiers Tech"
         },
         {
-          "quote": "Le Design Studio est vraiment différent. Notre équipe opérationnelle a construit et déployé un bot complet de suivi de commande en un après-midi  sans l'aide de développeurs.",
+          "quote": "Le Design Studio est vraiment différent. Notre équipe opérationnelle a construit et déployé un bot complet de suivi de commande en un après-midi sans l'aide de développeurs.",
           "author": "Nour Rahmani",
           "role": "Responsable Opérations",
           "company": "Dubai Boutique"
@@ -241,7 +241,7 @@
     "features": {
       "badge": "Plateforme centrale",
       "headline": "Tous les outils dont votre équipe de support a réellement besoin",
-      "description": "De la première réponse automatisée au ticket final résolu  tout au même endroit.",
+      "description": "De la première réponse automatisée au ticket final résolu tout au même endroit.",
       "items": [
         {
           "title": "Moniteur en direct",
@@ -249,11 +249,11 @@
         },
         {
           "title": "AI Bot Studio",
-          "description": "Construisez des flux avec 19 types de blocs  réponse IA, recherche en base de connaissances, requêtes web, conditions, minuteurs et transfert humain. Sans code."
+          "description": "Construisez des flux avec 19 types de blocs réponse IA, recherche en base de connaissances, requêtes web, conditions, minuteurs et transfert humain. Sans code."
         },
         {
           "title": "Base de connaissances",
-          "description": "Téléchargez vos documents et FAQ. Les bots récupèrent les réponses via recherche vectorielle  pas par simple correspondance de mots-clés. Réponses précises et sourcées."
+          "description": "Téléchargez vos documents et FAQ. Les bots récupèrent les réponses via recherche vectorielle pas par simple correspondance de mots-clés. Réponses précises et sourcées."
         },
         {
           "title": "Analyses",
@@ -272,7 +272,7 @@
     "designStudio": {
       "badge": "Design Studio",
       "headline": "Construisez n'importe quel flux de conversation sans code",
-      "description": "Connectez les blocs visuellement. Chaque flux est exécuté côté serveur en temps réel  pas de délais, pas de messages perdus.",
+      "description": "Connectez les blocs visuellement. Chaque flux est exécuté côté serveur en temps réel pas de délais, pas de messages perdus.",
       "items": [
         {
           "title": "Constructeur Visuel",
@@ -314,7 +314,7 @@
   },
   "designStudio": {
     "meta": {
-      "title": "Design Studio  Yoosr",
+      "title": "Design Studio Yoosr",
       "description": "Créez et configurez vos flux de bot visuellement."
     },
     "editor": {
@@ -340,8 +340,8 @@
       "title": "Débogueur en temps réel",
       "empty": "Aucun historique d'exécution détecté.",
       "hint": "Lancez une simulation de chat via le widget pour voir le graphe s'exécuter en temps réel.",
-      "nodeId": "ID du nœud: ",
-      "type": "Type: "
+      "nodeId": "ID du nœud:",
+      "type": "Type:"
     },
     "aiPromptBar": {
       "beta": "Bêta",
@@ -352,7 +352,7 @@
       "generate": "Générer",
       "toasts": {
         "generated": "Flux généré !",
-        "generatedDesc": "Canvas mis à jour  vérifiez et ajustez au besoin.",
+        "generatedDesc": "Canvas mis à jour vérifiez et ajustez au besoin.",
         "failed": "Échec de la génération",
         "timeout": "Délai d'attente dépassé",
         "timeoutDesc": "L'IA a mis trop de temps à répondre. Réessayez dans un instant.",
@@ -432,8 +432,8 @@
       "operatingHoursHint": "Ce bloc vérifie vos horaires d'ouverture au moment de l'exécution.",
       "configureOperatingHours": "Configuré les horaires d'ouverture →",
       "outputPaths": "Chemins de sortie",
-      "withinHours": "VRAI  Pendant les horaires d'ouverture",
-      "outsideHours": "FAUX  En dehors des horaires ou désactivé",
+      "withinHours": "VRAI Pendant les horaires d'ouverture",
+      "outsideHours": "FAUX En dehors des horaires ou désactivé",
       "searchQuery": "Requête de recherche",
       "searchQueryPlaceholder": "ex: {{user_message}}",
       "assignResultTo": "Assigner le résultat à la variable",
@@ -568,25 +568,25 @@
       "randomFrom": "Aléatoire parmi:",
       "clickToAddMessage": "Cliquez pour ajouter un message...",
       "button": "Bouton",
-      "maxTurns": "Tours max: ",
+      "maxTurns": "Tours max:",
       "success": "Succès",
       "failure": "Échec",
       "clickToAddPrompt": "Cliquez pour ajouter un prompt...",
       "clickToConfigure": "Cliquez pour configurer...",
       "trueLabel": "Vrai",
       "falseLabel": "Faux",
-      "saveTo": "Enregistrer dans: ",
+      "saveTo": "Enregistrer dans:",
       "varFallback": "var",
       "open": "Ouvert",
       "closed": "Fermé",
       "online": "En ligne",
       "offline": "Hors ligne",
       "labelApplied": "Étiquette appliquée...",
-      "assignTo": "Assigner à: ",
+      "assignTo": "Assigner à:",
       "kbReplyFallback": "kb_reply",
       "codeResultFallback": "code_result",
       "selectBotSlug": "sélectionner le slug",
-      "priority": "Priorité: ",
+      "priority": "Priorité:",
       "normalFallback": "normale",
       "secondsSuffix": "s"
     }
@@ -943,7 +943,7 @@
     "created_success": "Contact créé avec succès",
     "created_failed": "Échec de la création du contact",
     "imported": "{count} contacts importés. {skipped} ignorés.",
-    "skipped_rows": "lignes ignorées  nom manquant.",
+    "skipped_rows": "lignes ignorées nom manquant.",
     "contact_created": "Contact créé avec succès",
     "contact_create_failed": "Échec de la création du contact",
     "no_contacts_export": "Aucun contact à exporter.",
@@ -1204,7 +1204,7 @@
       "sla_save_failed": "Échec de l'enregistrement du paramètre SLA",
       "id_copied": "ID du projet copié dans le presse-papiers",
       "copied_to_clipboard": "{label} copié dans le presse-papiers",
-      "openrouter_free_desc": "Niveau gratuit  utilise des crédits API partagés par la communauté, peut avoir des limites de débit.",
+      "openrouter_free_desc": "Niveau gratuit utilise des crédits API partagés par la communauté, peut avoir des limites de débit.",
       "save_changes": "Enregistrer les modifications"
     },
     "widget": {
@@ -1490,7 +1490,7 @@
       "verify_token_label": "Jeton de vérification",
       "generate_token": "Générer",
       "whatsapp_connected": "WhatsApp connecté",
-      "token_saved_placeholder": "Jeton enregistré — entrez une nouvelle valeur pour le remplacer",
+      "token_saved_placeholder": "Jeton enregistré entrez une nouvelle valeur pour le remplacer",
       "token_placeholder": "Collez votre jeton d'accès",
       "setup_guide_title": "Comment configurer",
       "setup_guide_link": "Guide de configuration Meta Cloud API",
@@ -1545,7 +1545,7 @@
       "select_events": "Sélectionner les événements",
       "select_events_hint": "Sélectionnez au moins un événement",
       "select_one_event": "Sélectionnez au moins un événement",
-      "secret_notice": "Enregistrez votre secret de webhook  il ne sera plus affiché",
+      "secret_notice": "Enregistrez votre secret de webhook il ne sera plus affiché",
       "save_secret_title": "Enregistrez votre secret de webhook il ne sera plus affiché",
       "secret_desc": "Utilisez ce secret pour vérifier que les requêtes webhook proviennent bien de Yoosr.",
       "save_secret_desc": "Utilisez ce secret pour vérifier que les requêtes webhook proviennent bien de Yoosr.",
@@ -1750,8 +1750,8 @@
   "landingPage": {
     "hero": {
       "headline": "Automatisez le support. Générez des ventes. Passez la main aux humains.",
-      "subheadline": "Yoosr offre à votre entreprise une boîte de réception alimentée par l'IA — avec un constructeur de bot sans code, un routage intelligent des agents, le suivi des commandes, et un transfert en direct sur le Web, Telegram, Messenger et Instagram.",
-      "cta": "Accès anticipé — C'est gratuit",
+      "subheadline": "Yoosr offre à votre entreprise une boîte de réception alimentée par l'IA avec un constructeur de bot sans code, un routage intelligent des agents, le suivi des commandes, et un transfert en direct sur le Web, Telegram, Messenger et Instagram.",
+      "cta": "Accès anticipé C'est gratuit",
       "ctaMicrocopy": "Sans carte bancaire. Sans frais d'installation. En ligne en moins d'une heure."
     },
     "socialProof": {
@@ -1760,9 +1760,9 @@
     "problem": {
       "headline": "Vos clients en ont assez de se répéter. Votre équipe en a assez de répondre aux mêmes questions.",
       "painPoint1": "Transféré trois fois pour quelque chose que la première personne aurait dû gérer",
-      "painPoint2": "\"Où est ma commande ?\" — répondu manuellement, toute la journée, tous les jours",
-      "painPoint3": "Aucun contexte lors du transfert de conversation — le client doit tout recommencer",
-      "transition": "Yoosr répare le système, pas seulement les symptômes. Routage intelligent, contexte complet à chaque transfert, et un bot qui gère le travail répétitif — pour que votre équipe n'intervienne que lorsque ça compte vraiment."
+      "painPoint2": "\"Où est ma commande ?\" répondu manuellement, toute la journée, tous les jours",
+      "painPoint3": "Aucun contexte lors du transfert de conversation le client doit tout recommencer",
+      "transition": "Yoosr répare le système, pas seulement les symptômes. Routage intelligent, contexte complet à chaque transfert, et un bot qui gère le travail répétitif pour que votre équipe n'intervienne que lorsque ça compte vraiment."
     },
     "features": {
       "headline": "Conçu autour du fonctionnement réel du support.",
@@ -1772,15 +1772,15 @@
       },
       "liveMonitor": {
         "title": "Surveillance en direct",
-        "description": "Chaque conversation entrante visible en temps réel. Filtrez, assignez et résolvez — sans jamais quitter l'écran."
+        "description": "Chaque conversation entrante visible en temps réel. Filtrez, assignez et résolvez sans jamais quitter l'écran."
       },
       "unifiedInbox": {
         "title": "Boîte de réception unifiée",
-        "description": "Telegram, Instagram, Messenger et votre widget web — une boîte de réception, une équipe. Vos agents arrêtent de jongler entre les applications."
+        "description": "Telegram, Instagram, Messenger et votre widget web une boîte de réception, une équipe. Vos agents arrêtent de jongler entre les applications."
       },
       "knowledgeBase": {
         "title": "Base de connaissances",
-        "description": "Ajoutez une URL, importez un PDF ou collez du texte brut. Votre bot le lit et répond aux questions des clients — jour et nuit, sans solliciter votre équipe."
+        "description": "Ajoutez une URL, importez un PDF ou collez du texte brut. Votre bot le lit et répond aux questions des clients jour et nuit, sans solliciter votre équipe."
       },
       "orderTracking": {
         "title": "Suivi des commandes",
@@ -1788,15 +1788,15 @@
       },
       "analytics": {
         "title": "Analytiques & CSAT",
-        "description": "Voyez exactement ce que votre bot résout, où il bloque, et ce que les clients ont dit de chaque interaction — dans un seul tableau de bord."
+        "description": "Voyez exactement ce que votre bot résout, où il bloque, et ce que les clients ont dit de chaque interaction dans un seul tableau de bord."
       }
     },
     "designStudio": {
       "headline": "Créez votre premier bot en quelques minutes. Sans écrire une seule ligne de code.",
-      "subheadline": "Design Studio est un canevas visuel où vous faites glisser des blocs, connectez des conditions et créez des flux d'automatisation qui fonctionnent vraiment — sans développeur, sans prérequis technique.",
+      "subheadline": "Design Studio est un canevas visuel où vous faites glisser des blocs, connectez des conditions et créez des flux d'automatisation qui fonctionnent vraiment sans développeur, sans prérequis technique.",
       "aiFlow": {
         "title": "Génération de flux par IA",
-        "description": "Décrivez ce que vous voulez en texte simple. Yoosr génère l'intégralité du flux de bot pour vous — nœuds, conditions, branches et tout. Vous modifiez, il construit."
+        "description": "Décrivez ce que vous voulez en texte simple. Yoosr génère l'intégralité du flux de bot pour vous nœuds, conditions, branches et tout. Vous modifiez, il construit."
       },
       "debugger": {
         "title": "Débogueur pas à pas",
@@ -1804,16 +1804,16 @@
       },
       "liveHandoff": {
         "title": "Transfert en direct intégré",
-        "description": "Chaque flux peut escalader vers un agent humain au bon moment — avec le contexte complet de la conversation. Pas d'explications répétées. Pas d'historique perdu."
+        "description": "Chaque flux peut escalader vers un agent humain au bon moment avec le contexte complet de la conversation. Pas d'explications répétées. Pas d'historique perdu."
       },
       "closing": "Si votre processus de support peut être décrit, il peut être automatisé."
     },
     "channels": {
       "headline": "Rejoignez vos clients là où ils se trouvent déjà.",
-      "subheadline": "Vos clients ne changent pas d'application pour vous. Yoosr se connecte aux canaux qu'ils utilisent déjà — et route chaque message dans une boîte de réception unifiée.",
+      "subheadline": "Vos clients ne changent pas d'application pour vous. Yoosr se connecte aux canaux qu'ils utilisent déjà et route chaque message dans une boîte de réception unifiée.",
       "webWidget": {
         "title": "Widget Web",
-        "description": "Intégrez sur n'importe quel site en quelques minutes. Entièrement personnalisable — vos couleurs, votre logo, votre message d'accueil."
+        "description": "Intégrez sur n'importe quel site en quelques minutes. Entièrement personnalisable vos couleurs, votre logo, votre message d'accueil."
       },
       "telegram": {
         "title": "Telegram",
@@ -1821,7 +1821,7 @@
       },
       "messenger": {
         "title": "Facebook Messenger",
-        "description": "Chaque conversation Messenger de votre page Facebook arrive directement dans votre boîte de réception Yoosr — prête à être traitée ou automatisée."
+        "description": "Chaque conversation Messenger de votre page Facebook arrive directement dans votre boîte de réception Yoosr prête à être traitée ou automatisée."
       },
       "instagram": {
         "title": "Instagram DMs",
@@ -1842,7 +1842,7 @@
       },
       "step3": {
         "title": "Mettez en ligne et laissez-le travailler",
-        "description": "Déployez sur votre widget web, votre bot Telegram ou vos DM Instagram. Regardez les conversations être traitées, routées et résolues — automatiquement."
+        "description": "Déployez sur votre widget web, votre bot Telegram ou vos DM Instagram. Regardez les conversations être traitées, routées et résolues automatiquement."
       },
       "closing": "Votre équipe gère les exceptions. Yoosr gère tout le reste."
     },
@@ -1850,21 +1850,21 @@
       "headline": "Conçu pour les équipes qui ne peuvent pas se permettre de manquer un message.",
       "ecommerce": {
         "title": "Boutiques e-commerce",
-        "description": "Vos clients posent les mêmes questions avant chaque achat — délais de livraison, politiques de retour, statut de commande. Votre bot y répond automatiquement, 24h/24. Votre équipe intervient uniquement quand une touche humaine est vraiment nécessaire."
+        "description": "Vos clients posent les mêmes questions avant chaque achat délais de livraison, politiques de retour, statut de commande. Votre bot y répond automatiquement, 24h/24. Votre équipe intervient uniquement quand une touche humaine est vraiment nécessaire."
       },
       "saas": {
         "title": "Entreprises SaaS",
-        "description": "Transformez les conversations de support en conversations de croissance. Qualifiez des prospects, intégrez de nouveaux utilisateurs et répondez aux questions produit — sans recruter à chaque fois que votre base d'utilisateurs grandit."
+        "description": "Transformez les conversations de support en conversations de croissance. Qualifiez des prospects, intégrez de nouveaux utilisateurs et répondez aux questions produit sans recruter à chaque fois que votre base d'utilisateurs grandit."
       },
       "agencies": {
         "title": "Agences",
-        "description": "Gérez plusieurs espaces de travail clients depuis un seul compte. Chaque client obtient sa propre boîte de réception, son propre bot, ses propres canaux — et vous gardez une visibilité totale sur tous sans changer d'outil."
+        "description": "Gérez plusieurs espaces de travail clients depuis un seul compte. Chaque client obtient sa propre boîte de réception, son propre bot, ses propres canaux et vous gardez une visibilité totale sur tous sans changer d'outil."
       },
       "closing": "Quel que soit votre modèle d'activité, vos clients attendent des réponses rapides et claires. Yoosr le rend possible sans épuiser votre équipe."
     },
     "trust": {
       "headline": "Accès anticipé. Vrai produit. Pas de promesses en l'air.",
-      "subheadline": "Yoosr est en ligne, testé et utilisé par des équipes pilotes dès maintenant. Nous ne vendons pas une feuille de route — tout ce qui figure sur cette page existe et fonctionne aujourd'hui.",
+      "subheadline": "Yoosr est en ligne, testé et utilisé par des équipes pilotes dès maintenant. Nous ne vendons pas une feuille de route tout ce qui figure sur cette page existe et fonctionne aujourd'hui.",
       "builtInPublic": {
         "title": "Construit en public",
         "description": "La base de code est réelle, les fonctionnalités sont livrées et le produit est activement testé. Pas de diapositives. Pas de démos de choses qui n'existent pas encore."
@@ -1881,10 +1881,10 @@
     },
     "pricing": {
       "headline": "Des prix pour de vraies entreprises. Pas des budgets Silicon Valley.",
-      "subheadline": "Nous finalisons nos plans. Ce que nous pouvons vous dire maintenant : Yoosr sera tarifé pour les équipes qui construisent quelque chose de réel — pas pour des entreprises avec des budgets logiciels à six chiffres.",
+      "subheadline": "Nous finalisons nos plans. Ce que nous pouvons vous dire maintenant : Yoosr sera tarifé pour les équipes qui construisent quelque chose de réel pas pour des entreprises avec des budgets logiciels à six chiffres.",
       "free": {
         "title": "Gratuit pendant l'accès anticipé",
-        "description": "Sans carte bancaire. Sans compte à rebours d'essai. Sans limites de fonctionnalités. L'accès anticipé est entièrement gratuit pendant la bêta — utilisez le vrai produit, pas une version allégée."
+        "description": "Sans carte bancaire. Sans compte à rebours d'essai. Sans limites de fonctionnalités. L'accès anticipé est entièrement gratuit pendant la bêta utilisez le vrai produit, pas une version allégée."
       },
       "founderPricing": {
         "title": "Prix fondateur garanti",
@@ -1894,13 +1894,13 @@
         "title": "Aucune surprise",
         "description": "Pas de frais par siège qui s'accumulent contre vous. Pas de frais cachés pour les canaux ou les intégrations. Un plan simple qui évolue avec votre entreprise."
       },
-      "cta": "Rejoindre l'accès anticipé — Réserver ma place",
+      "cta": "Rejoindre l'accès anticipé Réserver ma place",
       "ctaMicrocopy": "Plans payants bientôt disponibles. L'accès anticipé est gratuit."
     },
     "finalCta": {
       "headline": "Vos clients envoient des messages en ce moment. Êtes-vous prêt ?",
-      "subheadline": "Chaque message sans réponse est une vente manquée, un client frustré, ou une relation perdue. Yoosr s'assure que cela n'arrive pas — automatiquement, sur tous les canaux, 24h/24.",
-      "cta": "Accès anticipé — C'est gratuit",
+      "subheadline": "Chaque message sans réponse est une vente manquée, un client frustré, ou une relation perdue. Yoosr s'assure que cela n'arrive pas automatiquement, sur tous les canaux, 24h/24.",
+      "cta": "Accès anticipé C'est gratuit",
       "ctaMicrocopy": "Sans carte bancaire. La configuration prend moins de 5 minutes.",
       "secondary": "Rejoignez 50+ équipes déjà sur liste d'attente."
     }
