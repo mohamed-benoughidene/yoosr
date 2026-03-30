@@ -35,10 +35,10 @@ function WaitlistForm() {
                 Request access to your early account.
             </p>
 
-            {/* @ts-expect-error Waitlist currently lacks TS definition for initialValues in this version but it works */}
+
             <Waitlist
                 signInUrl="/login"
-                initialValues={{ emailAddress: email }}
+                {...({ initialValues: { emailAddress: email } } as any)}
                 appearance={{
                     baseTheme: dark,
                     elements: {
