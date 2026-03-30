@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <Languages className="mr-2 size-4" />
+        <Languages className="me-2 size-4" />
         <span>{currentLang?.label || "Language"}</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
