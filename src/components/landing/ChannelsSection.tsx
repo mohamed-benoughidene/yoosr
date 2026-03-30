@@ -1,33 +1,35 @@
 "use client";
-
 import React from "react";
 import { ScrollReveal } from "./ScrollReveal";
 import { Globe, Send, MessageCircle, Instagram } from "lucide-react";
-
-const channels = [
-  {
-    title: "Web Widget",
-    description: "Embed on any website in minutes. Fully customizable - your colors, your logo, your welcome message.",
-    iconSVG: <Globe size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
-  },
-  {
-    title: "Telegram",
-    description: "Connect your Telegram bot in one click. No app review, no business verification, no waiting. Just connect and go.",
-    iconSVG: <Send size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
-  },
-  {
-    title: "Facebook Messenger",
-    description: "Every Messenger conversation from your Facebook page lands directly in your Yoosr inbox - ready to handle or automate.",
-    iconSVG: <MessageCircle size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
-  },
-  {
-    title: "Instagram DMs",
-    description: "Turn Instagram DMs into managed support conversations. Same inbox, same team, same bot.",
-    iconSVG: <Instagram size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
-  },
-];
+import { useTranslations } from "next-intl";
 
 export function ChannelsSection() {
+  const t = useTranslations("landingPage.channels");
+
+  const channels = [
+    {
+      title: t("webWidget.title"),
+      description: t("webWidget.description"),
+      iconSVG: <Globe size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
+    },
+    {
+      title: t("telegram.title"),
+      description: t("telegram.description"),
+      iconSVG: <Send size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
+    },
+    {
+      title: t("messenger.title"),
+      description: t("messenger.description"),
+      iconSVG: <MessageCircle size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
+    },
+    {
+      title: t("instagram.title"),
+      description: t("instagram.description"),
+      iconSVG: <Instagram size={24} color="var(--lp-gold)" strokeWidth={1.5} />,
+    },
+  ];
+
   return (
     <section className="bg-[var(--lp-bg)] py-[64px] md:py-[120px] overflow-hidden" id="channels-section">
       <style dangerouslySetInnerHTML={{ __html: `
@@ -68,10 +70,10 @@ export function ChannelsSection() {
               <div className="flex flex-col gap-4">
                 <span className="ch-label">CHANNELS</span>
                 <h2 className="ch-heading text-[36px] md:text-[48px] text-[var(--lp-text)]">
-                  Meet your customers where they already are.
+                  {t("headline")}
                 </h2>
                 <p className="ch-subheadline">
-                  Your customers don't switch apps for you. Yoosr connects to the channels they're already using - and routes every message into one unified inbox.
+                  {t("subheadline")}
                 </p>
               </div>
             </ScrollReveal>
@@ -98,7 +100,7 @@ export function ChannelsSection() {
 
             <ScrollReveal delay={500}>
               <p className="text-[14px] text-[var(--lp-text-secondary)] italic font-['Inter']">
-                One team. One inbox. Every channel handled.
+                {t("closing")}
               </p>
             </ScrollReveal>
         </div>

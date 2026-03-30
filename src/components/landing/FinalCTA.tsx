@@ -1,8 +1,10 @@
 "use client"
 
 import React from "react"
+import { useTranslations } from "next-intl"
 
 export function FinalCTA() {
+  const t = useTranslations("landingPage.finalCta")
 
   return (
     <section className="relative flex flex-col items-center justify-center py-20 md:py-32 w-full overflow-hidden" style={{ backgroundColor: "var(--lp-bg)" }}>
@@ -78,7 +80,7 @@ export function FinalCTA() {
             letterSpacing: "-0.03em"
           }}
         >
-          Your customers are messaging right now. Are you ready?
+          {t("headline")}
         </h2>
         
         <p 
@@ -90,7 +92,7 @@ export function FinalCTA() {
             fontWeight: 400
           }}
         >
-          Every unanswered message is a missed sale, a frustrated customer, or a lost relationship. Yoosr makes sure that doesn&apos;t happen — automatically, across every channel, around the clock.
+          {t("subheadline")}
         </p>
 
         <button 
@@ -117,7 +119,7 @@ export function FinalCTA() {
             e.currentTarget.style.transform = 'scale(1)'
           }}
         >
-          Get Early Access →
+          {t("cta")}
         </button>
 
         <div className="flex flex-col gap-1.5 mt-2">
@@ -129,7 +131,7 @@ export function FinalCTA() {
               fontWeight: 400
             }}
           >
-            No credit card. Setup takes less than 5 minutes.
+            {t("ctaMicrocopy")}
           </p>
           <p 
             className="text-[14px]"
@@ -139,7 +141,7 @@ export function FinalCTA() {
               fontWeight: 400
             }}
           >
-            Join 50+ teams already on the waitlist.
+            {t("secondary")}
           </p>
         </div>
 

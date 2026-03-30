@@ -1,7 +1,10 @@
 import React from "react";
+import { getTranslations } from "next-intl/server";
 import { Shield, Users, MessageSquare } from "lucide-react";
 
-export function TrustSection() {
+export async function TrustSection() {
+  const t = await getTranslations("landingPage.trust");
+
   return (
     <div className="w-full bg-[var(--lp-surface)] py-16 md:py-24">
       <div className="mx-auto max-w-[1200px] px-6">
@@ -10,10 +13,10 @@ export function TrustSection() {
             TRUST SIGNALS
           </span>
           <h2 className="mb-4 font-cabinet-grotesk text-4xl font-bold leading-tight tracking-tight text-[var(--lp-text)] md:text-[48px] md:leading-[56px]">
-            Early access. Real product. No vaporware.
+            {t("headline")}
           </h2>
           <p className="mx-auto mb-16 max-w-[520px] font-inter text-[18px] leading-[28px] text-[var(--lp-text-secondary)]">
-            Yoosr is live, tested, and being used by early teams right now. We're not selling a roadmap - everything on this page exists and works today.
+            {t("subheadline")}
           </p>
         </div>
 
@@ -24,10 +27,10 @@ export function TrustSection() {
               <Shield size={24} color="var(--lp-gold)" strokeWidth={1.5} />
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              Built in public
+              {t("builtInPublic.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              The codebase is real, the features are shipped, and the product is actively being tested. No slides. No demos of things that don't exist yet.
+              {t("builtInPublic.description")}
             </p>
           </div>
 
@@ -37,10 +40,10 @@ export function TrustSection() {
               <Users size={24} color="var(--lp-gold)" strokeWidth={1.5} />
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              50+ teams on the waitlist
+              {t("waitlist.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              Founders, e-commerce operators, and agency owners across the region are already signed up. Early access spots are limited.
+              {t("waitlist.description")}
             </p>
           </div>
 
@@ -50,16 +53,16 @@ export function TrustSection() {
               <MessageSquare size={24} color="var(--lp-gold)" strokeWidth={1.5} />
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              Your feedback shapes the product
+              {t("feedback.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              Early access users get direct access to the founding team. What you need gets built. What doesn't work gets fixed.
+              {t("feedback.description")}
             </p>
           </div>
         </div>
 
         <div className="mt-12 text-center text-[16px] italic leading-relaxed text-[var(--lp-text-secondary)]">
-          We'll let the product speak for itself. Get in and see.
+          {t("closing")}
         </div>
       </div>
     </div>

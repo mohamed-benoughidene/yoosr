@@ -3,41 +3,43 @@
 import React, { useState } from "react"
 import { ScrollReveal } from "./ScrollReveal"
 import { Bot, Monitor, Inbox, BookOpen, Package, BarChart2 } from "lucide-react"
-
-const featuresData = [
-  {
-    title: "Visual Bot Builder",
-    description: "Drag a block, set a condition, go live. No developer, no ticket, no waiting three sprints to automate one question.",
-    icon: <Bot size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  },
-  {
-    title: "Live Monitor",
-    description: "Every incoming conversation visible in real time. Filter, assign, and resolve - without ever leaving the screen.",
-    icon: <Monitor size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  },
-  {
-    title: "Unified Inbox",
-    description: "Telegram, Instagram, Messenger, and your website widget - one inbox, one team. Your agents stop juggling apps.",
-    icon: <Inbox size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  },
-  {
-    title: "Knowledge Base",
-    description: "Add a URL, upload a PDF, or paste plain text. Your bot reads it and answers customer questions - day and night, without asking your team.",
-    icon: <BookOpen size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  },
-  {
-    title: "Order Tracking",
-    description: "Create and track orders directly inside the chat window. No separate tool. Your agents capture everything without leaving the conversation.",
-    icon: <Package size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  },
-  {
-    title: "Analytics & CSAT",
-    description: "See exactly what your bot resolves, where it gets stuck, and what customers said about every interaction - in one dashboard.",
-    icon: <BarChart2 size={24} color="var(--lp-gold)" strokeWidth={1.5} />
-  }
-]
+import { useTranslations } from "next-intl"
 
 export function FeaturesGrid() {
+  const t = useTranslations("landingPage.features")
+
+  const featuresData = [
+    {
+      title: t("botBuilder.title"),
+      description: t("botBuilder.description"),
+      icon: <Bot size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    },
+    {
+      title: t("liveMonitor.title"),
+      description: t("liveMonitor.description"),
+      icon: <Monitor size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    },
+    {
+      title: t("unifiedInbox.title"),
+      description: t("unifiedInbox.description"),
+      icon: <Inbox size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    },
+    {
+      title: t("knowledgeBase.title"),
+      description: t("knowledgeBase.description"),
+      icon: <BookOpen size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    },
+    {
+      title: t("orderTracking.title"),
+      description: t("orderTracking.description"),
+      icon: <Package size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    },
+    {
+      title: t("analytics.title"),
+      description: t("analytics.description"),
+      icon: <BarChart2 size={24} color="var(--lp-gold)" strokeWidth={1.5} />
+    }
+  ]
   return (
     <section className="relative w-full overflow-hidden py-16 lg:py-24" style={{ backgroundColor: "var(--lp-bg)" }}>
       {/* Background glow band */}
@@ -74,7 +76,7 @@ export function FeaturesGrid() {
                 color: "var(--lp-text)",
               }}
             >
-              Built around how support actually works.
+              {t("headline")}
             </h2>
           </div>
         </ScrollReveal>

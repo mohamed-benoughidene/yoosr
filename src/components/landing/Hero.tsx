@@ -1,10 +1,10 @@
 "use client"
 
+import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react"
 
-const SUBHEADLINE = "Yoosr gives your business an AI-powered inbox — with a no-code bot builder, smart agent routing, order tracking, and live handoff across Web, Telegram, Messenger, and Instagram."
-
 export function Hero() {
+  const t = useTranslations("landingPage.hero")
   const [subVisible, setSubVisible] = useState(false)
 
   useEffect(() => {
@@ -13,11 +13,10 @@ export function Hero() {
   }, [])
 
 
-  const sentences = [
-    ["Automate", "Support."],
-    ["Capture", "Sales."],
-    ["Hand", "Off", "to", "Humans."]
-  ]
+  const sentences = t("headline").split(". ").map((s, i, arr) => {
+    const text = i < arr.length - 1 ? (s.endsWith(".") ? s : s + ".") : s;
+    return text.split(" ");
+  });
   let globalWordIdx = 0;
 
   return (
@@ -281,7 +280,7 @@ export function Hero() {
         </h1>
 
         <p className={`hero-subheadline ${subVisible ? 'visible' : ''}`}>
-          {SUBHEADLINE}
+          {t("subheadline")}
         </p>
 
         <button 
@@ -308,11 +307,11 @@ export function Hero() {
             e.currentTarget.style.transform = 'scale(1)'
           }}
         >
-          Get Early Access →
+          {t("cta")}
         </button>
         
         <div className="hero-microcopy">
-          No credit card. No setup fees. Live in under an hour.
+          {t("ctaMicrocopy")}
         </div>
         
         <div className="product-showcase-container">

@@ -1,29 +1,31 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ScrollReveal } from "./ScrollReveal";
 
-const steps = [
-  {
-    num: "01",
-    title: "Create your workspace",
-    body: "Sign up, connect your channels, and invite your team. No configuration marathon. No engineer needed. You're set up before your coffee gets cold."
-  },
-  {
-    num: "02",
-    title: "Build your first bot",
-    body: "Open Design Studio, drag your blocks, or just describe what you want in plain text and let AI generate the flow. Your first bot is ready to test in minutes."
-  },
-  {
-    num: "03",
-    title: "Go live and let it work",
-    body: "Deploy to your website widget, your Telegram bot, or your Instagram DMs. Watch conversations get handled, routed, and resolved - automatically."
-  }
-];
-
 export function HowItWorks() {
+  const t = useTranslations("landingPage.howItWorks");
   const containerRef = useRef<HTMLDivElement>(null);
   const [lineScale, setLineScale] = useState(0);
+
+  const steps = [
+    {
+      num: "01",
+      title: t("step1.title"),
+      body: t("step1.description")
+    },
+    {
+      num: "02",
+      title: t("step2.title"),
+      body: t("step2.description")
+    },
+    {
+      num: "03",
+      title: t("step3.title"),
+      body: t("step3.description")
+    }
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,10 +56,10 @@ export function HowItWorks() {
         <ScrollReveal>
           <div className="flex flex-col items-center text-center mb-16 md:mb-24">
             <span className="font-['Inter'] font-[500] text-[11px] text-[var(--lp-gold)] uppercase tracking-[0.1em] mb-4">
-              HOW IT WORKS
+              {t("badge")}
             </span>
             <h2 className="font-['Cabinet_Grotesk'] font-[700] text-[36px] md:text-[48px] text-[var(--lp-text)] tracking-tight max-w-[800px] leading-tight">
-              From signup to first automated conversation in under an hour.
+              {t("headline")}
             </h2>
           </div>
         </ScrollReveal>
@@ -110,7 +112,7 @@ export function HowItWorks() {
         <div className="mt-16 md:mt-24 text-center">
           <ScrollReveal delay={200}>
             <p className="font-['Cabinet_Grotesk'] font-[700] text-[20px] md:text-[24px] text-[var(--lp-gold)]">
-              Your team handles the exceptions. Yoosr handles everything else.
+              {t("closing")}
             </p>
           </ScrollReveal>
         </div>

@@ -1,3 +1,5 @@
+import { FooterLanguageSwitcher } from "@/components/FooterLanguageSwitcher";
+
 export function LandingFooter() {
   return (
     <footer style={{ background: 'var(--lp-surface)', borderTop: '1px solid var(--lp-border)', padding: '32px 24px' }}>
@@ -21,7 +23,7 @@ export function LandingFooter() {
             <a href="/legal/privacy" className="hover:text-[var(--lp-gold)] transition-colors">Privacy Policy</a>
           </div>
         </div>
-        {/* Right side spacer removed */}
+        <FooterLanguageSwitcher />
       </div>
     </footer>
   );

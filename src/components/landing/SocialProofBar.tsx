@@ -2,37 +2,42 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export function SocialProofBar() {
+  const t = useTranslations("landingPage.socialProof");
   const router = useRouter();
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push('/waitlist');
   };
 
-  const Item = () => (
-    <div className="flex items-center whitespace-nowrap text-[13px] font-medium text-[var(--lp-text-secondary)]">
-      <span className="ml-[12px] mr-[12px]">🟢 Early Access</span>
-      <span className="text-[var(--lp-gold)]">·</span>
-      <span className="mx-[12px]">4 channels, one inbox</span>
-      <span className="text-[var(--lp-gold)]">·</span>
-      <span className="mx-[12px]">AI + human handoff</span>
-      <span className="text-[var(--lp-gold)]">·</span>
-      <span className="mx-[12px]">No-code automation</span>
-      <span className="text-[var(--lp-gold)]">·</span>
-      <span className="mx-[12px] flex items-center">
-        Join 50+ teams on the waitlist{" "}
-        <button
-          type="button"
-          onClick={handleClick}
-          className="ml-1 inline-flex items-center text-[var(--lp-gold)] transition-opacity hover:opacity-80 focus:outline-none"
-        >
-          → Get Early Access
-        </button>
-      </span>
-      <span className="text-[var(--lp-gold)]">·</span>
-    </div>
-  );
+  const Item = () => {
+    const parts = t("bar").split(" | ");
+    return (
+      <div className="flex items-center whitespace-nowrap text-[13px] font-medium text-[var(--lp-text-secondary)]">
+        <span className="ml-[12px] mr-[12px]">🟢 {parts[0]}</span>
+        <span className="text-[var(--lp-gold)]">·</span>
+        <span className="mx-[12px]">{parts[1]}</span>
+        <span className="text-[var(--lp-gold)]">·</span>
+        <span className="mx-[12px]">{parts[2]}</span>
+        <span className="text-[var(--lp-gold)]">·</span>
+        <span className="mx-[12px]">{parts[3]}</span>
+        <span className="text-[var(--lp-gold)]">·</span>
+        <span className="mx-[12px] flex items-center">
+          {parts[4]}{" "}
+          <button
+            type="button"
+            onClick={handleClick}
+            className="ml-1 inline-flex items-center text-[var(--lp-gold)] transition-opacity hover:opacity-80 focus:outline-none"
+          >
+            → Get {parts[0]}
+          </button>
+        </span>
+        <span className="text-[var(--lp-gold)]">·</span>
+      </div>
+    );
+  };
 
   return (
     <>

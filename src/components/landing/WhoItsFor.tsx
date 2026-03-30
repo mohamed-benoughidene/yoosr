@@ -2,6 +2,7 @@
 
 import React from "react"
 import { ShoppingBag, Monitor, Users } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 const EcomIcon = () => (
   <ShoppingBag size={24} color="var(--lp-gold)" strokeWidth={1.5} className="mb-6" />
@@ -16,6 +17,7 @@ const AgencyIcon = () => (
 )
 
 export function WhoItsFor() {
+  const t = useTranslations("landingPage.audience")
   return (
     <div className="w-full bg-[var(--lp-bg)] py-16 md:py-24 px-6 relative overflow-hidden">
       <div className="max-w-[1200px] mx-auto relative z-10">
@@ -24,7 +26,7 @@ export function WhoItsFor() {
             WHO IT&apos;S FOR
           </span>
           <h2 className="font-cabinet font-bold text-4xl md:text-5xl text-[var(--lp-text)] max-w-2xl leading-tight">
-            Built for teams that can&apos;t afford to miss a message.
+            {t("headline")}
           </h2>
         </div>
 
@@ -33,10 +35,10 @@ export function WhoItsFor() {
           <div className="h-full flex flex-col p-8 rounded-[12px] bg-[var(--lp-surface)] border border-[var(--lp-gold)] shadow-[0_0_24px_var(--lp-gold-glow)] transition-all duration-300 lg:border-[var(--lp-gold)] lg:shadow-[0_0_24px_var(--lp-gold-glow)]">
             <EcomIcon />
             <h3 className="font-cabinet font-bold text-xl text-[var(--lp-text)]">
-              E-commerce Stores
+              {t("ecommerce.title")}
             </h3>
             <p className="mt-2 text-sm text-[var(--lp-text-secondary)] leading-[22px] font-inter">
-              Your customers ask the same questions before every purchase - shipping times, return policies, order status. Your bot answers all of it automatically, around the clock. Your team steps in only when a human touch actually matters.
+              {t("ecommerce.description")}
             </p>
           </div>
 
@@ -44,10 +46,10 @@ export function WhoItsFor() {
           <div className="h-full flex flex-col p-8 rounded-[12px] bg-[var(--lp-surface)] border border-[var(--lp-border)] transition-all duration-300 hover:border-[var(--lp-gold)] hover:shadow-[0_0_24px_var(--lp-gold-glow)]">
             <SaasIcon />
             <h3 className="font-cabinet font-bold text-xl text-[var(--lp-text)]">
-              SaaS Companies
+              {t("saas.title")}
             </h3>
             <p className="mt-2 text-sm text-[var(--lp-text-secondary)] leading-[22px] font-inter">
-              Turn support conversations into growth conversations. Qualify leads, onboard new signups, and answer product questions - without adding headcount every time your user base grows.
+              {t("saas.description")}
             </p>
           </div>
 
@@ -55,17 +57,17 @@ export function WhoItsFor() {
           <div className="h-full flex flex-col p-8 rounded-[12px] bg-[var(--lp-surface)] border border-[var(--lp-border)] transition-all duration-300 hover:border-[var(--lp-gold)] hover:shadow-[0_0_24px_var(--lp-gold-glow)]">
             <AgencyIcon />
             <h3 className="font-cabinet font-bold text-xl text-[var(--lp-text)]">
-              Agencies
+              {t("agencies.title")}
             </h3>
             <p className="mt-2 text-sm text-[var(--lp-text-secondary)] leading-[22px] font-inter">
-              Manage multiple client workspaces from one account. Each client gets their own inbox, their own bot, their own channels - and you get full visibility across all of them without switching tools.
+              {t("agencies.description")}
             </p>
           </div>
         </div>
 
         <div className="mt-6 md:mt-8 text-center">
           <p className="text-base text-[var(--lp-text-secondary)] italic font-inter max-w-2xl mx-auto">
-            Whatever your business looks like, your customers expect fast, clear answers. Yoosr makes that possible without burning out your team.
+            {t("closing")}
           </p>
         </div>
       </div>

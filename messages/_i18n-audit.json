@@ -1,0 +1,16 @@
+{
+  "ar": {
+    "missingCount": 0,
+    "orphanedCount": 0,
+    "missingKeys": [],
+    "orphanedKeys": []
+  },
+  "fr": {
+    "missingCount": 1,
+    "orphanedCount": 0,
+    "missingKeys": [
+      "designStudio.properties.maxTurnsHelper"
+    ],
+    "orphanedKeys": []
+  }
+}

@@ -1,9 +1,11 @@
 "use client"
 
 import React from "react"
+import { useTranslations } from "next-intl"
 import { ScrollReveal } from "./ScrollReveal"
 
 export function DesignStudioSection() {
+  const t = useTranslations("landingPage.designStudio")
   return (
     <section className="w-full relative overflow-hidden" style={{ backgroundColor: "var(--lp-surface)", padding: "96px 0" }}>
       <style dangerouslySetInnerHTML={{__html: `
@@ -118,9 +120,9 @@ export function DesignStudioSection() {
         <ScrollReveal>
           <div className="flex flex-col items-center text-center mb-16">
             <div className="ds-label">DESIGN STUDIO</div>
-            <h2 className="ds-headline">Build your first bot in minutes.<br className="hidden md:block"/> Without writing a single line of code.</h2>
+            <h2 className="ds-headline">{t("headline")}</h2>
             <p className="ds-subheadline">
-              Design Studio is a visual canvas where you drag blocks, connect conditions, and create automation flows that actually work - no developer required, no technical knowledge assumed.
+              {t("subheadline")}
             </p>
           </div>
         </ScrollReveal>
@@ -129,9 +131,9 @@ export function DesignStudioSection() {
           <ScrollReveal delay={100} className="h-full">
             <div className="ds-card cursor-pointer group">
               <div className="ds-card-number">01</div>
-              <h3 className="ds-card-title">AI Flow Generation</h3>
+              <h3 className="ds-card-title">{t("aiFlow.title")}</h3>
               <p className="ds-card-body">
-                Describe what you want in plain text. Yoosr generates the entire bot flow for you - nodes, conditions, branches and all. You edit, it builds.
+                {t("aiFlow.description")}
               </p>
             </div>
           </ScrollReveal>
@@ -139,9 +141,9 @@ export function DesignStudioSection() {
           <ScrollReveal delay={200} className="h-full">
             <div className="ds-card cursor-pointer group">
               <div className="ds-card-number">02</div>
-              <h3 className="ds-card-title">Step-Through Debugger</h3>
+              <h3 className="ds-card-title">{t("debugger.title")}</h3>
               <p className="ds-card-body">
-                Test your bot before it goes live. Walk through every node, see exactly what fires and what doesn't, catch edge cases before your customers do.
+                {t("debugger.description")}
               </p>
             </div>
           </ScrollReveal>
@@ -149,9 +151,9 @@ export function DesignStudioSection() {
           <ScrollReveal delay={300} className="h-full">
             <div className="ds-card cursor-pointer group">
               <div className="ds-card-number">03</div>
-              <h3 className="ds-card-title">Live Handoff Built In</h3>
+              <h3 className="ds-card-title">{t("liveHandoff.title")}</h3>
               <p className="ds-card-body">
-                Every flow can escalate to a human agent at exactly the right moment - with full conversation context intact. No repeat explanations. No lost history.
+                {t("liveHandoff.description")}
               </p>
             </div>
           </ScrollReveal>
@@ -225,7 +227,7 @@ export function DesignStudioSection() {
 
         <ScrollReveal delay={500}>
           <div className="ds-closing">
-            If your support process can be described, it can be automated.
+            {t("closing")}
           </div>
         </ScrollReveal>
       </div>

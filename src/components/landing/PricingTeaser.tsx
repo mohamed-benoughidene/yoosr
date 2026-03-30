@@ -2,8 +2,10 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export function PricingTeaser() {
+  const t = useTranslations("landingPage.pricing");
   const router = useRouter();
 
   const scrollToWaitlist = () => {
@@ -18,10 +20,10 @@ export function PricingTeaser() {
             PRICING
           </span>
           <h2 className="mb-4 font-cabinet-grotesk text-4xl font-bold leading-tight tracking-tight text-[var(--lp-text)] md:text-[48px] md:leading-[56px]">
-            Priced for real businesses. Not Silicon Valley budgets.
+            {t("headline")}
           </h2>
           <p className="mx-auto mb-16 max-w-[520px] font-inter text-[18px] leading-[28px] text-[var(--lp-text-secondary)]">
-            We're finalizing our plans. What we can tell you now: Yoosr will be priced for teams that are building something real - not enterprises with six-figure software budgets.
+            {t("subheadline")}
           </p>
         </div>
 
@@ -35,10 +37,10 @@ export function PricingTeaser() {
               </svg>
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              Free during early access
+              {t("free.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              No credit card. No trial countdown. No feature limits. Early access is fully free while we're in beta - use the real product, not a watered-down demo.
+              {t("free.description")}
             </p>
           </div>
 
@@ -52,10 +54,10 @@ export function PricingTeaser() {
               </svg>
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              Founder pricing locked in
+              {t("founderPricing.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              Sign up now and lock in the lowest price Yoosr will ever be. Early access users get grandfathered into founder rates when paid plans launch.
+              {t("founderPricing.description")}
             </p>
           </div>
 
@@ -68,10 +70,10 @@ export function PricingTeaser() {
               </svg>
             </div>
             <h3 className="mb-2 font-cabinet-grotesk text-[17px] font-semibold tracking-wide text-[var(--lp-text)]">
-              No surprises
+              {t("noSurprises.title")}
             </h3>
             <p className="font-inter text-[14px] leading-[22px] text-[var(--lp-text-secondary)] flex-grow">
-              No per-seat fees that scale against you. No hidden charges for channels or integrations. One straightforward plan that grows with your business.
+              {t("noSurprises.description")}
             </p>
           </div>
         </div>
@@ -81,10 +83,10 @@ export function PricingTeaser() {
             onClick={scrollToWaitlist}
             className="flex h-[52px] w-full max-w-[320px] items-center justify-center rounded-lg bg-[var(--lp-gold)] font-cabinet-grotesk text-[16px] font-semibold text-[#0C0B0F] transition-all duration-150 hover:scale-[1.02] hover:opacity-90"
           >
-            Join Early Access - Lock In Your Spot
+            {t("cta")}
           </button>
           <span className="mt-4 font-inter text-[13px] text-[var(--lp-text-muted)]">
-            Paid plans coming soon. Early access is free.
+            {t("ctaMicrocopy")}
           </span>
         </div>
       </div>

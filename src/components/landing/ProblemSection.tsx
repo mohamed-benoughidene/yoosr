@@ -1,12 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ScrollReveal } from "./ScrollReveal";
 
 export function ProblemSection() {
+  const t = useTranslations("landingPage.problem");
+
   const painPoints = [
-    "Transferred three times for something the first person should have handled",
-    "\"Where's my order?\" - answered manually, all day, every day",
-    "No context when the conversation changes hands - the customer has to start over"
+    t("painPoint1"),
+    t("painPoint2"),
+    t("painPoint3")
   ];
 
   return (
@@ -50,7 +53,7 @@ export function ProblemSection() {
               maxWidth: "520px",
             }}
           >
-            Your customers are tired of repeating themselves. Your team is tired of answering the same questions.
+            {t("headline")}
           </h2>
         </ScrollReveal>
 
@@ -93,7 +96,7 @@ export function ProblemSection() {
               maxWidth: "480px",
             }}
           >
-            Yoosr fixes the system, not just the symptoms. Smart routing, full context on every handoff, and a bot that handles the repetitive work - so your team only steps in when it actually matters.
+            {t("transition")}
           </p>
         </ScrollReveal>
       </div>
