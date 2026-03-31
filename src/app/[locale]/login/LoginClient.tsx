@@ -3,12 +3,16 @@
 import Link from "next/link"
 import { SignIn } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
+import { AuthProviders } from "@/components/AuthProviders"
+import { useLocale } from "next-intl"
 
-export function LoginClient() {
+function LoginContent() {
+    const locale = useLocale()
+    
     return (
         <div className="flex w-full flex-col items-center justify-center" style={{ backgroundColor: 'var(--lp-bg)', minHeight: '100vh' }}>
             <Link
-                href="/"
+                href={`/${locale}`}
                 className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center text-lg font-bold tracking-tight"
                 style={{ color: 'var(--lp-text)' }}
             >
@@ -37,12 +41,20 @@ export function LoginClient() {
                             },
                         }}
                         routing="hash"
-                        forceRedirectUrl="/onboarding"
-                        signUpUrl="/waitlist"
-                        afterSignInUrl="/dashboard"
+                        forceRedirectUrl={`/${locale}/onboarding`}
+                        signUpUrl={`/${locale}/waitlist`}
+                        afterSignInUrl={`/${locale}/dashboard`}
                     />
                 </div>
             </div>
         </div>
+    )
+}
+
+export function LoginClient() {
+    return (
+        <AuthProviders>
+            <LoginContent />
+        </AuthProviders>
     )
 }

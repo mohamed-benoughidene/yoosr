@@ -93,7 +93,7 @@
 
 ---
 
-### 6. Non-Composited SVG Animations (5 elements)
+### 6. ~~Non-Composited SVG Animations (5 elements)~~ ✅ (Done)
 - **What:** The bot flow diagram on the landing page animates SVG `<path>` elements using `stroke-dashoffset`. This property is not GPU-compositable — the browser must repaint on every frame, causing janky animation and contributing to CLS.
 - **Where:** The flow diagram component in the landing page (class `flow-edge`)
 - **Fix:** Replace `stroke-dashoffset` animation with `opacity` fade-in or `transform`-based animation. Alternatively, use `will-change: transform` or remove animation entirely on the static landing page version.
@@ -196,7 +196,7 @@
 | 3 | ~~Convex on landing page~~ | P0 | Low | ✅ Done |
 | 4 | ~~Security headers missing~~ | P0 | Low | ✅ Done |
 | 5 | ~~Missing preconnect hints~~ | P1 | Low | ✅ Done |
-| 6 | Non-composited SVG animations | P1 | Medium | CLS + jank |
+| 6 | ~~Non-composited SVG animations~~ | P1 | Medium | ✅ Done |
 | 7 | Logo width attribute missing | P1 | Low | CLS |
 | 8 | Footer contrast failures | P1 | Low | A11y 96→100 |
 | 9 | Legacy JS polyfills | P2 | Low | ~14 KiB JS |

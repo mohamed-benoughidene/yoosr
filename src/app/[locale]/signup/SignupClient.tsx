@@ -4,13 +4,16 @@ import Link from "next/link"
 import { SignUp } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
 import { useTranslations } from "next-intl"
+import { AuthProviders } from "@/components/AuthProviders"
+import { useLocale } from "next-intl"
 
-export function SignupClient() {
+function SignupContent() {
+    const locale = useLocale()
     const t = useTranslations("auth.signup")
     return (
         <div className="flex w-full flex-col items-center justify-center" style={{ backgroundColor: 'var(--lp-bg)', minHeight: '100vh' }}>
             <Link
-                href="/"
+                href={`/${locale}`}
                 className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center text-lg font-bold tracking-tight"
                 style={{ color: 'var(--lp-text)' }}
             >
@@ -40,22 +43,22 @@ export function SignupClient() {
                             },
                         }}
                         routing="hash"
-                        forceRedirectUrl="/onboarding"
-                        signInUrl="/login"
-                        afterSignUpUrl="/dashboard"
+                        forceRedirectUrl={`/${locale}/onboarding`}
+                        signInUrl={`/${locale}/login`}
+                        afterSignUpUrl={`/${locale}/dashboard`}
                     />
                 </div>
                 <p className="px-8 text-center text-sm text-muted-foreground">
                     By clicking continue, you agree to our{" "}
                     <Link
-                        href="/terms"
+                        href={`/${locale}/legal/terms`}
                         className="underline underline-offset-4 hover:text-primary"
                     >
                         Terms of Service
                     </Link>{" "}
                     and{" "}
                     <Link
-                        href="/privacy"
+                        href={`/${locale}/legal/privacy`}
                         className="underline underline-offset-4 hover:text-primary"
                     >
                         Privacy Policy
@@ -64,5 +67,13 @@ export function SignupClient() {
                 </p>
             </div>
         </div>
+    )
+}
+
+export function SignupClient() {
+    return (
+        <AuthProviders>
+            <SignupContent />
+        </AuthProviders>
     )
 }

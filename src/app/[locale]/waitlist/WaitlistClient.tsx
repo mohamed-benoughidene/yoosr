@@ -4,6 +4,7 @@ import { Waitlist } from "@clerk/nextjs"
 import { useSearchParams } from "next/navigation"
 import { dark } from "@clerk/themes"
 import { Suspense } from "react"
+import { AuthProviders } from "@/components/AuthProviders"
 
 function WaitlistForm() {
     const searchParams = useSearchParams()
@@ -52,10 +53,18 @@ function WaitlistForm() {
     )
 }
 
-export function WaitlistClient() {
+function WaitlistContent() {
     return (
         <Suspense fallback={<div style={{ backgroundColor: 'var(--lp-bg)', minHeight: '100vh' }} />}>
             <WaitlistForm />
         </Suspense>
+    )
+}
+
+export function WaitlistClient() {
+    return (
+        <AuthProviders>
+            <WaitlistContent />
+        </AuthProviders>
     )
 }

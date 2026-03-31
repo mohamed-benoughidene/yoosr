@@ -6,8 +6,9 @@ import { useOrganization, useUser } from "@clerk/nextjs"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Loader2 } from "lucide-react"
+import { AuthProviders } from "@/components/AuthProviders"
 
-export function OnboardingClient() {
+function OnboardingContent() {
     const router = useRouter()
     const { isLoaded: isUserLoaded, isSignedIn } = useUser()
     const { organization, isLoaded: isOrgLoaded } = useOrganization()
@@ -63,5 +64,13 @@ export function OnboardingClient() {
         <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
+    )
+}
+
+export function OnboardingClient() {
+    return (
+        <AuthProviders>
+            <OnboardingContent />
+        </AuthProviders>
     )
 }

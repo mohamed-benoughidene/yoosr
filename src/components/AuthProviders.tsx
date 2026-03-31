@@ -1,13 +1,8 @@
-"use client";
+"use client"
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { ClerkProvider, useAuth } from "@clerk/nextjs";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ReactNode } from "react";
-import { useLocale } from "next-intl";
-import { arSA, enUS, frFR } from "@clerk/localizations";
-
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { ClerkProvider } from "@clerk/nextjs"
+import { useLocale } from "next-intl"
+import { arSA, enUS, frFR } from "@clerk/localizations"
 
 const arSAWithPlaceholders = {
     ...arSA,
@@ -28,10 +23,10 @@ const arSAWithPlaceholders = {
     }
 }
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
-    const locale = useLocale();
-    const localeMap = { ar: arSAWithPlaceholders, en: enUS, fr: frFR };
-    const clerkLocalization = localeMap[locale as keyof typeof localeMap] ?? enUS;
+export function AuthProviders({ children }: { children: React.ReactNode }) {
+    const locale = useLocale()
+    const localeMap = { ar: arSAWithPlaceholders, en: enUS, fr: frFR }
+    const clerkLocalization = localeMap[locale as keyof typeof localeMap] ?? enUS
     
     // Locale-aware URLs for Clerk redirects
     const urls = {
@@ -48,9 +43,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
             localization={clerkLocalization}
             {...urls}
         >
-            <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-                {children}
-            </ConvexProviderWithClerk>
+            {children}
         </ClerkProvider>
-    );
+    )
 }

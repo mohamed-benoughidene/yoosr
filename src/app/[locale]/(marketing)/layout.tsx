@@ -1,4 +1,4 @@
-import { LandingHeader } from "@/components/layout/LandingHeader";
+import { LandingHeaderNoAuth } from "@/components/layout/LandingHeaderNoAuth";
 import { LandingFooter } from "@/components/layout/LandingFooter";
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server";
 import { MarketingProviders } from "@/components/MarketingProviders";
@@ -23,7 +23,7 @@ export default async function MarketingLayout({
                 <link rel="preconnect" href="https://safe-pheasant-87.clerk.accounts.dev" />
                 <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,600&display=optional" rel="stylesheet" />
                 <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@700&display=optional" rel="stylesheet" />
-                <LandingHeader />
+                <LandingHeaderNoAuth />
                 <main className="flex-1">{children}</main>
                 <LandingFooter />
             </div>
