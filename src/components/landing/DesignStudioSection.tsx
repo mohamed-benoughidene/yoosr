@@ -89,18 +89,20 @@ export function DesignStudioSection() {
         }
 
         @keyframes drawEdge {
-          to { stroke-dashoffset: 0; }
+          from { opacity: 0; stroke-dashoffset: 400; }
+          to { opacity: 1; stroke-dashoffset: 0; }
         }
         .flow-edge {
           stroke-dasharray: 400;
           stroke-dashoffset: 400;
           animation: drawEdge 800ms ease-out forwards;
+          will-change: opacity;
         }
         .edge-1 { animation-delay: 100ms; }
         .edge-2 { animation-delay: 250ms; }
         .edge-3 { animation-delay: 400ms; }
         .edge-4 { animation-delay: 550ms; }
-        
+
         @keyframes nodeAppear {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
@@ -108,6 +110,7 @@ export function DesignStudioSection() {
         .flow-node {
           opacity: 0;
           animation: nodeAppear 400ms ease-out forwards;
+          will-change: opacity, transform;
         }
         .node-1 { animation-delay: 0ms; }
         .node-2 { animation-delay: 150ms; }
