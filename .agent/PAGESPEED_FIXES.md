@@ -179,7 +179,7 @@
 
 ---
 
-### 12. Fontshare Fonts Cache TTL Too Short
+### 12. ~~Fontshare Fonts Cache TTL Too Short~~ ✅ (Done)
 - **What:** Cabinet Grotesk fonts from `cdn.fontshare.com` have a cache TTL of only 7 days. Lighthouse flagged this as a caching inefficiency (~4 KiB wasted on repeat visits).
 - **Where:** External — Fontshare CDN headers
 - **Fix:** If self-hosting fonts (recommended per Fix #2), this is resolved automatically since you control cache headers via Vercel. Add `Cache-Control: public, max-age=31536000, immutable` to font assets in `vercel.json`.
@@ -202,7 +202,7 @@
 | 9 | Legacy JS polyfills | P2 | Low | ~14 KiB JS |
 | 10 | ~~Unused Clerk JS bundle~~ | P2 | Medium | ✅ Done |
 | 11 | ~~Unused CSS~~ | P2 | Low | ✅ Done |
-| 12 | Fontshare cache TTL | P2 | Low | Repeat visitors |
+| 12 | ~~Fontshare cache TTL~~ | P2 | Low | ✅ Done |
 
 ---
 

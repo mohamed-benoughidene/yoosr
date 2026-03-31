@@ -1,0 +1,16 @@
+/* Cabinet Grotesk - Self-hosted with long cache TTL */
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./WN5274VQ3AUBDFP74GB4EC4XYJ3EKVNE.woff2') format('woff2');
+  font-weight: 700;
+  font-display: optional;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('./6QH2ALVTTK7IRVO5MYOQQ3OZNXW5SSS3.woff2') format('woff2');
+  font-weight: 800;
+  font-display: optional;
+  font-style: normal;
+}
