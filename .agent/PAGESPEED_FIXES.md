@@ -115,7 +115,7 @@
 
 ---
 
-### 8. Footer Contrast Ratio Failures (Accessibility — 4 missing points)
+### 8. ~~Footer Contrast Ratio Failures (Accessibility — 4 missing points)~~ ✅ (Done)
 - **What:** 6 elements in the footer fail WCAG AA contrast ratio requirements. Text color is too close to the `var(--lp-surface)` background.
 - **Failing elements:**
   - `Product video coming soon` (`.product-showcase-placeholder`)
@@ -198,7 +198,7 @@
 | 5 | ~~Missing preconnect hints~~ | P1 | Low | ✅ Done |
 | 6 | ~~Non-composited SVG animations~~ | P1 | Medium | ✅ Done |
 | 7 | Logo width attribute missing | P1 | Low | CLS |
-| 8 | Footer contrast failures | P1 | Low | A11y 96→100 |
+| 8 | ~~Footer contrast failures~~ | P1 | Low | ✅ Done |
 | 9 | Legacy JS polyfills | P2 | Low | ~14 KiB JS |
 | 10 | ~~Unused Clerk JS bundle~~ | P2 | Medium | ✅ Done |
 | 11 | ~~Unused CSS~~ | P2 | Low | ✅ Done |
