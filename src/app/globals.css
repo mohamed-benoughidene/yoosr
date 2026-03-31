@@ -1,7 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital%2Copsz%2Cwght@0%2C14..32%2C100..900;1%2C14..32%2C100..900&display=optional");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital%2Cwght@0%2C400..900;1%2C400..900&display=optional");
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=optional');
-
 @import "tailwindcss";
 
 @plugin "@tailwindcss/typography";
@@ -27,7 +23,7 @@
   --lp-violet-glow:rgba(108,99,255,0.12);
   --lp-text:#F2EFE9;
   --lp-text-secondary:#9E9AA8;
-  --lp-text-muted:#7A7685;
+  --lp-text-muted:#9E9AAD;
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -84,13 +80,13 @@
   --info: oklch(0.36 0.68 241.16);
   --warning: oklch(0.769 0.288 70.08);
 
-  /* Fonts */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  /* Fonts — loaded via next/font/google in layout.tsx */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
 
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-text: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-text: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --font-handwriting: "Caveat", cursive;
 

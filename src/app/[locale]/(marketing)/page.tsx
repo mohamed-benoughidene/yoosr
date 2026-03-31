@@ -1,15 +1,17 @@
 import { Hero } from "@/components/landing/Hero"
 import { SocialProofBar } from "@/components/landing/SocialProofBar"
 import { ProblemSection } from "@/components/landing/ProblemSection"
-import { FeaturesGrid } from "@/components/landing/FeaturesGrid"
-import { DesignStudioSection } from "@/components/landing/DesignStudioSection"
-import { HowItWorks } from "@/components/landing/HowItWorks"
-import { ChannelsSection } from "@/components/landing/ChannelsSection"
-import { WhoItsFor } from "@/components/landing/WhoItsFor"
-import { TrustSection } from "@/components/landing/TrustSection"
-import { PricingTeaser } from "@/components/landing/PricingTeaser"
-import { FinalCTA } from "@/components/landing/FinalCTA"
 import { ScrollReveal } from "@/components/landing/ScrollReveal"
+import dynamic from "next/dynamic"
+
+const FeaturesGrid = dynamic(() => import("@/components/landing/FeaturesGrid").then(m => ({ default: m.FeaturesGrid })))
+const DesignStudioSection = dynamic(() => import("@/components/landing/DesignStudioSection").then(m => ({ default: m.DesignStudioSection })))
+const HowItWorks = dynamic(() => import("@/components/landing/HowItWorks").then(m => ({ default: m.HowItWorks })))
+const ChannelsSection = dynamic(() => import("@/components/landing/ChannelsSection").then(m => ({ default: m.ChannelsSection })))
+const WhoItsFor = dynamic(() => import("@/components/landing/WhoItsFor").then(m => ({ default: m.WhoItsFor })))
+const TrustSection = dynamic(() => import("@/components/landing/TrustSection").then(m => ({ default: m.TrustSection })))
+const PricingTeaser = dynamic(() => import("@/components/landing/PricingTeaser").then(m => ({ default: m.PricingTeaser })))
+const FinalCTA = dynamic(() => import("@/components/landing/FinalCTA").then(m => ({ default: m.FinalCTA })))
 import { setRequestLocale as unstable_setRequestLocale, getTranslations } from "next-intl/server"
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

@@ -28,24 +28,31 @@ export function HowItWorks() {
   ];
 
   useEffect(() => {
+    let rafId: number;
+
     const handleScroll = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // We want the line to start drawing when the top of the container
-      // enters the middle of the viewport
-      const start = windowHeight * 0.6;
-      const progress = (start - rect.top) / rect.height;
-      
-      setLineScale(Math.max(0, Math.min(1, progress)));
+      if (rafId) return; // Skip if a frame is already queued
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+
+        const start = windowHeight * 0.6;
+        const progress = (start - rect.top) / rect.height;
+
+        setLineScale(Math.max(0, Math.min(1, progress)));
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     // Trigger once on mount to handle initial scroll position
     handleScroll();
-    
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return (

@@ -2,8 +2,8 @@
 @font-face {
   font-family: 'Cabinet Grotesk';
   src: url('./WN5274VQ3AUBDFP74GB4EC4XYJ3EKVNE.woff2') format('woff2');
-  font-weight: 700;
-  font-display: optional;
+  font-weight: 600 700;
+  font-display: swap;
   font-style: normal;
 }
 
@@ -11,6 +11,6 @@
   font-family: 'Cabinet Grotesk';
   src: url('./6QH2ALVTTK7IRVO5MYOQQ3OZNXW5SSS3.woff2') format('woff2');
   font-weight: 800;
-  font-display: optional;
+  font-display: swap;
   font-style: normal;
 }

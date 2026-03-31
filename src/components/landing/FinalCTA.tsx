@@ -2,6 +2,7 @@
 
 import React from "react"
 import { useTranslations } from "next-intl"
+import { Link } from "@/i18n/navigation"
 
 export function FinalCTA() {
   const t = useTranslations("landingPage.finalCta")
@@ -95,8 +96,8 @@ export function FinalCTA() {
           {t("subheadline")}
         </p>
 
-        <button 
-          onClick={() => window.location.href = '/waitlist'}
+        <Link 
+          href="/waitlist"
           style={{
             height: '48px',
             padding: '0 24px',
@@ -108,19 +109,16 @@ export function FinalCTA() {
             fontFamily: "'Cabinet Grotesk', sans-serif",
             fontWeight: 600,
             fontSize: '14px',
-            transition: '100ms'
+            transition: '100ms',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '0.88'
-            e.currentTarget.style.transform = 'scale(1.02)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '1'
-            e.currentTarget.style.transform = 'scale(1)'
-          }}
+          className="hover:opacity-[0.88] hover:scale-[1.02]"
         >
           {t("cta")}
-        </button>
+        </Link>
 
         <div className="flex flex-col gap-1.5 mt-2">
           <p 

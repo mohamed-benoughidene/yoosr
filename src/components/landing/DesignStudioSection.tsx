@@ -89,12 +89,11 @@ export function DesignStudioSection() {
         }
 
         @keyframes drawEdge {
-          from { opacity: 0; stroke-dashoffset: 400; }
-          to { opacity: 1; stroke-dashoffset: 0; }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .flow-edge {
-          stroke-dasharray: 400;
-          stroke-dashoffset: 400;
+          opacity: 0;
           animation: drawEdge 800ms ease-out forwards;
           will-change: opacity;
         }
