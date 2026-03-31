@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export function LandingHeaderNoAuth() {
   const router = useRouter();
@@ -9,23 +10,25 @@ export function LandingHeaderNoAuth() {
     <header className="fixed top-0 left-0 right-0 z-50 flex" style={{
       height: '56px',
       background: 'var(--lp-bg)',
-      backdropFilter: 'blur(12px)',
+      backdropFilter: 'blur(8px)',
       borderBottom: '1px solid var(--lp-border)'
     }}>
       <div className="mx-auto h-full flex flex-row items-center justify-between w-full" style={{ maxWidth: '1200px', padding: '0 24px' }}>
-        <div
+        <button
+          type="button"
           onClick={() => router.push('/')}
-          className="flex items-center"
+          className="flex items-center bg-transparent border-none p-0"
           style={{ cursor: 'pointer' }}
         >
-          <img
+          <Image
             src="/yoosr-light.svg"
             alt="Yoosr"
             height={32}
             width={100}
             className="h-8 w-auto"
+            priority
           />
-        </div>
+        </button>
 
         <div className="flex items-center gap-6">
           <button
@@ -59,7 +62,7 @@ export function LandingHeaderNoAuth() {
               borderRadius: '8px',
               padding: '0 16px',
               fontSize: '14px',
-              transition: 'all 100ms',
+              transition: 'border-color 100ms, color 100ms, transform 100ms',
               cursor: 'pointer'
             }}
             onMouseEnter={(e) => {

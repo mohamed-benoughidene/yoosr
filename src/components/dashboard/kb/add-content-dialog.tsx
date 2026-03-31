@@ -152,8 +152,9 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                         </DialogFooter>
                     </TabsContent>
                     <TabsContent value="file" className="space-y-4 py-4">
-                        <div
-                            className="border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                        <button
+                            type="button"
+                            className="border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors cursor-pointer w-full"
                             onClick={() => fileInputRef.current?.click()}
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
@@ -175,7 +176,7 @@ export function AddContentDialog({ onAdd }: { onAdd: (type: string, value: strin
                             <Button variant="secondary" type="button" className="pointer-events-none">
                                 {file ? t("change_file") : t("select_files")}
                             </Button>
-                        </div>
+                        </button>
                         <p className="text-xs text-muted-foreground text-center">
                             {t("file_size_hint")}
                         </p>

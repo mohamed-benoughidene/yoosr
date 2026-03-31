@@ -43,16 +43,16 @@ export function FeaturesGrid() {
   return (
     <section className="relative w-full overflow-hidden py-16 lg:py-24" style={{ backgroundColor: "var(--lp-bg)" }}>
       {/* Background glow band */}
-      <div 
+      <div
         className="absolute w-full h-[600px] pointer-events-none opacity-20"
-        style={{ 
-          background: "var(--lp-violet-glow)", 
-          filter: "blur(200px)",
+        style={{
+          background: "var(--lp-violet-glow)",
+          filter: "blur(8px)",
           top: "50%",
           left: 0,
           transform: "translateY(-50%)",
           zIndex: 0
-        }} 
+        }}
       />
 
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6">
@@ -97,7 +97,7 @@ function FeatureCard({ feature }: { feature: any }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div 
+    <div
       className="flex flex-col h-full cursor-pointer relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -106,9 +106,9 @@ function FeatureCard({ feature }: { feature: any }) {
         border: `1px solid ${isHovered ? "var(--lp-gold)" : "var(--lp-border)"}`,
         borderRadius: "12px",
         padding: "28px",
-        transition: "all 150ms ease",
-        boxShadow: isHovered 
-          ? "0 0 0 1px var(--lp-gold), 0 4px 24px var(--lp-gold-glow)" 
+        transition: "background 150ms ease, border-color 150ms ease, box-shadow 150ms ease",
+        boxShadow: isHovered
+          ? "0 0 0 1px var(--lp-gold), 0 4px 24px var(--lp-gold-glow)"
           : "none",
         zIndex: isHovered ? 10 : 1
       }}

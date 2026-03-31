@@ -19,16 +19,16 @@ export function ProblemSection() {
       style={{ backgroundColor: "var(--lp-bg)" }}
     >
       {/* Faint violet glow for the skipped right illustration area */}
-      <div 
+      <div
         className="absolute w-[600px] h-[600px] rounded-full pointer-events-none opacity-30"
-        style={{ 
-          background: "var(--lp-violet-glow)", 
-          filter: "blur(120px)",
+        style={{
+          background: "var(--lp-violet-glow)",
+          filter: "blur(8px)",
           top: "50%",
           right: "-100px",
           transform: "translateY(-50%)",
           zIndex: 0
-        }} 
+        }}
       />
 
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6">
@@ -59,7 +59,7 @@ export function ProblemSection() {
 
         <div className="flex flex-col gap-4 max-w-[520px]">
           {painPoints.map((point, idx) => (
-            <ScrollReveal key={idx} delay={idx * 100}>
+            <ScrollReveal key={`pain-${point.slice(0, 20)}`} delay={idx * 100}>
               <div 
                 className="flex items-start gap-3 rounded-[8px] py-4 px-5 border"
                 style={{

@@ -163,8 +163,9 @@ function InlineEditField({
     }
 
     return (
-        <div
-            className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-muted/50 rounded-md px-1 py-1.5 -mx-1 transition-colors"
+        <button
+            type="button"
+            className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-muted/50 rounded-md px-1 py-1.5 -mx-1 transition-colors w-full text-left"
             onClick={handleStartEdit}
         >
             <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -172,7 +173,7 @@ function InlineEditField({
                 {value || placeholder}
             </span>
             <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 ml-auto transition-opacity shrink-0" />
-        </div>
+        </button>
     )
 }
 
@@ -822,7 +823,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                             }
 
                             return (
-                                <div key={idx} className="flex items-start gap-3 text-sm group">
+                                <div key={`event-${event.createdAt}`} className="flex items-start gap-3 text-sm group">
                                     <div className="mt-0.5 p-1 rounded-full bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                         {event.handledBy === "bot" ? (
                                             <Bot className="h-3 w-3" />

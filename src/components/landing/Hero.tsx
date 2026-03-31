@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react"
 import { Link } from "@/i18n/navigation";
+import "./landing.css"
 
 export function Hero() {
   const t = useTranslations("landingPage.hero")
@@ -22,212 +23,11 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden w-full hero-section" style={{ backgroundColor: "var(--lp-bg)", zIndex: 1 }}>
-      <style dangerouslySetInnerHTML={{__html: `
-        .hero-section {
-          padding-top: 80px;
-          padding-bottom: 64px;
-        }
-        @media (min-width: 1024px) {
-          .hero-section {
-            padding-top: 120px;
-            padding-bottom: 96px;
-          }
-        }
-        
-        .hero-noise {
-          position: absolute;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .hero-content {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          width: 100%;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 24px;
-        }
-
-        .hero-badge {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 9999px;
-          padding: 6px 16px;
-          background: var(--lp-surface);
-          border: 1px solid var(--lp-gold);
-          color: var(--lp-gold);
-          font-family: 'Inter', sans-serif;
-          font-weight: 500;
-          font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          opacity: 0;
-          animation: badgeEnter 400ms ease-out forwards;
-        }
-        
-        @keyframes badgeEnter {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .hero-headline {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 800;
-          color: var(--lp-text);
-          letter-spacing: -0.03em;
-          line-height: 1.1;
-          margin-top: 24px;
-          margin-bottom: 24px;
-          font-size: 32px;
-          max-width: 800px;
-        }
-        @media (min-width: 640px) { .hero-headline { font-size: 42px; } }
-        @media (min-width: 768px) { .hero-headline { font-size: 56px; } }
-        @media (min-width: 1024px) { .hero-headline { font-size: 72px; } }
-
-        .headline-sentence {
-          white-space: nowrap;
-          display: inline-block;
-        }
-
-        .headline-word {
-          opacity: 0;
-          animation: wordFade 400ms ease forwards;
-        }
-        @keyframes wordFade {
-          to { opacity: 1; }
-        }
-
-        .hero-subheadline {
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 18px;
-          color: var(--lp-text-secondary);
-          line-height: 28px;
-          max-width: 600px;
-          margin-bottom: 32px;
-          opacity: 0;
-          transition: opacity 400ms ease;
-        }
-        .hero-subheadline.visible { opacity: 1; }
-
-        .hero-form {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          margin-bottom: 12px;
-          width: 100%;
-          max-width: 480px;
-        }
-        @media (min-width: 640px) {
-          .hero-form {
-            flex-direction: row;
-          }
-        }
-
-        .waitlist-input {
-          height: 48px;
-          padding: 0 16px;
-          background: var(--lp-surface-2);
-          border: 1px solid var(--lp-border);
-          color: var(--lp-text);
-          border-radius: 8px;
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 15px;
-          width: 100%;
-          outline: none;
-          transition: all 150ms;
-        }
-        .waitlist-input::placeholder {
-          color: var(--lp-text-muted);
-        }
-        .waitlist-input:focus {
-          border-color: var(--lp-gold);
-          box-shadow: 0 0 0 3px var(--lp-gold-glow);
-        }
-
-        .waitlist-button {
-          height: 48px;
-          padding: 0 24px;
-          background: var(--lp-gold);
-          color: #0C0B0F;
-          border-radius: 8px;
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 600;
-          font-size: 14px;
-          border: none;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: transform 100ms, opacity 100ms;
-          width: 100%;
-        }
-        @media (min-width: 640px) {
-          .waitlist-button { width: auto; }
-        }
-        .waitlist-button:hover {
-          opacity: 0.88;
-          transform: scale(1.02);
-        }
-
-        .hero-microcopy {
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 13px;
-          color: var(--lp-text-muted);
-        }
-          
-        .product-showcase-container {
-          position: relative;
-          width: 100%;
-          max-width: 1000px;
-          margin-top: 64px;
-          display: flex;
-          justify-content: center;
-        }
-          
-        .product-showcase {
-          width: 100%;
-          border: 1px solid var(--lp-border);
-          border-radius: 16px;
-          overflow: hidden;
-          background: var(--lp-surface);
-        }
-          
-        .product-showcase-placeholder {
-          width: 100%;
-          aspect-ratio: 16/9;
-          background: var(--lp-surface-2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--lp-text-muted);
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 14px;
-        }
-      `}} />
 
       <div className="hero-noise"></div>
 
       {/* Ambient background orbs */}
-      <div 
+      <div
         className="absolute rounded-full"
         style={{
           top: "-30%",
@@ -235,13 +35,13 @@ export function Hero() {
           width: "800px",
           height: "800px",
           background: "radial-gradient(circle, rgba(200,169,110,0.25), transparent 65%)",
-          filter: "blur(100px)",
+          filter: "blur(8px)",
           animation: "driftGold 12s ease-in-out infinite alternate",
           zIndex: -1,
           pointerEvents: "none"
         }}
       />
-      <div 
+      <div
         className="absolute rounded-full"
         style={{
           top: "-20%",
@@ -249,7 +49,7 @@ export function Hero() {
           width: "700px",
           height: "700px",
           background: "radial-gradient(circle, rgba(108,99,255,0.20), transparent 65%)",
-          filter: "blur(100px)",
+          filter: "blur(8px)",
           animation: "driftViolet 15s ease-in-out infinite alternate",
           zIndex: -1,
           pointerEvents: "none"

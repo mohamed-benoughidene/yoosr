@@ -59,9 +59,10 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
 
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div
+                        <button
+                            type="button"
                             className={cn(
-                                "cursor-pointer rounded-lg border-2 p-4 hover:border-primary transition-all",
+                                "cursor-pointer rounded-lg border-2 p-4 hover:border-primary transition-all w-full text-left",
                                 type === 'chatbot' ? "border-primary bg-primary/5" : "border-muted"
                             )}
                             onClick={() => setType('chatbot')}
@@ -71,10 +72,11 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
                             <p className="text-xs text-muted-foreground mt-1">
                                 LLM-powered chatbot for customer support.
                             </p>
-                        </div>
-                        <div
+                        </button>
+                        <button
+                            type="button"
                             className={cn(
-                                "cursor-pointer rounded-lg border-2 p-4 hover:border-primary transition-all",
+                                "cursor-pointer rounded-lg border-2 p-4 hover:border-primary transition-all w-full text-left",
                                 type === 'automation' ? "border-primary bg-primary/5" : "border-muted"
                             )}
                             onClick={() => setType('automation')}
@@ -84,7 +86,7 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
                             <p className="text-xs text-muted-foreground mt-1">
                                 Rule-based workflow for specific tasks.
                             </p>
-                        </div>
+                        </button>
                     </div>
 
                     <div className="grid gap-2">

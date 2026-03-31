@@ -10,13 +10,13 @@ export function FinalCTA() {
   return (
     <section className="relative flex flex-col items-center justify-center py-20 md:py-32 w-full overflow-hidden" style={{ backgroundColor: "var(--lp-bg)" }}>
       {/* Background glow behind text block */}
-      <div 
+      <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
         style={{
           width: "600px",
           height: "600px",
           background: "var(--lp-gold-glow)",
-          filter: "blur(200px)",
+          filter: "blur(8px)",
           opacity: 0.25,
           zIndex: 0
         }}

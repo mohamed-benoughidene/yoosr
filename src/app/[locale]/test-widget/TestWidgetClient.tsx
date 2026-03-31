@@ -52,10 +52,10 @@ export function TestWidgetClient({ locale }: { locale: string }) {
                             <span className="font-bold text-xl tracking-tight">Acme Corp</span>
                         </div>
                         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
-                            <a href="#" className="hover:text-zinc-900 transition-colors">Home</a>
-                            <a href="#" className="hover:text-zinc-900 transition-colors">Products</a>
-                            <a href="#" className="hover:text-zinc-900 transition-colors">Pricing</a>
-                            <a href="#" className="hover:text-zinc-900 transition-colors">Contact</a>
+                            <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm font-medium text-zinc-500">Home</button>
+                            <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm font-medium text-zinc-500">Products</button>
+                            <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm font-medium text-zinc-500">Pricing</button>
+                            <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm font-medium text-zinc-500">Contact</button>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -82,7 +82,7 @@ export function TestWidgetClient({ locale }: { locale: string }) {
                             </div>
                             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-zinc-900">
                                 {t("tagline").split(' ').map((word, i, arr) => (
-                                    <span key={i}>
+                                    <span key={`word-${i}-${word}`}>
                                         {word === "Future" ? (
                                             <span className="text-indigo-600">{word}</span>
                                         ) : (
@@ -178,8 +178,8 @@ export function TestWidgetClient({ locale }: { locale: string }) {
                         © {new Date().getFullYear()} Acme Corp International. All rights reserved.
                     </p>
                     <div className="flex items-center gap-6 text-sm text-zinc-400 font-medium">
-                        <a href="#" className="hover:text-zinc-900 transition-colors">Privacy</a>
-                        <a href="#" className="hover:text-zinc-900 transition-colors">Terms</a>
+                        <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm text-zinc-400 font-medium">Privacy</button>
+                        <button type="button" className="hover:text-zinc-900 transition-colors bg-transparent border-none cursor-pointer text-sm text-zinc-400 font-medium">Terms</button>
                     </div>
                 </div>
             </footer>

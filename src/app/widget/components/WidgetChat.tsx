@@ -143,12 +143,16 @@ function MessageImage({ fileId, fileName }: { fileId: string; fileName?: string 
     if (!url) return null
 
     return (
-        <img
-            src={url}
-            alt={fileName || "Image"}
-            className="max-w-[200px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm border border-gray-100"
-            onClick={() => window.open(url, "_blank")}
-        />
+        <div className="relative w-[200px] h-[150px] rounded-lg overflow-hidden cursor-pointer group shadow-sm border border-gray-100">
+            <Image
+                src={url}
+                alt={fileName || "Image"}
+                fill
+                className="object-cover group-hover:opacity-90 transition-opacity"
+                onClick={() => window.open(url, "_blank")}
+                sizes="200px"
+            />
+        </div>
     )
 }
 
@@ -607,7 +611,7 @@ export default function WidgetChat() {
                                         <div className="flex flex-col gap-2 mt-2">
                                             {msg.attachments.payload.buttons.map((btn: any, i: number) => (
                                                 <button
-                                                    key={i}
+                                                    key={`btn-${btn.label}-${i}`}
                                                     onClick={() => handleSendText(btn.label)}
                                                     className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors text-center shadow-sm"
                                                     disabled={loading || conversationStatus === 1000}

@@ -3,6 +3,7 @@ import React from "react";
 import { ScrollReveal } from "./ScrollReveal";
 import { Globe, Send, MessageCircle, Instagram } from "lucide-react";
 import { useTranslations } from "next-intl";
+import "./landing.css"
 
 export function ChannelsSection() {
   const t = useTranslations("landingPage.channels");
@@ -32,37 +33,6 @@ export function ChannelsSection() {
 
   return (
     <section className="bg-[var(--lp-bg)] py-[64px] md:py-[120px] overflow-hidden" id="channels-section">
-      <style dangerouslySetInnerHTML={{ __html: `
-        .ch-heading {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 700;
-          line-height: 1.1;
-          letter-spacing: -0.03em;
-        }
-        .ch-card-title {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 600;
-          font-size: 15px;
-          color: var(--lp-text);
-        }
-        .ch-label {
-          font-family: 'Inter', sans-serif;
-          font-weight: 500;
-          font-size: 11px;
-          color: var(--lp-gold);
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-bottom: 16px;
-        }
-        .ch-subheadline {
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 18px;
-          color: var(--lp-text-secondary);
-          line-height: 28px;
-          max-width: 520px;
-        }
-      `}} />
 
       <div className="max-w-[1200px] mx-auto px-6">
         <div className="max-w-4xl mx-auto flex flex-col gap-10">

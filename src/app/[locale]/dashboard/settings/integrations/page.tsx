@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle, Send, Loader2, Phone } from "lucide-react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
+import { OpenRouterCard } from "@/components/settings/OpenRouterCard"
 
 interface IntegrationField {
     key: string
@@ -111,11 +112,13 @@ export default function IntegrationsPage() {
     const [savingModel, setSavingModel] = useState(false)
     
     // WhatsApp Specific States
-    const [phoneNumberId, setPhoneNumberId] = useState("")
-    const [accessToken, setAccessToken] = useState("")
-    const [verifyToken, setVerifyToken] = useState("")
-    const [whatsappEnabled, setWhatsappEnabled] = useState(false)
-    const [hasExistingToken, setHasExistingToken] = useState(false)
+    const [whatsappState, setWhatsappState] = useState({
+        phoneNumberId: "",
+        accessToken: "",
+        verifyToken: "",
+        enabled: false,
+        hasExistingToken: false,
+    })
 
     const updateProject = useMutation(api.projects.update)
 
@@ -128,22 +131,23 @@ export default function IntegrationsPage() {
     }, [activeProject?._id, activeProject?.defaultModel])
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
-    
+
     useEffect(() => {
         if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
             const saved = (integrations ?? []).find((r: any) => r.provider === "whatsapp")
-            if (saved) {
-                setPhoneNumberId(saved.credentials?.phone_number_id || "")
-                setVerifyToken(saved.credentials?.verify_token || "")
-                setWhatsappEnabled(saved.enabled || false)
-                setHasExistingToken(!!saved.credentials?.access_token)
-            } else {
-                setPhoneNumberId("")
-                setVerifyToken("")
-                setWhatsappEnabled(false)
-                setHasExistingToken(false)
-            }
-            setAccessToken("")
+            setWhatsappState(saved ? {
+                phoneNumberId: saved.credentials?.phone_number_id || "",
+                accessToken: "",
+                verifyToken: saved.credentials?.verify_token || "",
+                enabled: saved.enabled || false,
+                hasExistingToken: !!saved.credentials?.access_token,
+            } : {
+                phoneNumberId: "",
+                accessToken: "",
+                verifyToken: "",
+                enabled: false,
+                hasExistingToken: false,
+            })
         }
     }, [activeConfig, integrations])
     const upsertIntegration = useMutation(api.integrations.upsert)
@@ -179,11 +183,11 @@ export default function IntegrationsPage() {
                     projectId: activeProject._id,
                     provider: "whatsapp",
                     credentials: {
-                        phone_number_id: phoneNumberId,
-                        access_token: accessToken,
-                        verify_token: verifyToken
+                        phone_number_id: whatsappState.phoneNumberId,
+                        access_token: whatsappState.accessToken,
+                        verify_token: whatsappState.verifyToken
                     },
-                    enabled: whatsappEnabled
+                    enabled: whatsappState.enabled
                 })
                 toast.success(t("whatsapp_connected"))
             } else if (activeConfig.category === "channel") {
@@ -418,45 +422,45 @@ export default function IntegrationsPage() {
                             <Label className="text-sm font-medium">{t("enable_integration", { name: activeConfig.name })}</Label>
                             <p className="text-xs text-muted-foreground">{t("enable_desc")}</p>
                         </div>
-                        <Switch checked={whatsappEnabled} onCheckedChange={setWhatsappEnabled} />
+                        <Switch checked={whatsappState.enabled} onCheckedChange={(val) => setWhatsappState(prev => ({ ...prev, enabled: val }))} />
                     </div>
                 </Card>
                 <Card className="p-5 space-y-4">
                     <h4 className="text-sm font-medium">{t("credentials")}</h4>
-                    
+
                     <div className="grid gap-1.5">
                         <Label htmlFor="phoneNumberId" className="text-sm">{t("phone_number_id_label")}</Label>
-                        <Input 
-                            id="phoneNumberId" 
-                            type="text" 
-                            placeholder={t("phone_number_id_label")} 
-                            value={phoneNumberId} 
-                            onChange={e => setPhoneNumberId(e.target.value)} 
+                        <Input
+                            id="phoneNumberId"
+                            type="text"
+                            placeholder={t("phone_number_id_label")}
+                            value={whatsappState.phoneNumberId}
+                            onChange={e => setWhatsappState(prev => ({ ...prev, phoneNumberId: e.target.value }))}
                         />
                     </div>
 
                     <div className="grid gap-1.5">
                         <Label htmlFor="accessToken" className="text-sm">{t("access_token_label")}</Label>
-                        <Input 
-                            id="accessToken" 
-                            type="password" 
-                            placeholder={hasExistingToken ? t("token_saved_placeholder") : t("token_placeholder")} 
-                            value={accessToken} 
-                            onChange={e => setAccessToken(e.target.value)} 
+                        <Input
+                            id="accessToken"
+                            type="password"
+                            placeholder={whatsappState.hasExistingToken ? t("token_saved_placeholder") : t("token_placeholder")}
+                            value={whatsappState.accessToken}
+                            onChange={e => setWhatsappState(prev => ({ ...prev, accessToken: e.target.value }))}
                         />
                     </div>
 
                     <div className="grid gap-1.5">
                         <Label htmlFor="verifyToken" className="text-sm">{t("verify_token_label")}</Label>
                         <div className="flex gap-2">
-                            <Input 
-                                id="verifyToken" 
-                                type="text" 
-                                placeholder={t("verify_token_label")} 
-                                value={verifyToken} 
-                                onChange={e => setVerifyToken(e.target.value)} 
+                            <Input
+                                id="verifyToken"
+                                type="text"
+                                placeholder={t("verify_token_label")}
+                                value={whatsappState.verifyToken}
+                                onChange={e => setWhatsappState(prev => ({ ...prev, verifyToken: e.target.value }))}
                             />
-                            <Button variant="outline" onClick={() => setVerifyToken(crypto.randomUUID())}>
+                            <Button variant="outline" onClick={() => setWhatsappState(prev => ({ ...prev, verifyToken: crypto.randomUUID() }))}>
                                 {t("generate_token")}
                             </Button>
                         </div>
@@ -558,27 +562,6 @@ export default function IntegrationsPage() {
         )
     }
 
-    const renderOpenRouterCard = () => (
-        <Card className="p-4 relative group transition-shadow cursor-pointer hover:shadow-md" onClick={() => { setActiveConfig("openrouter"); setTestResult(null); }}>
-            <div className="flex items-start gap-3">
-                <span className="inline-flex items-center justify-center h-10 w-10 rounded-lg text-lg bg-pink-100 text-pink-700">🔀</span>
-                <div>
-                    <p className="text-sm font-medium">OpenRouter</p>
-                    <p className="text-xs text-muted-foreground">Unified API for 100+ AI models</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 ml-auto" />
-            </div>
-            {hasKey && (
-                <div className="mt-3">
-                    <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1" />
-                        {t("connected")}
-                    </span>
-                </div>
-            )}
-        </Card>
-    )
-
     return (
         <div className="space-y-6">
             <div><h3 className="text-lg font-medium">{t("title")}</h3><p className="text-sm text-muted-foreground">{t("description")}</p></div>
@@ -586,7 +569,7 @@ export default function IntegrationsPage() {
             <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4" />{t("ai_providers")}</h4>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {renderOpenRouterCard()}
+                    <OpenRouterCard />
                 </div>
             </div>
             <div>

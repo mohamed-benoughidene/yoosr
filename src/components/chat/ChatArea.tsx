@@ -33,6 +33,7 @@ import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picke
 import { Suspense } from "react"
 import { useTranslations } from "next-intl"
 import { Skeleton } from "@/components/ui/skeleton"
+import Image from "next/image"
 
 interface ChatAreaProps {
     conversationId?: string | null
@@ -50,12 +51,16 @@ function MessageImage({ fileId, fileName }: { fileId: string; fileName?: string 
     if (!url) return null;
 
     return (
-        <img
-            src={url}
-            alt={fileName || "Shared image"}
-            className="max-w-[240px] rounded-lg cursor-pointer mt-1 hover:opacity-90 transition-opacity border bg-muted/20"
-            onClick={() => window.open(url, "_blank")}
-        />
+        <div className="relative w-[240px] h-[160px] mt-1 rounded-lg overflow-hidden border bg-muted/20 cursor-pointer group">
+            <Image
+                src={url}
+                alt={fileName || "Shared image"}
+                fill
+                className="object-cover group-hover:opacity-90 transition-opacity"
+                onClick={() => window.open(url, "_blank")}
+                sizes="240px"
+            />
+        </div>
     );
 }
 
@@ -432,10 +437,11 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                         return name.toLowerCase().includes(agentSearch.toLowerCase());
                                     })
                                     .map(m => (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={m.userId}
                                             onClick={() => handleTransfer(m.userId!, m.profile?.fullName || t("agent_fallback"))}
-                                            className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                                            className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors w-full text-left"
                                         >
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src={m.profile?.avatarUrl} />
@@ -445,7 +451,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                                 <span className="text-sm font-medium">{m.profile?.fullName || t("unknown_agent")}</span>
                                                 <span className="text-xs text-muted-foreground capitalize">{m.role}</span>
                                             </div>
-                                        </div>
+                                        </button>
                                     ))
                             )}
                         </div>
@@ -477,16 +483,17 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                         return d.name.toLowerCase().includes(departmentSearch.toLowerCase());
                                     })
                                     .map(d => (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={d._id}
                                             onClick={() => handleDepartmentTransfer(d._id, d.name)}
-                                            className="flex items-center gap-3 p-3 rounded-md hover:bg-muted cursor-pointer transition-colors border"
+                                            className="flex items-center gap-3 p-3 rounded-md hover:bg-muted cursor-pointer transition-colors border w-full text-left"
                                         >
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-medium">{d.name} {d.isDefault && <span className="text-xs text-muted-foreground ml-1">({t("default_dept_label")})</span>}</span>
                                                 {d.description && <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{d.description}</span>}
                                             </div>
-                                        </div>
+                                        </button>
                                     ))
                             )}
                         </div>
@@ -669,7 +676,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
 
 export function ChatArea(props: ChatAreaProps) {
     return (
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
             <ChatAreaContent {...props} />
         </Suspense>
     )

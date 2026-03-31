@@ -3,120 +3,12 @@
 import React from "react"
 import { useTranslations } from "next-intl"
 import { ScrollReveal } from "./ScrollReveal"
+import "./landing.css"
 
 export function DesignStudioSection() {
   const t = useTranslations("landingPage.designStudio")
   return (
     <section className="w-full relative overflow-hidden" style={{ backgroundColor: "var(--lp-surface)", padding: "96px 0" }}>
-      <style dangerouslySetInnerHTML={{__html: `
-        .ds-label {
-          font-family: 'Inter', sans-serif;
-          font-weight: 500;
-          font-size: 11px;
-          color: var(--lp-gold);
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin-bottom: 16px;
-        }
-        
-        .ds-headline {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 700;
-          color: var(--lp-text);
-          font-size: 36px;
-          line-height: 1.1;
-          letter-spacing: -0.03em;
-          margin-bottom: 24px;
-        }
-        @media (min-width: 768px) { .ds-headline { font-size: 48px; } }
-
-        .ds-subheadline {
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 18px;
-          color: var(--lp-text-secondary);
-          line-height: 28px;
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .ds-card {
-          background-color: var(--lp-surface-2);
-          border: 1px solid var(--lp-border);
-          border-radius: 10px;
-          padding: 24px;
-          transition: border-color 150ms ease, box-shadow 150ms ease;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-        .ds-card:hover {
-          border-color: var(--lp-gold);
-        }
-
-        .ds-card-number {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 700;
-          font-size: 13px;
-          color: var(--lp-gold);
-          margin-bottom: 16px;
-        }
-
-        .ds-card-title {
-          font-family: 'Cabinet Grotesk', sans-serif;
-          font-weight: 600;
-          font-size: 16px;
-          color: var(--lp-text);
-          margin-bottom: 8px;
-        }
-
-        .ds-card-body {
-          font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 14px;
-          color: var(--lp-text-secondary);
-          line-height: 22px;
-        }
-        
-        .ds-closing {
-          font-family: 'Inter', sans-serif;
-          font-style: italic;
-          font-weight: 400;
-          font-size: 16px;
-          color: var(--lp-text-secondary);
-          text-align: center;
-          margin-top: 48px;
-        }
-
-        @keyframes drawEdge {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .flow-edge {
-          opacity: 0;
-          animation: drawEdge 800ms ease-out forwards;
-          will-change: opacity;
-        }
-        .edge-1 { animation-delay: 100ms; }
-        .edge-2 { animation-delay: 250ms; }
-        .edge-3 { animation-delay: 400ms; }
-        .edge-4 { animation-delay: 550ms; }
-
-        @keyframes nodeAppear {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .flow-node {
-          opacity: 0;
-          animation: nodeAppear 400ms ease-out forwards;
-          will-change: opacity, transform;
-        }
-        .node-1 { animation-delay: 0ms; }
-        .node-2 { animation-delay: 150ms; }
-        .node-3 { animation-delay: 300ms; }
-        .node-4 { animation-delay: 450ms; }
-        .node-5 { animation-delay: 600ms; }
-      `}} />
 
       <div className="max-w-[1200px] mx-auto px-6">
         <ScrollReveal>

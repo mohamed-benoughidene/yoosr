@@ -77,6 +77,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
+    /*
+      dangerouslySetInnerHTML is intentional here — the chart config is
+      developer-controlled, never user input. This is a shadcn/ui pattern.
+    */
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
