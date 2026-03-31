@@ -161,7 +161,7 @@
 
 ---
 
-### 10. Unused JavaScript — 211 KiB
+### 10. ~~Unused JavaScript — 211 KiB~~ ✅ (Done)
 - **What:** Lighthouse estimates 211 KiB of JS is loaded but unused on initial page load. Breakdown:
   - Clerk SDK: 185.4 KiB unused (`ui-common`, `clerk.browser`, `vendors` chunks)
   - First-party chunk: 25.4 KiB unused
@@ -171,7 +171,7 @@
 
 ---
 
-### 11. Unused CSS — Est. 2+ KiB
+### 11. ~~Unused CSS — Est. 2+ KiB~~ ✅ (Done)
 - **What:** CSS rules loaded but not used for above-the-fold content. One minification saving of ~2.2 KiB identified in `.hero-section` styles.
 - **Where:** Landing page CSS chunks
 - **Fix:** Next.js handles CSS minification in production automatically. Verify `NODE_ENV=production` is set on Vercel (it should be by default). Additionally consider splitting landing-page-specific CSS from dashboard CSS if they share a bundle.
@@ -200,8 +200,8 @@
 | 7 | Logo width attribute missing | P1 | Low | CLS |
 | 8 | Footer contrast failures | P1 | Low | A11y 96→100 |
 | 9 | Legacy JS polyfills | P2 | Low | ~14 KiB JS |
-| 10 | Unused Clerk JS bundle | P2 | Medium | ~185 KiB JS mobile |
-| 11 | Unused CSS | P2 | Low | Minor |
+| 10 | ~~Unused Clerk JS bundle~~ | P2 | Medium | ✅ Done |
+| 11 | ~~Unused CSS~~ | P2 | Low | ✅ Done |
 | 12 | Fontshare cache TTL | P2 | Low | Repeat visitors |
 
 ---

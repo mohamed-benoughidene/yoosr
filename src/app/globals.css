@@ -335,184 +335,6 @@
     }
   }
 
-  @keyframes fade-in-scale {
-    0% {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes fade-in-scale-down {
-    0% {
-      opacity: 0;
-      transform: scale(1.1);
-    }
-
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes fade-in-slide-down {
-    0% {
-      transform: translateY(-24px);
-      opacity: 0;
-    }
-
-    100% {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes transform1 {
-
-    0%,
-    25%,
-    100% {
-      width: 100%;
-      padding-bottom: 120%;
-    }
-
-    33.33%,
-    58.33% {
-      width: 0%;
-      padding-bottom: 0%;
-    }
-
-    66.66%,
-    91.66% {
-      width: 90%;
-      padding-bottom: 100%;
-    }
-  }
-
-  @keyframes transform2 {
-
-    0%,
-    25%,
-    100% {
-      width: 65%;
-      padding-bottom: 65%;
-    }
-
-    33.33%,
-    58.33% {
-      width: 95%;
-      padding-bottom: 114%;
-    }
-
-    66.66%,
-    91.66% {
-      width: 52%;
-      padding-bottom: 52%;
-    }
-  }
-
-  @keyframes transform3 {
-
-    0%,
-    25%,
-    100% {
-      width: 78%;
-      padding-bottom: 100%;
-    }
-
-    33.33%,
-    58.33% {
-      width: 78%;
-      padding-bottom: 94%;
-    }
-
-    66.66%,
-    91.66% {
-      width: 95%;
-      padding-bottom: 76%;
-    }
-  }
-
-  @keyframes transform4 {
-
-    0%,
-    25%,
-    66.66%,
-    91.66%,
-    100% {
-      width: 0%;
-      padding-bottom: 0%;
-    }
-
-    33.33%,
-    58.33% {
-      width: 65%;
-      padding-bottom: 46%;
-    }
-  }
-
-  @keyframes image1 {
-
-    0%,
-    25%,
-    100% {
-      opacity: 1;
-    }
-
-    33.33%,
-    58.33%,
-    66.66%,
-    91.66% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes image2 {
-
-    0%,
-    25%,
-    33.33%,
-    58.33%,
-    100% {
-      opacity: 0;
-    }
-
-    66.66%,
-    91.66% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes image3 {
-
-    0%,
-    25%,
-    66.66%,
-    91.66%,
-    100% {
-      opacity: 0;
-    }
-
-    33.33%,
-    58.33% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes gradient-spin {
-    0% {
-      transform: translateX(-50%) translateY(-50%) rotate(0deg);
-    }
-
-    100% {
-      transform: translateX(-50%) translateY(-50%) rotate(360deg);
-    }
-  }
-
   @keyframes shadow-ping {
     0% {
       box-shadow: 0 0 0 0px var(--color-neutral-100);
@@ -527,33 +349,9 @@
     }
   }
 
-  @keyframes show-text {
-
-    0%,
-    14.28% {
-      opacity: 0;
-    }
-
-    17%,
-    26% {
-      opacity: 1;
-    }
-
-    28.58%,
-    100% {
-      opacity: 0;
-    }
-  }
-
   @keyframes flip-btn {
     to {
       transform: rotate(360deg);
-    }
-  }
-
-  @keyframes rotate-btn {
-    to {
-      transform: rotate(90deg);
     }
   }
 
@@ -934,14 +732,6 @@
 
   .rotate-y-180 {
     transform: rotateY(180deg);
-  }
-
-  .group-hover\/kibo-credit-card\:-rotate-y-180:hover {
-    transform: rotateY(180deg);
-  }
-
-  .group-hover\/kibo-credit-card\:shadow-lg:hover {
-    box-shadow: var(--shadow-lg);
   }
 }
 
