@@ -18,7 +18,7 @@
 
 ## P0 — Critical (fix before launch)
 
-### 1. Redirect Chain — +1,068ms desktop / +962ms mobile
+### 1. ~~Redirect Chain — +1,068ms desktop / +962ms mobile~~ ✅ (Done)
 - **What:** The URL `/en` is going through 3 redirects before the browser receives HTML. Each redirect is a full round-trip.
 - **Where:** Next.js middleware / routing config
 - **Fix:** Audit middleware to eliminate intermediate hops. The chain should collapse to a single direct rewrite, not 3 sequential redirects.
@@ -37,7 +37,7 @@
 
 ---
 
-### 3. Convex WebSocket Running on Landing Page
+### 3. ~~Convex WebSocket Running on Landing Page~~ ✅ (Done)
 - **What:** Convex client initializes on the public landing page and immediately fails with `ERR_NAME_NOT_RESOLVED` (3 repeated WebSocket errors in the console). The landing page has no Convex queries and should never initialize the Convex client.
 - **Where:** Root layout or landing page layout wrapping — the `ConvexProvider` is wrapping routes it shouldn't.
 - **Fix:** Scope the `ConvexProvider` to dashboard/authenticated routes only. The landing page layout (`/[locale]/page.tsx` or equivalent) should not be inside the Convex provider tree.
@@ -76,7 +76,7 @@
 
 ## P1 — High Impact, Quick Wins
 
-### 5. Missing Preconnect Hints
+### 5. ~~Missing Preconnect Hints~~ ✅ (Done)
 - **What:** Zero preconnect hints present. Lighthouse identified 3 candidates with significant LCP savings.
 - **Where:** `<head>` of landing page layout
 - **Fix:** Add before any font or Clerk tag:
@@ -191,11 +191,11 @@
 
 | # | Issue | Priority | Effort | Impact |
 |---|---|---|---|---|
-| 1 | Redirect chain (3 hops) | P0 | Medium | ~1s LCP |
+| 1 | ~~Redirect chain (3 hops)~~ | P0 | Medium | ✅ Done |
 | 2 | Render-blocking fonts | P0 | Medium | ~2s LCP mobile |
-| 3 | Convex on landing page | P0 | Low | Console errors + Best Practices |
+| 3 | ~~Convex on landing page~~ | P0 | Low | ✅ Done |
 | 4 | Security headers missing | P0 | Low | Security hardening |
-| 5 | Missing preconnect hints | P1 | Low | ~500ms LCP |
+| 5 | ~~Missing preconnect hints~~ | P1 | Low | ✅ Done |
 | 6 | Non-composited SVG animations | P1 | Medium | CLS + jank |
 | 7 | Logo width attribute missing | P1 | Low | CLS |
 | 8 | Footer contrast failures | P1 | Low | A11y 96→100 |
