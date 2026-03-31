@@ -45,7 +45,7 @@
 
 ---
 
-### 4. Security Headers Missing (High Severity)
+### 4. ~~Security Headers Missing (High Severity)~~ ✅ (Done)
 - **What:** 4 security headers are missing — all flagged as High severity by Lighthouse.
   - No Content Security Policy (CSP) in enforcement mode
   - No Cross-Origin-Opener-Policy (COOP) header
@@ -194,7 +194,7 @@
 | 1 | ~~Redirect chain (3 hops)~~ | P0 | Medium | ✅ Done |
 | 2 | Render-blocking fonts | P0 | Medium | ~2s LCP mobile |
 | 3 | ~~Convex on landing page~~ | P0 | Low | ✅ Done |
-| 4 | Security headers missing | P0 | Low | Security hardening |
+| 4 | ~~Security headers missing~~ | P0 | Low | ✅ Done |
 | 5 | ~~Missing preconnect hints~~ | P1 | Low | ✅ Done |
 | 6 | Non-composited SVG animations | P1 | Medium | CLS + jank |
 | 7 | Logo width attribute missing | P1 | Low | CLS |
