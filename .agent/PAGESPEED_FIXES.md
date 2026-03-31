@@ -131,7 +131,7 @@
 
 ## P2 — Performance Optimizations
 
-### 9. Legacy JavaScript Polyfills — 13.7 KiB wasted
+### 9. ~~Legacy JavaScript Polyfills — 13.7 KiB wasted~~ ✅ (Done)
 - **What:** A JS chunk is shipping polyfills for APIs that are natively supported in all modern browsers:
   - `Array.prototype.at`
   - `Array.prototype.flat`
@@ -199,7 +199,7 @@
 | 6 | ~~Non-composited SVG animations~~ | P1 | Medium | ✅ Done |
 | 7 | Logo width attribute missing | P1 | Low | CLS |
 | 8 | ~~Footer contrast failures~~ | P1 | Low | ✅ Done |
-| 9 | Legacy JS polyfills | P2 | Low | ~14 KiB JS |
+| 9 | ~~Legacy JS polyfills~~ | P2 | Low | ✅ Done |
 | 10 | ~~Unused Clerk JS bundle~~ | P2 | Medium | ✅ Done |
 | 11 | ~~Unused CSS~~ | P2 | Low | ✅ Done |
 | 12 | ~~Fontshare cache TTL~~ | P2 | Low | ✅ Done |

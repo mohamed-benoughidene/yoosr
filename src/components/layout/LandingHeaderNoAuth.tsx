@@ -22,6 +22,7 @@ export function LandingHeaderNoAuth() {
             src="/yoosr-light.svg"
             alt="Yoosr"
             height={32}
+            width={100}
             className="h-8 w-auto"
           />
         </div>
