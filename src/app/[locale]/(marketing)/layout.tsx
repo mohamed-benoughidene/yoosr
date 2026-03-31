@@ -21,8 +21,8 @@ export default async function MarketingLayout({
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
                 <link rel="preconnect" href="https://safe-pheasant-87.clerk.accounts.dev" />
-                <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,600&display=swap" rel="stylesheet" />
-                <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@700&display=swap" rel="stylesheet" />
+                <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,600&display=optional" rel="stylesheet" />
+                <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@700&display=optional" rel="stylesheet" />
                 <LandingHeader />
                 <main className="flex-1">{children}</main>
                 <LandingFooter />

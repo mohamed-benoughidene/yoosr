@@ -26,7 +26,7 @@
 
 ---
 
-### 2. Render-Blocking Fonts — +420ms desktop / +2,020ms mobile
+### 2. ~~Render-Blocking Fonts — +420ms desktop / +2,020ms mobile~~ ✅ (Done)
 - **What:** 3 separate Google Fonts CSS requests block the initial render. Fonts involved: IBM Plex Mono, Noto Naskh Arabic, Cabinet Grotesk (via Fontshare). The LCP element (`<p class="hero-subheadline visible">`) cannot paint until these finish.
 - **Where:** `<head>` of the landing page layout
 - **Fix options (pick one):**
@@ -192,7 +192,7 @@
 | # | Issue | Priority | Effort | Impact |
 |---|---|---|---|---|
 | 1 | ~~Redirect chain (3 hops)~~ | P0 | Medium | ✅ Done |
-| 2 | Render-blocking fonts | P0 | Medium | ~2s LCP mobile |
+| 2 | ~~Render-blocking fonts~~ | P0 | Medium | ✅ Done |
 | 3 | ~~Convex on landing page~~ | P0 | Low | ✅ Done |
 | 4 | ~~Security headers missing~~ | P0 | Low | ✅ Done |
 | 5 | ~~Missing preconnect hints~~ | P1 | Low | ✅ Done |
