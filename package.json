@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "browserslist": [
+    "defaults and supports es6-module"
+  ],
   "dependencies": {
     "@clerk/localizations": "^4.2.2",
     "@clerk/nextjs": "^6.37.5",
