@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import DesignStudioShell from "./DesignStudioShell";
+import { Providers } from "@/components/providers";
 
 export default async function DesignStudioLayout({
     children,
@@ -11,5 +12,9 @@ export default async function DesignStudioLayout({
     const { locale } = await params;
     setRequestLocale(locale);
 
-    return <DesignStudioShell>{children}</DesignStudioShell>;
+    return (
+        <Providers>
+            <DesignStudioShell>{children}</DesignStudioShell>
+        </Providers>
+    );
 }
