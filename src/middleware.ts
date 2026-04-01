@@ -1,8 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
-import { routing } from "./src/i18n/routing";
-
+import { routing } from "./i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 const isProtectedRoute = createRouteMatcher([
@@ -12,6 +11,10 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
+  // Redirect bare root to default locale
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/en", req.url));
+  }
 
   // Skip middleware for static assets and API routes early
   if (
