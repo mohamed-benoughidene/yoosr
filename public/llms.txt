@@ -1,0 +1,91 @@
+# Yoosr - AI-Powered Customer Support Platform
+
+## About
+Yoosr is an AI-powered customer support platform that helps businesses build intelligent chatbots with a visual flow builder, knowledge base integration, and omnichannel support. Built for MENA region with full Arabic RTL support.
+
+## Languages
+- English (en) - Default
+- Arabic (ar) - Full RTL support
+- French (fr)
+
+## Important Pages
+- Home: /[locale]/
+- Pricing: /[locale]/pricing
+- Waitlist: /[locale]/waitlist
+- Login: /[locale]/login
+- Signup: /[locale]/signup
+- Privacy Policy: /[locale]/legal/privacy
+- Terms of Service: /[locale]/legal/terms
+
+## Dashboard (Authenticated)
+- Dashboard Home: /[locale]/dashboard
+- Monitor: /[locale]/dashboard/monitor
+- Chat: /[locale]/dashboard/chat
+- Bots: /[locale]/dashboard/bots
+- Analytics: /[locale]/dashboard/analytics
+- Contacts: /[locale]/dashboard/contacts
+- Requests: /[locale]/dashboard/requests
+- History: /[locale]/dashboard/history
+- Activities: /[locale]/dashboard/activities
+- Apps: /[locale]/dashboard/apps
+- Knowledge Base: /[locale]/dashboard/kb
+- Settings: /[locale]/dashboard/settings
+
+## Design Studio
+- Bot Flow Builder: /[locale]/design-studio/[botId]
+
+## Key Features
+
+### Visual Bot Builder
+- Drag-and-drop React Flow editor
+- 19 block types including:
+  - Start, Reply, Set Attribute
+  - Condition (with expression evaluator)
+  - Web Request (GET/POST/PUT/DELETE)
+  - AI Task (LLM prompt execution)
+  - HITL Handoff (bot-to-human escalation)
+  - Ask Knowledge Base (RAG-powered Q&A)
+  - Change Department, Apply Label, Set Priority
+  - And more...
+
+### Knowledge Base with RAG
+- Embedding pipeline using NVIDIA embeddings
+- Source types: Text, URL, File (PDF/DOCX)
+- Vector search with 2048 dimensions
+- Multi-turn conversation support
+- Unanswered query tracking
+
+### Omnichannel Support
+- Website Widget (embeddable iframe)
+- Telegram (inbound + outbound)
+- Meta Messenger (inbound + outbound)
+- Instagram (inbound + outbound)
+- WhatsApp (inbound + outbound via Meta Cloud API)
+
+### Real-Time Analytics
+- CSAT scores and feedback
+- SLA breach rate tracking
+- AI token usage monitoring
+- Conversation volume charts
+- Tag distribution
+- Unanswered queries table
+
+### Multi-language Support
+- Full trilingual UI (EN/AR/FR)
+- Arabic RTL layout (sidebar flips to right)
+- Locale-aware date formatting
+- Widget locale auto-detection
+
+## Technology Stack
+- Frontend: Next.js 16, React 19, TypeScript
+- Backend: Convex (serverless reactive database)
+- Authentication: Clerk (multi-tenancy via Organizations)
+- AI: OpenRouter API (multiple model support)
+- Styling: Tailwind CSS 4, Shadcn UI
+
+## Contact
+- Email: support@yoosr.com
+- Website: https://yoosr.com
+
+## Disclaimer
+Yoosr is in early access. Features and pricing subject to change.

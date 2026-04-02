@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,9 +21,89 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+// Viewport metadata (separate export required in Next.js 14+)
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C0B0F" },
+  ],
+};
+
 export const metadata: Metadata = {
-  title: "Yoosr",
-  description: "AI-Powered Customer Support",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.com"),
+  title: {
+    default: "Yoosr - AI-Powered Customer Support Platform",
+    template: "%s | Yoosr",
+  },
+  description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support. Early access available.",
+  keywords: [
+    "AI customer support",
+    "chatbot builder",
+    "customer service automation",
+    "visual bot builder",
+    "knowledge base",
+    "RAG",
+    "omnichannel support",
+    "WhatsApp",
+    "Telegram",
+    "Messenger",
+    "Instagram",
+  ],
+  authors: [{ name: "Yoosr Team" }],
+  creator: "Yoosr",
+  publisher: "Yoosr",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://yoosr.com",
+    siteName: "Yoosr",
+    title: "Yoosr - AI-Powered Customer Support Platform",
+    description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Yoosr - AI-Powered Customer Support Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Yoosr - AI-Powered Customer Support Platform",
+    description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
+    images: ["/og-image.png"],
+    creator: "@yoosr",
+  },
+  alternates: {
+    canonical: "/",
+    languages: {
+      "en": "/en",
+      "ar": "/ar",
+      "fr": "/fr",
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

@@ -51,6 +51,21 @@
       "sourceType": "github",
       "computedHash": "b519aa0d3ec8e747e0419ff313b1d0b489dddfefeca248d68012888ff3f5ccce"
     },
+    "nextjs-seo": {
+      "source": "laguagu/claude-code-nextjs-skills",
+      "sourceType": "github",
+      "computedHash": "067dbf680b0ccf69c586b947fa0012e2adba5298b9f553391ccab36003067f5f"
+    },
+    "seo": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "computedHash": "f1fed683b76913d26fbf1aa1e008e6932f7771701fc3a79925b042236aa4681a"
+    },
+    "sitemap-robots": {
+      "source": "canatufkansu/claude-skills",
+      "sourceType": "github",
+      "computedHash": "3e47da5bb6e5041cd33ddfd68db76209c7ddcaf142c25ad16452086b89259428"
+    },
     "systematic-debugging": {
       "source": "obra/superpowers",
       "sourceType": "github",

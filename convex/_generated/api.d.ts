@@ -38,10 +38,12 @@ import type * as projects from "../projects.js";
 import type * as pushActions from "../pushActions.js";
 import type * as pushMutations from "../pushMutations.js";
 import type * as routing from "../routing.js";
+import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as tags from "../tags.js";
 import type * as utils from "../utils.js";
 import type * as webhooks from "../webhooks.js";
+import type * as wipe from "../wipe.js";
 
 import type {
   ApiFromModules,
@@ -80,10 +82,12 @@ declare const fullApi: ApiFromModules<{
   pushActions: typeof pushActions;
   pushMutations: typeof pushMutations;
   routing: typeof routing;
+  seed: typeof seed;
   settings: typeof settings;
   tags: typeof tags;
   utils: typeof utils;
   webhooks: typeof webhooks;
+  wipe: typeof wipe;
 }>;
 
 /**

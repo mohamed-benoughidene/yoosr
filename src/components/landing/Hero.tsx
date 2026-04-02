@@ -1,8 +1,9 @@
 "use client"
 
 import { useTranslations } from "next-intl";
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { LandingVideo } from "./VideoPlayer";
 import "./landing.css"
 
 export function Hero() {
@@ -114,9 +115,12 @@ export function Hero() {
         
         <div className="product-showcase-container">
           <div className="product-showcase">
-            <div className="product-showcase-placeholder">
-              Product video coming soon
-            </div>
+            <LandingVideo 
+              src="/walkthrough.mp4" 
+              autoPlay 
+              showControls={false} 
+              priority={true}
+            />
           </div>
         </div>
       </div>

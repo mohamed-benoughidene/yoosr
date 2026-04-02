@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale as unstable_setRequestLocale, getMessages } from "next-intl/server";
 import { HtmlDirSetter } from "@/components/HtmlDirSetter";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export function generateStaticParams() {
   return [{ locale: "en" }, { locale: "ar" }, { locale: "fr" }];
@@ -20,6 +21,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <HtmlDirSetter locale={locale} />
+      <JsonLd />
       {children}
     </NextIntlClientProvider>
   );

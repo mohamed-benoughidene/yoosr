@@ -291,23 +291,11 @@
 
 .product-showcase {
   width: 100%;
+  aspect-ratio: 16/9;
   border: 1px solid var(--lp-border);
   border-radius: 16px;
   overflow: hidden;
   background: var(--lp-surface);
-}
-
-.product-showcase-placeholder {
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: var(--lp-surface-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--lp-text-muted);
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
 }
 
 /* Channels Section */

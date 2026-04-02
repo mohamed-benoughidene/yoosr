@@ -13,13 +13,21 @@ const TrustSection = dynamic(() => import("@/components/landing/TrustSection").t
 const PricingTeaser = dynamic(() => import("@/components/landing/PricingTeaser").then(m => ({ default: m.PricingTeaser })))
 const FinalCTA = dynamic(() => import("@/components/landing/FinalCTA").then(m => ({ default: m.FinalCTA })))
 import { setRequestLocale as unstable_setRequestLocale, getTranslations } from "next-intl/server"
+import type { Metadata } from "next"
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "landing.meta" });
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.com";
+  
   return {
-    title: t("title"),
-    description: t("description"),
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        "en": `${baseUrl}/en`,
+        "ar": `${baseUrl}/ar`,
+        "fr": `${baseUrl}/fr`,
+      },
+    },
   };
 }
 
