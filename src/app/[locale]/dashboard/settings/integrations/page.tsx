@@ -56,33 +56,35 @@ export default function IntegrationsPage() {
             ], 
             instructions: `${t("telegram_instructions")} https://your-domain.com/webhooks/telegram` 
         },
-        { 
-            id: "messenger", 
-            name: "Messenger", 
-            description: t("messenger_description"), 
-            category: "channel", 
-            icon: "💬", 
-            color: "bg-indigo-100 text-indigo-700", 
-            locked: false, 
+        {
+            id: "messenger",
+            name: "Messenger",
+            description: t("messenger_description"),
+            category: "channel",
+            icon: "💬",
+            color: "bg-indigo-100 text-indigo-700",
+            locked: false,
             fields: [
-                { key: "page_id", label: t("page_id_label"), type: "text", placeholder: t("page_id_label") }, 
-                { key: "access_token", label: t("access_token_label"), type: "password", placeholder: "EAA..." }
-            ], 
-            instructions: t("messenger_instructions") 
+                { key: "page_id", label: t("page_id_label"), type: "text", placeholder: t("page_id_label") },
+                { key: "access_token", label: t("access_token_label"), type: "password", placeholder: "EAA..." },
+                { key: "app_secret", label: t("app_secret_label"), type: "password", placeholder: t("app_secret_placeholder") }
+            ],
+            instructions: t("messenger_instructions")
         },
-        { 
-            id: "instagram", 
-            name: "Instagram", 
-            description: t("instagram_description"), 
-            category: "channel", 
-            icon: "📸", 
-            color: "bg-fuchsia-100 text-fuchsia-700", 
-            locked: false, 
+        {
+            id: "instagram",
+            name: "Instagram",
+            description: t("instagram_description"),
+            category: "channel",
+            icon: "📸",
+            color: "bg-fuchsia-100 text-fuchsia-700",
+            locked: false,
             fields: [
-                { key: "page_id", label: t("account_id_label"), type: "text", placeholder: t("account_id_label") }, 
-                { key: "access_token", label: t("access_token_label"), type: "password", placeholder: "EAA..." }
-            ], 
-            instructions: t("instagram_instructions") 
+                { key: "page_id", label: t("account_id_label"), type: "text", placeholder: t("account_id_label") },
+                { key: "access_token", label: t("access_token_label"), type: "password", placeholder: "EAA..." },
+                { key: "app_secret", label: t("app_secret_label"), type: "password", placeholder: t("app_secret_placeholder") }
+            ],
+            instructions: t("instagram_instructions")
         },
         { 
             id: "whatsapp", 
@@ -116,6 +118,7 @@ export default function IntegrationsPage() {
         phoneNumberId: "",
         accessToken: "",
         verifyToken: "",
+        appSecret: "",
         enabled: false,
         hasExistingToken: false,
     })
@@ -139,12 +142,14 @@ export default function IntegrationsPage() {
                 phoneNumberId: saved.credentials?.phone_number_id || "",
                 accessToken: "",
                 verifyToken: saved.credentials?.verify_token || "",
+                appSecret: "",
                 enabled: saved.enabled || false,
                 hasExistingToken: !!saved.credentials?.access_token,
             } : {
                 phoneNumberId: "",
                 accessToken: "",
                 verifyToken: "",
+                appSecret: "",
                 enabled: false,
                 hasExistingToken: false,
             })
@@ -185,7 +190,8 @@ export default function IntegrationsPage() {
                     credentials: {
                         phone_number_id: whatsappState.phoneNumberId,
                         access_token: whatsappState.accessToken,
-                        verify_token: whatsappState.verifyToken
+                        verify_token: whatsappState.verifyToken,
+                        app_secret: whatsappState.appSecret
                     },
                     enabled: whatsappState.enabled
                 })
@@ -468,6 +474,17 @@ export default function IntegrationsPage() {
                                 {t("generate_token")}
                             </Button>
                         </div>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="appSecret" className="text-sm">{t("app_secret_label")}</Label>
+                        <Input
+                            id="appSecret"
+                            type="password"
+                            placeholder={t("app_secret_placeholder")}
+                            value={whatsappState.appSecret}
+                            onChange={e => setWhatsappState(prev => ({ ...prev, appSecret: e.target.value }))}
+                        />
                     </div>
                 </Card>
 

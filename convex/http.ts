@@ -3,13 +3,30 @@ import { httpAction } from "./_generated/server";
 import { internal, components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { RateLimiter } from "@convex-dev/rate-limiter";
-
-const http = httpRouter();
+import { decryptSecret } from "./lib/crypto";
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   createConversation: { kind: "fixed window", rate: 5, period: 60000 },
   sendMessage: { kind: "token bucket", rate: 20, period: 60000, capacity: 5 },
 });
+
+const http = httpRouter();
+
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Both strings must be the same length (checked by caller).
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+    const aBytes = new TextEncoder().encode(a);
+    const bBytes = new TextEncoder().encode(b);
+    if (aBytes.length !== bBytes.length) return false;
+
+    let diff = 0;
+    for (let i = 0; i < aBytes.length; i++) {
+        diff |= aBytes[i] ^ bBytes[i];
+    }
+    return diff === 0;
+}
 
 // Clerk webhook to sync user data
 http.route({
@@ -344,9 +361,19 @@ http.route({
         const verifyToken = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
 
-        const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
+        if (mode !== "subscribe" || !verifyToken) {
+            return new Response("Forbidden", { status: 403 });
+        }
 
-        if (mode === "subscribe" && verifyToken === WEBHOOK_VERIFY_TOKEN) {
+        // Check against all enabled WhatsApp integrations' verify_token
+        const integrations = await ctx.runQuery(internal.integrations.listAllEnabledMetaIntegrations);
+
+        const match = integrations.find(
+            (i: { credentials?: Record<string, unknown> }) =>
+                (i.credentials as { verify_token?: string })?.verify_token === verifyToken
+        );
+
+        if (match) {
             return new Response(challenge, { status: 200 });
         }
 
@@ -363,33 +390,90 @@ http.route({
             const rawBody = await request.text();
             const body = JSON.parse(rawBody);
             const signature = request.headers.get("X-Hub-Signature-256");
-            const appSecret = process.env.META_APP_SECRET;
 
-            if (appSecret) {
-                const encoder = new TextEncoder();
-                const key = await crypto.subtle.importKey(
-                    "raw",
-                    encoder.encode(appSecret),
-                    { name: "HMAC", hash: "SHA-256" },
-                    false,
-                    ["sign"]
-                );
-                const signatureBuffer = await crypto.subtle.sign(
-                    "HMAC",
-                    key,
-                    encoder.encode(rawBody)
-                );
-                const hashArray = Array.from(new Uint8Array(signatureBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                const expectedSignature = `sha256=${hashHex}`;
-
-                if (!signature || signature !== expectedSignature) {
-                    return new Response("Forbidden", { status: 403 });
-                }
-            } else {
-                console.warn("META_APP_SECRET not set, skipping signature validation");
+            if (!signature) {
+                return new Response("Forbidden", { status: 403 });
             }
 
+            // Identify the integration first by parsing the webhook body
+            let integration: { _id: Id<"integrations">; credentials?: Record<string, unknown> } | undefined | null;
+
+            if (body.object === "whatsapp_business_account") {
+                // Extract phone_number_id from first entry/change
+                if (body.entry && Array.isArray(body.entry) && body.entry.length > 0) {
+                    const change = body.entry[0]?.changes?.[0];
+                    const phoneNumberId = change?.value?.metadata?.phone_number_id;
+                    if (phoneNumberId) {
+                        integration = await ctx.runQuery(internal.integrations.getWhatsAppIntegrationByPhoneNumberId, {
+                            phoneNumberId,
+                        });
+                    }
+                }
+            } else if (body.object === "page") {
+                // entry.id is the page_id
+                if (body.entry && Array.isArray(body.entry) && body.entry.length > 0) {
+                    const pageId = body.entry[0].id;
+                    if (pageId) {
+                        integration = await ctx.runQuery(internal.integrations.getMessengerIntegrationByPageId, {
+                            pageId,
+                        });
+                    }
+                }
+            } else if (body.object === "instagram") {
+                // entry.id is the instagram account/page_id
+                if (body.entry && Array.isArray(body.entry) && body.entry.length > 0) {
+                    const pageId = body.entry[0].id;
+                    if (pageId) {
+                        integration = await ctx.runQuery(internal.integrations.getInstagramIntegrationByPageId, {
+                            pageId,
+                        });
+                    }
+                }
+            }
+
+            // If no integration found, reject
+            if (!integration || !integration.credentials) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            // Decrypt the app_secret for this integration
+            const appSecret = (integration.credentials as { app_secret?: string }).app_secret;
+            if (!appSecret) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            const key = process.env.ENCRYPTION_KEY;
+            if (!key) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            const decryptedSecret = await decryptSecret(appSecret, key);
+
+            // Verify signature using this integration's secret
+            const encoder = new TextEncoder();
+            const hmacKey = await crypto.subtle.importKey(
+                "raw",
+                encoder.encode(decryptedSecret),
+                { name: "HMAC", hash: "SHA-256" },
+                false,
+                ["sign"]
+            );
+            const signatureBuffer = await crypto.subtle.sign(
+                "HMAC",
+                hmacKey,
+                encoder.encode(rawBody)
+            );
+            const hashArray = Array.from(new Uint8Array(signatureBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            const expectedSignature = `sha256=${hashHex}`;
+
+            // Use constant-time comparison to prevent timing attacks
+            if (signature.length !== expectedSignature.length ||
+                !constantTimeCompare(signature, expectedSignature)) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            // Signature verified — process messages
             if (body.object === "whatsapp_business_account") {
                 if (body.entry && Array.isArray(body.entry)) {
                     for (const entry of body.entry) {
@@ -402,7 +486,7 @@ http.route({
                                     });
 
                                     if (!integration) continue;
-                                    
+
                                     if (change.value.messages && Array.isArray(change.value.messages)) {
                                         for (const message of change.value.messages) {
                                             if (message.type !== "text") continue;
@@ -494,7 +578,37 @@ http.route({
     handler: httpAction(async (ctx, request) => {
         try {
             const secretToken = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-            if (secretToken !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+            if (!secretToken) {
+                return new Response("Forbidden", { status: 403 });
+            }
+
+            // Look up all enabled Telegram integrations and match the webhook secret
+            const telegramIntegrations = await ctx.runQuery(internal.integrations.findTelegramByWebhookSecret, {
+                rawSecret: secretToken,
+            });
+
+            // Find matching integration by decrypting each webhook_secret
+            let matchedIntegration: { projectId: Id<"projects"> } | null = null;
+            const key = process.env.ENCRYPTION_KEY;
+
+            if (key && telegramIntegrations && telegramIntegrations.length > 0) {
+                for (const integration of telegramIntegrations) {
+                    const storedSecret = (integration as { credentials?: Record<string, unknown> }).credentials?.webhook_secret;
+                    if (!storedSecret) continue;
+
+                    try {
+                        const decrypted = await decryptSecret(storedSecret as string, key);
+                        if (decrypted === secretToken) {
+                            matchedIntegration = integration as { projectId: Id<"projects"> };
+                            break;
+                        }
+                    } catch {
+                        continue;
+                    }
+                }
+            }
+
+            if (!matchedIntegration) {
                 return new Response("Forbidden", { status: 403 });
             }
 

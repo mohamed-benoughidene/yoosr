@@ -1492,6 +1492,8 @@
       "whatsapp_connected": "WhatsApp connecté",
       "token_saved_placeholder": "Jeton enregistré entrez une nouvelle valeur pour le remplacer",
       "token_placeholder": "Collez votre jeton d'accès",
+      "app_secret_label": "Secret de l'application",
+      "app_secret_placeholder": "Votre secret d'application Meta de developers.facebook.com",
       "setup_guide_title": "Comment configurer",
       "setup_guide_link": "Guide de configuration Meta Cloud API",
       "ai_providers": "Fournisseurs d'IA",

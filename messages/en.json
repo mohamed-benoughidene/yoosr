@@ -1545,6 +1545,8 @@
       "whatsapp_connected": "WhatsApp connected",
       "token_saved_placeholder": "Token saved enter a new value to replace it",
       "token_placeholder": "Paste your access token",
+      "app_secret_label": "App Secret",
+      "app_secret_placeholder": "Your Meta App Secret from developers.facebook.com",
       "setup_guide_title": "How to set this up",
       "setup_guide_link": "Meta Cloud API setup guide"
     },

@@ -2,6 +2,7 @@ import { query, mutation, action, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { encryptSecret, decryptSecret } from "./lib/crypto";
+import { requireEnv } from "./lib/env";
 
 // ─── OpenRouter API Key Management (Dedicated Module) ───────────────────────
 
@@ -20,7 +21,7 @@ export const saveOpenRouterKey = mutation({
             .first();
         if (!project) throw new ConvexError("Project not found");
 
-        const encryptionKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!encryptionKey) throw new ConvexError("Encryption key not configured");
 
         const encryptedKey = await encryptSecret(args.key, encryptionKey);
@@ -62,7 +63,7 @@ export const getOpenRouterKeyStatus = query({
             .first();
         if (!project || !project.openRouterApiKey) return { hasKey: false };
 
-        const encryptionKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!encryptionKey) return { hasKey: false };
 
         const decrypted = await decryptSecret(project.openRouterApiKey, encryptionKey);
@@ -89,7 +90,7 @@ export const testOpenRouterKey = action({
             return { ok: false, error: "No API key saved" };
         }
 
-        const encryptionKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!encryptionKey) {
             return { ok: false, error: "Encryption key not configured" };
         }

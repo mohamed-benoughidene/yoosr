@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { encryptSecret, decryptSecret } from "./lib/crypto";
 import { requireAdmin } from "./utils";
+import { requireEnv } from "./lib/env";
 
 // List integrations for a project
 export const list = query({
@@ -126,7 +127,7 @@ export const saveChannelIntegration = action({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const key = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
 
         // Save raw first so the record exists
@@ -148,8 +149,16 @@ export const saveChannelIntegration = action({
             encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
         }
 
+        if ((args.provider === "messenger" || args.provider === "instagram") && args.credentials.app_secret) {
+            encryptedCredentials.app_secret = await encryptSecret(args.credentials.app_secret, key);
+        }
+
         if (args.provider === "whatsapp" && args.credentials.access_token) {
             encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
+        }
+
+        if (args.provider === "whatsapp" && args.credentials.app_secret) {
+            encryptedCredentials.app_secret = await encryptSecret(args.credentials.app_secret, key);
         }
 
         await ctx.runMutation(internal.integrations.patchCredentials, {
@@ -174,6 +183,23 @@ export const patchCredentials = internalMutation({
     }
 });
 
+export const patchWebhookSecret = internalMutation({
+    args: { projectId: v.id("projects"), provider: v.string(), webhookSecret: v.string() },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query("integrations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("provider"), args.provider))
+            .first();
+        if (existing) {
+            const creds = (existing.credentials as Record<string, unknown>) ?? {};
+            await ctx.db.patch(existing._id, {
+                credentials: { ...creds, webhook_secret: args.webhookSecret },
+            });
+        }
+    }
+});
+
 export const registerTelegramWebhook = action({
     args: {
         botToken: v.string(),
@@ -183,8 +209,14 @@ export const registerTelegramWebhook = action({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
+        const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
+        if (!key) throw new Error("Encryption key not configured");
+
+        // Generate a unique webhook secret for this integration
+        const webhookSecret = crypto.randomUUID();
+
         const webhookUrl = `${process.env.CONVEX_SITE_URL}/webhooks/telegram`;
-        
+
         const response = await fetch(`https://api.telegram.org/bot${args.botToken}/setWebhook`, {
             method: "POST",
             headers: {
@@ -192,7 +224,7 @@ export const registerTelegramWebhook = action({
             },
             body: JSON.stringify({
                 url: webhookUrl,
-                secret_token: process.env.TELEGRAM_WEBHOOK_SECRET,
+                secret_token: webhookSecret,
             }),
         });
 
@@ -201,6 +233,14 @@ export const registerTelegramWebhook = action({
         if (!response.ok || !result.ok) {
             throw new Error(result.description || "Failed to set Telegram webhook");
         }
+
+        // Store the encrypted webhook secret alongside the bot_token
+        const encryptedSecret = await encryptSecret(webhookSecret, key);
+        await ctx.runMutation(internal.integrations.patchWebhookSecret, {
+            projectId: args.projectId,
+            provider: "telegram",
+            webhookSecret: encryptedSecret,
+        });
 
         return { success: true };
     },
@@ -216,7 +256,7 @@ export const getDecryptedWhatsAppCredentials = internalQuery({
 
         if (!row) return null;
 
-        const key = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
 
         const credentials = row.credentials as { access_token: string; phone_number_id?: string; verify_token?: string };
@@ -236,7 +276,7 @@ export const getWhatsAppIntegrationByPhoneNumberId = internalQuery({
     handler: async (ctx, args) => {
         const integrations = await ctx.db
             .query("integrations")
-            .filter((q) => 
+            .filter((q) =>
                 q.and(
                     q.eq(q.field("provider"), "whatsapp"),
                     q.eq(q.field("enabled"), true)
@@ -247,5 +287,104 @@ export const getWhatsAppIntegrationByPhoneNumberId = internalQuery({
         return integrations.find(
             (i) => (i.credentials as { phone_number_id?: string })?.phone_number_id === args.phoneNumberId
         );
+    },
+});
+
+export const getMessengerIntegrationByPageId = internalQuery({
+    args: { pageId: v.string() },
+    handler: async (ctx, args) => {
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("provider"), "messenger"),
+                    q.eq(q.field("enabled"), true)
+                )
+            )
+            .take(500);
+
+        return integrations.find(
+            (i) => (i.credentials as { page_id?: string })?.page_id === args.pageId
+        );
+    },
+});
+
+export const getInstagramIntegrationByPageId = internalQuery({
+    args: { pageId: v.string() },
+    handler: async (ctx, args) => {
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("provider"), "instagram"),
+                    q.eq(q.field("enabled"), true)
+                )
+            )
+            .take(500);
+
+        return integrations.find(
+            (i) => (i.credentials as { page_id?: string })?.page_id === args.pageId
+        );
+    },
+});
+
+export const getTelegramIntegrationByWebhookSecret = internalQuery({
+    args: { webhookSecret: v.string() },
+    handler: async (ctx, args) => {
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("provider"), "telegram"),
+                    q.eq(q.field("enabled"), true)
+                )
+            )
+            .take(500);
+
+        return integrations.find(
+            (i) => (i.credentials as { webhook_secret?: string })?.webhook_secret === args.webhookSecret
+        );
+    },
+});
+
+/**
+ * Find a Telegram integration by matching the raw (unencrypted) webhook secret.
+ * This is used by the HTTP webhook handler to look up the integration.
+ */
+export const findTelegramByWebhookSecret = internalQuery({
+    args: { rawSecret: v.string() },
+    handler: async (ctx) => {
+        const integrations = await ctx.db
+            .query("integrations")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("provider"), "telegram"),
+                    q.eq(q.field("enabled"), true)
+                )
+            )
+            .take(500);
+
+        // The webhook_secret is stored encrypted, but we store the raw encrypted value
+        // so we can compare. However, since we can't decrypt in a query, we need
+        // to return all enabled telegram integrations and let the caller decrypt+match.
+        return integrations;
+    },
+});
+
+/**
+ * List all enabled Meta integrations (WhatsApp, Messenger, Instagram).
+ * Used by the webhook GET handler to verify subscription tokens.
+ */
+export const listAllEnabledMetaIntegrations = internalQuery({
+    args: {},
+    handler: async (ctx) => {
+        const [whatsapp, messenger, instagram] = await Promise.all([
+            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "whatsapp")).take(500),
+            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "messenger")).take(500),
+            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "instagram")).take(500),
+        ]);
+
+        const all = [...whatsapp, ...messenger, ...instagram];
+        return all.filter((i) => i.enabled);
     },
 });

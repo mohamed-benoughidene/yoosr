@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
 import { decryptSecret } from "./lib/crypto";
+import { requireEnv } from "./lib/env";
 
 type ActionResult = {
     newAttributes?: Record<string, unknown>;
@@ -91,7 +92,7 @@ async function executeAction(
                 const projectDefaultModel = projectInfo?.defaultModel;
                 let projectApiKey: string | undefined;
                 if (projectInfo?.openRouterApiKey) {
-                    const encryptionKey = process.env.ENCRYPTION_KEY;
+                    const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
                     if (encryptionKey) {
                         projectApiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
                     }
@@ -185,7 +186,7 @@ async function executeAction(
             const projectInfo = await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: kbConversation.projectId });
             let apiKey: string | undefined;
             if (projectInfo?.openRouterApiKey) {
-                const encryptionKey = process.env.ENCRYPTION_KEY;
+                const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
                 if (encryptionKey) {
                     apiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
                 }

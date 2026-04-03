@@ -1487,6 +1487,8 @@
       "whatsapp_connected": "تم ربط واتساب بنجاح",
       "token_saved_placeholder": "تم حفظ الرمز أدخل قيمة جديدة للاستبدال",
       "token_placeholder": "الصق رمز الوصول",
+      "app_secret_label": "سر التطبيق",
+      "app_secret_placeholder": "سر التطبيق الخاص بك من developers.facebook.com",
       "setup_guide_title": "كيفية الإعداد",
       "setup_guide_link": "دليل إعداد Meta Cloud API",
       "subtitle": "ربط مزودي AI وقنوات المراسلة.",

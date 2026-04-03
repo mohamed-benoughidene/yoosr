@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { decryptSecret } from "./lib/crypto";
+import { requireEnv } from "./lib/env";
 
 const GRAPH_API_VERSION = "v24.0";
 
@@ -1134,7 +1135,7 @@ export const sendMetaMessage = internalAction({
         const creds = integration.credentials as { access_token?: string } | undefined;
         const rawToken: string = creds?.access_token || "";
         if (!rawToken) return undefined;
-        const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const encKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!encKey) return undefined;
         const accessToken = rawToken.includes(":")
             ? await decryptSecret(rawToken, encKey)
@@ -1316,7 +1317,7 @@ export const sendTelegramMessage = internalAction({
         const creds = integration.credentials as { bot_token?: string } | undefined;
         const rawToken: string | undefined = creds?.bot_token;
         if (!rawToken) return undefined;
-        const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
+        const encKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!encKey) return undefined;
         const beforeColon = rawToken.split(":")[0];
         const isEncrypted = !/^\d+$/.test(beforeColon);
