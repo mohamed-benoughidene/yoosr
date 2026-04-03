@@ -7,6 +7,8 @@ export const metadata: Metadata = {
     description: "Configure your Yoosr workspace to get started."
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     unstable_setRequestLocale(locale);

@@ -7,6 +7,8 @@ export const metadata: Metadata = {
     description: "Create your Yoosr account and start managing customer support in minutes."
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function SignupPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     unstable_setRequestLocale(locale);
