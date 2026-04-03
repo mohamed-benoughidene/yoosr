@@ -4,6 +4,9 @@ import { PushNotificationInit } from "@/components/PushNotificationInit"
 import { DashboardAuthGuard } from "@/components/auth/DashboardAuthGuard"
 import { Providers } from "@/components/providers"
 
+// All dashboard pages are authenticated — never statically pre-render.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
     children,
     params,
