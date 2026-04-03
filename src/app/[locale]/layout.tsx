@@ -7,6 +7,10 @@ export function generateStaticParams() {
   return [{ locale: "en" }, { locale: "ar" }, { locale: "fr" }];
 }
 
+// Force all locale pages to be dynamically rendered — this avoids static
+// pre-render crashes when Clerk/Convex env vars are missing (CI build).
+export const dynamic = "force-dynamic";
+
 export default async function LocaleLayout({
   children,
   params,
