@@ -18,8 +18,7 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useReducer, useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, RefreshCw, UserMinus } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, UserMinus } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
 import {
@@ -168,7 +167,7 @@ export default function WidgetSetupPage() {
         autoCloseMinutes, preChatFormEnabled, contactMethod, translations
     } = widgetConfig
     const {
-        loading, iframeKey, copiedHtml, copiedNext, copiedSnippet, selectedPlatform
+        loading, iframeKey, copiedSnippet, selectedPlatform
     } = uiState
 
     const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -207,6 +206,7 @@ export default function WidgetSetupPage() {
                 preChatSubtitle: config.translations?.preChatSubtitle || t("default_form_description")
             }})
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeProject])
 
     const handleSave = async () => {
@@ -662,8 +662,7 @@ export default function WidgetSetupPage() {
                                     dispatch({ type: "INC_IFRAME_KEY" })
                                     toast.success(t("session_reset"))
                                 }
-                            } catch (e) {
-                                // Fallback if CORS prevents direct access (though same-origin should work)
+                            } catch {
                                 localStorage.removeItem("yoosr_visitor_id")
                                 dispatch({ type: "INC_IFRAME_KEY" })
                                 toast.success(t("session_reset_global"))

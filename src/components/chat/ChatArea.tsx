@@ -140,6 +140,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
         }, 500)
 
         return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId, conversation?.unreadCount, markAsRead])
 
     useEffect(() => {
@@ -334,7 +335,6 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
         )
     }
 
-    const isLoading = messages === undefined
     const isResolved = conversation?.status === 1000
 
     return (

@@ -62,58 +62,43 @@ export default function AnalyticsPage() {
     const to = toMs(toDate) + 86399999; // end of day
 
     const [convStatsData, setConvStatsData] = useState<{total: number, open: number, closed: number} | undefined>(undefined);
-    const [loadingStats, setLoadingStats] = useState(true);
     const fetchStats = useAction(api.analytics.getConversationStats);
 
     useEffect(() => {
         if (!activeProject) return;
         let isMounted = true;
-        setLoadingStats(true);
         fetchStats({ projectId: activeProject._id, from, to })
             .then(data => {
                 if (isMounted) setConvStatsData(data);
             })
-            .catch(console.error)
-            .finally(() => {
-                if (isMounted) setLoadingStats(false);
-            });
+            .catch(console.error);
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchStats]);
 
     const [volumeData, setVolumeData] = useState<{total: number, botHandled: number, agentHandled: number, daily: { date: string; bot: number; agent: number; total: number }[]} | undefined>(undefined);
-    const [loadingVolume, setLoadingVolume] = useState(true);
     const fetchVolume = useAction(api.analytics.getConversationVolume);
 
     useEffect(() => {
         if (!activeProject) return;
         let isMounted = true;
-        setLoadingVolume(true);
         fetchVolume({ projectId: activeProject._id, from, to })
             .then(data => {
                 if (isMounted) setVolumeData(data);
             })
-            .catch(console.error)
-            .finally(() => {
-                if (isMounted) setLoadingVolume(false);
-            });
+            .catch(console.error);
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchVolume]);
-    const [tokenData, setTokenData] = useState<{totalTokens: number, byModel: any[]} | undefined>(undefined);
-    const [loadingTokens, setLoadingTokens] = useState(true);
+    const [tokenData, setTokenData] = useState<{totalTokens: number, byModel: { model: string; tokens: number }[]} | undefined>(undefined);
     const fetchTokens = useAction(api.analytics.getTokenUsage);
 
     useEffect(() => {
         if (!activeProject) return;
         let isMounted = true;
-        setLoadingTokens(true);
         fetchTokens({ projectId: activeProject._id, from, to })
             .then(data => {
                 if (isMounted) setTokenData(data);
             })
-            .catch(console.error)
-            .finally(() => {
-                if (isMounted) setLoadingTokens(false);
-            });
+            .catch(console.error);
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchTokens]);
     const csatData = useQuery(
@@ -133,21 +118,16 @@ export default function AnalyticsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     );
     const [tagsData, setTagsData] = useState<{name: string, value: number}[] | undefined>(undefined);
-    const [loadingTags, setLoadingTags] = useState(true);
     const fetchTags = useAction(api.analytics.getTagsSummary);
 
     useEffect(() => {
         if (!activeProject) return;
         let isMounted = true;
-        setLoadingTags(true);
         fetchTags({ projectId: activeProject._id, from, to })
             .then(data => {
                 if (isMounted) setTagsData(data);
             })
-            .catch(console.error)
-            .finally(() => {
-                if (isMounted) setLoadingTags(false);
-            });
+            .catch(console.error);
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchTags]);
 
@@ -293,7 +273,7 @@ export default function AnalyticsPage() {
             {/* Bottom row: Unanswered Queries + CSAT */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <AnalyticsUnansweredQueries
-                    data={unansweredData as any}
+                    data={unansweredData}
                     isLoading={unansweredData === undefined}
                 />
                 <AnalyticsCSAT

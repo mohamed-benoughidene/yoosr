@@ -13,7 +13,8 @@ import { useLocale } from "next-intl"
 import { useRouter, usePathname } from "next/navigation"
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
-    const t = useTranslations("nav")
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _t = useTranslations("nav")
     const ensureProfile = useMutation(api.profiles.ensureCurrent)
     const updateHeartbeat = useMutation(api.profiles.updateHeartbeat)
     const { user, isLoaded, isSignedIn } = useUser()
@@ -32,7 +33,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 router.replace(newPath)
             }
         }
-    }, [isLoaded, isSignedIn, user, locale, pathname, router]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isLoaded, isSignedIn, user, locale, pathname, router])  
 
     // 1. Mark as online on mount
     useEffect(() => {

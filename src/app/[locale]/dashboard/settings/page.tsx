@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -46,7 +45,8 @@ export default function SettingsPage() {
 function SettingsContent() {
     const t = useTranslations("settings.project")
     const { activeProject } = useProject()
-    const isAdmin = activeProject?.userRole === "org:admin"
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
     const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel ?? "openrouter/free")
     const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")

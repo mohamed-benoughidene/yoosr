@@ -139,7 +139,8 @@ export const update = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const { id, ...updates } = args;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _id, ...updates } = args;
         const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
@@ -241,7 +242,8 @@ export const updateInternal = internalMutation({
         priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
     },
     handler: async (ctx, args) => {
-        const { id, clearBotId, ...updates } = args;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _id, clearBotId, ...updates } = args;
         const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;

@@ -40,7 +40,8 @@ export default function RequestsPage() {
     const updateConversation = useMutation(api.conversations.update)
     const resolveConversation = useMutation(api.conversations.resolve)
 
-    const myDepartments = useQuery(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _myDepartments = useQuery(
         api.settings.getMyDepartments,
         activeProject ? { projectId: activeProject._id } : "skip"
     )

@@ -1,6 +1,5 @@
 "use client"
 
-import { useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"

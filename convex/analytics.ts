@@ -4,6 +4,16 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { checkProjectOwnership } from "./utils";
 
+// Generic pagination wrapper to avoid implicit 'any'
+type PageResult<T> = { page: T[]; continueCursor: string | null; isDone: boolean };
+
+// Minimal types for pagination results
+type ConvWithCreationTime = { _creationTime: number; [key: string]: unknown };
+type ConvWithStatus = ConvWithCreationTime & { status?: number; assignedTo?: string; resolvedBy?: string; visitorId?: string };
+type MsgWithSender = ConvWithCreationTime & { senderType: string };
+type TokenUsage = { createdAt: number; model: string; tokensUsed: number; [key: string]: unknown };
+type ConvWithTags = ConvWithCreationTime & { tags?: string[] };
+
 // ---------------------------------------------------------------------------
 // Existing queries (kept for backward compat)
 // ---------------------------------------------------------------------------
@@ -38,7 +48,7 @@ export const getConversationStats = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForStats, {
+            const pageResult: PageResult<ConvWithStatus> = await ctx.runQuery(internal.analytics._paginateConversationsForStats, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -85,7 +95,7 @@ export const getVisitorStats = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForVisitors, {
+            const pageResult: PageResult<ConvWithStatus> = await ctx.runQuery(internal.analytics._paginateConversationsForVisitors, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -126,7 +136,7 @@ export const getMessageStats = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateMessagesForStats, {
+            const pageResult: PageResult<MsgWithSender> = await ctx.runQuery(internal.analytics._paginateMessagesForStats, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -159,7 +169,7 @@ export const _checkProjectOwnership = internalQuery({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
-        return await checkProjectOwnership(ctx, args.projectId, identity as any);
+        return await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
     }
 });
 
@@ -198,7 +208,7 @@ export const getConversationVolume = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForVolume, {
+            const pageResult: PageResult<ConvWithStatus> = await ctx.runQuery(internal.analytics._paginateConversationsForVolume, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -270,7 +280,7 @@ export const getTokenUsage = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateTokenUsage, {
+            const pageResult: PageResult<TokenUsage> = await ctx.runQuery(internal.analytics._paginateTokenUsage, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -331,7 +341,7 @@ export const getCSATSummary = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
         if (!project) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
         const conversations = await ctx.db
@@ -380,7 +390,7 @@ export const getCSATComments = query({
             throw new Error("Unauthenticated: identity required");
         }
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
         if (!project) return [];
 
         const ratings = await ctx.db
@@ -408,7 +418,7 @@ export const getProjectUsage = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { tokensConsumed: 0, conversationsCount: 0 };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
         if (!project) return { tokensConsumed: 0, conversationsCount: 0 };
 
         const usage = await ctx.db
@@ -455,7 +465,7 @@ export const getTagsSummary = action({
         let isDone = false;
 
         while (!isDone) {
-            const pageResult: any = await ctx.runQuery(internal.analytics._paginateConversationsForTags, {
+            const pageResult: PageResult<ConvWithTags> = await ctx.runQuery(internal.analytics._paginateConversationsForTags, {
                 projectId: args.projectId,
                 paginationOpts: { cursor, numItems: 200 },
             });
@@ -486,7 +496,7 @@ export const getProjectUsageSummary = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
         if (!project) throw new Error("Unauthorized: Project does not belong to your organization");
 
         // 1. Fetch project_usage record

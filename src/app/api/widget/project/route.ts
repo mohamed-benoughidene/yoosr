@@ -39,7 +39,7 @@ export async function GET(request: Request) {
             headers: corsHeaders()
         });
 
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: "Internal server error" }, {
             status: 500,
             headers: corsHeaders()

@@ -3,10 +3,10 @@
 import { ErrorFallback } from "@/components/error-fallback"
 
 export default function DesignStudioError({
-    error,
+
     reset,
 }: {
-    error: Error & { digest?: string }
+
     reset: () => void
 }) {
     return <ErrorFallback reset={reset} homeHref="/dashboard" />

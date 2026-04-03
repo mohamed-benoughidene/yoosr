@@ -1,4 +1,4 @@
-import { ComponentProps, useState, useReducer } from "react"
+import { useReducer } from "react"
 import { useOrganization } from "@clerk/nextjs"
 
 
@@ -43,9 +43,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, SlidersHorizontal, Tag } from "lucide-react"
 
-import { MessageCircle, Globe, Facebook, Mail, Instagram, Send } from "lucide-react"
+import { MessageCircle, Globe, Mail, Instagram, Send } from "lucide-react"
 
-import { useQuery, useMutation } from "convex/react"
+import { useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../convex/_generated/dataModel"

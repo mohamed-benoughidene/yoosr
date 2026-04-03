@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useProject } from "@/context/ProjectContext";
@@ -45,7 +45,7 @@ function NodePropertiesPanelContent({
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
     const labels = useQuery(api.labels.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
-    const data = (node?.data || {}) as Record<string, string>;
+    const data = useMemo(() => (node?.data || {}) as Record<string, string>, [node?.data]);
     const dataObj = node?.data as Record<string, string | string[] | undefined> | undefined;
     const [localVariations, setLocalVariations] = useState<string[]>(() => {
         const textVariations = dataObj?.textVariations as string[] | undefined;

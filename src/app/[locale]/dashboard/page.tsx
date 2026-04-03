@@ -1,14 +1,14 @@
 "use client"
 
 import { useTranslations, useLocale } from "next-intl"
+import { useState } from "react"
 
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
-    CardTitle,
-    CardFooter
+    CardTitle
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +42,9 @@ export default function DashboardPage() {
     const dateFnsLocale = localeMap[locale] ?? enUS
     const { activeProject } = useProject()
     const router = useRouter()
+
+    // Stable snapshot of "now" for this render — initialized once to avoid impure calls
+    const [currentTime] = useState(() => Date.now());
 
     const homeStats = useQuery(
         api.dashboard.getHomeStats,
@@ -196,7 +199,7 @@ export default function DashboardPage() {
                                             >
                                                 <TableCell className="font-medium">{conv.visitorName}</TableCell>
                                                 <TableCell className="text-muted-foreground">
-                                                    {conv.waitMs ? formatDistanceToNow(Date.now() - conv.waitMs, { addSuffix: true, locale: dateFnsLocale }) : "—"}
+                                                    {conv.waitMs ? formatDistanceToNow(currentTime - conv.waitMs, { addSuffix: true, locale: dateFnsLocale }) : "—"}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -224,7 +227,7 @@ export default function DashboardPage() {
                 <Card className="col-span-12 lg:col-span-5 flex flex-col">
                     <CardHeader>
                         <CardTitle>{t("recent_activity")}</CardTitle>
-                        <CardDescription>Live feed of what's happening right now.</CardDescription>
+                        <CardDescription>Live feed of what&apos;s happening right now.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-y-auto max-h-[400px] scrollbar-thin pr-2">
                         {!recentActivities || recentActivities.length === 0 ? (
@@ -331,7 +334,7 @@ export default function DashboardPage() {
                                 <div className="flex items-baseline gap-2">
                                     <h3 className="text-3xl font-bold">
                                         {todaySnapshot.avgWaitTimeTodayMs
-                                            ? formatDistanceToNow(Date.now() - todaySnapshot.avgWaitTimeTodayMs, { addSuffix: true, locale: dateFnsLocale }).replace('about ', '')
+                                            ? formatDistanceToNow(currentTime - todaySnapshot.avgWaitTimeTodayMs, { addSuffix: true, locale: dateFnsLocale }).replace('about ', '')
                                             : '—'}
                                     </h3>
                                 </div>

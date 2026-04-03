@@ -68,7 +68,7 @@ Return exactly a JSON array of strings containing the matching names, nothing el
                     const rawTags = parsed.map(t => String(t).toLowerCase().trim().replace(/\s+/g, "_")).filter(t => t.length > 0);
                     tags = rawTags.filter(t => validLabelsMap.has(t)).map(t => validLabelsMap.get(t)!);
                 }
-            } catch (e) {
+            } catch {
                 console.error("Failed to parse tags from LLM", result.text);
             }
 

@@ -12,7 +12,7 @@ const WhoItsFor = dynamic(() => import("@/components/landing/WhoItsFor").then(m 
 const TrustSection = dynamic(() => import("@/components/landing/TrustSection").then(m => ({ default: m.TrustSection })))
 const PricingTeaser = dynamic(() => import("@/components/landing/PricingTeaser").then(m => ({ default: m.PricingTeaser })))
 const FinalCTA = dynamic(() => import("@/components/landing/FinalCTA").then(m => ({ default: m.FinalCTA })))
-import { setRequestLocale as unstable_setRequestLocale, getTranslations } from "next-intl/server"
+import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 import type { Metadata } from "next"
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -34,7 +34,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     unstable_setRequestLocale(locale);
-    const t = await getTranslations({ locale, namespace: "landing" });
   return (
     <>
       <section id="home">

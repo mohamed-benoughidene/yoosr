@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useReducer } from "react"
 import { toast } from "sonner"
-import { Plus, Trash2, Building2, Bot, Pencil, X, Users, UserPlus } from "lucide-react"
+import { Plus, Trash2, Building2, Bot, Pencil, X, Users } from "lucide-react"
 import {
     Table,
     TableBody,
@@ -25,12 +25,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import {
     Dialog,
     DialogContent,
@@ -98,7 +93,7 @@ type DepartmentsAction =
     | { type: "SET_EDITING_DEPT_ID"; payload: Id<"departments"> | null }
     | { type: "SET_DEPT_PENDING_DELETE"; payload: Id<"departments"> | null }
     | { type: "RESET_DRAFT" }
-    | { type: "START_EDIT"; payload: any }
+    | { type: "START_EDIT"; payload: { _id: Id<"departments">; name: string; description?: string; routingMode?: "assigned" | "pooled"; botId?: Id<"bots">; tags?: string[] } }
     | { type: "ADD_TAG"; payload: string }
     | { type: "REMOVE_TAG"; payload: string }
 
@@ -252,7 +247,7 @@ export default function DepartmentsPage() {
         dispatch({ type: "RESET_DRAFT" })
     }
 
-    const handleEdit = (dept: unknown) => {
+    const handleEdit = (dept: { _id: Id<"departments">; name: string; description?: string; routingMode?: "assigned" | "pooled"; botId?: Id<"bots">; tags?: string[] }) => {
         dispatch({ type: "START_EDIT", payload: dept })
     }
 
@@ -527,10 +522,8 @@ export default function DepartmentsPage() {
                                                                                 key={m.userId}
                                                                                 variant="ghost"
                                                                                 className="w-full justify-start text-xs h-9"
-                                                                                onClick={(e) => {
-                                                                                    // The popover trigger automatically handles state, we just dispatch the action
+                                                                                onClick={() => {
                                                                                     handleAssignMember(m.userId, dept._id)
-                                                                                    // Clicking a portal item will close it if not intercepted
                                                                                 }}
                                                                             >
                                                                                 <Avatar className="h-5 w-5 mr-2">
@@ -553,7 +546,7 @@ export default function DepartmentsPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right flex items-center justify-end gap-1">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(dept)}>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(dept as { _id: Id<"departments">; name: string; description?: string; routingMode?: "assigned" | "pooled"; botId?: Id<"bots">; tags?: string[] })}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             {!dept.isDefault && (

@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
     MoreHorizontal,
-    MoreVertical,
     Clock,
     Globe,
     Building,
@@ -28,18 +27,13 @@ import {
     Check,
     X,
     ExternalLink,
-    Facebook,
     Mail,
-    UserCircle,
     Phone,
     MapPin,
     StickyNote,
-    Edit2,
-    Save,
     UserPlus,
     RefreshCw,
     Plus,
-    Tag,
     Loader2,
     ShoppingBag,
     Send,
@@ -59,7 +53,7 @@ import {
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
-import { useState, useEffect, useCallback, KeyboardEvent } from "react"
+import { useState, useCallback, KeyboardEvent } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
 import { useTranslations, useLocale } from "next-intl"
@@ -805,7 +799,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                         {t("section_activity") || "Activity"}
                     </h3>
                     <div className="space-y-3">
-                        {conversationEvents.map((event, idx) => {
+                        {conversationEvents.map((event) => {
                             const eventDate = new Date(event.createdAt);
                             const timeStr = eventDate.toLocaleDateString(locale, {
                                 month: "short",

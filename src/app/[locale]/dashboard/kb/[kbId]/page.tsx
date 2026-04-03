@@ -21,14 +21,12 @@ import { api } from "../../../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../../../convex/_generated/dataModel"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 
 export default function KnowledgeBaseDetailsPage() {
     const params = useParams()
     const rawKbId = params.kbId as string
-    const router = useRouter()
     const { activeProject } = useProject()
     const t = useTranslations("knowledge_base")
     const tCommon = useTranslations("common")

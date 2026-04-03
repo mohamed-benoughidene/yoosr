@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Conversation } from "./conversation-list"
 import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown, ChevronLeft, Info } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -518,9 +517,9 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                 const isLead = msg.senderType === "visitor";
                                 const isInternal = msg.isInternal;
 
-                                const timeFormat = new Intl.DateTimeFormat("en", {
-                                    timeStyle: "short"
-                                }).format(new Date(msg.createdAt ?? Date.now()));
+                                const timeFormat = msg.createdAt
+                                    ? new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(new Date(msg.createdAt))
+                                    : "";
 
                                 if (isLead) {
                                     return (

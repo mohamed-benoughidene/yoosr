@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "next-intl";
 import { formatDistanceToNow } from "date-fns";
-import { Separator } from "@/components/ui/separator";
 
 interface CSATData {
     average: number;
@@ -104,7 +103,7 @@ export function AnalyticsCSAT({ data, isLoading, comments }: Props) {
                                                 </span>
                                             </div>
                                             <p className="text-sm text-foreground italic leading-relaxed">
-                                                "{c.comment}"
+                                                &ldquo;{c.comment}&rdquo;
                                             </p>
                                         </div>
                                     ))}

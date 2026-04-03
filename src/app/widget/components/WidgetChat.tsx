@@ -241,6 +241,7 @@ export default function WidgetChat() {
         }, delay)
 
         return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectConfig])
 
     // Find or create conversation
@@ -268,7 +269,7 @@ export default function WidgetChat() {
                         dispatch({ type: "SET_SHOW_PRE_CHAT", payload: true })
                     }
                 }
-            } catch (e) {
+            } catch {
                 dispatch({ type: "SET_ERROR", payload: t("failedToConnect") })
             }
             dispatch({ type: "SET_LOADING", payload: false })

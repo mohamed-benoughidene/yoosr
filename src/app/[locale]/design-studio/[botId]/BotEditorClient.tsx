@@ -22,7 +22,7 @@ function BotEditor() {
     const params = useParams();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { activeProject } = useProject();
+    useProject();
 
     const botId = params.botId as Id<"bots">;
     const projectId = searchParams.get("project");

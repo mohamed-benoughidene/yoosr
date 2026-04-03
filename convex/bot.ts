@@ -1,27 +1,56 @@
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, ActionCtx } from "./_generated/server";
 import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
 import { decryptSecret } from "./lib/crypto";
 
+type ActionResult = {
+    newAttributes?: Record<string, unknown>;
+    nextNodeId?: string | null;
+    suspend?: boolean;
+    newBotId?: Id<"bots"> | null;
+    resetNodeId?: boolean;
+    clearAttributes?: boolean;
+    scheduleNextBlockAfter?: number;
+};
+
+type ActionDoc = { _type: string; [key: string]: unknown };
+
+type ExecutionNode = {
+    _id?: string;
+    id?: string;
+    name?: string;
+    actions?: ActionDoc[];
+    nextBlock?: string;
+    [key: string]: unknown;
+};
+
 /**
  * Executes a specific block type and returns the state mutation instructions.
  */
-async function executeAction(ctx: any, action: any, attributes: any, incomingMessage: string, conversationId: any, projectId: any, channel: any) {
+async function executeAction(
+    ctx: ActionCtx,
+    action: ActionDoc,
+    attributes: Record<string, unknown>,
+    incomingMessage: string,
+    conversationId: Id<"conversations">,
+    projectId: Id<"projects">,
+    channel: string
+): Promise<ActionResult> {
     switch (action._type) {
-        case "reply":
-            let textValue = action.text;
+        case "reply": {
+            let textValue = action.text as string | undefined;
             if (Array.isArray(action.textVariations) && action.textVariations.length > 0) {
-                textValue = action.textVariations[Math.floor(Math.random() * action.textVariations.length)];
+                textValue = action.textVariations[Math.floor(Math.random() * action.textVariations.length)] as string;
             }
-            const text = interpolate(textValue, attributes);
+            const text = interpolate(textValue ?? "", attributes);
             await ctx.runMutation(internal.bot.createBotMessage, {
                 conversationId,
                 projectId,
                 channel,
                 content: text,
-                attachments: action.buttons && action.buttons.length > 0 ? {
+                attachments: Array.isArray(action.buttons) && action.buttons.length > 0 ? {
                     type: "template",
                     payload: {
                         template_type: "button",
@@ -30,30 +59,32 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                 } : undefined
             });
             return { newAttributes: {} };
+        }
 
         case "capture_user_reply":
             if (!incomingMessage) {
                 return { suspend: true };
             }
             return {
-                newAttributes: { [action.attribute]: incomingMessage },
+                newAttributes: { [action.attribute as string]: incomingMessage },
             };
 
         case "set_attribute":
             return {
-                newAttributes: { [action.key]: evaluateExpression(action.value, attributes) }
+                newAttributes: { [action.key as string]: evaluateExpression(action.value as string | number, attributes) }
             };
 
         case "condition":
-            const result = evaluateCondition(action.expression, attributes);
+            const result = evaluateCondition(action.expression as string, attributes);
             return {
                 newAttributes: {},
-                nextNodeId: result ? action.truePath : action.falsePath,
+                nextNodeId: result ? (action.truePath as string | null) : (action.falsePath as string | null),
             };
 
         case "chatgpt_task": {
-            const systemPrompt = interpolate(action.prompt || action.systemPrompt || "", attributes);
-            const userInput = interpolate(action.userInput || "{{lastUserText}}", attributes);
+            const systemPrompt = interpolate((action.prompt || action.systemPrompt || "") as string, attributes);
+            const userInput = interpolate((action.userInput || "{{lastUserText}}") as string, attributes);
+            const assignKey = (action.assignTo as string) ?? "gpt_reply";
             try {
                 const _aiTaskConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
                 const projectInfo = _aiTaskConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: _aiTaskConv.projectId }) : undefined;
@@ -66,7 +97,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                     }
                 }
                 console.log("[BOT DEBUG] Executing AI block, model:", action.model, "projectDefault:", projectDefaultModel, "hasProjectKey:", !!projectApiKey)
-                const llmResult = await callAITask(systemPrompt, userInput, action.model, projectDefaultModel, projectApiKey);
+                const llmResult = await callAITask(systemPrompt, userInput, action.model as string | undefined, projectDefaultModel, projectApiKey);
                 // Log token usage
                 if (_aiTaskConv) {
                     try {
@@ -76,23 +107,24 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
                             tokensUsed: llmResult.tokensUsed,
                             operation: "ai_task",
                         });
-                    } catch (e: any) {
-                        console.warn("[BOT ENGINE] Failed to log token usage:", e.message);
+                    } catch (e: unknown) {
+                        console.warn("[BOT ENGINE] Failed to log token usage:", e instanceof Error ? e.message : String(e));
                     }
                 }
                 const parsed = tryParseJSON(llmResult.text);
                 return {
                     newAttributes: parsed
-                        ? { ...parsed, [action.assignTo ?? "gpt_reply"]: llmResult.text }
-                        : { [action.assignTo ?? "gpt_reply"]: llmResult.text },
-                    nextNodeId: action.successPath ?? null,
+                        ? { ...parsed, [assignKey]: llmResult.text }
+                        : { [assignKey]: llmResult.text },
+                    nextNodeId: (action.successPath as string | null) ?? null,
                 };
-            } catch (e: any) {
-                console.error("[BOT ENGINE] AI Task failed:", e.message);
+            } catch (e: unknown) {
+                console.error("[BOT ENGINE] AI Task failed:", e instanceof Error ? e.message : String(e));
+                const errorMsg = e instanceof Error ? e.message : String(e);
                 if (action.failurePath) {
-                    return { newAttributes: { ai_error: e.message }, nextNodeId: action.failurePath };
+                    return { newAttributes: { ai_error: errorMsg }, nextNodeId: action.failurePath as string };
                 }
-                return { newAttributes: { [action.assignTo ?? "gpt_reply"]: "", ai_error: e.message } };
+                return { newAttributes: { [assignKey]: "", ai_error: errorMsg } };
             }
         }
 
@@ -100,13 +132,13 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             if (attributes?.__kbDone === true) {
                 return {
                     newAttributes: { ...attributes, __kbDone: false },
-                    nextNodeId: action.truePath
+                    nextNodeId: action.truePath as string | null,
                 };
             }
 
             // Turn counter: stored as attributes.__kbTurns in the conversation bot state attributes bag.
             // Read it on entry. Default to 0 if absent.
-            let kbTurns = attributes?.__kbTurns ?? 0;
+            const kbTurns = (attributes?.__kbTurns as number) ?? 0;
 
             // 1. If incomingMessage is absent or empty: return { suspend: true }.
             if (!incomingMessage || incomingMessage.trim() === "") {
@@ -115,35 +147,37 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
 
             // 2. Run KB search with incomingMessage as query.
             const kbConversation = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-            // @ts-ignore
-            let kbResults: any[] = [];
+            if (!kbConversation) return { suspend: true };
+
+            let kbResults: Array<{ text: string; [key: string]: unknown }> = [];
             try {
                 // Using existing searchSimilarChunks action as the KB search pipeline.
-                kbResults = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
+                const rawResults = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
                     projectId: kbConversation.projectId,
                     query: incomingMessage,
                 });
-            } catch (e: any) {
-                console.error("[BOT ENGINE] KB search failed:", e.message);
+                kbResults = rawResults as Array<{ text: string; [key: string]: unknown }>;
+            } catch {
+                console.error("[BOT ENGINE] KB search failed");
             }
 
             // 3. If no result above threshold: return { nextNodeId: action.elsePath }. No reply.
             if (!kbResults || kbResults.length === 0) {
-                return { nextNodeId: action.elsePath };
+                return { nextNodeId: action.elsePath as string | null };
             }
 
             // 4. If results found:
             // a. systemPrompt = action.systemPrompt or fallback
-            let systemPrompt = action.systemPrompt || "You are a helpful support assistant. Answer only based on the provided context.";
+            let systemPrompt = (action.systemPrompt as string) || "You are a helpful support assistant. Answer only based on the provided context.";
 
             // b. Append chunks joined and capped at 3000 chars.
-            const contextText = kbResults.map((r: any) => r.text).join("\n").slice(0, 3000);
+            const contextText = kbResults.map((r) => r.text).join("\n").slice(0, 3000);
             systemPrompt += "\n\nUse the following context to answer:\n" + contextText;
 
             // c. Fetch conversation history as ChatMessage[]
             const messageDocs = await ctx.runQuery(internal.messages.listPublic, { conversationId, limit: 20 });
-            const history: ChatMessage[] = messageDocs.map((m: any) => ({
-                role: (m.senderType === "visitor" ? "user" : "assistant") as any,
+            const history: ChatMessage[] = messageDocs.map((m: { senderType: string; content: string }) => ({
+                role: (m.senderType === "visitor" ? "user" : "assistant") as "user" | "assistant",
                 content: m.content
             })).slice(-10);
 
@@ -160,7 +194,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const result = await callAIAssistant(
                 systemPrompt,
                 history,
-                action.model,
+                action.model as string | undefined,
                 projectInfo?.defaultModel,
                 apiKey
             );
@@ -185,14 +219,15 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const nextTurns = kbTurns + 1;
 
             // h. Persist via updated attributes returned to the engine.
-            const updatedAttributes = {
+            const assignToKey = (action.assignTo as string) ?? "kb_reply";
+            const updatedAttributes: Record<string, unknown> = {
                 ...attributes,
                 __kbTurns: nextTurns,
-                [action.assignTo ?? "kb_reply"]: result.text
+                [assignToKey]: result.text
             };
 
             // 5. If __kbTurns >= (action.maxTurns ?? 5): reset __kbTurns to 0, return { nextNodeId: action.truePath }.
-            if (nextTurns >= (action.maxTurns ?? 5)) {
+            if (nextTurns >= ((action.maxTurns as number) ?? 5)) {
                 return {
                     newAttributes: { ...updatedAttributes, __kbTurns: 0, __kbDone: true },
                     suspend: true
@@ -207,20 +242,20 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
         }
 
         case "web_request":
-            const url = interpolate(action.url, attributes);
-            const method = action.method || "GET";
+            const url = interpolate(action.url as string, attributes);
+            const method = (action.method as string) || "GET";
             const body = action.body ? JSON.stringify(interpolateObject(action.body, attributes)) : undefined;
             try {
-                const response = await fetch(url, { method, body, headers: action.headers });
-                if (!response.ok) return { newAttributes: {}, nextNodeId: action.failurePath };
+                const response = await fetch(url, { method, body, headers: action.headers as Record<string, string> | undefined });
+                if (!response.ok) return { newAttributes: {}, nextNodeId: action.failurePath as string | null };
                 const data = await response.json();
                 return { newAttributes: { api_results: JSON.stringify(data) } };
-            } catch (e) {
-                return { newAttributes: {}, nextNodeId: action.failurePath };
+            } catch {
+                return { newAttributes: {}, nextNodeId: action.failurePath as string | null };
             }
 
         case "replace_bot":
-            const newBotId = await ctx.runQuery(internal.bot.getBotIdBySlug, { slug: action.slug });
+            const newBotId = await ctx.runQuery(internal.bot.getBotIdBySlug, { slug: action.slug as string });
             if (newBotId) {
                 return {
                     newAttributes: {},
@@ -234,11 +269,11 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             const convState = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             await ctx.runMutation(internal.bot.assignToHuman, {
                 conversationId,
-                deptId: action.deptId,
+                deptId: action.deptId as string | undefined,
             });
 
             await ctx.runMutation(internal.conversations.logConversationEvent, {
-                projectId: convState.projectId,
+                projectId: convState?.projectId ?? projectId,
                 conversationId,
                 handledBy: "bot",
                 closed: false,
@@ -258,62 +293,66 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
             return { newAttributes: {}, suspend: true };
 
         case "mcp_tool_call":
-            return { newAttributes: { [action.assignTo ?? "mcp_result"]: "Tool Called" } };
+            return { newAttributes: { [(action.assignTo as string) ?? "mcp_result"]: "Tool Called" } };
 
         case "wait":
-            return { suspend: true, scheduleNextBlockAfter: (action.delaySeconds || 1) * 1000 };
+            return { suspend: true, scheduleNextBlockAfter: ((action.delaySeconds as number) || 1) * 1000 };
 
-        case "if_operating_hours":
+        case "if_operating_hours": {
             const ohCnv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-            const hours = await ctx.runQuery(internal.bot.getOperatingHoursInternal, { projectId: ohCnv.projectId });
+            const hours = await ctx.runQuery(internal.bot.getOperatingHoursInternal, { projectId: ohCnv?.projectId ?? projectId });
             let isOpen = true;
             if (hours && hours.enabled && hours.schedule && hours.timezone) {
                 isOpen = isOpenNow(hours.schedule, hours.timezone);
             }
-            return { nextNodeId: isOpen ? action.truePath : action.falsePath };
+            return { nextNodeId: isOpen ? (action.truePath as string | null) : (action.falsePath as string | null) };
+        }
 
-        case "if_online_agent":
+        case "if_online_agent": {
             const c2 = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
-            const onlineAgents = await ctx.runQuery(internal.bot.getOnlineAgentsInternal, { projectId: c2.projectId });
-            return { nextNodeId: onlineAgents.length > 0 ? action.truePath : action.falsePath };
+            const onlineAgents = await ctx.runQuery(internal.bot.getOnlineAgentsInternal, { projectId: c2?.projectId ?? projectId });
+            return { nextNodeId: onlineAgents.length > 0 ? (action.truePath as string | null) : (action.falsePath as string | null) };
+        }
 
-        case "change_department":
+        case "change_department": {
             const c3 = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             await ctx.runMutation(internal.conversations.updateInternal, {
                 id: conversationId,
-                departmentId: action.departmentId,
+                departmentId: action.departmentId as Id<"departments"> | undefined,
                 botPaused: true,
                 clearBotId: true,
             });
             await ctx.scheduler.runAfter(2000, internal.routing.routeConversation, {
                 conversationId: conversationId,
-                projectId: c3.projectId,
-                departmentId: action.departmentId,
+                projectId: c3?.projectId ?? projectId,
+                departmentId: action.departmentId as Id<"departments"> | undefined,
                 skipBot: true,
             });
             return { suspend: true };
+        }
 
         case "code_action":
-            const Parser = require("expr-eval").Parser;
-            const parser = new Parser();
-            let codeResult = null;
+            // Dynamic import for expr-eval (ESM-compatible)
+            const { Parser } = await import("expr-eval");
+            const parser2 = new Parser();
+            let codeResult: unknown = null;
             try {
                 // To avoid string syntax errors (e.g. Support == 'Support' instead of 'Support' == 'Support')
                 // we will use expr-eval's native variable support for {{var}} patterns.
                 // Replace all {{var}} with raw property paths (e.g. user_intent) so expr-eval handles evaluation safely.
-                const expression = (action.expression || "0").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, "$1");
-                const expr = parser.parse(expression);
-                codeResult = expr.evaluate(attributes);
-            } catch (e: any) {
-                console.error("Code action error:", e.message);
+                const expression = ((action.expression as string) || "0").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, "$1");
+                const expr = parser2.parse(expression);
+                codeResult = expr.evaluate(attributes as Record<string, number | string>);
+            } catch (e: unknown) {
+                console.error("Code action error:", e instanceof Error ? e.message : String(e));
             }
-            return { newAttributes: { [action.assignTo ?? "code_result"]: codeResult } };
+            return { newAttributes: { [(action.assignTo as string) ?? "code_result"]: codeResult } };
 
         case "clear_transcript":
             return { newAttributes: {}, clearAttributes: true };
 
         case "applyLabel": {
-            const labelName = interpolate(action.labelName || "", attributes);
+            const labelName = interpolate((action.labelName as string) || "", attributes);
             if (labelName) {
                 await ctx.runMutation(api.tags.assignTagToConversation, {
                     conversationId,
@@ -326,7 +365,7 @@ async function executeAction(ctx: any, action: any, attributes: any, incomingMes
         case "set_priority":
             await ctx.runMutation(internal.conversations.updateInternal, {
                 id: conversationId,
-                priority: action.priority
+                priority: action.priority as "low" | "normal" | "high" | "urgent" | undefined,
             });
             return { newAttributes: {} };
 
@@ -404,12 +443,12 @@ export const executeNextBlock = internalAction({
         const currentNodeId = conversation.currentNodeId;
         console.log(`[BOT ENGINE] currentNodeId is: ${currentNodeId}`);
 
-        let currentNode = null;
+        let currentNode: ExecutionNode | undefined;
         if (currentNodeId) {
-            currentNode = executionNodes.find((n: any) => n._id === currentNodeId || n.id === currentNodeId);
+            currentNode = (executionNodes as ExecutionNode[]).find((n) => n._id === currentNodeId || n.id === currentNodeId);
         }
         if (!currentNode) {
-            currentNode = executionNodes[0];
+            currentNode = executionNodes[0] as ExecutionNode | undefined;
         }
 
         console.log(`[BOT ENGINE] raw next node: ${JSON.stringify(currentNode)}`);
@@ -427,7 +466,7 @@ export const executeNextBlock = internalAction({
         let newBotId = null;
         let resetNode = false;
 
-        const actions = Array.isArray(currentNode.actions) ? currentNode.actions : [];
+        const actions = Array.isArray(currentNode.actions) ? currentNode.actions as ActionDoc[] : [];
 
         for (const action of actions) {
             console.log(`[BOT ENGINE] -> Running Action: ${action._type}`);
@@ -484,17 +523,17 @@ export const executeNextBlock = internalAction({
             botId: newBotId,
             botStepCount: nextStepCount,
             executionTrace: {
-                nodeId: currentNode._id || currentNode.id,
-                type: currentNode.name || "node",
-                action: actions.map((a: any) => a._type).join(",") || "continue",
+                nodeId: currentNode._id || currentNode.id || "",
+                type: (currentNode.name as string) || "node",
+                action: actions.map((a) => a._type).join(",") || "continue",
                 timestamp: Date.now(),
             },
         });
 
         // 6. Continue traversal if next node does not require user input
         if (updatedNodeId) {
-            const nextNode = executionNodes.find((n: any) => n._id === updatedNodeId || n.id === updatedNodeId);
-            const requiresInput = nextNode?.actions?.some((a: any) => a._type === "capture_user_reply");
+            const nextNode = (executionNodes as ExecutionNode[]).find((n) => n._id === updatedNodeId || n.id === updatedNodeId);
+            const requiresInput = nextNode?.actions?.some((a) => a._type === "capture_user_reply");
             console.log(`[BOT ENGINE] Next node is ${nextNode?.name}. Requires input? ${requiresInput}`);
 
             if (!requiresInput) {
@@ -545,7 +584,7 @@ export const getBotFlow = internalQuery({
     args: { botId: v.string() },
     handler: async (ctx, args) => {
         return await ctx.db.query("bot_flows")
-            .withIndex("by_botId", (q) => q.eq("botId", args.botId as any))
+            .withIndex("by_botId", (q) => q.eq("botId", args.botId as Id<"bots">))
             .first();
     }
 });
@@ -584,7 +623,7 @@ export const updateConversationState = internalMutation({
         }
 
         // Upsert bot execution state into the dedicated table
-        const botStatePatch: any = {
+        const botStatePatch: Record<string, unknown> = {
             attributes: args.attributes,
         };
         if (args.currentNodeId !== undefined) botStatePatch.currentNodeId = args.currentNodeId;
@@ -723,27 +762,30 @@ export const getProjectDefaultModel = internalQuery({
 });
 
 /** Utilities */
-function interpolate(template: string, attributes: Record<string, any>): string {
+function interpolate(template: string, attributes: Record<string, unknown>): string {
     if (!template) return "";
     return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (_, path) => {
-        return path.split('.').reduce((obj: any, key: string) => obj?.[key], attributes) ?? '';
+        return path.split('.').reduce((obj: unknown, key: string) => {
+            if (obj && typeof obj === 'object' && key in obj) return (obj as Record<string, unknown>)[key];
+            return undefined;
+        }, attributes) ?? '';
     });
 }
 
-function interpolateObject(obj: any, attributes: Record<string, any>): any {
+function interpolateObject(obj: unknown, attributes: Record<string, unknown>): unknown {
     if (typeof obj === 'string') return interpolate(obj, attributes);
     if (Array.isArray(obj)) return obj.map(v => interpolateObject(v, attributes));
     if (typeof obj === 'object' && obj !== null) {
-        const result: any = {};
+        const result: Record<string, unknown> = {};
         for (const key in obj) {
-            result[key] = interpolateObject(obj[key], attributes);
+            result[key] = interpolateObject((obj as Record<string, unknown>)[key], attributes);
         }
         return result;
     }
     return obj;
 }
 
-function evaluateCondition(expression: string, attributes: any): boolean {
+function evaluateCondition(expression: string, attributes: Record<string, unknown>): boolean {
     if (!expression) return false;
     try {
         const hydrated = interpolate(expression, attributes).trim();
@@ -774,10 +816,10 @@ function evaluateCondition(expression: string, attributes: any): boolean {
 
                 // For math ops, convert to number
                 if (['>', '<', '>=', '<='].includes(op)) {
-                    return (fn as any)(Number(left), Number(right));
+                    return (fn as (l: number, r: number) => boolean)(Number(left), Number(right));
                 }
 
-                return (fn as any)(left, right);
+                return (fn as (l: string, r: string) => boolean)(left, right);
             }
         }
 
@@ -788,7 +830,7 @@ function evaluateCondition(expression: string, attributes: any): boolean {
     }
 }
 
-function evaluateExpression(value: string | number, attributes: any): any {
+function evaluateExpression(value: string | number, attributes: Record<string, unknown>): unknown {
     if (typeof value === 'number') return value;
     if (typeof value !== 'string') return value;
 
@@ -826,7 +868,13 @@ function tryParseJSON(str: string) {
     }
 }
 
-function isOpenNow(schedule: any[], timezone: string): boolean {
+type ScheduleDay = {
+    day?: string;
+    open?: boolean;
+    slots?: Array<{ start: string; end: string }>;
+};
+
+function isOpenNow(schedule: ScheduleDay[], timezone: string): boolean {
     const now = new Date();
     try {
         const formatter = new Intl.DateTimeFormat('en-US', {

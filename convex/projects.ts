@@ -190,7 +190,8 @@ export const update = mutation({
             throw new Error("Project not found");
         }
 
-        const { id, ...updates } = args;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _id, ...updates } = args;
         // Filter out undefined values
         const cleanUpdates: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(updates)) {

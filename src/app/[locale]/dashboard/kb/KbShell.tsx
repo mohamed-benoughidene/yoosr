@@ -182,7 +182,7 @@ export default function KbShell({
                     <DialogHeader>
                         <DialogTitle>Create Knowledge Base</DialogTitle>
                         <DialogDescription>
-                            Add a new knowledge base to organize your project's data.
+                            Add a new knowledge base to organize your project&apos;s data.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">

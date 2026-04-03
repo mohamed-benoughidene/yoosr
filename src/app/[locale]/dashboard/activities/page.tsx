@@ -2,12 +2,10 @@
 
 import { useTranslations } from "next-intl";
 
-import { useState } from "react";
 import { useProject } from "@/context/ProjectContext";
 import { ActivitiesDataTable } from "@/components/activities/ActivitiesDataTable";
 import { getColumns, type ActivityLog } from "@/components/activities/columns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Loader2, Activity } from "lucide-react";
 import { usePaginatedQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";

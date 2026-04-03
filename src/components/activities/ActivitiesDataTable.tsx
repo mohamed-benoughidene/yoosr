@@ -31,6 +31,7 @@ export function ActivitiesDataTable<TData, TValue>({
     loadMore,
     status,
 }: DataTableProps<TData, TValue>) {
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
         columns,

@@ -155,7 +155,7 @@ export function NotificationBell() {
                                                     {notif.title}
                                                 </p>
                                                 <span className="shrink-0 text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
-                                                    {formatDistanceToNow(notif.createdAt ?? Date.now(), { addSuffix: true })}
+                                                    {notif.createdAt ? formatDistanceToNow(notif.createdAt, { addSuffix: true }) : "recently"}
                                                 </span>
                                             </div>
                                             {notif.body && (

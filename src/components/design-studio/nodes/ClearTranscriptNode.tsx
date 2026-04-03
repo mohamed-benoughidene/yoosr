@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Eraser } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-export function ClearTranscriptNode({ data, selected }: NodeProps) {
+export function ClearTranscriptNode({ selected }: NodeProps) {
     const t = useTranslations("designStudio");
     return (
         <div className={`group relative min-w-[150px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected ? "border-red-500 shadow-md" : "border-border hover:border-red-500/50"}`}>

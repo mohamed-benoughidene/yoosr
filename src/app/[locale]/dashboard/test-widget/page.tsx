@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,10 @@ export default function TestWidgetPage() {
     const { activeProject, isLoading } = useProject()
     const t = useTranslations("testWidget")
     const [iframeKey, setIframeKey] = useState(0)
-    const [baseUrl, setBaseUrl] = useState("")
-
-    useEffect(() => {
-        setBaseUrl(window.location.origin)
-    }, [])
+    // Initialize baseUrl once on client side
+    const [baseUrl] = useState(() =>
+        typeof window !== "undefined" ? window.location.origin : ""
+    )
 
     if (isLoading) {
         return (

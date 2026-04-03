@@ -185,7 +185,8 @@ export const sendFromWidget = internalMutation({
             // It is assigned, but `assignedTo` (which tracks human Clerk ID) is null.
             // This means one of the participants is a bot! Let's trigger the execution engine.
 
-            const botIdString = conversation.botId || conversation.participants[0];
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const _botIdString = conversation.botId || conversation.participants[0];
 
             await ctx.scheduler.runAfter(0, internal.bot.executeNextBlock, {
                 conversationId,

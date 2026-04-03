@@ -270,7 +270,6 @@ export default function OrdersPage() {
         importDispatch({ type: "SET_LOADING", payload: true })
         try {
             let totalInserted = 0
-            let totalSkipped = 0
 
             for (let i = 0; i < parsedOrders.length; i += 500) {
                 const chunk = parsedOrders.slice(i, i + 500)
@@ -279,7 +278,6 @@ export default function OrdersPage() {
                 }) as { inserted: number, skipped: number }
 
                 totalInserted += result.inserted
-                totalSkipped += result.skipped
             }
 
             importDispatch({ type: "RESET" })

@@ -26,7 +26,7 @@ export const sendPushToOrg = internalAction({
         process.env.VAPID_PUBLIC_KEY as string,
         process.env.VAPID_PRIVATE_KEY as string
       );
-    } catch (e) {
+    } catch {
       // Missing environment variables or malformed VAPID keys
       return;
     }
@@ -88,7 +88,7 @@ export const sendPushToAgent = internalAction({
         process.env.VAPID_PUBLIC_KEY as string,
         process.env.VAPID_PRIVATE_KEY as string
       );
-    } catch (e) {
+    } catch {
       // Missing environment variables or malformed VAPID keys
       return; // return silently on configuration error
     }

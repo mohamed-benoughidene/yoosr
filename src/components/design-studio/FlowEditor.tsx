@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     ReactFlow,
     Controls,
@@ -47,7 +47,7 @@ import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
 import { useTranslations } from "next-intl";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const nodeTypes: NodeTypes = {
     start: StartNode,
     reply: ReplyNode,
@@ -253,7 +253,8 @@ export function FlowEditor({
     );
 
     const handleNodesDelete = useCallback(
-        (deletedNodes: Node[]) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_deletedNodes: Node[]) => {
             notifyChange(getNodes(), edges);
         },
         [getNodes, edges, notifyChange]
@@ -281,6 +282,7 @@ export function FlowEditor({
                 };
             }
             // Return base node if not active
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { className, ...rest } = n;
             return rest as Node;
         });

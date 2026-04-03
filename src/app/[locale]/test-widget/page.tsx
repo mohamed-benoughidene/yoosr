@@ -1,6 +1,5 @@
 import {
-  setRequestLocale as unstable_setRequestLocale,
-  getTranslations
+  setRequestLocale as unstable_setRequestLocale
 } from "next-intl/server"
 import { TestWidgetClient } from "./TestWidgetClient"
 import type { Metadata } from "next"
@@ -14,7 +13,6 @@ export const metadata: Metadata = {
 export default async function TestWidgetPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     unstable_setRequestLocale(locale);
-    const t = await getTranslations("testWidget")
 
-    return <TestWidgetClient locale={locale} />
+    return <TestWidgetClient />
 }

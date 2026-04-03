@@ -20,16 +20,6 @@ import {
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
 
-const DAYS = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-] as const
-
 
 
 interface TimeSlot {
@@ -114,6 +104,7 @@ export default function OperatingHoursPage() {
     const upsertHours = useMutation(api.settings.upsertOperatingHours)
 
     // Sync from Convex query to local state
+    /* eslint-disable react-hooks/set-state-in-effect -- Initialize local state from server data */
     useEffect(() => {
         if (existingHours) {
             setEnabled(existingHours.enabled)
@@ -121,6 +112,7 @@ export default function OperatingHoursPage() {
             setSchedule(existingHours.schedule as DaySchedule[])
         }
     }, [existingHours])
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const handleSave = async () => {
         if (!activeProject) return

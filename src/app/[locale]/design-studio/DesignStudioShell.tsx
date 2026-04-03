@@ -4,7 +4,6 @@ import { useProject } from "@/context/ProjectContext";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { Id } from "../../../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";

@@ -7,7 +7,7 @@ import { ArrowLeft, Rocket, Zap, Shield, Globe, ChevronRight, MessageSquare, X }
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 
-export function TestWidgetClient({ locale }: { locale: string }) {
+export function TestWidgetClient() {
     const t = useTranslations("testWidget")
     const { activeProject, isLoading: isProjectLoading } = useProject()
     const [isOpen, setIsOpen] = useState(false)
@@ -149,7 +149,7 @@ export function TestWidgetClient({ locale }: { locale: string }) {
                             </div>
                             <h3 className="text-xl font-bold mb-3">{t("feature2")}</h3>
                             <p className="text-zinc-500 leading-relaxed">
-                                Security isn't an afterthought. Every layer of our stack is hardened against modern cyber threats.
+                                Security isn&apos;t an afterthought. Every layer of our stack is hardened against modern cyber threats.
                             </p>
                         </div>
                         <div className="p-8 rounded-2xl border border-zinc-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group">

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
+import { useEffect, useMemo } from "react";
+import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Loader2, Play, Terminal, X } from "lucide-react";
@@ -36,7 +36,7 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
         activeConv ? { conversationId: activeConv._id } : "skip"
     );
 
-    const executionLog = botState?.executionLog || [];
+    const executionLog = useMemo(() => botState?.executionLog || [], [botState?.executionLog]);
 
     // Auto-update highlight to the latest block executed
     useEffect(() => {

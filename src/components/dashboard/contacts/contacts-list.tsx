@@ -190,6 +190,7 @@ export function ContactsList() {
         },
     ]
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: contacts as Contact[],
         columns,

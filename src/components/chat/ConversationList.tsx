@@ -1,7 +1,6 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 import { Search, MessageCircle } from "lucide-react"
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useProject } from "@/context/ProjectContext"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useQuery, useMutation } from "convex/react"
+import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
 import { useState } from "react"
@@ -46,22 +45,6 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
 
     // Chat only shows conversations assigned to the current agent
     const conversations = allConversations.filter((c: { assignedTo?: string | null }) => c.assignedTo === user?.id)
-
-    const createConversation = useMutation(api.conversations.create)
-
-    const handleNewChat = async () => {
-        if (!activeProject || !user) return
-
-        try {
-            const conversationId = await createConversation({
-                projectId: activeProject._id,
-                visitorName: t("new_visitor_label"),
-            })
-            router.push(`/dashboard/chat?conversationId=${conversationId}`)
-        } catch (error) {
-            console.error("Error creating new chat:", error)
-        }
-    }
 
     const handleSelectConversation = (id: string) => {
         router.push(`/dashboard/chat?conversationId=${id}`)
