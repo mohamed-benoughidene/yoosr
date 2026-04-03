@@ -7,7 +7,7 @@ type ClerkIdentity = {
     subject: string;
     org_id?: string;
     org_role?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
 export const createOrder = mutation({
@@ -22,7 +22,7 @@ export const createOrder = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-        requireAdmin(identity as any);
+        requireAdmin(identity);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }
@@ -78,7 +78,7 @@ export const updateOrderStatus = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-        requireAdmin(identity as any);
+        requireAdmin(identity);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }
@@ -107,7 +107,7 @@ export const deleteOrder = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-        requireAdmin(identity as any);
+        requireAdmin(identity);
         if (!identity || !identity.org_id) {
             throw new Error("Not authenticated or no active organization");
         }

@@ -17,7 +17,7 @@ export default function AppsPage() {
     const router = useRouter()
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
-    const installedApps = (integrations ?? []).map((i: any) => i.provider)
+    const installedApps = (integrations ?? []).map((i: { provider?: string }) => i.provider).filter(Boolean) as string[]
     const loading = integrations === undefined
 
     return (

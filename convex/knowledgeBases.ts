@@ -27,7 +27,7 @@ export const get = query({
         const kb = await ctx.db.get(args.id);
         if (!kb) return null;
 
-        const check = await checkProjectOwnership(ctx, kb.projectId, identity as any);
+        const check = await checkProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
         if (!check) return null;
 
         return kb;
@@ -71,7 +71,7 @@ export const create = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        await assertProjectOwnership(ctx, args.projectId, identity as any);
+        await assertProjectOwnership(ctx, args.projectId, identity as unknown as { org_id: string });
 
         return await ctx.db.insert("knowledge_bases", args);
     },
@@ -105,7 +105,7 @@ export const addSource = mutation({
         const kb = await ctx.db.get(args.kbId);
         if (!kb) throw new ConvexError("Knowledge base not found");
 
-        await assertProjectOwnership(ctx, kb.projectId, identity as any);
+        await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
         const sourceId = await ctx.db.insert("knowledge_base_sources", {
             kbId: args.kbId,
@@ -136,7 +136,7 @@ export const removeSource = mutation({
         const kb = await ctx.db.get(source.kbId);
         if (!kb) throw new ConvexError("Knowledge base not found");
 
-        await assertProjectOwnership(ctx, kb.projectId, identity as any);
+        await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
         await ctx.db.delete(args.id);
     },

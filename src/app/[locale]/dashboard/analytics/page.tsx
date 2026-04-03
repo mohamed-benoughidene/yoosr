@@ -80,7 +80,7 @@ export default function AnalyticsPage() {
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchStats]);
 
-    const [volumeData, setVolumeData] = useState<{total: number, botHandled: number, agentHandled: number, daily: any[]} | undefined>(undefined);
+    const [volumeData, setVolumeData] = useState<{total: number, botHandled: number, agentHandled: number, daily: { date: string; bot: number; agent: number; total: number }[]} | undefined>(undefined);
     const [loadingVolume, setLoadingVolume] = useState(true);
     const fetchVolume = useAction(api.analytics.getConversationVolume);
 

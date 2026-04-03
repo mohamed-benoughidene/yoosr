@@ -179,7 +179,17 @@ export default function WidgetSetupPage() {
 
     useEffect(() => {
         if (activeProject?.widgetConfig) {
-            const config = activeProject.widgetConfig as Record<string, any>
+            const config = activeProject.widgetConfig as {
+                primaryColor?: string;
+                align?: "left" | "right";
+                logoUrl?: string;
+                welcomeDelay?: number;
+                enableWelcomeNotification?: boolean;
+                autoCloseMinutes?: number;
+                preChatFormEnabled?: boolean;
+                contactMethod?: "email" | "phone";
+                translations?: Record<string, string>;
+            }
             dispatch({ type: "SET_THEME", payload: config.primaryColor || "#6366f1" })
             dispatch({ type: "SET_ALIGN", payload: config.align || "right" })
             dispatch({ type: "SET_LOGO_URL", payload: config.logoUrl || "" })
@@ -334,7 +344,7 @@ export default function WidgetSetupPage() {
                                 <div className="space-y-2">
                                     <Label>{t("presets")}</Label>
                                     <div className="flex flex-wrap gap-2">
-                                        {Object.entries(THEMES).map(([key, theme]) => (
+                                        {(Object.entries(THEMES) as [string, { translationKey: string; color: string }][]).map(([key, theme]) => (
                                             <Button
                                                 key={key}
                                                 variant="outline"
@@ -346,7 +356,7 @@ export default function WidgetSetupPage() {
                                                     className="w-3 h-3 rounded-full"
                                                     style={{ backgroundColor: theme.color }}
                                                 />
-                                                {t((theme as any).translationKey)}
+                                                {t(theme.translationKey)}
                                             </Button>
                                         ))}
                                     </div>

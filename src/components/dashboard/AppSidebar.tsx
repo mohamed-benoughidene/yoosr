@@ -26,7 +26,18 @@ import {
 } from "@/components/ui/sidebar"
 import { FeedbackModal } from "@/components/feedback/FeedbackModal"
 
-const navGroups = [
+interface NavItem {
+  labelKey: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
     title: "",
     items: [
@@ -177,10 +188,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     const isHidden = item.labelKey === "analytics" && !isAdmin
                     return (
                       <SidebarMenuItem key={item.href} className={isHidden ? "hidden" : ""}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.labelKey as any)}>
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.labelKey)}>
                           <Link href={item.href}>
                             <item.icon className="size-4" />
-                            <span>{t(item.labelKey as any)}</span>
+                            <span>{t(item.labelKey)}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

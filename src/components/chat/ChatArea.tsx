@@ -592,7 +592,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             {/* Input */}
             <div className="p-4 border-t">
                 <div className="mb-3 flex items-center justify-between">
-                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as any)} className="w-[200px]">
+                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-[200px]">
                         <TabsList className="h-8 w-full grid grid-cols-2">
                             <TabsTrigger value="public" className="text-xs">{t("mode_public")}</TabsTrigger>
                             <TabsTrigger value="internal" className="text-xs">{t("mode_internal")}</TabsTrigger>

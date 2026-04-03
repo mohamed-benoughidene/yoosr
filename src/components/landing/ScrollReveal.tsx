@@ -6,8 +6,8 @@ import { useEffect, useRef, ReactNode } from "react"
 let sharedObserver: IntersectionObserver | null = null;
 const callbacks = new Map<Element, (entry: IntersectionObserverEntry) => void>();
 
-function getObserver(): IntersectionObserver {
-  if (typeof window === 'undefined') return null as any;
+function getObserver(): IntersectionObserver | null {
+  if (typeof window === 'undefined') return null;
   if (!sharedObserver) {
     sharedObserver = new IntersectionObserver(
       (entries) => {

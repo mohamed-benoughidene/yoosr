@@ -3,6 +3,7 @@ import {
     Sparkles,
     Instagram,
     Send,
+    LucideIcon,
 } from "lucide-react";
 
 export interface AppDefinition {
@@ -10,7 +11,7 @@ export interface AppDefinition {
     name: string;
     description: string;
     category: 'channel' | 'ai' | 'utility';
-    icon: any; // Lucide icon
+    icon: LucideIcon; // Lucide icon
     isPro?: boolean;
     isComingSoon?: boolean;
 }

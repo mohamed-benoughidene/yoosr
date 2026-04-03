@@ -14,7 +14,9 @@ const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
 
 function playBeep() {
     try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const AudioCtx = window.AudioContext || (window as unknown as Record<string, unknown>).webkitAudioContext as typeof AudioContext | undefined;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx()
         const oscillator = ctx.createOscillator()
         const gain = ctx.createGain()
         oscillator.connect(gain)
@@ -37,7 +39,7 @@ interface Message {
     type?: string
     senderId?: string
     senderName?: string
-    attachments?: any
+    attachments?: unknown
     fileId?: string
     fileName?: string
     _creationTime: number
@@ -68,7 +70,7 @@ interface ChatState {
     input: string;
     loading: boolean;
     error: string | null;
-    projectConfig: any;
+    projectConfig: Record<string, unknown> | null;
     conversationStatus: number;
     showRating: boolean;
     showPreChat: boolean;
@@ -84,7 +86,7 @@ type ChatAction =
     | { type: "SET_INPUT", payload: string }
     | { type: "SET_LOADING", payload: boolean }
     | { type: "SET_ERROR", payload: string | null }
-    | { type: "SET_PROJECT_CONFIG", payload: any }
+    | { type: "SET_PROJECT_CONFIG", payload: Record<string, unknown> }
     | { type: "SET_CONVERSATION_STATUS", payload: number }
     | { type: "SET_SHOW_RATING", payload: boolean }
     | { type: "SET_SHOW_PRE_CHAT", payload: boolean }
@@ -212,7 +214,7 @@ export default function WidgetChat() {
     useEffect(() => {
         if (!projectConfig || welcomeShownRef.current) return
 
-        const config = projectConfig?.widgetConfig
+        const config = projectConfig?.widgetConfig as { enableWelcomeNotification?: boolean; welcomeDelay?: number; translations?: { welcomeMessage?: string } } | undefined
         const enableWelcome = config?.enableWelcomeNotification ?? true
         const delay = (config?.welcomeDelay ?? 3) * 1000
         const welcomeMsg = t("system.welcome") || config?.translations?.welcomeMessage
@@ -226,7 +228,7 @@ export default function WidgetChat() {
                     if (prev.length > 0) return prev
                     return [{
                         _id: "welcome_" + Date.now(),
-                        content: welcomeMsg,
+                        content: welcomeMsg || "Welcome!",
                         senderType: "bot",
                         _creationTime: Date.now(),
                     }]
@@ -261,7 +263,7 @@ export default function WidgetChat() {
                 } else {
                     // Don't create conversation until first message
                     // Show Pre-chat form if configured and no data yet
-                    const enablePreChat = projectConfig.widgetConfig?.preChatFormEnabled ?? true
+                    const enablePreChat = (projectConfig?.widgetConfig as { preChatFormEnabled?: boolean } | undefined)?.preChatFormEnabled ?? true
                     if (!preChatData && enablePreChat) {
                         dispatch({ type: "SET_SHOW_PRE_CHAT", payload: true })
                     }
@@ -507,10 +509,10 @@ export default function WidgetChat() {
     }
 
     // Read widget config
-    const widgetConfig = projectConfig?.widgetConfig
+    const widgetConfig = projectConfig?.widgetConfig as { primaryColor?: string; translations?: { headerTitle?: string; onlineStatus?: string; preChatTitle?: string; preChatSubtitle?: string }; logoUrl?: string; contactMethod?: "email" | "phone" } | undefined
     const widgetColor = widgetConfig?.primaryColor || "#6366f1"
-    const widgetTitle = t("headerTitle") || widgetConfig?.translations?.headerTitle || projectConfig?.name
-    const onlineStatus = t("onlineStatus") || widgetConfig?.translations?.onlineStatus
+    const widgetTitle = t("headerTitle") || widgetConfig?.translations?.headerTitle || (projectConfig?.name as string | undefined) || "Chat"
+    const onlineStatus = t("onlineStatus") || widgetConfig?.translations?.onlineStatus || "Online"
     const logoUrl = widgetConfig?.logoUrl || ""
 
     if (error && !conversationId) {
@@ -604,12 +606,16 @@ export default function WidgetChat() {
                                                     : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
                                             }
                                         >
-                                            {msg.type === "system" ? t((msg.content.startsWith("widget.") ? msg.content.replace("widget.", "") : msg.content) as any) : msg.content}
+                                            {msg.type === "system" ? (() => {
+                                                const content = msg.content as string;
+                                                const key = content.startsWith("widget.") ? content.replace("widget.", "") : content;
+                                                return t(key);
+                                            })() : msg.content as string}
                                         </div>
                                     )}
-                                    {!isVisitor && msg.attachments?.payload?.buttons && (
+                                    {!isVisitor && (msg.attachments as { payload?: { buttons?: Array<{ label: string }> } } | undefined)?.payload?.buttons && (
                                         <div className="flex flex-col gap-2 mt-2">
-                                            {msg.attachments.payload.buttons.map((btn: any, i: number) => (
+                                            {(msg.attachments as { payload: { buttons: Array<{ label: string }> } }).payload.buttons.map((btn, i) => (
                                                 <button
                                                     key={`btn-${btn.label}-${i}`}
                                                     onClick={() => handleSendText(btn.label)}

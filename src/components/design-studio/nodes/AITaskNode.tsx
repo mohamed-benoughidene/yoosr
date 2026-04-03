@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 export function AITaskNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
-    const nodeData = data as Record<string, any>;
+    const nodeData = data as Record<string, string>;
     const { activeProject } = useProject();
     const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 

@@ -48,9 +48,9 @@ export function PricingTable() {
             {t("pricing.headline")}
           </h2>
           <p className="text-lg text-muted-foreground mt-3 max-w-2xl">
-            {t("pricing.description" as any) === "pricing.description" 
+            {t("pricing.description") === "pricing.description"
               ? "Choose the plan that's right for your business. No hidden fees."
-              : t("pricing.description" as any)}
+              : t("pricing.description")}
           </p>
 
           {/* Toggle Section */}
@@ -65,7 +65,7 @@ export function PricingTable() {
                 )}
                 onClick={() => setIsYearly(false)}
               >
-                {t("pricing.toggle.monthly" as any) === "pricing.toggle.monthly" ? "Monthly" : t("pricing.toggle.monthly" as any)}
+                {t("pricing.toggle.monthly") === "pricing.toggle.monthly" ? "Monthly" : t("pricing.toggle.monthly")}
               </span>
               <Switch checked={isYearly} onCheckedChange={setIsYearly} />
               <div className="flex items-center">
@@ -78,7 +78,7 @@ export function PricingTable() {
                   )}
                   onClick={() => setIsYearly(true)}
                 >
-                  {t("pricing.toggle.yearly" as any) === "pricing.toggle.yearly" ? "Yearly" : t("pricing.toggle.yearly" as any)}
+                  {t("pricing.toggle.yearly") === "pricing.toggle.yearly" ? "Yearly" : t("pricing.toggle.yearly")}
                 </span>
                 <span className="font-mono text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1.5">
                   -20%
@@ -100,7 +100,7 @@ export function PricingTable() {
             >
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
-                  {t("pricing.mostPopular" as any) === "pricing.mostPopular" ? "Most Popular" : t("pricing.mostPopular" as any)}
+                  {t("pricing.mostPopular") === "pricing.mostPopular" ? "Most Popular" : t("pricing.mostPopular")}
                 </div>
               )}
 

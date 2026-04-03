@@ -93,7 +93,14 @@ export function FeaturesGrid() {
   )
 }
 
-function FeatureCard({ feature }: { feature: any }) {
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  [key: string]: unknown;
+}
+
+function FeatureCard({ feature }: { feature: Feature }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (

@@ -400,7 +400,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                             {FIELDS.map((field) => (
                                 <InlineEditField
                                     key={field.key}
-                                    value={(conversation as any)[field.key] ?? ""}
+                                    value={((conversation as Record<string, unknown>)?.[field.key] as string) ?? ""}
                                     placeholder={field.placeholder}
                                     icon={field.icon}
                                     multiline={field.multiline}
@@ -449,7 +449,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                 <span className="text-muted-foreground min-w-[60px]">{t("priority_label")}: </span>
                                 <Select
                                     value={conversation.priority || "normal"}
-                                    onValueChange={(val: any) => {
+                                    onValueChange={(val: "low" | "normal" | "high" | "urgent") => {
                                         updateConversation({
                                             id: conversationId,
                                             priority: val
@@ -564,7 +564,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                             ) : labels.length === 0 ? (
                                                 <div className="text-xs text-muted-foreground p-2 text-center">{t("tags_none_configured")}</div>
                                             ) : (
-                                                labels.map((label: any) => {
+                                                labels.map((label: { _id?: string; name: string; color?: string }) => {
                                                     if (tags.includes(label.name)) return null;
                                                     return (
                                                         <Button
@@ -593,7 +593,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     <span className="text-xs text-muted-foreground italic">{t("tags_none_added")}</span>
                                 ) : (
                                     tags.map((tag: string) => {
-                                        const labelInfo = labels?.find((l: any) => l.name === tag);
+                                        const labelInfo = labels?.find((l: { name: string }) => l.name === tag);
                                         return (
                                             <Badge
                                                 key={tag}

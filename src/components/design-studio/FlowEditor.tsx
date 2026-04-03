@@ -16,6 +16,8 @@ import {
     BackgroundVariant,
     useReactFlow,
     type NodeTypes,
+    type NodeChange,
+    type EdgeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -45,6 +47,7 @@ import { NodePropertiesPanel } from "./NodePropertiesPanel";
 
 import { useTranslations } from "next-intl";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const nodeTypes: NodeTypes = {
     start: StartNode,
     reply: ReplyNode,
@@ -207,9 +210,9 @@ export function FlowEditor({
 
     // Track node/edge changes for auto-save
     const handleNodesChange = useCallback(
-        (changes: any) => {
+        (changes: NodeChange[]) => {
             // Filter out deletion events for the start node
-            const filteredChanges = changes.filter((change: any) => {
+            const filteredChanges = changes.filter((change) => {
                 if (change.type === 'remove') {
                     const node = nodes.find(n => n.id === change.id);
                     return node?.type !== 'start';
@@ -223,7 +226,7 @@ export function FlowEditor({
     );
 
     const handleEdgesChange = useCallback(
-        (changes: any) => {
+        (changes: EdgeChange[]) => {
             onEdgesChange(changes);
         },
         [onEdgesChange]

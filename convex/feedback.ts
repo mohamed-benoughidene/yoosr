@@ -5,7 +5,7 @@ type ClerkIdentity = {
   subject: string;
   org_id?: string;
   org_role?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export const submitFeedback = mutation({

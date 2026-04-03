@@ -75,8 +75,9 @@ export default function KnowledgeBaseDetailsPage() {
         try {
             await removeSource({ id })
             toast.success(t("source_deleted"))
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("delete_failed")
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("delete_failed")
             toast.error(errorMessage)
         }
     }
@@ -167,7 +168,13 @@ export default function KnowledgeBaseDetailsPage() {
                             {t("no_content")}
                         </div>
                     ) : (
-                        contents.map((item: any) => (
+                        contents.map((item: {
+                            _id: Id<"knowledge_base_sources">;
+                            type?: string;
+                            value?: string;
+                            status?: string;
+                            _creationTime?: number;
+                        }) => (
                             <div key={item._id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 items-center text-sm hover:bg-muted/10 transition-colors min-w-[800px]">
                                 <div className="col-span-1">
                                     {item.type === 'url' && (
@@ -192,13 +199,13 @@ export default function KnowledgeBaseDetailsPage() {
                                 <div className="col-span-6 font-medium">
                                     {item.type === 'url' ? (
                                         <a href={item.value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                                            {item.value.length > 50 ? item.value.substring(0, 50) + '...' : item.value}
+                                            {item.value && item.value.length > 50 ? item.value.substring(0, 50) + '...' : item.value}
                                         </a>
                                     ) : item.type === 'file' ? (
                                         <span className="text-muted-foreground">{t("uploaded_file")}</span>
                                     ) : (
                                         <span className="text-muted-foreground truncate block">
-                                            {item.value.length > 80 ? item.value.substring(0, 80) + '...' : item.value}
+                                            {item.value && item.value.length > 80 ? item.value.substring(0, 80) + '...' : item.value}
                                         </span>
                                     )}
                                 </div>

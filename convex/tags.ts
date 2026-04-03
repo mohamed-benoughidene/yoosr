@@ -28,7 +28,7 @@ export const extractGenerativeTags = internalAction({
 
         if (!labels || labels.length === 0) return;
 
-        const validLabelNames = labels.map((l: any) => l.name);
+        const validLabelNames = labels.map((l: { name: string }) => l.name);
         const validLabelsMap = new Map(
             validLabelNames.map((name: string) => [
                 name.toLowerCase().trim().replace(/\s+/g, "_"),
@@ -37,7 +37,7 @@ export const extractGenerativeTags = internalAction({
         );
 
         // Build transcript
-        const transcript = messages.map((m: any) => `${m.senderType}: ${m.content}`).join("\n");
+        const transcript = messages.map((m: { senderType: string; content: string }) => `${m.senderType}: ${m.content}`).join("\n");
 
         const prompt = `
 You are an expert support conversation analyzer.
@@ -135,7 +135,7 @@ export const assignTagToConversation = mutation({
         const conversation = await ctx.db.get(args.conversationId);
         if (!conversation) throw new ConvexError("Conversation not found");
 
-        await assertProjectOwnership(ctx, conversation.projectId, identity as any);
+        await assertProjectOwnership(ctx, conversation.projectId, identity as unknown as { org_id: string });
 
         const existingTags = conversation.tags || [];
         if (!existingTags.includes(args.tagName)) {
@@ -171,7 +171,7 @@ export const removeTagFromConversation = mutation({
         const conversation = await ctx.db.get(args.conversationId);
         if (!conversation) throw new ConvexError("Conversation not found");
 
-        await assertProjectOwnership(ctx, conversation.projectId, identity as any);
+        await assertProjectOwnership(ctx, conversation.projectId, identity as unknown as { org_id: string });
 
         const existingTags = conversation.tags || [];
         const newTags = existingTags.filter(t => t !== args.tagName);

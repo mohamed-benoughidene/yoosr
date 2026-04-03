@@ -28,8 +28,8 @@ export const upsert = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
         if (!identity) throw new Error("Not authenticated");
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
 
         // Check if we already have this provider for this project
         const existing = await ctx.db
@@ -39,7 +39,7 @@ export const upsert = mutation({
             .first();
 
         if (existing) {
-            const updates: Record<string, any> = {};
+            const updates: Record<string, unknown> = {};
             if (args.credentials !== undefined) updates.credentials = args.credentials;
             if (args.enabled !== undefined) updates.enabled = args.enabled;
             await ctx.db.patch(existing._id, updates);
@@ -69,7 +69,7 @@ export const upsertInternal = internalMutation({
             .filter((q) => q.eq(q.field("provider"), args.provider))
             .first();
         if (existing) {
-            const updates: Record<string, any> = {};
+            const updates: Record<string, unknown> = {};
             if (args.credentials !== undefined) updates.credentials = args.credentials;
             if (args.enabled !== undefined) updates.enabled = args.enabled;
             await ctx.db.patch(existing._id, updates);
@@ -89,15 +89,15 @@ export const upsertInternal = internalMutation({
 export const remove = mutation({
     args: { id: v.id("integrations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity() as any;
-        requireAdmin(identity);
+        const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
 
         const integration = await ctx.db.get(args.id);
         if (!integration) throw new Error("Integration not found");
 
         const project = await ctx.db.get(integration.projectId);
-        if (!project || project.orgId !== identity.org_id) {
+        if (!project || project.orgId !== (identity as unknown as { org_id: string }).org_id) {
             throw new ConvexError("Unauthorized");
         }
 
@@ -138,7 +138,7 @@ export const saveChannelIntegration = action({
         });
 
         // Encrypt the sensitive token per provider
-        let encryptedCredentials = { ...args.credentials };
+        const encryptedCredentials: Record<string, unknown> = { ...args.credentials };
 
         if (args.provider === "telegram" && args.credentials.bot_token) {
             encryptedCredentials.bot_token = await encryptSecret(args.credentials.bot_token, key);
@@ -219,7 +219,7 @@ export const getDecryptedWhatsAppCredentials = internalQuery({
         const key = process.env.INTEGRATIONS_ENCRYPTION_KEY;
         if (!key) throw new Error("Encryption key not configured");
 
-        const credentials = row.credentials as any;
+        const credentials = row.credentials as { access_token: string; phone_number_id?: string; verify_token?: string };
         const decryptedToken = await decryptSecret(credentials.access_token, key);
 
         return {
@@ -245,7 +245,7 @@ export const getWhatsAppIntegrationByPhoneNumberId = internalQuery({
             .take(500);
 
         return integrations.find(
-            (i) => (i.credentials as any)?.phone_number_id === args.phoneNumberId
+            (i) => (i.credentials as { phone_number_id?: string })?.phone_number_id === args.phoneNumberId
         );
     },
 });

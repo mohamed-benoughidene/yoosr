@@ -30,15 +30,24 @@ export default function ActivitiesPage() {
         return <div className="p-8 text-muted-foreground">Select a project to view activities.</div>;
     }
 
-    const mappedLogs: ActivityLog[] = (logs ?? []).map((log: any) => ({
+    const mappedLogs: ActivityLog[] = (logs ?? []).map((log: {
+        _id: string;
+        actorName?: string;
+        action?: string;
+        actionType?: string;
+        targetType?: string;
+        targetId?: string;
+        createdAt?: number;
+        _creationTime?: number;
+    }) => ({
         _id: log._id,
-        actorName: log.actorName,
-        action: log.action,
-        actionType: log.actionType,
-        targetType: log.targetType,
+        actorName: log.actorName ?? "Unknown",
+        action: log.action ?? "unknown",
+        actionType: log.actionType ?? "unknown",
+        targetType: log.targetType ?? "unknown",
         targetId: log.targetId,
-        createdAt: log.createdAt ?? log._creationTime,
-        _creationTime: log._creationTime,
+        createdAt: log.createdAt ?? log._creationTime ?? 0,
+        _creationTime: log._creationTime ?? 0,
     }));
 
     return (

@@ -26,7 +26,7 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
     );
 
     // Find the most recent conversation involving this bot
-    const activeConv = recentConversations?.find((c: any) =>
+    const activeConv = recentConversations?.find((c: { botId?: string; participants?: string[] }) =>
         c.botId === botId || (c.participants && c.participants.includes(botId))
     );
 
@@ -81,7 +81,7 @@ export function DebuggerPanel({ projectId, botId, onActiveNodeChange, onClose }:
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {executionLog.map((log: any, i: number) => (
+                            {executionLog.map((log: { timestamp: number; action: string; nodeId: string; type?: string }, i: number) => (
                                 <div key={i} className="text-xs space-y-1">
                                     <div className="flex justify-between items-center text-muted-foreground">
                                         <span className="font-mono">{new Date(log.timestamp).toLocaleTimeString()}</span>

@@ -216,7 +216,7 @@ http.route({
         }
 
         const conversation = await ctx.runQuery(internal.conversations.getInternal, {
-            id: id as any,
+            id: id as Id<"conversations">,
         });
 
         // Filter sensitive data
@@ -253,7 +253,7 @@ http.route({
 
         // Update conversation record (legacy)
         await ctx.runMutation(internal.analytics.submitCSATInternal, {
-            conversationId: id as any,
+            conversationId: id as Id<"conversations">,
             rating,
             comment: feedback,
         });
@@ -282,7 +282,7 @@ http.route({
         }
 
         const conversation = await ctx.runQuery(internal.conversations.findByVisitor, {
-            projectId: projectId as any,
+            projectId: projectId as Id<"projects">,
             visitorId,
         });
 
@@ -309,7 +309,7 @@ http.route({
         }
 
         const messages = await ctx.runQuery(internal.messages.listPublic, {
-            conversationId: conversationId as any,
+            conversationId: conversationId as Id<"conversations">,
             limit: 100,
         });
 
@@ -411,9 +411,11 @@ http.route({
                                             let senderName = message.from;
 
                                             if (change.value.contacts && Array.isArray(change.value.contacts)) {
-                                                const contact = change.value.contacts.find((c: any) => c.wa_id === message.from);
+                                                const contact = change.value.contacts.find(
+                                                    (c: { wa_id?: string; profile?: { name?: string } }) => c.wa_id === message.from
+                                                );
                                                 if (contact) {
-                                                    senderId = contact.wa_id;
+                                                    senderId = contact.wa_id || senderId;
                                                     senderName = contact.profile?.name || senderId;
                                                 }
                                             }

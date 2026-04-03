@@ -1,4 +1,4 @@
-import { action, internalAction, internalQuery, internalMutation } from "./_generated/server";
+import { action, internalAction, internalQuery, internalMutation, ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -65,7 +65,7 @@ function splitIntoChunks(text: string, maxLen = 500): string[] {
 }
 
 async function processAndStoreChunks(
-    ctx: any,
+    ctx: ActionCtx,
     args: { sourceId: Id<"knowledge_base_sources">; projectId: Id<"projects"> },
     chunks: string[]
 ) {
@@ -98,7 +98,7 @@ async function processAndStoreChunks(
                 }),
             });
             const data = await response.json();
-            const output = data.data ? data.data.map((d: any) => d.embedding) : [];
+            const output = data.data ? data.data.map((d: { embedding: number[] }) => d.embedding) : [];
 
             const is1D = Array.isArray(output) && output.length > 0 && typeof output[0] === 'number';
             const embeddings = is1D ? [output] : output;
@@ -119,8 +119,9 @@ async function processAndStoreChunks(
                 console.error("Unexpected embedding format from OpenRouter", data);
                 hasErrors = true;
             }
-        } catch (e: any) {
-            console.error("Failed to embed chunk batch", e.message);
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error("Failed to embed chunk batch", errorMessage);
             hasErrors = true;
         }
     }
@@ -166,8 +167,9 @@ export const indexSource = internalAction({
 
                 const chunks = splitIntoChunks(cleanedText);
                 await processAndStoreChunks(ctx, args, chunks);
-            } catch (e: any) {
-                console.error("Failed to process URL source:", e.message);
+            } catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                console.error("Failed to process URL source:", errorMessage);
                 await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
             }
         } else if (source.type === "file") {
@@ -203,8 +205,9 @@ export const indexSource = internalAction({
                     const chunks = splitIntoChunks(cleanedText);
                     await processAndStoreChunks(ctx, args, chunks);
                 }
-            } catch (e: any) {
-                console.error("Failed to process file source:", e.message);
+            } catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                console.error("Failed to process file source:", errorMessage);
                 await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
             }
         } else {
@@ -221,13 +224,13 @@ export const searchSimilarChunks = internalAction({
         projectId: v.id("projects"),
         query: v.string(),
     },
-    handler: async (ctx, args): Promise<any[]> => {
+    handler: async (ctx, args): Promise<unknown[]> => {
         if (!process.env.OPENROUTER_API_KEY) {
             console.error("Missing OPENROUTER_API_KEY");
             return [];
         }
 
-        let embedding: any;
+        let embedding: { data: { embedding: number[] }[] };
         try {
             const response = await fetch("https://openrouter.ai/api/v1/embeddings", {
                 method: "POST",
@@ -242,8 +245,9 @@ export const searchSimilarChunks = internalAction({
             });
             const data = await response.json();
             embedding = data.data?.[0]?.embedding ?? data.data;
-        } catch (error: any) {
-            console.error("OpenRouter API error", error.message);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("OpenRouter API error", errorMessage);
             return [];
         }
 
@@ -263,17 +267,17 @@ export const searchSimilarChunks = internalAction({
             filter: (q) => q.eq("projectId", args.projectId),
             limit: 5,
         });
-        const relevantResults = results.filter((r: any) => r._score >= MIN_RELEVANCE_SCORE);
+        const relevantResults = results.filter((r: { _score: number }) => r._score >= MIN_RELEVANCE_SCORE);
 
 
         const chunks = await Promise.all(
-            relevantResults.map(async (result: any): Promise<any> => {
-                const chunk = await ctx.runQuery(internal.knowledge.getChunkInternal, { id: result._id as any });
+            relevantResults.map(async (result: { _id: Id<"knowledge_base_chunks">; _score: number }): Promise<unknown> => {
+                const chunk = await ctx.runQuery(internal.knowledge.getChunkInternal, { id: result._id });
                 return chunk;
             })
         );
 
-        const validChunks = chunks.filter((c: any) => c !== null);
+        const validChunks = chunks.filter((c: unknown) => c !== null);
 
         if (validChunks.length === 0) {
             await ctx.runMutation(internal.analytics.logUnansweredQuery, {

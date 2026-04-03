@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 export function ReplyNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
-    const nodeData = data as Record<string, any>;
+    const nodeData = data as Record<string, string | string[] | Array<Record<string, unknown>> | undefined>;
 
     return (
         <div
@@ -30,9 +30,9 @@ export function ReplyNode({ data, selected }: NodeProps) {
                     <span className="text-xs font-semibold truncate leading-tight">
                         {t("blocks.reply.name")}
                     </span>
-                    {nodeData.label && (
+                    {(nodeData.label as string) && (
                         <span className="text-[10px] text-muted-foreground truncate leading-tight">
-                            {nodeData.label}
+                            {nodeData.label as string}
                         </span>
                     )}
                 </div>
@@ -40,18 +40,23 @@ export function ReplyNode({ data, selected }: NodeProps) {
 
             {/* Body */}
             <div className="px-4 py-3">
-                {nodeData.textVariations && nodeData.textVariations.length > 0 ? (
+                {(() => {
+                    const variations = nodeData.textVariations as string[] | undefined;
+                    const buttons = nodeData.buttons as Array<{ label?: string }> | undefined;
+                    return (
+                    <>
+                    {variations && variations.length > 0 ? (
                     <div className="space-y-1">
                         <p className="text-[10px] text-muted-foreground/70 uppercase">{t("nodes.randomFrom")}</p>
-                        {nodeData.textVariations.map((v: string, i: number) => (
+                        {variations.map((v, i) => (
                             <p key={i} className="text-xs text-muted-foreground line-clamp-2 bg-muted/50 p-1 rounded">
                                 {v}
                             </p>
                         ))}
                     </div>
-                ) : nodeData.text ? (
+                ) : (nodeData.text as string | undefined) ? (
                     <p className="text-xs text-muted-foreground line-clamp-3">
-                        {nodeData.text}
+                        {nodeData.text as string}
                     </p>
                 ) : (
                     <p className="text-xs italic text-muted-foreground/50">
@@ -60,10 +65,10 @@ export function ReplyNode({ data, selected }: NodeProps) {
                 )}
 
                 {/* Buttons preview */}
-                {nodeData.buttons && nodeData.buttons.length > 0 && (
+                {buttons && buttons.length > 0 && (
                     <div className="mt-2 space-y-1">
-                        {nodeData.buttons.map(
-                            (btn: any, i: number) => (
+                        {buttons.map(
+                            (btn, i) => (
                                 <div
                                     key={i}
                                     className="rounded-md border border-dashed px-2 py-1 text-center text-[10px] text-muted-foreground"
@@ -74,6 +79,9 @@ export function ReplyNode({ data, selected }: NodeProps) {
                         )}
                     </div>
                 )}
+                </>
+                )
+                })()}
             </div>
 
             <Handle

@@ -4,6 +4,7 @@ import { useState, useReducer } from "react"
 import { useTranslations } from "next-intl"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
+import { Id } from "../../../../../convex/_generated/dataModel"
 import { useProject } from "@/context/ProjectContext"
 import {
     Table,
@@ -43,7 +44,7 @@ type FilterType = "all" | "new" | "confirmed" | "cancelled"
 interface ImportState {
     importOpen: boolean;
     importLoading: boolean;
-    parsedOrders: any[];
+    parsedOrders: { contactName: string; phone?: string; product: string; notes?: string; status?: string }[];
     skippedCount: number;
     importError: string | null;
 }
@@ -51,7 +52,7 @@ interface ImportState {
 type ImportAction =
     | { type: "OPEN_IMPORT" }
     | { type: "CLOSE_IMPORT" }
-    | { type: "SET_PARSED"; payload: { data: any[], skipped: number } }
+    | { type: "SET_PARSED"; payload: { data: { contactName: string; phone?: string; product: string; notes?: string; status?: string }[], skipped: number } }
     | { type: "SET_LOADING"; payload: boolean }
     | { type: "SET_ERROR"; payload: string | null }
     | { type: "RESET" }
@@ -98,7 +99,7 @@ export default function OrdersPage() {
         return order.status === filter
     })
 
-    const handleUpdateStatus = async (orderId: any, status: "new" | "confirmed" | "cancelled") => {
+    const handleUpdateStatus = async (orderId: Id<"orders">, status: "new" | "confirmed" | "cancelled") => {
         try {
             await updateOrderStatus({ orderId, status })
             toast.success(t("order_marked", { status }))
@@ -107,7 +108,7 @@ export default function OrdersPage() {
         }
     }
 
-    const handleDelete = async (orderId: any) => {
+    const handleDelete = async (orderId: Id<"orders">) => {
         if (!confirm(t("confirm_delete"))) return;
         try {
             await deleteOrder({ orderId })
@@ -186,7 +187,7 @@ export default function OrdersPage() {
 
         const fileExt = file.name.split('.').pop()?.toLowerCase()
 
-        const processData = (data: any[]) => {
+        const processData = (data: Record<string, unknown>[]) => {
             let skipped = 0
             const mapped = data.map(row => {
                 const contactName = row["Contact Name"] || row.contactName
@@ -198,13 +199,13 @@ export default function OrdersPage() {
                 }
 
                 return {
-                    contactName,
-                    phone: row["Phone"] || row.phone || undefined,
-                    product,
-                    notes: row["Notes"] || row.notes || undefined,
-                    status: row["Status"] || row.status || undefined,
+                    contactName: String(contactName),
+                    phone: row["Phone"] ? String(row["Phone"]) : (row.phone ? String(row.phone) : undefined),
+                    product: String(product),
+                    notes: row["Notes"] ? String(row["Notes"]) : (row.notes ? String(row.notes) : undefined),
+                    status: row["Status"] ? String(row["Status"]) : (row.status ? String(row.status) : undefined),
                 }
-            }).filter(Boolean)
+            }).filter(Boolean) as Array<{ contactName: string; phone?: string; product: string; notes?: string; status?: string }>
 
             importDispatch({ type: "SET_PARSED", payload: { data: mapped, skipped } })
 
@@ -220,7 +221,7 @@ export default function OrdersPage() {
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    processData(results.data)
+                    processData(results.data as Record<string, unknown>[])
                 },
                 error: (error: Error) => {
                     importDispatch({ type: "SET_ERROR", payload: `${t("error_csv")}: ${error.message}` })
@@ -235,9 +236,10 @@ export default function OrdersPage() {
                     const wsname = wb.SheetNames[0]
                     const ws = wb.Sheets[wsname]
                     const data = xlsx.utils.sheet_to_json(ws)
-                    processData(data)
-                } catch (error: any) {
-                    importDispatch({ type: "SET_ERROR", payload: `${t("error_excel")}: ${error.message}` })
+                    processData(data as Record<string, unknown>[])
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    importDispatch({ type: "SET_ERROR", payload: `${t("error_excel")}: ${errorMessage}` })
                 }
             }
             reader.readAsBinaryString(file)
@@ -251,8 +253,9 @@ export default function OrdersPage() {
                         return
                     }
                     processData(data)
-                } catch (error: any) {
-                    importDispatch({ type: "SET_ERROR", payload: `${t("error_json")}: ${error.message}` })
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    importDispatch({ type: "SET_ERROR", payload: `${t("error_json")}: ${errorMessage}` })
                 }
             }
             reader.readAsText(file)
@@ -285,8 +288,9 @@ export default function OrdersPage() {
             // Allow re-uploading the same file
             const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
             if (fileInput) fileInput.value = ''
-        } catch (error: any) {
-            toast.error(t("import_failed_msg", { error: error.message }))
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error(t("import_failed_msg", { error: errorMessage }))
         } finally {
             importDispatch({ type: "SET_LOADING", payload: false })
         }

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 export function WebRequestNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
-    const nodeData = data as Record<string, any>;
+    const nodeData = data as Record<string, string>;
 
     return (
         <div

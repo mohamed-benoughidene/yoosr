@@ -21,7 +21,7 @@ const TARGET_COLORS: Record<string, "default" | "secondary" | "outline"> = {
     bot: "outline",
 };
 
-export const getColumns = (t: any): ColumnDef<ActivityLog>[] => [
+export const getColumns = (t: (key: string) => string): ColumnDef<ActivityLog>[] => [
     {
         accessorKey: "createdAt",
         header: t("activity_log.date"),

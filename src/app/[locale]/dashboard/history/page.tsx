@@ -43,7 +43,11 @@ export default function HistoryPage() {
 
     const conversations = allConversations
 
-    const filteredConversations = conversations.filter((convo: any) => {
+    const filteredConversations = conversations.filter((convo: {
+        visitorName?: string;
+        lastMessage?: string;
+        updatedAt?: number;
+    }) => {
         const matchesSearch = convo.visitorName?.toLowerCase().includes(search.toLowerCase()) ||
             convo.lastMessage?.toLowerCase().includes(search.toLowerCase())
 

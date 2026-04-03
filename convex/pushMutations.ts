@@ -87,7 +87,7 @@ export const registerPushSubscription = mutation({
             createdAt: Date.now(),
           });
         } else {
-          const orgId = (identity as any).org_id;
+          const orgId = (identity as unknown as { org_id: string }).org_id;
           await ctx.db.insert("push_subscriptions", {
             userId: identity.subject,
             orgId: orgId ?? "",

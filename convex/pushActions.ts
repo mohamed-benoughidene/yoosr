@@ -37,7 +37,7 @@ export const sendPushToOrg = internalAction({
     });
 
     await Promise.allSettled(
-      subscriptions.map(async (sub: any) => {
+      subscriptions.map(async (sub: { subscription: string; userId: string }) => {
         try {
           const parsedSubscription = JSON.parse(sub.subscription);
 
@@ -52,8 +52,9 @@ export const sendPushToOrg = internalAction({
           if (!isTrusted) return;
 
           await webpush.sendNotification(parsedSubscription, payload);
-        } catch (error: any) {
-          if (error?.statusCode === 410 || error?.statusCode === 404) {
+        } catch (error: unknown) {
+          const err = error as { statusCode?: number };
+          if (err?.statusCode === 410 || err?.statusCode === 404) {
             await ctx.runMutation(internal.pushMutations.removePushSubscription, {
               userId: sub.userId,
             });
@@ -111,8 +112,9 @@ export const sendPushToAgent = internalAction({
       if (!isTrusted) return;
 
       await webpush.sendNotification(parsedSubscription, payload);
-    } catch (error: any) {
-      if (error?.statusCode === 410 || error?.statusCode === 404) {
+    } catch (error: unknown) {
+      const err = error as { statusCode?: number };
+      if (err?.statusCode === 410 || err?.statusCode === 404) {
         await ctx.runMutation(internal.pushMutations.removePushSubscription, {
           userId: args.userId,
         });

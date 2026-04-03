@@ -99,7 +99,7 @@ export function NotificationBell() {
                         </div>
                     ) : (
                         <div className="flex flex-col pb-2">
-                            {notifications.map((notif: any) => {
+                            {notifications.map((notif: { _id?: string; conversationId?: string; read?: boolean; type?: string; title?: string; message?: string; body?: string; createdAt?: number }) => {
                                 const isUnread = !notif.read;
 
                                 let Icon = Bell;
@@ -131,7 +131,11 @@ export function NotificationBell() {
                                 return (
                                     <button
                                         key={notif._id}
-                                        onClick={() => handleNotificationClick(notif._id, notif.conversationId)}
+                                        onClick={() => {
+                                            if (notif._id && notif.conversationId) {
+                                                handleNotificationClick(notif._id as Id<"notifications">, notif.conversationId as Id<"conversations">)
+                                            }
+                                        }}
                                         className={cn(
                                             "relative flex items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50 w-full border-b last:border-0",
                                             isUnread
@@ -151,7 +155,7 @@ export function NotificationBell() {
                                                     {notif.title}
                                                 </p>
                                                 <span className="shrink-0 text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
-                                                    {formatDistanceToNow(notif.createdAt, { addSuffix: true })}
+                                                    {formatDistanceToNow(notif.createdAt ?? Date.now(), { addSuffix: true })}
                                                 </span>
                                             </div>
                                             {notif.body && (

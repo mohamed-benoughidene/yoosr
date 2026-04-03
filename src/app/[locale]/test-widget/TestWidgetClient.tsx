@@ -187,7 +187,7 @@ export function TestWidgetClient({ locale }: { locale: string }) {
             {/* Widget Launcher Button */}
             <button
                 className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-[9999] transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95"
-                style={{ backgroundColor: activeProject?.widgetConfig?.primaryColor ?? "#6366f1" }}
+                style={{ backgroundColor: (activeProject?.widgetConfig as { primaryColor?: string } | undefined)?.primaryColor ?? "#6366f1" }}
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Close chat widget" : "Open chat widget"}
             >

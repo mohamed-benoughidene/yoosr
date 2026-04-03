@@ -31,7 +31,7 @@ export const findByConversation = query({
 
         if (!contact) return null;
 
-        const project = await checkProjectOwnership(ctx, contact.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, contact.projectId, identity as unknown as { org_id: string });
         if (!project) return null;
 
         return contact;
@@ -57,7 +57,7 @@ export const create = mutation({
         const contactId = await ctx.db.insert("contacts", args);
 
         // Wire contact.created webhook
-        await ctx.scheduler.runAfter(0, (internal as any).webhooks.fireWebhookEvent, {
+        await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
             projectId: args.projectId,
             event: "contact.created",
             payload: { contactId, projectId: args.projectId },
@@ -85,10 +85,10 @@ export const update = mutation({
         const contact = await ctx.db.get(args.id);
         if (!contact) throw new ConvexError("Contact not found");
 
-        await assertProjectOwnership(ctx, contact.projectId, identity as any);
+        await assertProjectOwnership(ctx, contact.projectId, identity as unknown as { org_id: string });
 
         const { id, ...updates } = args;
-        const cleanUpdates: Record<string, any> = {};
+        const cleanUpdates: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -141,7 +141,7 @@ export const batchImport = mutation({
             throw new ConvexError("Array must contain between 1 and 500 contacts");
         }
 
-        const orgId = (identity as any).org_id;
+        const orgId = (identity as unknown as { org_id: string }).org_id;
         if (!orgId) throw new Error("No organization ID found in identity");
 
         const project = await ctx.db

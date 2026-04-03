@@ -77,8 +77,9 @@ export default function WebhooksPage() {
             }
             setCopiedSecret(false);
             toast.success(t("webhook_created"));
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("webhook_create_failed");
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("webhook_create_failed");
             toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
@@ -233,12 +234,17 @@ export default function WebhooksPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                subscriptions.map((sub: any) => (
+                                subscriptions.map((sub: {
+                                    _id: Id<"webhook_subscriptions">;
+                                    url?: string;
+                                    events?: string[];
+                                    isActive?: boolean;
+                                }) => (
                                     <TableRow key={sub._id}>
                                         <TableCell className="font-medium">{sub.url}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1.5 max-w-[300px]">
-                                                {sub.events.map((ev: string) => (
+                                                {(sub.events ?? []).map((ev: string) => (
                                                     <Badge
                                                         variant="secondary"
                                                         key={ev}
@@ -257,8 +263,9 @@ export default function WebhooksPage() {
                                                         try {
                                                             await updateWebhook({ id: sub._id, isActive: checked });
                                                             toast.success(checked ? t("webhook_activated") : t("webhook_paused"));
-                                                        } catch (error: any) {
-                                                            const errorMessage = error.data?.message || error.message || t("webhook_update_failed");
+                                                        } catch (error: unknown) {
+                                                            const err = error as { data?: { message?: string }; message?: string };
+                                                            const errorMessage = err.data?.message || err.message || t("webhook_update_failed");
                                                             toast.error(errorMessage);
                                                         }
                                                     }}
@@ -307,8 +314,9 @@ export default function WebhooksPage() {
                                         await removeWebhook({ id: webhookPendingDelete });
                                         toast.success(t("webhook_deleted"));
                                         setWebhookPendingDelete(null);
-                                    } catch (error: any) {
-                                        const errorMessage = error.data?.message || error.message || t("webhook_delete_failed");
+                                    } catch (error: unknown) {
+                                        const err = error as { data?: { message?: string }; message?: string };
+                                        const errorMessage = err.data?.message || err.message || t("webhook_delete_failed");
                                         toast.error(errorMessage);
                                     }
                                 }

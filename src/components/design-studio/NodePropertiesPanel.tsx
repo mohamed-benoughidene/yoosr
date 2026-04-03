@@ -45,17 +45,13 @@ function NodePropertiesPanelContent({
     const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
     const labels = useQuery(api.labels.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
-    const data = (node?.data || {}) as Record<string, any>;
-    const [localVariations, setLocalVariations] = useState<string[]>(() => 
-        data.textVariations || (data.text ? [data.text] : [""])
-    );
-
-    useEffect(() => {
-        if (node?.id) {
-            const dataV = (node?.data || {}) as Record<string, any>;
-            setLocalVariations(dataV.textVariations || (dataV.text ? [dataV.text] : [""]));
-        }
-    }, [node?.id]);
+    const data = (node?.data || {}) as Record<string, string>;
+    const dataObj = node?.data as Record<string, string | string[] | undefined> | undefined;
+    const [localVariations, setLocalVariations] = useState<string[]>(() => {
+        const textVariations = dataObj?.textVariations as string[] | undefined;
+        const text = dataObj?.text as string | undefined;
+        return textVariations || (text ? [text] : [""]);
+    });
     const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
 
     const update = useCallback(
@@ -95,7 +91,7 @@ function NodePropertiesPanelContent({
                 <div className="space-y-1.5">
                     <Label className="text-xs">{t("properties.label")}</Label>
                     <Input
-                        value={data.label || ""}
+                        value={(data.label as string) || ""}
                         onChange={(e) => update("label", e.target.value)}
                         className="h-8 text-sm"
                         placeholder={t("properties.blockName")}
@@ -153,7 +149,7 @@ function NodePropertiesPanelContent({
                                     size="sm"
                                     className="h-6 px-2 text-xs"
                                     onClick={() => {
-                                        const buttons = [...(data.buttons || [])];
+                                        const buttons = [...((data.buttons as unknown) as Array<Record<string, unknown>> || [])];
                                         buttons.push({
                                             label: "",
                                             value: "",
@@ -166,12 +162,12 @@ function NodePropertiesPanelContent({
                                     {t("properties.add")}
                                 </Button>
                             </div>
-                            {(data.buttons || []).map((btn: any, i: number) => (
+                            {((data.buttons as unknown) as Array<{ label?: string; value?: string }> || []).map((btn, i) => (
                                 <div key={`button-${i}`} className="flex items-center gap-1.5">
                                     <Input
-                                        value={btn.label}
+                                        value={(btn as { label: string }).label || ""}
                                         onChange={(e) => {
-                                            const buttons = [...data.buttons];
+                                            const buttons = [...(data.buttons as unknown as Array<Record<string, unknown>>)];
                                             buttons[i] = {
                                                 ...buttons[i],
                                                 label: e.target.value,
@@ -187,8 +183,8 @@ function NodePropertiesPanelContent({
                                         size="icon"
                                         className="h-7 w-7 shrink-0"
                                         onClick={() => {
-                                            const buttons = data.buttons.filter(
-                                                (_: any, j: number) => j !== i
+                                            const buttons = ((data.buttons as unknown) as unknown[]).filter(
+                                                (_: unknown, j: number) => j !== i
                                             );
                                             update("buttons", buttons);
                                         }}
@@ -490,7 +486,7 @@ function NodePropertiesPanelContent({
                                         {t("properties.noLabels")}
                                     </SelectItem>
                                 ) : (
-                                    labels.map((lbl: any) => (
+                                    labels.map((lbl: { _id: string; name: string; color: string }) => (
                                         <SelectItem key={lbl._id} value={lbl.name}>
                                             <div className="flex items-center gap-2">
                                                 <div
@@ -550,7 +546,7 @@ function NodePropertiesPanelContent({
                                         {t("properties.noDepartments")}
                                     </SelectItem>
                                 ) : (
-                                    departments.map((dept: any) => (
+                                    departments.map((dept: { _id: string; name: string }) => (
                                         <SelectItem key={dept._id} value={dept._id}>
                                             {dept.name}
                                         </SelectItem>

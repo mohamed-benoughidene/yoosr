@@ -8,7 +8,7 @@ type ClerkIdentity = {
     subject: string;
     org_id?: string;
     org_role?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
 // Internal: get project for widget (no auth required)
@@ -192,7 +192,7 @@ export const update = mutation({
 
         const { id, ...updates } = args;
         // Filter out undefined values
-        const cleanUpdates: Record<string, any> = {};
+        const cleanUpdates: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -290,7 +290,7 @@ export const deleteProjectData = internalMutation({
         }
         else {
             // All other tables have by_projectId index
-            const batch = await ctx.db.query(currentStep as any)
+            const batch = await ctx.db.query(currentStep as "integrations" | "bots" | "knowledge_bases" | "conversations" | "contacts" | "messages" | "activity_logs" | "departments" | "canned_responses" | "labels" | "operating_hours" | "project_usage" | "unanswered_queries" | "webhook_subscriptions")
                 .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
                 .take(BATCH_SIZE);
             for (const item of batch) {

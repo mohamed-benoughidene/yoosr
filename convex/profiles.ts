@@ -34,7 +34,7 @@ export const getByUserId = query({
             return null;
         }
 
-        if (profile.orgId !== (identity as any).org_id) {
+        if (profile.orgId !== (identity as unknown as { org_id: string }).org_id) {
             throw new Error("Unauthorized");
         }
 
@@ -50,7 +50,7 @@ export const list = query({
             throw new Error("Unauthenticated");
         }
 
-        const orgId = (identity as any).org_id;
+        const orgId = (identity as unknown as { org_id: string }).org_id;
         if (!orgId) {
             throw new Error("No organization context");
         }
@@ -79,7 +79,7 @@ export const updateMe = mutation({
             .first();
 
         if (existing) {
-            const updates: Record<string, any> = { updatedAt: Date.now() };
+            const updates: Record<string, unknown> = { updatedAt: Date.now() };
             for (const [k, val] of Object.entries(args)) {
                 if (val !== undefined) updates[k] = val;
             }
@@ -138,7 +138,7 @@ export const ensureCurrent = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
-        console.log("identity.org_id:", (identity as any).org_id);
+        console.log("identity.org_id:", (identity as unknown as { org_id: string }).org_id);
 
         const existing = await ctx.db
             .query("profiles")
@@ -151,7 +151,7 @@ export const ensureCurrent = mutation({
                 fullName: identity.name || "Agent",
                 email: identity.email,
                 avatarUrl: identity.pictureUrl,
-                orgId: (identity as any).org_id,
+                orgId: (identity as unknown as { org_id: string }).org_id,
                 updatedAt: Date.now(),
                 isAvailable: false,
                 lastSeenAt: Date.now(),
@@ -168,7 +168,7 @@ export const ensureCurrent = mutation({
             if (identity.pictureUrl && identity.pictureUrl !== existing.avatarUrl) {
                 updates.avatarUrl = identity.pictureUrl;
             }
-            const identityOrgId = (identity as any).org_id;
+            const identityOrgId = (identity as unknown as { org_id: string }).org_id;
             if (identityOrgId && identityOrgId !== existing.orgId) {
                 updates.orgId = identityOrgId;
             }
@@ -222,7 +222,7 @@ export const setAvailability = mutation({
         if (existing) {
             await ctx.db.patch(existing._id, {
                 isAvailable: args.isAvailable,
-                orgId: (identity as any).org_id,
+                orgId: (identity as unknown as { org_id: string }).org_id,
                 updatedAt: Date.now(),
                 lastSeenAt: Date.now(),
             });
@@ -230,15 +230,15 @@ export const setAvailability = mutation({
             await ctx.db.insert("profiles", {
                 userId: identity.subject,
                 isAvailable: args.isAvailable,
-                orgId: (identity as any).org_id,
+                orgId: (identity as unknown as { org_id: string }).org_id,
                 updatedAt: Date.now(),
                 lastSeenAt: Date.now(),
             });
         }
 
-        if (args.isAvailable && (identity as any).org_id) {
+        if (args.isAvailable && (identity as unknown as { org_id: string }).org_id) {
             await ctx.scheduler.runAfter(0, internal.routing.retryRoutingForAgent, {
-                orgId: (identity as any).org_id,
+                orgId: (identity as unknown as { org_id: string }).org_id,
             });
         }
     },

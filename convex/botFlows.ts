@@ -1,13 +1,59 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
- 
+import { Id } from "./_generated/dataModel";
+
 // Extend the Identity type to include custom claims from Clerk
 type ClerkIdentity = {
     subject: string;
     org_id?: string;
     org_role?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
+
+// Types for bot flow nodes and edges
+interface FlowNodeData {
+    text?: string;
+    textVariations?: string[];
+    buttons?: unknown[];
+    attributeKey?: string;
+    attributeValue?: string;
+    operator?: string;
+    compareValue?: string;
+    method?: string;
+    url?: string;
+    responseVariable?: string;
+    prompt?: string;
+    systemPrompt?: string;
+    userInput?: string;
+    model?: string;
+    outputVariable?: string;
+    assignTo?: string;
+    maxTurns?: number;
+    handoffMessage?: string;
+    closingMessage?: string;
+    knowledgeBaseId?: Id<"knowledge_bases">;
+    query?: string;
+    attribute?: string;
+    delaySeconds?: number;
+    slug?: string;
+    departmentId?: string;
+    code?: string;
+    [key: string]: unknown;
+}
+
+interface FlowNode {
+    id: string;
+    type: string;
+    data?: FlowNodeData;
+    [key: string]: unknown;
+}
+
+interface FlowEdge {
+    source: string;
+    sourceHandle?: string;
+    target?: string;
+    [key: string]: unknown;
+}
 
 // Get flow for a bot
 export const get = query({
@@ -29,12 +75,12 @@ export const get = query({
     },
 });
 
-function compileToExecutionNodes(nodes: any[], edges: any[]) {
+function compileToExecutionNodes(nodes: FlowNode[], edges: FlowEdge[]) {
     if (!Array.isArray(nodes)) return [];
     const safeEdges = Array.isArray(edges) ? edges : [];
 
     return nodes.map((node) => {
-        const actions: any[] = [];
+        const actions: unknown[] = [];
         const data = node.data || {};
 
         switch (node.type) {
@@ -56,8 +102,8 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 });
                 break;
             case "condition":
-                const trueEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target;
-                const falseEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
+                const trueEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target;
+                const falseEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target;
 
                 let expr = "";
                 const rawKey = (data.attributeKey || "").replace(/^\{\{|\}\}$/g, "").trim();
@@ -90,8 +136,8 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 }
                 break;
             case "aiTask": {
-                const successEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target;
-                const failureEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
+                const successEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target;
+                const failureEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target;
                 actions.push({
                     _type: "chatgpt_task",
                     prompt: data.prompt || data.systemPrompt || "",
@@ -105,8 +151,8 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 break;
             }
             case "ai_assistant": {
-                const aiSuccessEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target;
-                const aiFailureEdge = safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target;
+                const aiSuccessEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target;
+                const aiFailureEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target;
                 actions.push({
                     _type: "ai_assistant",
                     systemPrompt: data.systemPrompt || "",
@@ -129,15 +175,15 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
             case "if_operating_hours":
                 actions.push({
                     _type: "if_operating_hours",
-                    truePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target,
-                    falsePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target,
+                    truePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target,
+                    falsePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target,
                 });
                 break;
             case "if_online_agent":
                 actions.push({
                     _type: "if_online_agent",
-                    truePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target,
-                    falsePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target,
+                    truePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target,
+                    falsePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target,
                 });
                 break;
             case "ask_kb":
@@ -148,8 +194,8 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                     maxTurns: data.maxTurns ?? 5,
                     query: data.query || "",
                     assignTo: data.assignTo || "kb_reply",
-                    truePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "true")?.target,
-                    elsePath: safeEdges.find((e: any) => e.source === node.id && e.sourceHandle === "false")?.target,
+                    truePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target,
+                    elsePath: safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target,
                 });
                 break;
             case "capture_user_reply":
@@ -202,7 +248,7 @@ function compileToExecutionNodes(nodes: any[], edges: any[]) {
                 break;
         }
 
-        const nextBlock = safeEdges.find((e: any) => e.source === node.id && !e.sourceHandle)?.target;
+        const nextBlock = safeEdges.find((e: FlowEdge) => e.source === node.id && !e.sourceHandle)?.target;
 
         return {
             _id: node.id,

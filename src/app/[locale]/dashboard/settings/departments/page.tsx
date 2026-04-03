@@ -230,8 +230,9 @@ export default function DepartmentsPage() {
                 toast.success(t("department_created"))
             }
             resetForm()
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || (editingDeptId ? t("department_update_failed") : t("department_create_failed"))
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || (editingDeptId ? t("department_update_failed") : t("department_create_failed"))
             toast.error(errorMessage)
         }
     }
@@ -240,8 +241,9 @@ export default function DepartmentsPage() {
         try {
             await removeDepartment({ id })
             toast.success(t("department_deleted"))
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("department_delete_failed")
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("department_delete_failed")
             toast.error(errorMessage)
         }
     }
@@ -250,7 +252,7 @@ export default function DepartmentsPage() {
         dispatch({ type: "RESET_DRAFT" })
     }
 
-    const handleEdit = (dept: any) => {
+    const handleEdit = (dept: unknown) => {
         dispatch({ type: "START_EDIT", payload: dept })
     }
 

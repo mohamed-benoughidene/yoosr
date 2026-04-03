@@ -14,7 +14,7 @@ interface Project {
     orgId: string
     status?: string
     defaultModel?: string
-    widgetConfig?: any
+    widgetConfig?: unknown
     userRole?: string
     slaHours?: number
     widgetLocale?: "en" | "ar" | "fr"

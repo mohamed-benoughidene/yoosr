@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 export function AskKnowledgeBaseNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
-    const nodeData = data as Record<string, any>;
+    const nodeData = data as Record<string, string>;
     return (
         <div className={`group relative min-w-[220px] rounded-xl border-2 bg-background shadow-sm transition-all ${selected ? "border-indigo-500 shadow-indigo-500/10" : "border-border hover:border-indigo-500/50"}`}>
             <Handle type="target" position={Position.Top} className="!h-3 !w-3 !rounded-full !border-2 !border-indigo-500 !bg-background transition-colors group-hover:!bg-indigo-500" />

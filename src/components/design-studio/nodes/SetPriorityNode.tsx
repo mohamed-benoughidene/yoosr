@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 export function SetPriorityNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
-    const nodeData = data as Record<string, any>;
+    const nodeData = data as Record<string, string>;
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {

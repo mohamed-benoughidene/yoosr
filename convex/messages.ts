@@ -63,7 +63,7 @@ export const send = mutation({
         });
 
         // Update the conversation's last message and timestamp
-        const updateData: Record<string, any> = {
+        const updateData: Record<string, unknown> = {
             lastMessage: args.content,
             updatedAt: Date.now(),
         };
@@ -264,7 +264,7 @@ export const sendMessage = mutation({
 
         // Update the conversation's last message and timestamp if not internal
         // Standard practice might update it anyway
-        const updateData: Record<string, any> = {
+        const updateData: Record<string, unknown> = {
             updatedAt: Date.now(),
         };
 

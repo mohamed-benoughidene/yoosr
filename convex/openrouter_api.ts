@@ -11,7 +11,7 @@ export const saveOpenRouterKey = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new ConvexError("Not authenticated");
 
-        const orgId = (identity as any).org_id as string | undefined;
+        const orgId = (identity as unknown as { org_id: string }).org_id as string | undefined;
         if (!orgId) throw new ConvexError("No organization selected");
 
         const project = await ctx.db
@@ -34,7 +34,7 @@ export const clearOpenRouterKey = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new ConvexError("Not authenticated");
 
-        const orgId = (identity as any).org_id as string | undefined;
+        const orgId = (identity as unknown as { org_id: string }).org_id as string | undefined;
         if (!orgId) throw new ConvexError("No organization selected");
 
         const project = await ctx.db
@@ -53,7 +53,7 @@ export const getOpenRouterKeyStatus = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { hasKey: false };
 
-        const orgId = (identity as any).org_id as string | undefined;
+        const orgId = (identity as unknown as { org_id: string }).org_id as string | undefined;
         if (!orgId) return { hasKey: false };
 
         const project = await ctx.db
@@ -77,10 +77,10 @@ export const testOpenRouterKey = action({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new ConvexError("Not authenticated");
 
-        const orgId = (identity as any).org_id as string | undefined;
+        const orgId = (identity as unknown as { org_id: string }).org_id as string | undefined;
         if (!orgId) throw new ConvexError("No organization selected");
 
-        const project: any = await ctx.runQuery(
+        const project = await ctx.runQuery(
             internal.openrouter_api.getProjectByOrgIdInternal,
             { orgId }
         );
@@ -116,12 +116,13 @@ export const testOpenRouterKey = action({
                 return { ok: false, error: `${response.status}: ${response.statusText}` };
             }
 
-            const data: any = await response.json();
-            const content: string = data.choices?.[0]?.message?.content;
+            const data: { choices?: { message?: { content?: string } }[] } = await response.json();
+            const content: string | undefined = data.choices?.[0]?.message?.content;
 
             return { ok: true, model: model, message: content };
-        } catch (err: any) {
-            return { ok: false, error: err.message ?? "Network error" };
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            return { ok: false, error: errorMessage };
         }
     },
 });

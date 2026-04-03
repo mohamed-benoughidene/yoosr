@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 import { useUser } from "@clerk/nextjs"
 
 
@@ -105,8 +106,9 @@ export default function CannedResponsesPage() {
             setNewTitle("")
             setNewMessage("")
             setCreateOpen(false)
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("response_create_failed")
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("response_create_failed")
             toast.error(errorMessage)
         }
     }
@@ -115,8 +117,9 @@ export default function CannedResponsesPage() {
         try {
             await removeCannedResponse({ id })
             toast.success(t("response_deleted"))
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("response_delete_failed")
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("response_delete_failed")
             toast.error(errorMessage)
         }
     }
@@ -132,8 +135,9 @@ export default function CannedResponsesPage() {
             })
             toast.success(t("response_updated"))
             setEditingId(null)
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t("response_update_failed")
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t("response_update_failed")
             toast.error(errorMessage)
         }
     }
@@ -171,9 +175,9 @@ export default function CannedResponsesPage() {
     }
 
     const filteredResponses = responses.filter(
-        (r: any) =>
-            r.trigger.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            r.message.toLowerCase().includes(searchQuery.toLowerCase())
+        (r: { trigger?: string; message?: string }) =>
+            r.trigger?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.message?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     return (
@@ -330,7 +334,11 @@ export default function CannedResponsesPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredResponses.map((res: any) => (
+                            filteredResponses.map((res: {
+                                _id: Id<"canned_responses">;
+                                trigger?: string;
+                                message?: string;
+                            }) => (
                                 <TableRow key={res._id}>
                                     <TableCell>
                                         <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
@@ -353,8 +361,8 @@ export default function CannedResponsesPage() {
                                             className="h-8 w-8 text-muted-foreground mr-1"
                                             onClick={() => {
                                                 setEditingId(res._id)
-                                                setEditTitle(res.trigger)
-                                                setEditMessage(res.message)
+                                                setEditTitle(res.trigger || "")
+                                                setEditMessage(res.message || "")
                                             }}
                                         >
                                             <Pencil className="h-4 w-4" />

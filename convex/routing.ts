@@ -43,7 +43,7 @@ export const routeConversation = internalMutation({
             }
 
             if (botIdToAssign) {
-                let participants = conversation.participants || [];
+                const participants = conversation.participants || [];
                 if (!participants.includes(botIdToAssign)) {
                     participants.push(botIdToAssign);
                 }
@@ -130,7 +130,7 @@ export const routeConversation = internalMutation({
 
 
         if (chosenAgentId) {
-            let participants = conversation.participants || [];
+            const participants = conversation.participants || [];
             if (!participants.includes(chosenAgentId)) {
                 participants.push(chosenAgentId);
             }

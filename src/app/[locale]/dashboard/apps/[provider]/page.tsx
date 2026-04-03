@@ -28,13 +28,13 @@ export default function AppDetailsPage({ params }: { params: Promise<{ provider:
     const removeIntegration = useMutation(api.integrations.remove)
 
     const loading = integrations === undefined
-    const existingIntegration = (integrations ?? []).find((i: any) => i.provider === provider)
+    const existingIntegration = (integrations ?? []).find((i: { provider?: string; credentials?: unknown }) => i.provider === provider)
     const isInstalled = !!existingIntegration
 
     // Populate credential on first load
     const populatedRef = useState(false)
     if (existingIntegration && !populatedRef[0]) {
-        const creds = existingIntegration.credentials as any
+        const creds = existingIntegration.credentials as { token?: string; apiKey?: string }
         if (creds?.token) setCredentialValue(creds.token)
         else if (creds?.apiKey) setCredentialValue(creds.apiKey)
         populatedRef[1](true)

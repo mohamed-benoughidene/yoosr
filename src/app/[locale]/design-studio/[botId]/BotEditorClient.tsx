@@ -86,7 +86,7 @@ function BotEditor() {
             // Sanitize: guarantee every node has id, position, data, and a valid type
             const seenIds = new Set<string>();
             const safeNodes = nodes.map((node, index) => {
-                const n = { ...node } as any;
+                const n = { ...node } as { id?: string; position?: { x: number; y: number }; data?: Record<string, unknown>; type?: string };
                 if (!n.id) n.id = `node-${index}`;
 
                 if (seenIds.has(n.id)) {
@@ -94,7 +94,7 @@ function BotEditor() {
                 }
                 seenIds.add(n.id);
 
-                n.type = normalizeType(n.type);
+                n.type = normalizeType(n.type ?? "");
                 if (!n.position || typeof n.position.x !== "number") {
                     n.position = { x: 250, y: 50 + index * 180 };
                 }
@@ -113,7 +113,7 @@ function BotEditor() {
     const initialNodesWithPositions = useMemo(() => {
         if (!flow || !flow.nodes) return undefined;
         const seenIds = new Set<string>();
-        return (flow.nodes as any[]).map((node, index) => {
+        return (flow.nodes as { id?: string; _id?: string; position?: { x: number; y: number }; data?: Record<string, unknown>; type?: string }[]).map((node, index) => {
             const mappedNode = { ...node };
 
             // Map Convex _id to ReactFlow id if required

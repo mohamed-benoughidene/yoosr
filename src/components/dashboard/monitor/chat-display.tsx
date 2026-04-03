@@ -514,17 +514,17 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     Load older messages
                                 </button>
                             )}
-                            {[...results].reverse().map((msg: any) => {
+                            {[...results].reverse().map((msg: { senderType?: string; isInternal?: boolean; createdAt?: number; content?: string; _id?: string }) => {
                                 const isLead = msg.senderType === "visitor";
                                 const isInternal = msg.isInternal;
 
                                 const timeFormat = new Intl.DateTimeFormat("en", {
                                     timeStyle: "short"
-                                }).format(new Date(msg.createdAt));
+                                }).format(new Date(msg.createdAt ?? Date.now()));
 
                                 if (isLead) {
                                     return (
-                                        <div key={msg.id} className="flex items-end gap-3">
+                                        <div key={msg._id} className="flex items-end gap-3">
                                             <Avatar className="h-8 w-8 border">
                                                 <AvatarImage src={conversation.user.avatar} />
                                                 <AvatarFallback>{conversation.user.initials}</AvatarFallback>
@@ -542,7 +542,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                 } else {
                                     // Agent or bot message
                                     return (
-                                        <div key={msg.id} className="flex items-end gap-3 flex-row-reverse">
+                                        <div key={msg._id} className="flex items-end gap-3 flex-row-reverse">
                                             <Avatar className={cn("h-8 w-8 border", isInternal ? "bg-yellow-100" : "bg-blue-100")}>
                                                 <AvatarImage src={msg.senderType === "agent" ? "https://github.com/shadcn.png" : undefined} />
                                                 <AvatarFallback className={isInternal ? "text-yellow-700" : "text-blue-700"}>
@@ -578,7 +578,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             {/* Footer / Input Area */}
             <div className="border-t bg-background p-4">
                 <div className="mb-3 flex items-center justify-between">
-                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as any)} className="w-[200px]">
+                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-[200px]">
                         <TabsList className="h-8 w-full grid grid-cols-2">
                             <TabsTrigger value="public" className="text-xs">Public</TabsTrigger>
                             <TabsTrigger value="internal" className="text-xs">Internal</TabsTrigger>

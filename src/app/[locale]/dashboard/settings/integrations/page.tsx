@@ -134,7 +134,7 @@ export default function IntegrationsPage() {
 
     useEffect(() => {
         if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
-            const saved = (integrations ?? []).find((r: any) => r.provider === "whatsapp")
+            const saved = (integrations ?? []).find((r: { provider?: string; credentials?: Record<string, unknown> }) => r.provider === "whatsapp")
             setWhatsappState(saved ? {
                 phoneNumberId: saved.credentials?.phone_number_id || "",
                 accessToken: "",
@@ -163,14 +163,14 @@ export default function IntegrationsPage() {
     const clearOpenRouter = useMutation(api.openrouter_api.clearOpenRouterKey)
     const testOpenRouter = useAction(api.openrouter_api.testOpenRouterKey)
 
-    const savedMap: Record<string, any> = {}
-        ; (integrations ?? []).forEach((row: any) => { savedMap[row.provider] = row })
+    const savedMap: Record<string, { credentials?: Record<string, unknown>; enabled?: boolean }> = {}
+        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, unknown>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
 
     const openConfig = (integration: IntegrationDef) => {
         if (integration.locked) return
         setActiveConfig(integration)
         const saved = savedMap[integration.id]
-        if (saved) { setFormValues(saved.credentials || {}); setFormEnabled(saved.enabled || false) }
+        if (saved) { setFormValues(saved.credentials as Record<string, string> || {}); setFormEnabled(saved.enabled || false) }
         else { const d: Record<string, string> = {}; integration.fields.forEach(f => d[f.key] = ""); setFormValues(d); setFormEnabled(false) }
     }
 
@@ -203,8 +203,9 @@ export default function IntegrationsPage() {
                         projectId: activeProject._id,
                     })
                     toast.success(t("telegram_connected"))
-                } catch (err: any) {
-                    toast.error(t("webhook_registration_failed").replace("{error}", err.message))
+                } catch (err: unknown) {
+                    const errorMessage = err instanceof Error ? err.message : String(err);
+                    toast.error(t("webhook_registration_failed").replace("{error}", errorMessage))
                     setSaving(false)
                     return
                 }
@@ -223,8 +224,9 @@ export default function IntegrationsPage() {
             setOpenRouterKey("")
             setTestResult(null)
             toast.success(t("openrouter_saved"))
-        } catch (e: any) {
-            toast.error(e.message ?? t("openrouter_save_failed"))
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : t("openrouter_save_failed");
+            toast.error(errorMessage)
         } finally {
             setSavingOr(false)
         }
@@ -236,8 +238,9 @@ export default function IntegrationsPage() {
         try {
             const res = await testOpenRouter()
             setTestResult(res)
-        } catch (e: any) {
-            setTestResult({ ok: false, error: e.message ?? t("test_key_failed") })
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : t("test_key_failed");
+            setTestResult({ ok: false, error: errorMessage })
         } finally {
             setTestingOr(false)
         }
@@ -248,8 +251,9 @@ export default function IntegrationsPage() {
             await clearOpenRouter()
             setTestResult(null)
             toast.success(t("openrouter_removed"))
-        } catch (e: any) {
-            toast.error(e.message ?? t("openrouter_remove_failed"))
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : t("openrouter_remove_failed");
+            toast.error(errorMessage)
         }
     }
 

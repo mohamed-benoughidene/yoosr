@@ -39,7 +39,6 @@ function WaitlistForm() {
 
             <Waitlist
                 signInUrl="/login"
-                {...({ initialValues: { emailAddress: email } } as any)}
                 appearance={{
                     baseTheme: dark,
                     elements: {

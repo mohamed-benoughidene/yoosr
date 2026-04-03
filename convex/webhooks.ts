@@ -131,9 +131,10 @@ export const deliverWebhook = internalAction({
             if (!response.ok) {
                 errorMessage = `Webhook failed with status ${response.status}`;
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             success = false;
-            errorMessage = error.message || String(error);
+            const err = error as { message?: string };
+            errorMessage = err.message || String(error);
         }
 
         // Log the delivery attempt
@@ -210,7 +211,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Unauthorized");
 
         const bytes = new Uint8Array(32);
@@ -238,7 +239,7 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Unauthorized");
 
         await ctx.db.patch(args.id, { isActive: args.isActive });
@@ -248,7 +249,7 @@ export const update = mutation({
 export const remove = mutation({
     args: { id: v.id("webhook_subscriptions") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity() as any;
+        const identity = await ctx.auth.getUserIdentity() as { org_id: string; org_role?: string } | null;
         requireAdmin(identity);
         if (!identity) throw new Error("Not authenticated");
 
@@ -275,14 +276,14 @@ export const backfillWebhookSecrets = mutation({
 
         for (const sub of subscriptions) {
             // Check if secret is missing or empty
-            if (!(sub as any).secret) {
+            if (!sub.secret) {
                 const bytes = new Uint8Array(32);
                 crypto.getRandomValues(bytes);
                 const secret = Array.from(bytes)
                     .map((b) => b.toString(16).padStart(2, "0"))
                     .join("");
 
-                await ctx.db.patch(sub._id, { secret } as any);
+                await ctx.db.patch(sub._id, { secret });
                 updatedCount++;
             }
         }

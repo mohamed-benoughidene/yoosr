@@ -1,7 +1,7 @@
 export async function encryptSecret(plaintext: string, keyHex: string): Promise<string> {
     const keyBytes = hexToBytes(keyHex);
     const cryptoKey = await crypto.subtle.importKey(
-        "raw", keyBytes as any, { name: "AES-GCM" }, false, ["encrypt"]
+        "raw", keyBytes as BufferSource, { name: "AES-GCM" }, false, ["encrypt"]
     );
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encoded = new TextEncoder().encode(plaintext);
@@ -17,10 +17,10 @@ export async function decryptSecret(encrypted: string, keyHex: string): Promise<
     const ciphertext = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
     const keyBytes = hexToBytes(keyHex);
     const cryptoKey = await crypto.subtle.importKey(
-        "raw", keyBytes as any, { name: "AES-GCM" }, false, ["decrypt"]
+        "raw", keyBytes as BufferSource, { name: "AES-GCM" }, false, ["decrypt"]
     );
     const decrypted = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: iv as any }, cryptoKey, ciphertext as any
+        { name: "AES-GCM", iv }, cryptoKey, ciphertext
     );
     return new TextDecoder().decode(decrypted);
 }

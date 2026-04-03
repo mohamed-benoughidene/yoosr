@@ -175,7 +175,7 @@ export const generateFlow = action({
     let parsed: { nodes: unknown[]; edges: unknown[] };
     try {
       parsed = JSON.parse(cleaned);
-    } catch (err) {
+    } catch {
       // Try to extract the first {...} block in case there's preamble text
       const match = cleaned.match(/\{[\s\S]*\}/);
       if (match) {

@@ -27,7 +27,7 @@ export const get = query({
         const bot = await ctx.db.get(args.id);
         if (bot === null) return null;
 
-        const project = await checkProjectOwnership(ctx, bot.projectId, identity as any);
+        const project = await checkProjectOwnership(ctx, bot.projectId, identity as unknown as { org_id: string });
         if (project === null) return null;
 
         return bot;
@@ -44,7 +44,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_id: string; org_role?: string });
         if (!identity) throw new Error("Not authenticated");
 
         const botId = await ctx.db.insert("bots", {
@@ -81,14 +81,14 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_id: string; org_role?: string });
         if (!identity) throw new Error("Not authenticated");
 
         const bot = await ctx.db.get(args.id);
         if (!bot) throw new Error("Bot not found");
 
-        const { id, ...updates } = args;
-        const cleanUpdates: Record<string, any> = {};
+        const { ...updates } = args;
+        const cleanUpdates: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -150,7 +150,7 @@ export const remove = mutation({
     args: { id: v.id("bots") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_id: string; org_role?: string });
         if (!identity) throw new Error("Not authenticated");
 
         const bot = await ctx.db.get(args.id);

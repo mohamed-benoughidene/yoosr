@@ -59,9 +59,9 @@ export default function KbShell({
     const [deleteTarget, setDeleteTarget] = useState<Id<"knowledge_bases"> | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
 
-    const kbToDelete = (knowledgeBases ?? []).find((k: any) => k._id === deleteTarget)
+    const kbToDelete = (knowledgeBases ?? []).find((k: { _id: Id<"knowledge_bases"> }) => k._id === deleteTarget)
 
-    const openDeleteDialog = (kb: any) => {
+    const openDeleteDialog = (kb: { _id: Id<"knowledge_bases"> }) => {
         setDeleteTarget(kb._id)
     }
 
@@ -76,8 +76,9 @@ export default function KbShell({
             if (activeId === deleteTarget) {
                 router.push("/dashboard/kb/default")
             }
-        } catch (error: any) {
-            toast.error(error.message || "Failed to delete knowledge base")
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Failed to delete knowledge base";
+            toast.error(errorMessage)
         } finally {
             setIsDeleting(false)
         }
@@ -101,8 +102,9 @@ export default function KbShell({
             setName("")
             setDescription("")
             setIsDefault(false)
-        } catch (error: any) {
-            toast.error(error.message || "Failed to create knowledge base")
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Failed to create knowledge base";
+            toast.error(errorMessage)
         } finally {
             setIsSubmitting(false)
         }
@@ -127,7 +129,11 @@ export default function KbShell({
                                 {t("no_kbs")}
                             </div>
                         )}
-                        {(knowledgeBases ?? []).map((kb: any) => (
+                        {(knowledgeBases ?? []).map((kb: {
+                            _id: Id<"knowledge_bases">;
+                            name?: string;
+                            isDefault?: boolean;
+                        }) => (
                             <div key={kb._id} className={cn(
                                 "group relative flex items-center justify-between rounded-md transition-colors hover:bg-accent",
                                 (activeId === kb._id || (!activeId && pathname === '/dashboard/kb' && kb.isDefault))

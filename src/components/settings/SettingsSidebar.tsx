@@ -59,6 +59,7 @@ const sidebarNavItems = [
     },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface SettingsSidebarProps extends React.HTMLAttributes<HTMLElement> { }
 
 export function SettingsSidebar({ className, ...props }: SettingsSidebarProps) {

@@ -38,7 +38,8 @@ import { arSA, fr, enUS } from "date-fns/locale"
 export default function DashboardPage() {
     const t = useTranslations("dashboard")
     const locale = useLocale()
-    const dateFnsLocale = ({ ar: arSA, fr: fr, en: enUS } as any)[locale] ?? enUS
+    const localeMap: Record<string, typeof enUS> = { ar: arSA, fr: fr, en: enUS }
+    const dateFnsLocale = localeMap[locale] ?? enUS
     const { activeProject } = useProject()
     const router = useRouter()
 
@@ -181,7 +182,13 @@ export default function DashboardPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {liveQueue.map((conv: any) => (
+                                        {liveQueue.map((conv: {
+                                            _id: string;
+                                            visitorName?: string;
+                                            waitMs?: number;
+                                            assignedAgentName?: string;
+                                            status?: number;
+                                        }) => (
                                             <TableRow
                                                 key={conv._id}
                                                 className="cursor-pointer hover:bg-muted/50"
@@ -189,7 +196,7 @@ export default function DashboardPage() {
                                             >
                                                 <TableCell className="font-medium">{conv.visitorName}</TableCell>
                                                 <TableCell className="text-muted-foreground">
-                                                    {formatDistanceToNow(Date.now() - conv.waitMs, { addSuffix: true, locale: dateFnsLocale })}
+                                                    {conv.waitMs ? formatDistanceToNow(Date.now() - conv.waitMs, { addSuffix: true, locale: dateFnsLocale }) : "—"}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -227,7 +234,14 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {recentActivities.map((activity: any) => (
+                                {recentActivities.map((activity: {
+                                    _id: string;
+                                    actorName?: string;
+                                    action?: string;
+                                    targetType?: string;
+                                    targetId?: string;
+                                    createdAt?: number;
+                                }) => (
                                     <div
                                         key={activity._id}
                                         className="flex gap-4 group cursor-pointer hover:bg-muted/30 p-2 -m-2 rounded-lg transition-all duration-200 ease-in-out"
@@ -243,7 +257,7 @@ export default function DashboardPage() {
                                         <div className="flex flex-col gap-1 min-w-0">
                                             <p className="text-sm leading-tight break-words">
                                                 <span className="font-medium mr-1 text-foreground group-hover:text-primary transition-colors">{activity.actorName}</span>
-                                                <span className="text-muted-foreground">{t(`activity_actions.${activity.action}`, { default: activity.action?.replace(/_/g, " ") })}</span>
+                                                <span className="text-muted-foreground">{t(`activity_actions.${activity.action}`, { default: activity.action?.replace(/_/g, " ") || "unknown action" })}</span>
                                             </p>
                                             {activity.createdAt && (
                                                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider tabular-nums">

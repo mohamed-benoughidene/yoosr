@@ -88,8 +88,9 @@ export function ContactsList() {
         try {
             await removeContact({ id })
             toast.success(t('deleted_success'))
-        } catch (error: any) {
-            const errorMessage = error.data?.message || error.message || t('deleted_failed')
+        } catch (error: unknown) {
+            const err = error as { data?: { message?: string }; message?: string };
+            const errorMessage = err.data?.message || err.message || t('deleted_failed')
             toast.error(errorMessage)
         }
     }
@@ -238,7 +239,7 @@ export function ContactsList() {
                                             column.toggleVisibility(!!value)
                                         }
                                     >
-                                        {t(column.id as any)}
+                                        {t(column.id as string)}
                                     </DropdownMenuCheckboxItem>
                                 )
                             })}

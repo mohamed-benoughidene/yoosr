@@ -54,7 +54,7 @@ export const createDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("departments", args);
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
@@ -81,14 +81,14 @@ export const updateDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
 
         const department = await ctx.db.get(id);
         if (!department) throw new Error("Department not found");
 
-        const clean: Record<string, any> = {};
+        const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
 
@@ -108,7 +108,7 @@ export const removeDepartment = mutation({
     args: { id: v.id("departments") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
 
         const department = await ctx.db.get(args.id);
@@ -135,15 +135,17 @@ export const addMemberToDepartment = mutation({
         clerkUserId: v.string(),
     },
     handler: async (ctx, args) => {
-        const identity = (await ctx.auth.getUserIdentity()) as any;
-        requireAdmin(identity);
-        if (!identity || !identity.org_id) throw new Error("Not authenticated or missing org_id");
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated or missing org_id");
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
+        const orgId = (identity as unknown as { org_id: string }).org_id;
+        if (!orgId) throw new Error("Not authenticated or missing org_id");
 
         const department = await ctx.db.get(args.departmentId);
         if (!department) throw new Error("Department not found");
 
         const project = await ctx.db.get(department.projectId);
-        if (!project || project.orgId !== identity.org_id) {
+        if (!project || project.orgId !== orgId) {
             throw new Error("Unauthorized to modify this department");
         }
 
@@ -172,14 +174,16 @@ export const removeMemberFromDepartment = mutation({
         clerkUserId: v.string(),
     },
     handler: async (ctx, args) => {
-        const identity = (await ctx.auth.getUserIdentity()) as any;
-        if (!identity || !identity.org_id) throw new Error("Not authenticated or missing org_id");
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated or missing org_id");
+        const orgId = (identity as unknown as { org_id: string }).org_id;
+        if (!orgId) throw new Error("Not authenticated or missing org_id");
 
         const department = await ctx.db.get(args.departmentId);
         if (!department) throw new Error("Department not found");
 
         const project = await ctx.db.get(department.projectId);
-        if (!project || project.orgId !== identity.org_id) {
+        if (!project || project.orgId !== orgId) {
             throw new Error("Unauthorized to modify this department");
         }
 
@@ -226,7 +230,7 @@ export const createCannedResponse = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("canned_responses", {
             ...args,
@@ -255,10 +259,10 @@ export const updateCannedResponse = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
-        const clean: Record<string, any> = {};
+        const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
 
@@ -280,7 +284,7 @@ export const removeCannedResponse = mutation({
     args: { id: v.id("canned_responses") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
 
         const cannedResponse = await ctx.db.get(args.id);
@@ -311,7 +315,7 @@ export const createLabel = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const id = await ctx.db.insert("labels", {
             ...args,
@@ -340,10 +344,10 @@ export const updateLabel = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
         const { id, ...updates } = args;
-        const clean: Record<string, any> = {};
+        const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
 
@@ -366,7 +370,7 @@ export const removeLabel = mutation({
     args: { id: v.id("labels") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
 
         const label = await ctx.db.get(args.id);
@@ -426,7 +430,7 @@ export const upsertOperatingHours = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        requireAdmin(identity as any);
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         if (!identity) throw new Error("Not authenticated");
 
         const existing = await ctx.db

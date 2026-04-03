@@ -59,7 +59,7 @@ export default function RequestsPage() {
         // Exclude resolved/closed conversations
         if (req.status === 1000) return false
 
-        if (filter === "bot_escalated") return (req as any).handoffSource === "bot"
+        if (filter === "bot_escalated") return (req as { handoffSource?: string }).handoffSource === "bot"
         if (filter === "unassigned") return !req.assignedTo
         if (filter === "mine" && user) return req.assignedTo === user.id
         return true
@@ -69,8 +69,8 @@ export default function RequestsPage() {
     const filteredRequests = requests
         .slice()
         .sort((a, b) => {
-            const aEsc = (a as any).handoffSource === "bot" ? 0 : 1
-            const bEsc = (b as any).handoffSource === "bot" ? 0 : 1
+            const aEsc = (a as { handoffSource?: string }).handoffSource === "bot" ? 0 : 1
+            const bEsc = (b as { handoffSource?: string }).handoffSource === "bot" ? 0 : 1
             if (aEsc !== bEsc) return aEsc - bEsc
             return 0
         })
@@ -82,7 +82,7 @@ export default function RequestsPage() {
 
     const unassignedCount = allConversations.filter((c) => !c.assignedTo && c.status !== 1000).length
     const myCount = allConversations.filter((c) => c.assignedTo === user?.id && c.status !== 1000).length
-    const botEscalatedCount = allConversations.filter((c) => (c as any).handoffSource === "bot" && c.status !== 1000).length
+    const botEscalatedCount = allConversations.filter((c) => (c as { handoffSource?: string }).handoffSource === "bot" && c.status !== 1000).length
 
     const handleAssignToMe = async (id: Id<"conversations">) => {
         if (!user) return
@@ -255,7 +255,7 @@ export default function RequestsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {(req as any).handoffSource === "bot" ? (
+                                            {(req as { handoffSource?: string }).handoffSource === "bot" ? (
                                                 <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
                                                     {t("bot_escalated")}
                                                 </Badge>

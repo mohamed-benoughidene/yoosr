@@ -1,3 +1,4 @@
+import { Id } from "./_generated/dataModel";
 import { query, mutation, internalMutation, internalQuery, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
@@ -139,7 +140,7 @@ export const update = mutation({
         if (!identity) throw new Error("Not authenticated");
 
         const { id, ...updates } = args;
-        const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
+        const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -241,7 +242,7 @@ export const updateInternal = internalMutation({
     },
     handler: async (ctx, args) => {
         const { id, clearBotId, ...updates } = args;
-        const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
+        const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -265,8 +266,8 @@ export const updateConversationStatus = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Not authenticated");
 
-        const updates: any = {
-            status: args.status,
+        const updates: { status: 100 | 200 | 1000; updatedAt: number; botPaused?: boolean } = {
+            status: args.status as 100 | 200 | 1000,
             updatedAt: Date.now(),
         };
 
@@ -358,7 +359,7 @@ export const createFromWidget = internalMutation({
         }
 
         // Read project settings to optionally inject welcome message into history permanently
-        const widgetConfig = (project?.widgetConfig as any) || {};
+        const widgetConfig = (project?.widgetConfig as Record<string, unknown>) || {};
         const enableWelcome = widgetConfig.enableWelcomeNotification ?? true;
         const welcomeMsg = "system.welcome";
 
@@ -524,7 +525,7 @@ export const join = mutation({
             participants.push(identity.subject);
         }
 
-        const updates: Record<string, any> = {
+        const updates: Record<string, unknown> = {
             participants,
             updatedAt: Date.now(),
             botPaused: true,
@@ -580,7 +581,7 @@ export const leave = mutation({
             (id) => id !== identity.subject
         );
 
-        const updates: Record<string, any> = {
+        const updates: Record<string, unknown> = {
             participants,
             updatedAt: Date.now(),
         };
@@ -615,7 +616,7 @@ export const updateVisitorInfo = mutation({
         if (!identity) throw new Error("Not authenticated");
 
         const { id, ...updates } = args;
-        const cleanUpdates: Record<string, any> = { updatedAt: Date.now() };
+        const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
         for (const [key, value] of Object.entries(updates)) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
@@ -636,7 +637,7 @@ export const updateMetadataInternal = internalMutation({
         const conversation = await ctx.db.get(args.id);
         if (!conversation) throw new Error("Conversation not found");
 
-        const patch: Record<string, any> = {
+        const patch: Record<string, unknown> = {
             lastMessage: args.lastMessage,
             updatedAt: Date.now(),
             unreadCount: args.unreadCount,
@@ -752,8 +753,8 @@ export const autoCloseInactive = internalMutation({
             const project = await ctx.db.get(conv.projectId);
             if (!project) continue;
 
-            const config = project.widgetConfig as Record<string, any> | undefined;
-            const autoCloseMinutes = config?.autoCloseMinutes ?? 30;
+            const config = project.widgetConfig as Record<string, unknown> | undefined;
+            const autoCloseMinutes = (config?.autoCloseMinutes as number) ?? 30;
 
             // Skip if auto-close is disabled
             if (autoCloseMinutes <= 0) continue;
@@ -960,7 +961,7 @@ export const createOrUpdateFromMeta = internalMutation({
         }
 
         // 2. Find the project integration
-        let integration: any;
+        let integration: { projectId: Id<"projects">; credentials?: Record<string, unknown> } | undefined;
         if (args.channel === "whatsapp") {
             const rows = await ctx.db
                 .query("integrations")
@@ -968,7 +969,7 @@ export const createOrUpdateFromMeta = internalMutation({
                 .filter((q) => q.eq(q.field("enabled"), true))
                 .take(500);
             integration = rows.find(
-                (i) => i.credentials && i.credentials.phone_number_id === args.phoneNumberId
+                (i) => i.credentials && (i.credentials as { phone_number_id?: string }).phone_number_id === args.phoneNumberId
             );
         } else {
             const integrations = await ctx.db
@@ -1000,7 +1001,6 @@ export const createOrUpdateFromMeta = internalMutation({
         if (openConversation) {
             conversationId = openConversation._id;
         } else {
-            // @ts-ignore - Ignoring TS errors for strictly requested fields that might not be in schema
             conversationId = await ctx.db.insert("conversations", {
                 projectId: integration.projectId,
                 visitorId: args.senderId,
@@ -1014,7 +1014,6 @@ export const createOrUpdateFromMeta = internalMutation({
         }
 
         // 4. Insert the message
-        // @ts-ignore - Ignoring TS errors for strictly requested fields that might not be in schema
         await ctx.db.insert("messages", {
             conversationId: conversationId,
             projectId: integration.projectId,
@@ -1055,7 +1054,7 @@ export const createOrUpdateFromMeta = internalMutation({
 // Internal: fetch a conversation by ID without auth guard (for use in internalAction/internalMutation)
 export const getById = internalQuery({
     args: { id: v.id("conversations") },
-    handler: async (ctx, args): Promise<any> => {
+    handler: async (ctx, args) => {
         return await ctx.db.get(args.id);
     },
 });
@@ -1069,7 +1068,7 @@ export const sendMetaMessage = internalAction({
     },
     handler: async (ctx, args): Promise<string | undefined> => {
         // 1. Fetch the conversation
-        const conversation: any = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
+        const conversation = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
         if (!conversation) return undefined;
 
         if (args.channel === "whatsapp" || conversation.channel === "whatsapp") {
@@ -1120,17 +1119,18 @@ export const sendMetaMessage = internalAction({
         if (!conversation.channelSenderId) return undefined;
 
         // 4. Fetch the project's integration for this channel
-        const integrations: any[] = await ctx.runQuery(internal.integrations.listForProject, {
+        const integrations: { provider?: string; enabled?: boolean; credentials?: Record<string, unknown> }[] = await ctx.runQuery(internal.integrations.listForProject, {
             projectId: conversation.projectId,
         });
 
-        const integration: any = (integrations ?? []).find(
-            (i: any) => i.provider === conversation.channel && i.enabled === true
+        const integration = (integrations ?? []).find(
+            (i) => i.provider === conversation.channel && i.enabled === true
         );
 
         if (!integration) return undefined;
 
-        const rawToken: string = integration.credentials?.access_token;
+        const creds = integration.credentials as { access_token?: string } | undefined;
+        const rawToken: string = creds?.access_token || "";
         if (!rawToken) return undefined;
         const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
         if (!encKey) return undefined;
@@ -1158,7 +1158,7 @@ export const sendMetaMessage = internalAction({
                 return undefined;
             }
 
-            const data: any = await response.json();
+            const data: { message_id?: string } = await response.json();
             return data.message_id as string;
         } catch (err) {
             console.error("[sendMetaMessage] fetch error:", err);
@@ -1234,7 +1234,6 @@ export const createOrUpdateFromTelegram = internalMutation({
         if (openConversation) {
             conversationId = openConversation._id;
         } else {
-            // @ts-ignore
             conversationId = await ctx.db.insert("conversations", {
                 projectId: integration.projectId,
                 visitorId: args.senderId,
@@ -1248,7 +1247,6 @@ export const createOrUpdateFromTelegram = internalMutation({
         }
 
         // 4. Insert the message
-        // @ts-ignore
         await ctx.db.insert("messages", {
             conversationId: conversationId,
             projectId: integration.projectId,
@@ -1293,7 +1291,7 @@ export const sendTelegramMessage = internalAction({
     },
     handler: async (ctx, args) => {
         // 1. Fetch the conversation
-        const conversation: any = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
+        const conversation = await ctx.runQuery(internal.conversations.getById, { id: args.conversationId });
         if (!conversation) return undefined;
 
         // 2. Only proceed for Telegram channel
@@ -1303,17 +1301,18 @@ export const sendTelegramMessage = internalAction({
         if (!conversation.channelSenderId) return undefined;
 
         // 4. Fetch the project's integration for this channel
-        const integrations: any[] = await ctx.runQuery(internal.integrations.listForProject, {
+        const integrations: { provider?: string; enabled?: boolean; credentials?: Record<string, unknown> }[] = await ctx.runQuery(internal.integrations.listForProject, {
             projectId: conversation.projectId,
         });
 
-        const integration: any = (integrations ?? []).find(
-            (i: any) => i.provider === "telegram" && i.enabled === true
+        const integration = (integrations ?? []).find(
+            (i) => i.provider === "telegram" && i.enabled === true
         );
 
         if (!integration) return undefined;
 
-        const rawToken: string = integration.credentials?.bot_token;
+        const creds = integration.credentials as { bot_token?: string } | undefined;
+        const rawToken: string | undefined = creds?.bot_token;
         if (!rawToken) return undefined;
         const encKey = process.env.INTEGRATIONS_ENCRYPTION_KEY;
         if (!encKey) return undefined;

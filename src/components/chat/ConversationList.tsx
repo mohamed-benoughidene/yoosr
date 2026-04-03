@@ -45,7 +45,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
     ) ?? []
 
     // Chat only shows conversations assigned to the current agent
-    const conversations = allConversations.filter((c: any) => c.assignedTo === user?.id)
+    const conversations = allConversations.filter((c: { assignedTo?: string | null }) => c.assignedTo === user?.id)
 
     const createConversation = useMutation(api.conversations.create)
 
@@ -89,7 +89,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
         }
     })
 
-    const unreadCount = conversations.filter((c: any) => (c.unreadCount ?? 0) > 0).length
+    const unreadCount = conversations.filter((c: { unreadCount?: number }) => (c.unreadCount ?? 0) > 0).length
 
     const tabs: { key: ChatTab; label: string; count?: number }[] = [
         { key: "all", label: tMonitor("filter_status_all") },
