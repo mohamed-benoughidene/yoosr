@@ -97,7 +97,6 @@ async function executeAction(
                         projectApiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
                     }
                 }
-                console.log("[BOT DEBUG] Executing AI block, model:", action.model, "projectDefault:", projectDefaultModel, "hasProjectKey:", !!projectApiKey)
                 const llmResult = await callAITask(systemPrompt, userInput, action.model as string | undefined, projectDefaultModel, projectApiKey);
                 // Log token usage
                 if (_aiTaskConv) {
@@ -400,14 +399,9 @@ export const executeNextBlock = internalAction({
         incomingMessage: v.string(),
     },
     handler: async (ctx, args) => {
-        console.log(`[BOT ENGINE] Start execution for convo: ${args.conversationId} with msg: "${args.incomingMessage}"`);
         // 1. Fetch conversation state
         const conversation = await ctx.runQuery(internal.bot.getConversationState, { id: args.conversationId });
-        if (!conversation) {
-            console.log(`[BOT ENGINE] Convo ${args.conversationId} not found`);
-            return;
-        }
-        console.log("[BOT DEBUG] Bot triggered for conversation:", args.conversationId, "project:", conversation.projectId)
+        if (!conversation) return;
 
         // Infinite Loop Guard
         const currentStepCount = conversation.botStepCount || 0;
@@ -419,30 +413,24 @@ export const executeNextBlock = internalAction({
 
         // HITL Guard: if the conversation was handed off to a human, stop all bot processing.
         if (conversation.botPaused === true) {
-            console.log(`[BOT ENGINE] Convo ${args.conversationId} is paused for human handoff. Skipping bot execution.`);
             return;
         }
 
         if (!conversation.botId) {
-            console.log(`[BOT ENGINE] Convo ${args.conversationId} has no assigned botId`);
             return;
         }
 
 
         // 2. Fetch bot flow
-        console.log(`[BOT ENGINE] Fetching flow for botId: ${conversation.botId}`);
         const flow = await ctx.runQuery(internal.bot.getBotFlow, { botId: conversation.botId as Id<"bots"> });
         if (!flow || !flow.nodes || flow.nodes.length === 0) {
-            console.log(`[BOT ENGINE] Bot flow empty or missing for botId ${conversation.botId}`);
             return;
         }
 
         const executionNodes = flow.executionNodes && flow.executionNodes.length > 0 ? flow.executionNodes : flow.nodes;
-        console.log(`[BOT ENGINE] Flow loaded. ${executionNodes.length} nodes found (using ${flow.executionNodes ? "compiled" : "raw"} schema).`);
 
         // 3. Find current node
         const currentNodeId = conversation.currentNodeId;
-        console.log(`[BOT ENGINE] currentNodeId is: ${currentNodeId}`);
 
         let currentNode: ExecutionNode | undefined;
         if (currentNodeId) {
@@ -452,14 +440,9 @@ export const executeNextBlock = internalAction({
             currentNode = executionNodes[0] as ExecutionNode | undefined;
         }
 
-        console.log(`[BOT ENGINE] raw next node: ${JSON.stringify(currentNode)}`);
-
         if (!currentNode) {
-            console.log(`[BOT ENGINE] No valid start node found in flow. Aborting.`);
             return;
         }
-
-        console.log(`[BOT ENGINE] Current Node: ${currentNode.name} (${currentNode._id})`);
 
         // 4. Execute each action sequentially
         let attributes = { ...conversation.attributes };
@@ -470,7 +453,6 @@ export const executeNextBlock = internalAction({
         const actions = Array.isArray(currentNode.actions) ? currentNode.actions as ActionDoc[] : [];
 
         for (const action of actions) {
-            console.log(`[BOT ENGINE] -> Running Action: ${action._type}`);
             const result = await executeAction(ctx, action, attributes, args.incomingMessage, args.conversationId, conversation.projectId, conversation.channel || "widget");
 
             if (result.newAttributes) {
@@ -480,7 +462,6 @@ export const executeNextBlock = internalAction({
                 attributes = {};
             }
             if (result.nextNodeId) {
-                console.log(`[BOT ENGINE] -> Condition override to: ${result.nextNodeId}`);
                 nextNodeId = result.nextNodeId;
             }
             if (result.newBotId) {
@@ -491,7 +472,6 @@ export const executeNextBlock = internalAction({
             }
 
             if (result.suspend) {
-                console.log(`[BOT ENGINE] -> Action requested suspend at node: ${currentNode._id}`);
                 await ctx.runMutation(internal.bot.updateConversationState, {
                     id: args.conversationId,
                     // If we scheduled a future block, advance the pointer now so it doesn't infinite loop.
@@ -513,8 +493,6 @@ export const executeNextBlock = internalAction({
             }
         }
 
-        console.log(`[BOT ENGINE] Node actions complete. Next Node ID: ${nextNodeId}`);
-
         // 5. Advance to next node
         const updatedNodeId = resetNode ? null : (nextNodeId ?? null);
         await ctx.runMutation(internal.bot.updateConversationState, {
@@ -535,24 +513,18 @@ export const executeNextBlock = internalAction({
         if (updatedNodeId) {
             const nextNode = (executionNodes as ExecutionNode[]).find((n) => n._id === updatedNodeId || n.id === updatedNodeId);
             const requiresInput = nextNode?.actions?.some((a) => a._type === "capture_user_reply");
-            console.log(`[BOT ENGINE] Next node is ${nextNode?.name}. Requires input? ${requiresInput}`);
 
             if (!requiresInput) {
-                console.log(`[BOT ENGINE] Auto-continuing to next block.`);
                 await ctx.runAction(internal.bot.executeNextBlock, {
                     conversationId: args.conversationId,
                     incomingMessage: args.incomingMessage,
                 });
             }
         } else if (newBotId) {
-            // We replaced a bot, start traversal on new bot
-            console.log(`[BOT ENGINE] Bot Replaced. Restarting execution for new bot.`);
             await ctx.runAction(internal.bot.executeNextBlock, {
                 conversationId: args.conversationId,
                 incomingMessage: "",
             });
-        } else {
-            console.log(`[BOT ENGINE] End of flow reached.`);
         }
     }
 });

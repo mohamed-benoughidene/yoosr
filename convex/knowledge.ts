@@ -213,7 +213,7 @@ export const indexSource = internalAction({
         } else {
             // For MVP, URL/File types can just fail gracefully or skip
             await ctx.runMutation(internal.knowledge.updateSourceStatusInternal, { id: args.sourceId, status: "failed" });
-            console.log("Unsupported source type for MVP:", source.type);
+            console.warn("Unsupported source type:", source.type);
         }
     }
 });

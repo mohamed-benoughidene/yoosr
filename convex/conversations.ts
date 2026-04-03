@@ -1079,7 +1079,6 @@ export const sendMetaMessage = internalAction({
                 projectId: conversation.projectId,
             });
             if (!creds || !creds.enabled) {
-                console.log("[sendMetaMessage] WhatsApp integration not found or disabled");
                 return undefined;
             }
             const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${creds.phoneNumberId}/messages`;

@@ -7,7 +7,6 @@ import OpenAI from "openai";
 
 
 function getClient(customApiKey?: string): OpenAI {
-    console.log("[OPENROUTER DEBUG] Using key source:", customApiKey ? "project" : "env", "model will be set by caller")
     const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error("Missing OPENROUTER_API_KEY environment variable");

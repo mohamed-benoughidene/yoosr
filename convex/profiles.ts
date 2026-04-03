@@ -138,8 +138,6 @@ export const ensureCurrent = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
 
-        console.log("identity.org_id:", (identity as unknown as { org_id: string }).org_id);
-
         const existing = await ctx.db
             .query("profiles")
             .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
