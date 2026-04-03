@@ -7,7 +7,8 @@ import { ReactNode } from "react";
 import { useLocale } from "next-intl";
 import { arSA, enUS, frFR } from "@clerk/localizations";
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
 
 const arSAWithPlaceholders = {
     ...arSA,
@@ -32,7 +33,14 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     const locale = useLocale();
     const localeMap = { ar: arSAWithPlaceholders, en: enUS, fr: frFR };
     const clerkLocalization = localeMap[locale as keyof typeof localeMap] ?? enUS;
-    
+
+    // During static generation (CI build), Convex URL may not be available.
+    // In that case, just render children without Convex provider (static pages
+    // like marketing won't need it; dashboard pages will render empty anyway).
+    if (!convex) {
+        return <ClerkProvider localization={clerkLocalization}>{children}</ClerkProvider>;
+    }
+
     // Locale-aware URLs for Clerk redirects
     const urls = {
         signInUrl: `/${locale}/login`,
