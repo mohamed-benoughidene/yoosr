@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button"
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
     const formattedSlug = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co"
+    const ogUrl = `${baseUrl}/og/image?title=${encodeURIComponent(formattedSlug)}&description=${encodeURIComponent(`Learn about ${formattedSlug} from Yoosr`)}`
     return {
         title: `${formattedSlug} — Yoosr`,
-        description: `Learn about ${formattedSlug} from Yoosr.`
+        description: `Learn about ${formattedSlug} from Yoosr.`,
+        openGraph: {
+            images: [{ url: ogUrl, width: 1200, height: 630, alt: formattedSlug }],
+        },
+        twitter: {
+            images: [ogUrl],
+        },
     }
 }
 import Link from "next/link"

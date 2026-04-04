@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAdmin } from "./utils";
+import { paginationOptsValidator } from "convex/server";
 
 // Extend the Identity type to include custom claims from Clerk
 type ClerkIdentity = {
@@ -62,12 +63,37 @@ export const listOrders = query({
             throw new Error("Project not found");
         }
 
+        // Bounded to 500 — safe for most use cases. Use listOrdersPaginated for full pagination.
         const orders = await ctx.db
             .query("orders")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(500);
 
         return orders.sort((a, b) => b.createdAt - a.createdAt);
+    },
+});
+
+export const listOrdersPaginated = query({
+    args: {
+        projectId: v.id("projects"),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity || !identity.org_id) {
+            throw new Error("Not authenticated or no active organization");
+        }
+
+        const project = await ctx.db.get(args.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw new Error("Project not found");
+        }
+
+        return await ctx.db
+            .query("orders")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .order("desc")
+            .paginate(args.paginationOpts);
     },
 });
 

@@ -70,13 +70,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://yoosr.com",
+    url: "https://yoosr.co",
     siteName: "Yoosr",
     title: "Yoosr - AI-Powered Customer Support Platform",
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/image",
         width: 1200,
         height: 630,
         alt: "Yoosr - AI-Powered Customer Support Platform",
@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Yoosr - AI-Powered Customer Support Platform",
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
-    images: ["/og-image.png"],
+    images: ["/og/image"],
     creator: "@yoosr",
   },
   alternates: {

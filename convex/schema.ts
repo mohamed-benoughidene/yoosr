@@ -162,10 +162,18 @@ export default defineSchema({
     // Integrations (telegram, whatsapp, etc.)
     integrations: defineTable({
         projectId: v.id("projects"),
-        provider: v.string(), // "telegram", "openai", "whatsapp"
+        provider: v.string(), // "telegram", "openai", "whatsapp", "messenger", "instagram"
         credentials: v.optional(v.any()), // JSON (encrypted tokens)
         enabled: v.optional(v.boolean()),
-    }).index("by_projectId", ["projectId"]),
+        // Denormalized lookup fields for O(log n) queries (stored inside credentials but also indexed here)
+        phoneNumberId: v.optional(v.string()), // WhatsApp: external_phone_number_id
+        pageId: v.optional(v.string()), // Messenger/Instagram: page_id
+        webhookSecret: v.optional(v.string()), // Telegram: unique webhook secret per bot
+    }).index("by_projectId", ["projectId"])
+        .index("by_provider_enabled", ["provider", "enabled"])
+        .index("by_provider_phoneNumberId", ["provider", "phoneNumberId"])
+        .index("by_provider_pageId", ["provider", "pageId"])
+        .index("by_provider_webhookSecret", ["provider", "webhookSecret"]),
 
     // Departments
     departments: defineTable({

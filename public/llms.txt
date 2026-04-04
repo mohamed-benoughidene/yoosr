@@ -1,91 +1,52 @@
-# Yoosr - AI-Powered Customer Support Platform
+# Yoosr
+
+> Yoosr is an AI-powered customer support platform with a visual bot builder, knowledge base RAG, and omnichannel support for WhatsApp, Telegram, Messenger, and Instagram. Built for small to medium businesses.
+
+## Docs
+
+- [Visual Bot Builder](https://yoosr.co/en/#features): Drag-and-drop interface for creating customer support workflows without code, with conditional logic, AI blocks, and node-based flow design.
+- [Knowledge Base with RAG](https://yoosr.co/en/#features): Upload documents, URLs, and files to power AI responses with retrieval-augmented generation and vector embeddings.
+- [Omnichannel Support](https://yoosr.co/en/#channels): Connect WhatsApp, Telegram, Facebook Messenger, and Instagram DMs into a unified inbox for customer conversations.
+- [How It Works](https://yoosr.co/en/#how-it-works): Step-by-step walkthrough of setting up a Yoosr project, connecting integrations, and going live with AI-powered support.
+- [Who It's For](https://yoosr.co/en/#who-its-for): Overview of target users including e-commerce businesses, SaaS companies, and support teams across multiple industries.
+- [Pricing](https://yoosr.co/en/pricing): Details the pricing tiers, feature comparison, and plan limits for different business sizes.
+
+## Products
+
+- [Design Studio](https://yoosr.co/en/design-studio): Visual bot builder for creating and editing conversational AI flows with a node-based editor, AI model selection, and conditional branching.
+- [Web Chat Widget](https://yoosr.co/en/#channels): Embeddable chat widget for websites that connects to the same unified inbox as messaging channels.
+
+## Solutions
+
+- [E-commerce Support Automation](https://yoosr.co/en/solutions/ecommerce): Order management, automated responses, and multi-channel customer support for online stores.
+- [SaaS Customer Support](https://yoosr.co/en/solutions/saas): In-app support, ticketing, and self-service knowledge base for software companies.
+
+## Resources
+
+- [Trust & Security](https://yoosr.co/en/#trust-signals): Details on data encryption, per-integration webhook security, multi-tenant isolation, and SOC 2 compliance.
+- [Supported Channels Overview](https://yoosr.co/en/apps): List of all supported integrations including WhatsApp Business API, Telegram bots, Facebook Messenger, and Instagram.
 
 ## About
-Yoosr is an AI-powered customer support platform that helps businesses build intelligent chatbots with a visual flow builder, knowledge base integration, and omnichannel support. Built for MENA region with full Arabic RTL support.
 
-## Languages
-- English (en) - Default
-- Arabic (ar) - Full RTL support
-- French (fr)
+- [About Yoosr](https://yoosr.co/en): AI-powered customer support platform enabling businesses to automate support across messaging channels with visual bot building and knowledge base RAG.
 
-## Important Pages
-- Home: /[locale]/
-- Pricing: /[locale]/pricing
-- Waitlist: /[locale]/waitlist
-- Login: /[locale]/login
-- Signup: /[locale]/signup
-- Privacy Policy: /[locale]/legal/privacy
-- Terms of Service: /[locale]/legal/terms
+## Legal
 
-## Dashboard (Authenticated)
-- Dashboard Home: /[locale]/dashboard
-- Monitor: /[locale]/dashboard/monitor
-- Chat: /[locale]/dashboard/chat
-- Bots: /[locale]/dashboard/bots
-- Analytics: /[locale]/dashboard/analytics
-- Contacts: /[locale]/dashboard/contacts
-- Requests: /[locale]/dashboard/requests
-- History: /[locale]/dashboard/history
-- Activities: /[locale]/dashboard/activities
-- Apps: /[locale]/dashboard/apps
-- Knowledge Base: /[locale]/dashboard/kb
-- Settings: /[locale]/dashboard/settings
+- [Privacy Policy](https://yoosr.co/en/legal/privacy): Data collection, processing, retention, and user rights under GDPR and applicable regulations.
+- [Terms of Service](https://yoosr.co/en/legal/terms): Terms governing use of the Yoosr platform, account policies, and liability limitations.
 
-## Design Studio
-- Bot Flow Builder: /[locale]/design-studio/[botId]
+## Key Facts
 
-## Key Features
-
-### Visual Bot Builder
-- Drag-and-drop React Flow editor
-- 19 block types including:
-  - Start, Reply, Set Attribute
-  - Condition (with expression evaluator)
-  - Web Request (GET/POST/PUT/DELETE)
-  - AI Task (LLM prompt execution)
-  - HITL Handoff (bot-to-human escalation)
-  - Ask Knowledge Base (RAG-powered Q&A)
-  - Change Department, Apply Label, Set Priority
-  - And more...
-
-### Knowledge Base with RAG
-- Embedding pipeline using NVIDIA embeddings
-- Source types: Text, URL, File (PDF/DOCX)
-- Vector search with 2048 dimensions
-- Multi-turn conversation support
-- Unanswered query tracking
-
-### Omnichannel Support
-- Website Widget (embeddable iframe)
-- Telegram (inbound + outbound)
-- Meta Messenger (inbound + outbound)
-- Instagram (inbound + outbound)
-- WhatsApp (inbound + outbound via Meta Cloud API)
-
-### Real-Time Analytics
-- CSAT scores and feedback
-- SLA breach rate tracking
-- AI token usage monitoring
-- Conversation volume charts
-- Tag distribution
-- Unanswered queries table
-
-### Multi-language Support
-- Full trilingual UI (EN/AR/FR)
-- Arabic RTL layout (sidebar flips to right)
-- Locale-aware date formatting
-- Widget locale auto-detection
-
-## Technology Stack
-- Frontend: Next.js 16, React 19, TypeScript
-- Backend: Convex (serverless reactive database)
-- Authentication: Clerk (multi-tenancy via Organizations)
-- AI: OpenRouter API (multiple model support)
-- Styling: Tailwind CSS 4, Shadcn UI
+- Platform name: Yoosr
+- Domain: yoosr.co
+- Industry: AI-powered customer support / conversational AI
+- Supported languages: English, Arabic, French
+- Supported channels: WhatsApp Business API, Telegram, Facebook Messenger, Instagram DMs, Web Widget
+- Key features: Visual bot builder, knowledge base RAG, team collaboration, analytics dashboard, order management, multi-tenant auth
+- Backend: Convex (serverless database, real-time sync)
+- Auth: Clerk (multi-tenant, role-based access)
+- AI providers: OpenAI (primary), Hugging Face (embeddings)
 
 ## Contact
-- Email: support@yoosr.com
-- Website: https://yoosr.com
 
-## Disclaimer
-Yoosr is in early access. Features and pricing subject to change.
+- Website: https://yoosr.co

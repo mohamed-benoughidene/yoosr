@@ -17,8 +17,8 @@ import type { Metadata } from "next"
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.com";
-  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
+
   return {
     alternates: {
       canonical: `${baseUrl}/${locale}`,
@@ -27,6 +27,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
         "ar": `${baseUrl}/ar`,
         "fr": `${baseUrl}/fr`,
       },
+    },
+    openGraph: {
+      images: [
+        {
+          url: `${baseUrl}/og/image?title=Yoosr&description=AI-Powered%20Customer%20Support%20Platform`,
+          width: 1200,
+          height: 630,
+          alt: "Yoosr - AI-Powered Customer Support Platform",
+        },
+      ],
+    },
+    twitter: {
+      images: [`${baseUrl}/og/image?title=Yoosr&description=AI-Powered%20Customer%20Support%20Platform`],
     },
   };
 }

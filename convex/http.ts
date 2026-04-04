@@ -582,33 +582,12 @@ http.route({
                 return new Response("Forbidden", { status: 403 });
             }
 
-            // Look up all enabled Telegram integrations and match the webhook secret
-            const telegramIntegrations = await ctx.runQuery(internal.integrations.findTelegramByWebhookSecret, {
+            // Look up Telegram integration by denormalized webhookSecret index (O(log n))
+            const integration = await ctx.runQuery(internal.integrations.findTelegramByWebhookSecret, {
                 rawSecret: secretToken,
             });
 
-            // Find matching integration by decrypting each webhook_secret
-            let matchedIntegration: { projectId: Id<"projects"> } | null = null;
-            const key = process.env.ENCRYPTION_KEY;
-
-            if (key && telegramIntegrations && telegramIntegrations.length > 0) {
-                for (const integration of telegramIntegrations) {
-                    const storedSecret = (integration as { credentials?: Record<string, unknown> }).credentials?.webhook_secret;
-                    if (!storedSecret) continue;
-
-                    try {
-                        const decrypted = await decryptSecret(storedSecret as string, key);
-                        if (decrypted === secretToken) {
-                            matchedIntegration = integration as { projectId: Id<"projects"> };
-                            break;
-                        }
-                    } catch {
-                        continue;
-                    }
-                }
-            }
-
-            if (!matchedIntegration) {
+            if (!integration) {
                 return new Response("Forbidden", { status: 403 });
             }
 
@@ -630,6 +609,7 @@ http.route({
                 senderName,
                 messageText,
                 messageId,
+                projectId: integration.projectId,
             });
 
             return new Response("OK", { status: 200 });

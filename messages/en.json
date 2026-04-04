@@ -1096,6 +1096,7 @@
     "uploaded_file": "Uploaded file",
     "indexing": "Indexing...",
     "indexed": "Indexed",
+    "load_more": "Load more",
     "failed": "Failed",
     "delete_source_title": "Delete Source",
     "delete_source_desc": "This source and its indexed data will be permanently deleted. This action cannot be undone.",

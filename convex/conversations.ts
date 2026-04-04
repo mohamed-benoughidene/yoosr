@@ -963,26 +963,29 @@ export const createOrUpdateFromMeta = internalMutation({
             return;
         }
 
-        // 2. Find the project integration
-        let integration: { projectId: Id<"projects">; credentials?: Record<string, unknown> } | undefined;
+        // 2. Find the project integration using denormalized indexes
+        let integration: { projectId: Id<"projects">; credentials?: Record<string, unknown>; enabled?: boolean } | null | undefined;
         if (args.channel === "whatsapp") {
-            const rows = await ctx.db
+            integration = await ctx.db
                 .query("integrations")
-                .filter((q) => q.eq(q.field("provider"), "whatsapp"))
-                .filter((q) => q.eq(q.field("enabled"), true))
-                .take(500);
-            integration = rows.find(
-                (i) => i.credentials && (i.credentials as { phone_number_id?: string }).phone_number_id === args.phoneNumberId
-            );
+                .withIndex("by_provider_phoneNumberId", (q) =>
+                    q.eq("provider", "whatsapp").eq("phoneNumberId", args.phoneNumberId)
+                )
+                .first();
+            if (!integration || !integration.enabled) {
+                integration = undefined;
+            }
         } else {
-            const integrations = await ctx.db
+            // messenger or instagram
+            integration = await ctx.db
                 .query("integrations")
-                .filter((q) => q.eq(q.field("provider"), args.channel))
-                .filter((q) => q.eq(q.field("enabled"), true))
-                .take(100);
-            integration = integrations.find(
-                (i) => i.credentials && i.credentials.page_id === args.pageId
-            );
+                .withIndex("by_provider_pageId", (q) =>
+                    q.eq("provider", args.channel).eq("pageId", args.pageId)
+                )
+                .first();
+            if (!integration || !integration.enabled) {
+                integration = undefined;
+            }
         }
 
         if (!integration) {
@@ -1196,6 +1199,7 @@ export const createOrUpdateFromTelegram = internalMutation({
         senderName: v.optional(v.string()),
         messageText: v.optional(v.string()),
         messageId: v.string(),
+        projectId: v.id("projects"),
     },
     handler: async (ctx, args) => {
         // 1. Deduplicate
@@ -1208,25 +1212,14 @@ export const createOrUpdateFromTelegram = internalMutation({
             return;
         }
 
-        // 2. Find the project integration
-        const integrations = await ctx.db
-            .query("integrations")
-            .filter((q) => q.eq(q.field("provider"), "telegram"))
-            .filter((q) => q.eq(q.field("enabled"), true))
-            .take(100);
-
-        const integration = integrations[0];
-
-        if (!integration) {
-            return;
-        }
+        // 2. Find or create the conversation (projectId already verified by webhook handler)
 
         // 3. Find or create the conversation
         let conversationId;
         const openConversation = await ctx.db
             .query("conversations")
-            .withIndex("by_projectId_channelSenderId", (q) => 
-                q.eq("projectId", integration.projectId).eq("channelSenderId", args.chatId)
+            .withIndex("by_projectId_channelSenderId", (q) =>
+                q.eq("projectId", args.projectId).eq("channelSenderId", args.chatId)
             )
             .filter((q) => q.neq(q.field("status"), 1000))
             .first();
@@ -1237,7 +1230,7 @@ export const createOrUpdateFromTelegram = internalMutation({
             conversationId = openConversation._id;
         } else {
             conversationId = await ctx.db.insert("conversations", {
-                projectId: integration.projectId,
+                projectId: args.projectId,
                 visitorId: args.senderId,
                 visitorName: args.senderName ?? "Telegram User",
                 channel: "telegram",
@@ -1251,7 +1244,7 @@ export const createOrUpdateFromTelegram = internalMutation({
         // 4. Insert the message
         await ctx.db.insert("messages", {
             conversationId: conversationId,
-            projectId: integration.projectId,
+            projectId: args.projectId,
             senderType: "visitor",
             senderId: args.senderId,
             content: args.messageText ?? "",
@@ -1272,7 +1265,7 @@ export const createOrUpdateFromTelegram = internalMutation({
             if (isNew) {
                 await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
                     conversationId,
-                    projectId: integration.projectId,
+                    projectId: args.projectId,
                     initialMessage: args.messageText ?? "",
                 });
             } else if (!conversation.botPaused && conversation.botId) {

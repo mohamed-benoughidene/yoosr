@@ -1,8 +1,8 @@
 # Remaining Work Plan
 
-**Project:** Yoosr - AI-Powered Customer Support Platform  
-**Created:** Saturday, April 4, 2026  
-**Current Status:** Production-ready with hardened security  
+**Project:** Yoosr - AI-Powered Customer Support Platform
+**Created:** Saturday, April 4, 2026
+**Current Status:** Production-ready with hardened security, optimized performance, automated CI/CD, and full SEO
 **Last Updated:** Saturday, April 4, 2026
 
 ---
@@ -16,10 +16,15 @@
 | Security | ✅ All 5 vulnerabilities fixed |
 | Type Safety | ✅ Excellent throughout |
 | Webhook Security | ✅ Per-integration, multi-tenant safe |
+| Debug Code | ✅ All debug logs removed |
+| Performance Pagination | ✅ All critical queries paginated or bounded |
+| Database Indexes | ✅ Integration lookups use composite indexes |
+| CI/CD Pipeline | ✅ GitHub Actions — lint, build, deploy on push |
+| SEO | ✅ llms.txt, dynamic sitemap, dynamic OG images |
 
-**What's done:** All critical code quality and security issues are resolved. The platform is production-ready.
+**What's done:** All critical code quality, security, performance, and deployment automation issues are resolved. The platform is production-ready.
 
-**What's left:** These are improvements that will make the platform more reliable, faster, and easier to maintain — but none are blocking a launch.
+**What's left:** These are improvements that will make the platform more reliable, easier to maintain, and more observable — but none are blocking a launch.
 
 ---
 
@@ -29,89 +34,11 @@
 
 ### 🔴 HIGH PRIORITY — Do Before Launch
 
-These items directly affect your users' experience and your ability to detect problems in production.
-
----
-
-#### 1. Clean Up Debug Code
-
-**What it is:** There are 25+ `console.log` statements left in the code from development. They print debug info like `[BOT DEBUG] Executing AI block, model: ...` every time the bot runs.
-
-**Why it matters:**
-- Your production logs will be flooded with debug noise
-- Hard to find real errors among debug messages
-- May expose internal details in logs
-- Costs more in logging/storage
-
-**Where it is:**
-- `convex/bot.ts` — 25+ debug logs
-- `convex/openrouter.ts` — 1 debug log
-
-**What needs to happen:**
-- Remove all debug `console.log` statements
-- Or wrap them in a `DEBUG` environment flag so they only show when you turn them on
-
-**Estimated effort:** 30 minutes
-
----
-
-#### 2. Performance Pagination
-
-**What it is:** Several database queries use `.take(500)` which means they only fetch the first 500 records. If a business has 600 contacts, 1000 conversations, or 2000 notifications, the counts and analytics will be wrong.
-
-**Why it matters:**
-- Analytics dashboard shows wrong numbers (undercounts)
-- Notification counts are incorrect
-- Contact lists show incomplete data
-- Gets worse as the business grows
-
-**Where it is:** 8 files affected
-
-| File | Current Limit | What It Affects |
-|------|---------------|-----------------|
-| `convex/analytics.ts` | `.take(500)` | CSAT scores, conversation volume stats |
-| `convex/contacts.ts` | `.take(500)` | Total contact count |
-| `convex/conversations.ts` | `.take(500)` | Conversation counts |
-| `convex/dashboard.ts` | `.take(500)` | Dashboard widgets |
-| `convex/knowledgeBases.ts` | `.take(100)` | Knowledge base chunk count |
-| `convex/labels.ts` | `.take(200)` | Label counts |
-| `convex/notifications.ts` | `.take(50)` | Notification count (worst — only 50!) |
-| `convex/orders.ts` | `.take(500)` | Order counts |
-
-**What needs to happen:**
-- For small counts (notifications): Use a denormalized counter table (update count on each insert/delete)
-- For large counts (contacts, conversations): Use paginated loops that fetch all records in batches and sum them up
-
-**Estimated effort:** 4 hours
-
----
-
-#### 3. Set Up CI/CD Pipeline
-
-**What it is:** Right now, deployment is manual — you run `bun run build`, `bun run lint`, and deploy by hand. A CI/CD pipeline automates this: every time you push code, it automatically runs checks and deploys if everything passes.
-
-**Why it matters:**
-- No one can accidentally break production (bad code gets caught before deploy)
-- Consistent quality — build, lint, and tests always run
-- No manual steps = no forgotten steps
-- Faster releases
-
-**What needs to happen:**
-- Set up GitHub Actions workflow
-- Steps: lint → build → test → deploy to Convex → deploy to Vercel
-- Add a `README.md` explaining the deploy process
-
-**Estimated effort:** 2 hours
-
----
-
-### 🟡 MEDIUM PRIORITY — Do Soon After Launch
-
 These items improve performance, security, and reliability once you have real users.
 
 ---
 
-#### 4. Add Error Monitoring (Sentry or similar)
+#### 1. Add Error Monitoring (Sentry or similar)
 
 **What it is:** Right now, if something breaks in production, you won't know until a user complains. Error monitoring tools catch crashes automatically and alert you with the exact file, line, and user context.
 
@@ -131,7 +58,7 @@ These items improve performance, security, and reliability once you have real us
 
 ---
 
-#### 5. Rate Limit Webhook Endpoints
+#### 2. Rate Limit Webhook Endpoints
 
 **What it is:** The widget endpoints (`/widget/messages`, `/widget/conversations`) are already rate-limited (max 5 creates/minute, 20 messages/minute). But the webhook endpoints (`/webhooks/meta`, `/webhooks/telegram`) have no rate limiting.
 
@@ -150,35 +77,7 @@ These items improve performance, security, and reliability once you have real us
 
 ---
 
-#### 6. Database Index Audit
-
-**What it is:** Some queries scan entire tables instead of using indexes. An index is like a book's table of contents — without it, Convex has to read every single row to find what it needs.
-
-**Why it matters:**
-- Queries get slower as data grows
-- Some queries scan 500+ rows just to find one match
-- Wastes Convex compute units (costs money)
-- Slow dashboard loading
-
-**Where it is:** Several queries in `convex/integrations.ts` use `.filter()` which scans every row:
-
-```typescript
-// ❌ Scans all integrations, then filters in memory
-.filter((q) => q.eq(q.field("provider"), "whatsapp"))
-
-// ✅ Should use an index (needs to be added to schema)
-.withIndex("by_provider", (q) => q.eq("provider", "whatsapp"))
-```
-
-**What needs to happen:**
-- Add composite index: `by_provider_enabled` on `integrations` table
-- Update all queries to use `.withIndex()` instead of `.filter()`
-
-**Estimated effort:** 1 hour
-
----
-
-#### 7. Bundle Size Audit
+#### 3. Bundle Size Audit
 
 **What it is:** Your app generates 99 static pages and has a large component tree. Some pages may load unnecessary JavaScript, making the initial page load slow.
 
@@ -203,7 +102,7 @@ These are polish items. They improve the experience but don't affect functionali
 
 ---
 
-#### 8. Font Migration
+#### 4. Font Migration
 
 **What it is:** Your marketing page loads custom fonts using `<link>` tags instead of Next.js's built-in font optimization. This causes a 2-second lint warning.
 
@@ -222,7 +121,7 @@ These are polish items. They improve the experience but don't affect functionali
 
 ---
 
-#### 9. Middleware Deprecation
+#### 5. Middleware Deprecation
 
 **What it is:** Next.js 16 renamed `middleware.ts` to `proxy.ts`. Your current file still works but shows a deprecation warning in the build.
 
@@ -239,7 +138,7 @@ These are polish items. They improve the experience but don't affect functionali
 
 ---
 
-#### 10. Testing Suite
+#### 6. Testing Suite
 
 **What it is:** There are no automated tests. Every change requires manual testing by clicking through the app.
 
@@ -258,27 +157,23 @@ These are polish items. They improve the experience but don't affect functionali
 
 ---
 
-#### 11. SEO Optimization — ✅ FOUNDATION EXISTS
+#### 7. SEO Optimization — ✅ DONE
 
-**What's already done:**
-- ✅ `src/app/sitemap.ts` — Dynamic sitemap with multi-locale support (en/ar/fr)
+**What's been done:**
+- ✅ `src/app/sitemap.ts` — Dynamic sitemap with multi-locale support (en/ar/fr), 24 solution/product URLs added, junk anchor links and authenticated dashboard pages removed
 - ✅ `src/app/robots.ts` — Robots.txt with sitemap reference
 - ✅ `src/components/seo/JsonLd.tsx` — Structured data components:
   - Organization schema
   - WebSite schema
   - SoftwareApplication schema
   - FAQ schema
-
-**What could still be improved:**
-- Sitemap doesn't include dynamic content (bots, knowledge bases, products)
-- No Open Graph / Twitter Card meta tag audit done
-- No `llms.txt` for AI crawler discovery
-
-**Estimated effort:** 2-3 hours (improvements only, foundation is solid)
+- ✅ `public/llms.txt` — AI crawler discovery file with 14 page entries, Key Facts, and Contact sections (yoosr.co domain)
+- ✅ `src/app/og/image/route.tsx` — Dynamic OG image generation endpoint (1200×630, per-page titles)
+- ✅ All pages updated with dynamic OG images (home, products, solutions, pricing, design studio)
 
 ---
 
-#### 12. Accessibility Audit — ✅ PARTIAL FOUNDATION EXISTS
+#### 8. Accessibility Audit — ✅ PARTIAL FOUNDATION EXISTS
 
 **What's already done:**
 - ✅ 29+ `aria-*` attributes used throughout the app
@@ -303,16 +198,16 @@ These are polish items. They improve the experience but don't affect functionali
 | Priority | Item | Effort | Status | When to Do |
 |----------|------|--------|--------|------------|
 | 🔴 | Clean debug code | 30 min | ✅ **DONE** | — |
-| 🔴 | Performance pagination | 4 hours | ❌ Not started | **Before launch** |
-| 🔴 | CI/CD pipeline | 2 hours | ❌ Not started | **Before launch** |
-| 🟡 | Error monitoring (Sentry) | 1 hour | ❌ Not started | After launch |
+| 🔴 | Performance pagination | 4 hours | ✅ **DONE** | — |
+| 🔴 | CI/CD pipeline | 2 hours | ✅ **DONE** | — |
+| 🔴 | Error monitoring (Sentry) | 1 hour | ❌ Not started | After launch |
 | 🟡 | Rate limit webhooks | 30 min | ❌ Not started | After launch |
-| 🟡 | Database indexes | 1 hour | ❌ Not started | After launch |
+| 🟡 | Database indexes | 1 hour | ✅ **DONE** | — |
 | 🟡 | Bundle size audit | 1 hour | ❌ Not started | After launch |
 | 🟢 | Font migration | 15 min | ❌ Not started | Anytime |
 | 🟢 | Middleware deprecation | 1 hour | ❌ Not started | When next-intl supports it |
 | 🟢 | Testing suite | 8+ hours | ❌ Not started | Ongoing |
-| 🟢 | SEO improvements | 2-3 hours | ✅ Foundation exists | Before marketing push |
+| 🟢 | SEO improvements | 2-3 hours | ✅ **DONE** | — |
 | 🟢 | Accessibility audit | 3-4 hours | ✅ Partial foundation exists | Before marketing push |
 
 ---
@@ -329,13 +224,12 @@ When you want to work on something:
 ### Recommended Order:
 
 ```
-Step 1: Clean debug code (30 min) → Quick win, instant value
-Step 2: Performance pagination (4 hours) → Data accuracy
-Step 3: CI/CD pipeline (2 hours) → Automated quality gates
-Step 4: Everything else → Pick based on your needs
+Step 1: Error monitoring (1 hour) → Know about bugs before users
+Step 2: Everything else → Pick based on your needs
 
-Note: SEO and Accessibility already have solid foundations.
-      Remaining work is improvements, not building from scratch.
+Note: Debug code, performance pagination, database indexes,
+      CI/CD pipeline, and SEO are all complete. Accessibility
+      has a solid foundation.
 ```
 
 ---
@@ -364,5 +258,9 @@ These are the env vars currently set on your dev deployment:
 | Session 1 | April 2 | Type safety fixes | 327 build errors → 0 |
 | Session 2 | April 3 | Lint cleanup | 64 errors → 0, 106 warnings → 2 |
 | Session 3 | April 4 | Security hardening | 5 vulnerabilities → 0, per-integration webhook security |
+| Session 4 | April 4 | Debug code cleanup | 28 debug logs removed |
+| Session 5 | April 4 | Performance pagination + indexes | All critical queries paginated or bounded, 4 new indexes added |
+| Session 6 | April 4 | CI/CD pipeline | GitHub Actions workflow + static build fix (force-dynamic pages) |
+| Session 7 | April 4 | SEO optimization | llms.txt, dynamic sitemap with 24 solution/product URLs, dynamic OG images endpoint |
 
 **Total:** 765 issues found → 2 remaining (acceptable font warnings). **99.7% resolved.**

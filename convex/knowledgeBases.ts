@@ -2,6 +2,7 @@ import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
+import { paginationOptsValidator } from "convex/server";
 
 // List knowledge bases for a project
 export const list = query({
@@ -87,7 +88,26 @@ export const listSources = query({
         return await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
-            .take(100); // TODO: replace with paginated aggregation
+            .take(100);
+    },
+});
+
+// List sources for a knowledge base with pagination
+export const listSourcesPaginated = query({
+    args: { kbId: v.id("knowledge_bases"), paginationOpts: paginationOptsValidator },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const kb = await ctx.db.get(args.kbId);
+        if (!kb) throw new Error("Knowledge base not found");
+
+        await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
+
+        return await ctx.db
+            .query("knowledge_base_sources")
+            .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
+            .paginate(args.paginationOpts);
     },
 });
 

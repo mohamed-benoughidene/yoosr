@@ -1,96 +1,71 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yoosr.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yoosr.co';
   const locales = ['en', 'ar', 'fr'];
 
-  // Static pages available in each locale
-  const staticPages = [
-    '',
-    '/pricing',
-    '/waitlist',
-    '/login',
-    '/signup',
-    '/onboarding',
-    '/legal/privacy',
-    '/legal/terms',
+  // Public marketing pages
+  const publicPages = [
+    { path: '', changeFrequency: 'weekly' as const, priority: 1 },
+    { path: '/pricing', changeFrequency: 'monthly' as const, priority: 0.8 },
+    { path: '/waitlist', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/login', changeFrequency: 'monthly' as const, priority: 0.5 },
+    { path: '/signup', changeFrequency: 'monthly' as const, priority: 0.7 },
+    { path: '/onboarding', changeFrequency: 'monthly' as const, priority: 0.5 },
+    { path: '/legal/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
+    { path: '/legal/terms', changeFrequency: 'yearly' as const, priority: 0.3 },
   ];
 
-  // Generate URLs for all locales and static pages
-  const staticUrls = locales.flatMap((locale) =>
-    staticPages.map((page) => ({
-      url: `${baseUrl}/${locale}${page}`,
+  const publicUrls = locales.flatMap((locale) =>
+    publicPages.map((page) => ({
+      url: `${baseUrl}/${locale}${page.path}`,
       lastModified: new Date(),
-      changeFrequency: page === '' ? 'weekly' as const : 'monthly' as const,
-      priority: page === '' ? 1 : 0.8,
+      changeFrequency: page.changeFrequency,
+      priority: page.priority,
     }))
   );
 
-  // Dashboard pages (authenticated - lower priority, still indexable for logged-in users)
-  const dashboardPages = [
-    '/dashboard',
-    '/dashboard/monitor',
-    '/dashboard/chat',
-    '/dashboard/bots',
-    '/dashboard/analytics',
-    '/dashboard/contacts',
-    '/dashboard/requests',
-    '/dashboard/history',
-    '/dashboard/activities',
-    '/dashboard/apps',
-    '/dashboard/kb',
-    '/dashboard/settings',
-  ];
-
-  const dashboardUrls = locales.flatMap((locale) =>
-    dashboardPages.map((page) => ({
-      url: `${baseUrl}/${locale}${page}`,
+  // Solutions pages (hardcoded slugs from solutions/[slug]/page.tsx)
+  const solutionSlugs = ['customer-service', 'marketing', 'ecommerce', 'education'];
+  const solutionUrls = locales.flatMap((locale) =>
+    solutionSlugs.map((slug) => ({
+      url: `${baseUrl}/${locale}/solutions/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
-      priority: 0.5,
+      priority: 0.7,
     }))
   );
 
-  // Design studio pages
-  const designStudioUrls = locales.flatMap((locale) => ({
+  // Products pages (hardcoded slugs from products/[slug]/page.tsx)
+  const productSlugs = ['design-studio', 'knowledge-base', 'integrations', 'analytics'];
+  const productUrls = locales.flatMap((locale) =>
+    productSlugs.map((slug) => ({
+      url: `${baseUrl}/${locale}/products/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+  );
+
+  // Design Studio (entry point, not per-bot pages)
+  const designStudioUrls = locales.map((locale) => ({
     url: `${baseUrl}/${locale}/design-studio`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
 
-  // Marketing/landing page sections (anchor links)
-  const landingSections = [
-    '/#home',
-    '/#features',
-    '/#studio',
-    '/#how-it-works',
-    '/#who-its-for',
-    '/#trust-signals',
-    '/#pricing',
-    '/#channels',
-  ];
-
-  const landingSectionUrls = locales.flatMap((locale) =>
-    landingSections.map((section) => ({
-      url: `${baseUrl}/${locale}${section}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.9,
-    }))
-  );
-
   return [
-    // Homepage has highest priority
+    // Homepage (no locale prefix) — highest priority
     {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 1,
     },
-    ...staticUrls,
-    ...dashboardUrls,
+    ...publicUrls,
+    ...solutionUrls,
+    ...productUrls,
     ...designStudioUrls,
-    ...landingSectionUrls,
   ];
 }

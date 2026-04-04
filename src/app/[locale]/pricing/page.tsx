@@ -2,9 +2,20 @@ import type { Metadata } from "next"
 import { PricingTable } from "@/components/pricing/PricingTable"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
-export const metadata: Metadata = {
-    title: "Pricing — Yoosr",
-    description: "Simple, transparent pricing for teams of all sizes."
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
+    const ogUrl = `${baseUrl}/og/image?title=Pricing&description=Simple,%20transparent%20pricing%20for%20teams%20of%20all%20sizes`;
+    return {
+        title: "Pricing — Yoosr",
+        description: "Simple, transparent pricing for teams of all sizes.",
+        openGraph: {
+            images: [{ url: ogUrl, width: 1200, height: 630, alt: "Yoosr Pricing" }],
+        },
+        twitter: {
+            images: [ogUrl],
+        },
+    }
 }
 
 export default async function PricingPage({ params }: { params: Promise<{ locale: string }> }) {

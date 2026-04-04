@@ -102,11 +102,11 @@ export const routeConversation = internalMutation({
         let chosenAgentId: string | null = null;
 
         if (availableAgents.length > 0 && !skipAssignment) {
-            // Apply least-busy algorithm
+            // Apply least-busy algorithm — bounded to 1000 active convos (sufficient for load balancing)
             const activeConversations = await ctx.db
                 .query("conversations")
                 .withIndex("by_projectId_status", (q) => q.eq("projectId", args.projectId).eq("status", 200))
-                .take(500);
+                .take(1000);
 
             const agentLoads = new Map<string, number>();
             availableAgents.forEach(a => agentLoads.set(a.userId!, 0));

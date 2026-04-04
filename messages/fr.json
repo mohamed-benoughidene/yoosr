@@ -1080,6 +1080,7 @@
     "uploaded_file": "Fichier téléchargé",
     "indexing": "Indexation...",
     "indexed": "Indexé",
+    "load_more": "Charger plus",
     "failed": "Échec",
     "delete_source_title": "Supprimer la source",
     "delete_source_desc": "Cette source et ses données indexées seront définitivement supprimées. Cette action est irréversible.",

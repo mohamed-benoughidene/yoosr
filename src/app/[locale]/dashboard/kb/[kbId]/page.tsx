@@ -16,7 +16,7 @@ import {
 import { Globe, FileText, Trash2, RefreshCw, Type } from "lucide-react"
 import { useParams } from "next/navigation"
 import { AddContentDialog } from "@/components/dashboard/kb/add-content-dialog"
-import { useQuery, useMutation } from "convex/react"
+import { useMutation, usePaginatedQuery } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { Id } from "../../../../../../convex/_generated/dataModel"
@@ -58,11 +58,17 @@ export default function KnowledgeBaseDetailsPage() {
         resolveId()
     }, [rawKbId, activeProject, getDefaultKb])
 
-    const sources = useQuery(api.knowledgeBases.listSources, resolvedKbId ? { kbId: resolvedKbId } : "skip")
+    const sourcesResult = usePaginatedQuery(
+        api.knowledgeBases.listSourcesPaginated,
+        resolvedKbId ? { kbId: resolvedKbId } : "skip",
+        { initialNumItems: 50 }
+    )
     const addSource = useMutation(api.knowledgeBases.addSource)
     const removeSource = useMutation(api.knowledgeBases.removeSource)
 
-    const loading = !resolvedKbId || sources === undefined
+    const loading = !resolvedKbId || !sourcesResult
+
+    const sources = sourcesResult?.results ?? []
 
     const handleAddContent = async (type: string, value: string) => {
         if (!resolvedKbId) return
@@ -246,6 +252,19 @@ export default function KnowledgeBaseDetailsPage() {
                         ))
                     )}
                 </div>
+
+                {/* Load more button for pagination */}
+                {sourcesResult?.status === "CanLoadMore" && (
+                    <div className="flex justify-center">
+                        <Button
+                            variant="outline"
+                            onClick={() => sourcesResult.loadMore(50)}
+                            disabled={sourcesResult.status !== "CanLoadMore"}
+                        >
+                            {t("load_more")}
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Delete Source Confirmation */}

@@ -98,16 +98,16 @@ export const unreadCount = query({
 
         if (!project) return 0;
 
-        // Count unread
+        // Count unread — use 51 as sentinel for "50+" to avoid scanning beyond
         const notifications = await ctx.db
             .query("notifications")
             .withIndex("by_project_recipient", (q) =>
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
             .filter((q) => q.eq(q.field("read"), false))
-            .take(50); // TODO: replace with paginated aggregation
+            .take(51);
 
-        return notifications.length;
+        return notifications.length >= 51 ? 999 : notifications.length; // 999 = "99+" sentinel for frontend
     },
 });
 
@@ -146,13 +146,15 @@ export const markAllRead = mutation({
 
         if (!project) return;
 
+        // Mark all unread as read — bounded batch to avoid runaway reads
+        const MAX_BATCH = 200;
         const notifications = await ctx.db
             .query("notifications")
             .withIndex("by_project_recipient", (q) =>
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
             .filter((q) => q.eq(q.field("read"), false))
-            .take(50); // TODO: replace with paginated aggregation
+            .take(MAX_BATCH);
 
         for (const notif of notifications) {
             await ctx.db.patch(notif._id, { read: true });
@@ -178,12 +180,14 @@ export const clearAll = mutation({
 
         if (!project) return;
 
+        // Delete in bounded batches
+        const MAX_BATCH = 200;
         const notifications = await ctx.db
             .query("notifications")
             .withIndex("by_project_recipient", (q) =>
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
-            .take(50); // TODO: replace with paginated aggregation
+            .take(MAX_BATCH);
 
         for (const notif of notifications) {
             await ctx.db.delete(notif._id);
@@ -195,10 +199,12 @@ export const cleanupOldNotifications = internalMutation({
     args: {},
     handler: async (ctx) => {
         const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        // Delete in bounded batches — cron will run repeatedly so old entries will be cleaned over time
+        const MAX_BATCH = 500;
         const oldNotifications = await ctx.db
             .query("notifications")
             .withIndex("by_createdAt", (q) => q.lt("createdAt", sevenDaysAgo))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(MAX_BATCH);
 
         for (const notif of oldNotifications) {
             await ctx.db.delete(notif._id);

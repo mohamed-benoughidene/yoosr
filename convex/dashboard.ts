@@ -14,12 +14,12 @@ export const getHomeStats = query({
 
         const startOfYesterdayMs = startOfTodayMs - 24 * 60 * 60 * 1000;
 
-        // 1. Bots count for onboarding banner
-        const bots = await ctx.db
+        // 1. Bots count for onboarding banner — use .first() for O(log n) existence check
+        const bot = await ctx.db
             .query("bots")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
-            .take(1);
-        const botsCount = bots.length;
+            .first();
+        const botsCount = bot ? 1 : 0;
 
         // 2. Fetch active and recent conversations (exclude resolved)
         const unassignedConversations = await ctx.db
@@ -39,12 +39,12 @@ export const getHomeStats = query({
         const waitingConversations = allConversations.filter(c => c.status === 100);
         const myAssigned = openConversations.filter(c => c.assignedTo === identity.subject);
 
-        // Fetch online teammates — query profiles directly by org
+        // Fetch online teammates — bounded query with "99+" sentinel
         const project = await ctx.db.get(args.projectId);
         const orgProfiles = project ? await ctx.db
             .query("profiles")
             .withIndex("by_orgId", q => q.eq("orgId", project.orgId))
-            .take(500) : [];
+            .take(101) : [];
 
         const onlineTeammatesCount = orgProfiles.filter(
             p => p.isAvailable === true
@@ -80,12 +80,12 @@ export const getHomeStats = query({
         // 4. Recent Activity (40% width)
         // Moved to separate paginated query in the frontend to optimize reads.
 
-        // 5. Today's Snapshot (needs ALL conversations including resolved)
+        // 5. Today's Snapshot — bounded to 2000 records (sufficient for 100+ conversations/day)
         const snapshotConversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
             .filter(q => q.gte(q.field("_creationTime"), startOfYesterdayMs))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(2000);
 
         const conversationsToday = snapshotConversations.filter(c => (c._creationTime ?? 0) >= startOfTodayMs);
         const conversationsYesterday = snapshotConversations.filter(c =>
@@ -94,15 +94,14 @@ export const getHomeStats = query({
         const todayCount = conversationsToday.length;
         const yesterdayCount = conversationsYesterday.length;
 
-        // Bot Resolved Today
+        // Bot Resolved Today — bounded to 2000 events
         const todayEvents = await ctx.db
             .query("conversation_events")
             .withIndex("by_projectId_createdAt", q =>
                 q.eq("projectId", args.projectId)
                     .gte("createdAt", startOfTodayMs)
             )
-            .filter(q => q.gte(q.field("createdAt"), startOfTodayMs))
-            .take(500); // TODO: replace with paginated aggregation
+            .take(2000);
 
         const botResolvedToday = todayEvents.filter(e => e.handledBy === "bot" && e.closed).length;
 

@@ -169,7 +169,11 @@ export const _checkProjectOwnership = internalQuery({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return null;
-        return await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
+        const orgId = (identity as { org_id?: string }).org_id;
+        if (!orgId) return null;
+        const project = await ctx.db.get(args.projectId);
+        if (!project || project.orgId !== orgId) return null;
+        return project;
     }
 });
 
@@ -330,8 +334,9 @@ export const getUnansweredQueries = query({
 
 /**
  * CSAT summary: average rating + count per star (1-5).
+ * Uses the dedicated csat_ratings table with paginated action loop.
  */
-export const getCSATSummary = query({
+export const getCSATSummary = action({
     args: {
         projectId: v.id("projects"),
         from: v.number(),
@@ -341,38 +346,79 @@ export const getCSATSummary = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
-        const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
-        if (!project) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+        const orgId = (identity as { org_id?: string }).org_id;
+        if (!orgId) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
+        // Verify project access via internal query
+        const hasAccess = await ctx.runQuery(internal.analytics.checkProjectAccess, {
+            projectId: args.projectId,
+            orgId,
+        });
+        if (!hasAccess) return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
-        const ratings = conversations.filter(c =>
-            c._creationTime >= args.from &&
-            c._creationTime <= args.to &&
-            c.rating !== undefined
-        );
-
-        if (ratings.length === 0) {
-            return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
-        }
-
-        const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>;
+        // Paginated loop over csat_ratings table
+        let cursor: string | undefined;
         let sum = 0;
-        for (const c of ratings) {
-            const star = Math.min(5, Math.max(1, Math.round(c.rating!)));
-            distribution[star] = (distribution[star] ?? 0) + 1;
-            sum += c.rating!;
+        let total = 0;
+        const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>;
+
+        let done = false;
+        while (!done) {
+            const pageResult = await ctx.runQuery(internal.analytics.getCSATRatingsPage, {
+                projectId: args.projectId,
+                from: args.from,
+                to: args.to,
+                cursor,
+                limit: 500,
+            });
+
+            for (const r of pageResult.page) {
+                const star = Math.min(5, Math.max(1, Math.round(r.rating)));
+                distribution[star] = (distribution[star] ?? 0) + 1;
+                sum += r.rating;
+                total++;
+            }
+
+            done = pageResult.isDone;
+            cursor = pageResult.continueCursor as string | undefined;
         }
 
         return {
-            average: Math.round((sum / ratings.length) * 10) / 10,
-            total: ratings.length,
+            average: total > 0 ? Math.round((sum / total) * 10) / 10 : 0,
+            total,
             distribution,
         };
+    },
+});
+
+export const checkProjectAccess = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        orgId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const project = await ctx.db.get(args.projectId);
+        return project?.orgId === args.orgId;
+    },
+});
+
+export const getCSATRatingsPage = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        from: v.number(),
+        to: v.number(),
+        cursor: v.optional(v.string()),
+        limit: v.number(),
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("csat_ratings")
+            .withIndex("by_projectId_createdAt", (q) =>
+                q.eq("projectId", args.projectId)
+                    .gte("createdAt", args.from)
+                    .lte("createdAt", args.to)
+            )
+            .paginate({ cursor: args.cursor ?? null, numItems: args.limit });
     },
 });
 
@@ -695,8 +741,9 @@ export const submitCSAT = mutation({
 
 /**
  * Calculates the SLA breach rate for conversations within a date range.
+ * Uses paginated action loop to count ALL conversations, not just first 500.
  */
-export const getSLABreachRate = query({
+export const getSLABreachRate = action({
     args: {
         projectId: v.id("projects"),
         from: v.number(),
@@ -706,37 +753,65 @@ export const getSLABreachRate = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { total: 0, slaTracked: 0, breached: 0, breachRate: 0 };
 
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            // TODO: paginated — will undercount beyond 500 records, rewrite as action with paginated loop pre-launch
-            .take(500); // TODO: replace with paginated aggregation
+        const orgId = (identity as { org_id?: string }).org_id;
+        if (!orgId) return { total: 0, slaTracked: 0, breached: 0, breachRate: 0 };
 
-        const inRange = conversations.filter(c =>
-            c._creationTime >= args.from && c._creationTime <= args.to
-        );
+        const hasAccess = await ctx.runQuery(internal.analytics.checkProjectAccess, {
+            projectId: args.projectId,
+            orgId,
+        });
+        if (!hasAccess) return { total: 0, slaTracked: 0, breached: 0, breachRate: 0 };
 
+        // Paginated loop over conversations
+        let cursor: string | undefined;
+        let total = 0;
         let slaTracked = 0;
         let breached = 0;
 
-        for (const c of inRange) {
-            if (c.slaDeadline !== undefined && c.firstResponseAt !== undefined) {
-                slaTracked++;
-                if (c.firstResponseAt > c.slaDeadline) {
-                    breached++;
+        let done = false;
+        while (!done) {
+            const pageResult = await ctx.runQuery(internal.analytics.getSLAConversationsPage, {
+                projectId: args.projectId,
+                from: args.from,
+                to: args.to,
+                cursor,
+                limit: 500,
+            });
+
+            for (const c of pageResult.page) {
+                total++;
+                if (c.slaDeadline !== undefined && c.firstResponseAt !== undefined) {
+                    slaTracked++;
+                    if (c.firstResponseAt > c.slaDeadline) {
+                        breached++;
+                    }
                 }
             }
+
+            done = pageResult.isDone;
+            cursor = pageResult.continueCursor as string | undefined;
         }
 
         const breachRateRaw = slaTracked > 0 ? (breached / slaTracked) * 100 : 0;
         const breachRate = Math.round(breachRateRaw * 10) / 10;
 
-        return {
-            total: inRange.length,
-            slaTracked,
-            breached,
-            breachRate,
-        };
+        return { total, slaTracked, breached, breachRate };
+    },
+});
+
+export const getSLAConversationsPage = internalQuery({
+    args: {
+        projectId: v.id("projects"),
+        from: v.number(),
+        to: v.number(),
+        cursor: v.optional(v.string()),
+        limit: v.number(),
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .paginate({ cursor: args.cursor ?? null, numItems: args.limit });
     },
 });
 

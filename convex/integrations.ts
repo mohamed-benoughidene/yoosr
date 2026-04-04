@@ -39,10 +39,19 @@ export const upsert = mutation({
             .filter((q) => q.eq(q.field("provider"), args.provider))
             .first();
 
+        // Extract denormalized fields from credentials for indexing
+        const creds = args.credentials || {};
+        const phoneNumberId = creds.phone_number_id as string | undefined;
+        const pageId = creds.page_id as string | undefined;
+        const webhookSecret = creds.webhook_secret as string | undefined;
+
         if (existing) {
             const updates: Record<string, unknown> = {};
             if (args.credentials !== undefined) updates.credentials = args.credentials;
             if (args.enabled !== undefined) updates.enabled = args.enabled;
+            if (phoneNumberId !== undefined) updates.phoneNumberId = phoneNumberId;
+            if (pageId !== undefined) updates.pageId = pageId;
+            if (webhookSecret !== undefined) updates.webhookSecret = webhookSecret;
             await ctx.db.patch(existing._id, updates);
             return existing._id;
         } else {
@@ -51,6 +60,9 @@ export const upsert = mutation({
                 provider: args.provider,
                 credentials: args.credentials ?? {},
                 enabled: args.enabled ?? false,
+                phoneNumberId,
+                pageId,
+                webhookSecret,
             });
         }
     },
@@ -62,6 +74,9 @@ export const upsertInternal = internalMutation({
         provider: v.string(),
         credentials: v.optional(v.any()),
         enabled: v.optional(v.boolean()),
+        phoneNumberId: v.optional(v.string()),
+        pageId: v.optional(v.string()),
+        webhookSecret: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -73,6 +88,9 @@ export const upsertInternal = internalMutation({
             const updates: Record<string, unknown> = {};
             if (args.credentials !== undefined) updates.credentials = args.credentials;
             if (args.enabled !== undefined) updates.enabled = args.enabled;
+            if (args.phoneNumberId !== undefined) updates.phoneNumberId = args.phoneNumberId;
+            if (args.pageId !== undefined) updates.pageId = args.pageId;
+            if (args.webhookSecret !== undefined) updates.webhookSecret = args.webhookSecret;
             await ctx.db.patch(existing._id, updates);
             return existing._id;
         } else {
@@ -81,6 +99,9 @@ export const upsertInternal = internalMutation({
                 provider: args.provider,
                 credentials: args.credentials ?? {},
                 enabled: args.enabled ?? false,
+                phoneNumberId: args.phoneNumberId,
+                pageId: args.pageId,
+                webhookSecret: args.webhookSecret,
             });
         }
     },
@@ -130,12 +151,20 @@ export const saveChannelIntegration = action({
         const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
 
+        // Extract denormalized fields before encrypting
+        const phoneNumberId = args.credentials.phone_number_id as string | undefined;
+        const pageId = args.credentials.page_id as string | undefined;
+        const webhookSecret = args.credentials.webhook_secret as string | undefined;
+
         // Save raw first so the record exists
         await ctx.runMutation(internal.integrations.upsertInternal, {
             projectId: args.projectId,
             provider: args.provider,
             credentials: args.credentials,
             enabled: args.enabled,
+            phoneNumberId,
+            pageId,
+            webhookSecret,
         });
 
         // Encrypt the sensitive token per provider
@@ -165,6 +194,8 @@ export const saveChannelIntegration = action({
             projectId: args.projectId,
             provider: args.provider,
             credentials: encryptedCredentials,
+            phoneNumberId: args.provider === "whatsapp" ? phoneNumberId : undefined,
+            pageId: (args.provider === "messenger" || args.provider === "instagram") ? pageId : undefined,
         });
 
         return { success: true };
@@ -172,14 +203,25 @@ export const saveChannelIntegration = action({
 });
 
 export const patchCredentials = internalMutation({
-    args: { projectId: v.id("projects"), provider: v.string(), credentials: v.any() },
+    args: {
+        projectId: v.id("projects"),
+        provider: v.string(),
+        credentials: v.any(),
+        phoneNumberId: v.optional(v.string()),
+        pageId: v.optional(v.string()),
+    },
     handler: async (ctx, args) => {
         const existing = await ctx.db
             .query("integrations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .filter((q) => q.eq(q.field("provider"), args.provider))
             .first();
-        if (existing) await ctx.db.patch(existing._id, { credentials: args.credentials });
+        if (existing) {
+            const updates: Record<string, unknown> = { credentials: args.credentials };
+            if (args.phoneNumberId !== undefined) updates.phoneNumberId = args.phoneNumberId;
+            if (args.pageId !== undefined) updates.pageId = args.pageId;
+            await ctx.db.patch(existing._id, updates);
+        }
     }
 });
 
@@ -195,6 +237,7 @@ export const patchWebhookSecret = internalMutation({
             const creds = (existing.credentials as Record<string, unknown>) ?? {};
             await ctx.db.patch(existing._id, {
                 credentials: { ...creds, webhook_secret: args.webhookSecret },
+                webhookSecret: args.webhookSecret, // Denormalized for indexing
             });
         }
     }
@@ -274,117 +317,80 @@ export const getDecryptedWhatsAppCredentials = internalQuery({
 export const getWhatsAppIntegrationByPhoneNumberId = internalQuery({
     args: { phoneNumberId: v.string() },
     handler: async (ctx, args) => {
-        const integrations = await ctx.db
+        return await ctx.db
             .query("integrations")
-            .filter((q) =>
-                q.and(
-                    q.eq(q.field("provider"), "whatsapp"),
-                    q.eq(q.field("enabled"), true)
-                )
+            .withIndex("by_provider_phoneNumberId", (q) =>
+                q.eq("provider", "whatsapp").eq("phoneNumberId", args.phoneNumberId)
             )
-            .take(500);
-
-        return integrations.find(
-            (i) => (i.credentials as { phone_number_id?: string })?.phone_number_id === args.phoneNumberId
-        );
+            .first();
     },
 });
 
 export const getMessengerIntegrationByPageId = internalQuery({
     args: { pageId: v.string() },
     handler: async (ctx, args) => {
-        const integrations = await ctx.db
+        return await ctx.db
             .query("integrations")
-            .filter((q) =>
-                q.and(
-                    q.eq(q.field("provider"), "messenger"),
-                    q.eq(q.field("enabled"), true)
-                )
+            .withIndex("by_provider_pageId", (q) =>
+                q.eq("provider", "messenger").eq("pageId", args.pageId)
             )
-            .take(500);
-
-        return integrations.find(
-            (i) => (i.credentials as { page_id?: string })?.page_id === args.pageId
-        );
+            .first();
     },
 });
 
 export const getInstagramIntegrationByPageId = internalQuery({
     args: { pageId: v.string() },
     handler: async (ctx, args) => {
-        const integrations = await ctx.db
+        return await ctx.db
             .query("integrations")
-            .filter((q) =>
-                q.and(
-                    q.eq(q.field("provider"), "instagram"),
-                    q.eq(q.field("enabled"), true)
-                )
+            .withIndex("by_provider_pageId", (q) =>
+                q.eq("provider", "instagram").eq("pageId", args.pageId)
             )
-            .take(500);
-
-        return integrations.find(
-            (i) => (i.credentials as { page_id?: string })?.page_id === args.pageId
-        );
+            .first();
     },
 });
 
 export const getTelegramIntegrationByWebhookSecret = internalQuery({
     args: { webhookSecret: v.string() },
     handler: async (ctx, args) => {
-        const integrations = await ctx.db
+        return await ctx.db
             .query("integrations")
-            .filter((q) =>
-                q.and(
-                    q.eq(q.field("provider"), "telegram"),
-                    q.eq(q.field("enabled"), true)
-                )
+            .withIndex("by_provider_webhookSecret", (q) =>
+                q.eq("provider", "telegram").eq("webhookSecret", args.webhookSecret)
             )
-            .take(500);
-
-        return integrations.find(
-            (i) => (i.credentials as { webhook_secret?: string })?.webhook_secret === args.webhookSecret
-        );
+            .first();
     },
 });
 
 /**
  * Find a Telegram integration by matching the raw (unencrypted) webhook secret.
- * This is used by the HTTP webhook handler to look up the integration.
+ * Uses the denormalized webhookSecret index for O(log n) lookup.
  */
 export const findTelegramByWebhookSecret = internalQuery({
     args: { rawSecret: v.string() },
-    handler: async (ctx) => {
-        const integrations = await ctx.db
+    handler: async (ctx, args) => {
+        return await ctx.db
             .query("integrations")
-            .filter((q) =>
-                q.and(
-                    q.eq(q.field("provider"), "telegram"),
-                    q.eq(q.field("enabled"), true)
-                )
+            .withIndex("by_provider_webhookSecret", (q) =>
+                q.eq("provider", "telegram").eq("webhookSecret", args.rawSecret)
             )
-            .take(500);
-
-        // The webhook_secret is stored encrypted, but we store the raw encrypted value
-        // so we can compare. However, since we can't decrypt in a query, we need
-        // to return all enabled telegram integrations and let the caller decrypt+match.
-        return integrations;
+            .first();
     },
 });
 
 /**
  * List all enabled Meta integrations (WhatsApp, Messenger, Instagram).
- * Used by the webhook GET handler to verify subscription tokens.
+ * Uses the by_provider_enabled index for O(log n) lookup.
  */
 export const listAllEnabledMetaIntegrations = internalQuery({
     args: {},
     handler: async (ctx) => {
         const [whatsapp, messenger, instagram] = await Promise.all([
-            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "whatsapp")).take(500),
-            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "messenger")).take(500),
-            ctx.db.query("integrations").withIndex("by_projectId").filter((q) => q.eq(q.field("provider"), "instagram")).take(500),
+            ctx.db.query("integrations").withIndex("by_provider_enabled", (q) => q.eq("provider", "whatsapp").eq("enabled", true)).take(500),
+            ctx.db.query("integrations").withIndex("by_provider_enabled", (q) => q.eq("provider", "messenger").eq("enabled", true)).take(500),
+            ctx.db.query("integrations").withIndex("by_provider_enabled", (q) => q.eq("provider", "instagram").eq("enabled", true)).take(500),
         ]);
 
-        const all = [...whatsapp, ...messenger, ...instagram];
-        return all.filter((i) => i.enabled);
+        return [...whatsapp, ...messenger, ...instagram];
     },
 });

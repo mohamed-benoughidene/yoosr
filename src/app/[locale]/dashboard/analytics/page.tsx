@@ -101,10 +101,6 @@ export default function AnalyticsPage() {
             .catch(console.error);
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchTokens]);
-    const csatData = useQuery(
-        api.analytics.getCSATSummary,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
     const csatCommentsData = useQuery(
         api.analytics.getCSATComments,
         activeProject ? { projectId: activeProject._id, limit: 5 } : "skip"
@@ -131,10 +127,33 @@ export default function AnalyticsPage() {
         return () => { isMounted = false; };
     }, [activeProject, from, to, fetchTags]);
 
-    const slaData = useQuery(
-        api.analytics.getSLABreachRate,
-        activeProject ? { projectId: activeProject._id, from, to } : "skip"
-    );
+    // CSAT summary — paginated action (was query, now fetches all records)
+    const [csatData, setCsatData] = useState<{ average: number; total: number; distribution: Record<number, number> } | undefined>(undefined);
+    const fetchCSAT = useAction(api.analytics.getCSATSummary);
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        fetchCSAT({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setCsatData(data ?? undefined);
+            })
+            .catch(console.error);
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchCSAT]);
+
+    // SLA breach rate — paginated action (was query, now fetches all records)
+    const [slaData, setSlaData] = useState<{ total: number; slaTracked: number; breached: number; breachRate: number } | undefined>(undefined);
+    const fetchSLA = useAction(api.analytics.getSLABreachRate);
+    useEffect(() => {
+        if (!activeProject) return;
+        let isMounted = true;
+        fetchSLA({ projectId: activeProject._id, from, to })
+            .then(data => {
+                if (isMounted) setSlaData(data ?? undefined);
+            })
+            .catch(console.error);
+        return () => { isMounted = false; };
+    }, [activeProject, from, to, fetchSLA]);
 
     if (!activeProject) {
         return <div className="p-8 text-muted-foreground">{t("select_project_message")}</div>;
