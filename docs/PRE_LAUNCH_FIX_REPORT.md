@@ -48,11 +48,11 @@
 | 25 | No environment variable validation | ✅ Fixed — `src/lib/env.ts` with Zod schemas, validated at startup |
 | 26 | No `.env.example` file | ✅ Fixed — created with all required vars documented |
 
-### April 5, 2026 — Phase 4 Complete (6 of 7 MEDIUM issues fixed → 1 noted limitation)
+### April 5, 2026 — Phase 4 Complete (7 of 7 MEDIUM issues fixed)
 
 | # | Issue | Status |
 |---|---|---|
-| 27 | No optimistic UI updates in dashboard | ⚠️ Documented — Convex 1.31.7 doesn't support `optimisticUpdate` API; requires upgrade to 1.32+ |
+| 27 | No optimistic UI updates in dashboard | ✅ Fixed — added `.withOptimisticUpdate()` to labels, canned responses, contacts, orders, bots, and knowledge bases mutations |
 | 28 | ActiveProject always returns first project | ✅ Fixed — URL search param `?projectId=` + `ProjectSwitcher` dropdown in header |
 | 29 | KbShell violates single responsibility | ✅ Fixed — extracted to `KbList`, `KbCreateDialog`, `KbDeleteDialog` (271→62 lines) |
 | 30 | Admin redirect race condition | ✅ Fixed — loading skeleton shown during auth check; no flash of protected content |
@@ -227,10 +227,10 @@
 
 ### State Management
 
-- [ ] **27. No optimistic UI updates in dashboard**
+- [x] **27. No optimistic UI updates in dashboard**
   - **Part:** 14
   - **Risk:** Laggy UX on mutations, especially on slower connections
-  - **Fix:** Documented — Convex 1.31.7 doesn't support `optimisticUpdate` option; requires upgrade to 1.32+ or manual state management
+  - **Fix:** Added `.withOptimisticUpdate()` to mutations for labels (create/delete), canned responses (create/update/delete), contacts (create/delete), orders (status/delete), bots (create/update/delete), knowledge bases (create/delete)
 
 - [x] **28. ActiveProject always returns first project**
   - **Part:** 14
@@ -467,7 +467,7 @@ Issues: 11 ✅, 12 ✅, 17 ✅, 19 ✅, 20 ✅, 21 ✅, 13 ✅, 14 ✅ → **8/8
 Issues: 9 ✅, 10 ✅, 18 ✅, 22 ✅, 23 ✅, 24 ✅, 25 ✅, 26 ✅ → **8/8 DONE**
 
 ### Phase 4: UX & Polish (Week 4)
-Issues: 27 ⚠️, 28 ✅, 29 ✅, 30 ✅, 31 ✅, 32 ✅, 53 ✅ → **6/7 DONE** (1 documented limitation)
+Issues: 27 ✅, 28 ✅, 29 ✅, 30 ✅, 31 ✅, 32 ✅, 53 ✅ → **7/7 DONE**
 
 ### Phase 5: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)

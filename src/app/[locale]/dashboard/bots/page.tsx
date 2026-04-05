@@ -52,9 +52,56 @@ export default function BotsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const createBot = useMutation(api.bots.create)
-    const updateBot = useMutation(api.bots.update)
-    const removeBot = useMutation(api.bots.remove)
+    const createBot = useMutation(api.bots.create).withOptimisticUpdate(
+        (localStore, args) => {
+            const existing = localStore.getQuery(api.bots.list, { projectId: args.projectId });
+            if (existing) {
+                localStore.setQuery(api.bots.list, { projectId: args.projectId }, [
+                    ...existing,
+                    {
+                        _id: `temp_${Date.now()}` as any,
+                        _creationTime: Date.now(),
+                        projectId: args.projectId,
+                        name: args.name,
+                        description: args.description,
+                        type: args.type,
+                    },
+                ]);
+            }
+        }
+    );
+    const updateBot = useMutation(api.bots.update).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.bots.list);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.bots.list,
+                        q.args,
+                        (q.value as any[]).map((b: any) =>
+                            b._id === args.id
+                                ? { ...b, name: args.name ?? b.name, description: args.description ?? b.description }
+                                : b
+                        )
+                    );
+                }
+            }
+        }
+    );
+    const removeBot = useMutation(api.bots.remove).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.bots.list);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.bots.list,
+                        q.args,
+                        (q.value as any[]).filter((b: any) => b._id !== args.id)
+                    );
+                }
+            }
+        }
+    );
 
     const handleCreateBot = async (name: string, description: string, type: 'chatbot' | 'automation') => {
         if (!activeProject) return

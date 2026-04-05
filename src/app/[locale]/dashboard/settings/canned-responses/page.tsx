@@ -89,9 +89,56 @@ export default function CannedResponsesPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const createCannedResponse = useMutation(api.settings.createCannedResponse)
-    const updateCannedResponse = useMutation(api.settings.updateCannedResponse)
-    const removeCannedResponse = useMutation(api.settings.removeCannedResponse)
+    const createCannedResponse = useMutation(api.settings.createCannedResponse).withOptimisticUpdate(
+        (localStore, args) => {
+            const existing = localStore.getQuery(api.settings.listCannedResponses, { projectId: args.projectId });
+            if (existing) {
+                localStore.setQuery(api.settings.listCannedResponses, { projectId: args.projectId }, [
+                    ...existing,
+                    {
+                        _id: `temp_${Date.now()}` as any,
+                        _creationTime: Date.now(),
+                        projectId: args.projectId,
+                        trigger: args.trigger,
+                        message: args.message,
+                        createdBy: args.projectId,
+                    },
+                ]);
+            }
+        }
+    );
+    const updateCannedResponse = useMutation(api.settings.updateCannedResponse).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.settings.listCannedResponses);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.settings.listCannedResponses,
+                        q.args,
+                        (q.value as any[]).map((r: any) =>
+                            r._id === args.id
+                                ? { ...r, trigger: args.trigger ?? r.trigger, message: args.message ?? r.message }
+                                : r
+                        )
+                    );
+                }
+            }
+        }
+    );
+    const removeCannedResponse = useMutation(api.settings.removeCannedResponse).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.settings.listCannedResponses);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.settings.listCannedResponses,
+                        q.args,
+                        (q.value as any[]).filter((r: any) => r._id !== args.id)
+                    );
+                }
+            }
+        }
+    );
 
     const handleCreate = async () => {
         if (!activeProject || !newTitle || !newMessage) return

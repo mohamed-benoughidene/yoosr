@@ -74,7 +74,20 @@ export function ContactsList() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const removeContact = useMutation(api.contacts.remove)
+    const removeContact = useMutation(api.contacts.remove).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.contacts.list);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.contacts.list,
+                        q.args,
+                        (q.value as any[]).filter((c: any) => c._id !== args.id)
+                    );
+                }
+            }
+        }
+    );
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])

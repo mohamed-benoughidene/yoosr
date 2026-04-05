@@ -88,9 +88,37 @@ export default function OrdersPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     )
 
-    const updateOrderStatus = useMutation(api.orders.updateOrderStatus)
-    const deleteOrder = useMutation(api.orders.deleteOrder)
-    const batchImportOrders = useMutation(api.orders.batchImportOrders)
+    const updateOrderStatus = useMutation(api.orders.updateOrderStatus).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.orders.listOrders);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.orders.listOrders,
+                        q.args,
+                        (q.value as any[]).map((o: any) =>
+                            o._id === args.orderId ? { ...o, status: args.status } : o
+                        )
+                    );
+                }
+            }
+        }
+    );
+    const deleteOrder = useMutation(api.orders.deleteOrder).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.orders.listOrders);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.orders.listOrders,
+                        q.args,
+                        (q.value as any[]).filter((o: any) => o._id !== args.orderId)
+                    );
+                }
+            }
+        }
+    );
+    const batchImportOrders = useMutation(api.orders.batchImportOrders);
 
     const filteredOrders = orders?.filter(order => {
         if (filter === "all") return true

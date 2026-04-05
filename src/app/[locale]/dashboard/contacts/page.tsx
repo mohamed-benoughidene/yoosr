@@ -83,8 +83,28 @@ export default function ContactsPage() {
         api.contacts.list,
         activeProject ? { projectId: activeProject._id } : "skip"
     )
-    const createContact = useMutation(api.contacts.create)
-    const batchImportContacts = useMutation(api.contacts.batchImport)
+    const createContact = useMutation(api.contacts.create).withOptimisticUpdate(
+        (localStore, args) => {
+            const existing = localStore.getQuery(api.contacts.list, { projectId: args.projectId });
+            if (existing) {
+                localStore.setQuery(api.contacts.list, { projectId: args.projectId }, [
+                    ...existing,
+                    {
+                        _id: `temp_${Date.now()}` as any,
+                        _creationTime: Date.now(),
+                        projectId: args.projectId,
+                        name: args.name,
+                        email: args.email,
+                        phone: args.phone,
+                        address: args.address,
+                        note: args.note,
+                        tags: [],
+                    },
+                ]);
+            }
+        }
+    );
+    const batchImportContacts = useMutation(api.contacts.batchImport);
 
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)

@@ -29,7 +29,20 @@ export function KbDeleteDialog({ kbId, kbName, onOpenChange }: KbDeleteDialogPro
     const router = useRouter()
     const params = useParams()
     const activeId = params.kbId as string
-    const removeKb = useMutation(api.knowledgeBases.remove)
+    const removeKb = useMutation(api.knowledgeBases.remove).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.knowledgeBases.list);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.knowledgeBases.list,
+                        q.args,
+                        (q.value as any[]).filter((kb: any) => kb._id !== args.kbId)
+                    );
+                }
+            }
+        }
+    );
 
     const handleDelete = async () => {
         if (!kbId) return

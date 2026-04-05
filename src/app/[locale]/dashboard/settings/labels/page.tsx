@@ -54,8 +54,38 @@ export default function LabelsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const createLabel = useMutation(api.settings.createLabel)
-    const removeLabel = useMutation(api.settings.removeLabel)
+    const createLabel = useMutation(api.settings.createLabel).withOptimisticUpdate(
+        (localStore, args) => {
+            const existing = localStore.getQuery(api.labels.listLabels, { projectId: args.projectId });
+            if (existing) {
+                localStore.setQuery(api.labels.listLabels, { projectId: args.projectId }, [
+                    ...existing,
+                    {
+                        _id: `temp_${Date.now()}` as any,
+                        _creationTime: Date.now(),
+                        projectId: args.projectId,
+                        name: args.name,
+                        color: args.color,
+                        createdBy: args.projectId,
+                    },
+                ]);
+            }
+        }
+    );
+    const removeLabel = useMutation(api.settings.removeLabel).withOptimisticUpdate(
+        (localStore, args) => {
+            const allQueries = localStore.getAllQueries(api.labels.listLabels);
+            for (const q of allQueries) {
+                if (q.value) {
+                    localStore.setQuery(
+                        api.labels.listLabels,
+                        q.args,
+                        (q.value as any[]).filter((l) => l._id !== args.id)
+                    );
+                }
+            }
+        }
+    );
 
     const handleCreate = async () => {
         if (!activeProject || !newName.trim()) return

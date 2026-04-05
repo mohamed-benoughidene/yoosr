@@ -25,7 +25,24 @@ export function KbCreateDialog({ open, onOpenChange }: KbCreateDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const { activeProject } = useProject()
-    const createKb = useMutation(api.knowledgeBases.create)
+    const createKb = useMutation(api.knowledgeBases.create).withOptimisticUpdate(
+        (localStore, args) => {
+            const existing = localStore.getQuery(api.knowledgeBases.list, { projectId: args.projectId });
+            if (existing) {
+                localStore.setQuery(api.knowledgeBases.list, { projectId: args.projectId }, [
+                    ...existing,
+                    {
+                        _id: `temp_${Date.now()}` as any,
+                        _creationTime: Date.now(),
+                        projectId: args.projectId,
+                        name: args.name,
+                        description: args.description,
+                        isDefault: args.isDefault,
+                    },
+                ]);
+            }
+        }
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
