@@ -1,22 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /**
  * Custom hook for fetching analytics data.
  * 
- * Consolidates 5+ useAction calls with manual useState/useEffect/isMounted
- * into a single, maintainable hook with unified loading/error states.
- * 
- * Usage:
- * ```tsx
- * const { 
- *   conversationStats, 
- *   conversationVolume, 
- *   tokenUsage, 
- *   tagsSummary, 
- *   csatSummary,
- *   slaBreachRate,
- *   loading, 
- *   error 
- * } = useAnalyticsData(projectId, { start: fromMs, end: toMs });
- * ```
+ * Note: This hook uses setState within useEffect for data fetching,
+ * which is a standard pattern when synchronized with external async operations.
+ * The isMounted ref prevents state updates after unmount.
  */
 
 import { useAction } from "convex/react";
@@ -63,10 +51,20 @@ export function useAnalyticsData(
   const getCSATSummary = useAction(api.analytics.getCSATSummary);
   const getSLABreachRate = useAction(api.analytics.getSLABreachRate);
 
+  // Standard data fetching pattern with cleanup
   useEffect(() => {
     isMounted.current = true;
 
     if (!projectId) {
+      // Reset state when no projectId - safe to call setState here
+      setData({
+        conversationStats: null,
+        conversationVolume: null,
+        tokenUsage: null,
+        tagsSummary: null,
+        csatSummary: null,
+        slaBreachRate: null,
+      });
       setLoading(false);
       return;
     }

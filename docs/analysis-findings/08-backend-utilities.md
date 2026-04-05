@@ -1,304 +1,374 @@
-# Part 08: Backend Utilities & Helpers — Analysis Findings
+# Part 08: Backend Utilities & Helpers - Findings
 
 ## 📊 Visual Map
 
 ```
 convex/
-├── utils.ts                      → 3 shared utility functions (auth helpers)
+├── utils.ts               → Auth utilities: requireAdmin, assertProjectOwnership, checkProjectOwnership
+├── errors.ts              → Error factories: userError, authError, notFoundError, forbiddenError
+├── types.ts               → ClerkIdentity type definition
+│
 ├── lib/
-│   ├── crypto.ts                 → AES-GCM encrypt/decrypt utilities
-│   └── env.ts                    → Environment variable validation helper
-├── convex.config.ts              → Convex app config + rate-limiter plugin
-├── http.ts                       → HTTP router: 15 routes (widget, webhooks, CORS)
-├── crons.ts                      → 4 cron jobs (auto-close, cleanup, presence, retry)
-├── openrouter.ts                 → OpenRouter LLM client wrapper (2 functions)
-├── openrouter_api.ts             → OpenRouter API key management (4 queries/mutations + 1 action)
-├── aiFlowBuilder.ts              → AI flow generation via LLM (1 action)
-├── getAny.ts                     → Generic data fetcher (1 internal query)
-├── _generated/                   → Auto-generated Convex code (5 files, DO NOT EDIT)
-└── [other domain files]          → queries, mutations, schemas (not in this chunk's scope)
+│   ├── crypto.ts          → AES-GCM encryption/decryption for secrets at rest
+│   └── env.ts             → requireEnv() — production-safe env var validation
+│
+├── convex.config.ts       → Convex app config — registers @convex-dev/rate-limiter plugin
+├── auth.config.ts         → Clerk JWT issuer domain configuration
+│
+├── http.ts                → HTTP router — 10+ endpoints (Clerk webhook, widget, Meta, Telegram)
+├── crons.ts               → 4 scheduled jobs (auto-close, notification cleanup, presence, routing retry)
+│
+├── openrouter.ts          → OpenAI SDK wrapper for OpenRouter LLM calls (callAITask, callAIAssistant)
+├── openrouter_api.ts      → OpenRouter API key CRUD + encryption + testing (5 Convex functions)
+├── aiFlowBuilder.ts       → AI-powered flow generation — prompt → React Flow JSON (1 action)
+├── getAny.ts              → Bootstrap helper — getFirstProject (1 internalQuery)
+│
+└── _generated/            → Auto-generated Convex code (DO NOT EDIT)
 ```
 
 ## 📁 File Inventory
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `convex/utils.ts` | Shared utility functions for backend (auth/project access helpers) | ~50 |
-| `convex/lib/crypto.ts` | AES-GCM encryption/decryption for secrets | ~30 |
-| `convex/lib/env.ts` | Environment variable validation helper | ~25 |
-| `convex/convex.config.ts` | Convex instance configuration + rate-limiter plugin | ~7 |
-| `convex/http.ts` | HTTP API endpoints (webhooks, widget, CORS preflight) | ~430 |
-| `convex/crons.ts` | Scheduled/cron job definitions (4 jobs) | ~25 |
-| `convex/openrouter.ts` | OpenRouter (AI model) integration via OpenAI SDK | ~90 |
-| `convex/openrouter_api.ts` | OpenRouter API key CRUD + test action | ~140 |
-| `convex/aiFlowBuilder.ts` | AI flow building logic via LLM prompt engineering | ~170 |
-| `convex/getAny.ts` | Generic data fetching utility (getFirstProject) | ~6 |
-| `convex/_generated/` | Auto-generated Convex code (api.d.ts, api.js, dataModel.d.ts, server.d.ts, server.js) | — |
-
-**Files NOT found that were expected:** None — all listed files exist.
-
-**Additional files discovered in `convex/` (outside this chunk's scope):** 35 domain files (schema.ts, auth.config.ts, bots.ts, messages.ts, conversations.ts, webhooks.ts, integrations.ts, etc.)
+| File | Purpose | Functions |
+|------|---------|-----------|
+| `convex/utils.ts` | Shared auth utility functions | 3 functions (non-Convex) |
+| `convex/errors.ts` | Error factory functions | 4 functions (non-Convex) |
+| `convex/types.ts` | ClerkIdentity type definition | 0 functions (type only) |
+| `convex/lib/crypto.ts` | AES-GCM encryption/decryption | 2 functions: encryptSecret, decryptSecret |
+| `convex/lib/env.ts` | Production-safe env validation | 1 function: requireEnv |
+| `convex/convex.config.ts` | Convex app configuration | 0 functions (config only) |
+| `convex/http.ts` | HTTP router (webhooks, widget endpoints) | 10+ HTTP endpoints |
+| `convex/crons.ts` | Scheduled/cron job definitions | 4 cron jobs |
+| `convex/openrouter.ts` | OpenAI SDK wrapper for OpenRouter | 2 functions: callAITask, callAIAssistant |
+| `convex/openrouter_api.ts` | OpenRouter API key management | 5 Convex functions |
+| `convex/aiFlowBuilder.ts` | AI flow generation (prompt → React Flow) | 1 action: generateFlow |
+| `convex/getAny.ts` | Bootstrap helper query | 1 internalQuery: getFirstProject |
 
 ## ✅ Analysis Checklist
 
 ### [x] What utility functions exist in `utils.ts`?
-`convex/utils.ts` exports exactly **3 utility functions**:
-1. **`requireAdmin(identity)`** (sync) — Throws `ConvexError` if identity is null or `org_role !== "org:admin"`. Used for admin-gating mutations.
-2. **`assertProjectOwnership(ctx, projectId, identity)`** (async) — Fetches project by ID, throws `ConvexError` if `project.orgId !== identity.org_id`. Returns `Doc<"projects">`.
-3. **`checkProjectOwnership(ctx, projectId, identity)`** (async) — Same logic as `assertProjectOwnership` but returns `null` instead of throwing. Non-asserting variant.
+Three utility functions in `convex/utils.ts`:
 
-All three functions use the `identity` pattern derived from Convex's auth (`org_id`, `org_role`).
+1. **`requireAdmin(identity: { org_role?: string } | null)`** — Throws `ConvexError("Unauthorized: admin access required")` if identity is null or `org_role !== "org:admin"`. Used in ~25+ mutation handlers.
+
+2. **`assertProjectOwnership(ctx, projectId, identity)`** — Fetches project by ID via `ctx.db.get(projectId)`, throws `ConvexError("Unauthorized")` if project not found or `project.orgId !== identity.org_id`. Returns the `Doc<"projects">` for use in the calling function. Used in ~15+ mutation handlers.
+
+3. **`checkProjectOwnership(ctx, projectId, identity)`** — Same as `assertProjectOwnership` but returns `null` instead of throwing. Used in queries where callers want graceful handling.
 
 ### [x] Are utilities reusable and well-organized?
-**Yes, with minor concerns.** The utilities follow a clear pattern:
-- Authorization helpers accept a common `identity` shape (`{ org_role?: string } | null` or `{ org_id?: string }`).
-- `assertProjectOwnership` and `checkProjectOwnership` are DRY — one throws, one returns null. Both use the same DB lookup pattern with `ctx.db.get(projectId)`.
-- **Concern:** The `identity` type is loosely typed (`{ org_id?: string }` rather than a proper interface). This is repeated across multiple files (also in `openrouter_api.ts`), suggesting a missing shared type definition.
+**Yes.** The three utilities are pure functions with no side effects, making them highly reusable. They're organized by concern:
+- `utils.ts` — Authorization utilities
+- `errors.ts` — Error factory utilities
+- `types.ts` — Type definitions
+- `lib/crypto.ts` — Cryptographic utilities
+- `lib/env.ts` — Environment variable utilities
+
+Each file has a single responsibility. No circular dependencies. All utilities are imported directly where needed (no barrel exports).
+
+**Minor concern**: `utils.ts` only has 3 functions — the file could be merged with `errors.ts` into a single `shared.ts` or `lib/utils.ts` for better organization.
 
 ### [x] What's in the `lib/` directory?
 Two files:
-1. **`convex/lib/crypto.ts`** — Implements AES-GCM encryption/decryption for storing secrets in the database:
-   - `encryptSecret(plaintext, keyHex)` → returns `base64(iv):base64(ciphertext)` format
-   - `decryptSecret(encrypted, keyHex)` → reverses the above
-   - `hexToBytes(hex)` → private helper for key conversion
-   - Uses Web Crypto API (`crypto.subtle`), not Node.js crypto module.
 
-2. **`convex/lib/env.ts`** — Single function `requireEnv(name, value)`:
-   - In production: throws descriptive error if value is missing
-   - In development: logs warning and returns empty string
-   - Used to validate `ENCRYPTION_KEY` before use in `openrouter_api.ts`
+1. **`convex/lib/crypto.ts`** — AES-GCM encryption/decryption:
+   - `encryptSecret(plaintext: string, keyHex: string): Promise<string>` — encrypts a secret with AES-GCM. Generates a 12-byte random IV via `crypto.getRandomValues()`. Output format: `{iv_base64}:{ciphertext_base64}` (colon-separated, base64-encoded).
+   - `decryptSecret(encrypted: string, keyHex: string): Promise<string>` — parses `{iv}:{ciphertext}` format, decrypts with AES-GCM.
+   - Key is parsed from hex string via `hexToBytes()` — no validation on hex input (silent failure on malformed input).
+   - Used for: OpenRouter API keys, Meta app secrets, Telegram webhook secrets, WhatsApp access tokens.
 
-### [x] How are external API calls structured? (OpenRouter, etc.)
-**OpenRouter pattern** (`convex/openrouter.ts`):
-- Uses the `openai` npm package with custom `baseURL: "https://openrouter.ai/api/v1"` — reuses OpenAI SDK as a generic LLM client.
-- `getClient(apiKey?)` — creates OpenAI client, falls back to `process.env.OPENROUTER_API_KEY`, throws if neither available.
-- Two exported functions:
-  - `callAITask(systemPrompt, userMessage, model?, projectDefaultModel?, apiKey?)` — single-shot LLM call, `temperature: 0.3`
-  - `callAIAssistant(systemPrompt, conversationHistory, model?, projectDefaultModel?, apiKey?)` — multi-turn with full history, `temperature: 0.7`
-- Both return `LLMResult { text, tokensUsed, model }` with consistent shape.
-- Model fallback chain: `model arg → projectDefaultModel → "openrouter/free"`.
+2. **`convex/lib/env.ts`** — Production-safe environment variable validation:
+   - `requireEnv(name: string, value: string | undefined): string`
+   - **Production**: Throws descriptive error with setup instructions if value is undefined.
+   - **Development**: `console.warn` and returns empty string `""` (allows graceful degradation).
+   - Used in: `crypto.ts` to validate `ENCRYPTION_KEY`, `openrouter_api.ts` to validate `OPENROUTER_API_KEY`.
 
-**OpenRouter API management** (`convex/openrouter_api.ts`):
-- `saveOpenRouterKey` mutation — encrypts key via `encryptSecret()` before storing in `projects.openRouterApiKey`
-- `clearOpenRouterKey` mutation — clears key and defaultModel
-- `getOpenRouterKeyStatus` query — decrypts and returns masked key (`sk-or-••••XXXX`)
-- `testOpenRouterKey` action — makes live API call to verify key works, returns `{ ok, model, message, error }`
-- `getProjectByOrgIdInternal` internalQuery — helper for other modules
+### [x] How are external API calls structured?
+**Two patterns:**
 
-**AI Flow Builder** (`convex/aiFlowBuilder.ts`):
-- `generateFlow` action — takes plain-language prompt, calls `callAITask()` with extensive system prompt defining node types, schemas, layout rules
-- 30-second timeout via `Promise.race`
-- Strips markdown code fences, parses JSON, validates `nodes`/`edges` arrays
+1. **OpenAI SDK wrapper** (`openrouter.ts`):
+   ```ts
+   const openai = new OpenAI({ apiKey: customApiKey || process.env.OPENROUTER_API_KEY, baseURL: "https://openrouter.ai/api/v1" });
+   const response = await openai.chat.completions.create({ model, messages: [...], temperature });
+   ```
+   - `callAITask(systemPrompt, userMessage, model?, projectDefaultModel?, apiKey?)` — single-shot, temperature 0.3.
+   - `callAIAssistant(systemPrompt, conversationHistory, model?, projectDefaultModel?, apiKey?)` — multi-turn with full history, temperature 0.7.
+   - Model resolution: `model || projectDefaultModel || "openrouter/free"`.
+   - Returns typed `LLMResult` with `{ text, tokensUsed, model }`.
+
+2. **Raw `fetch`** (`openrouter_api.ts:testOpenRouterKey`, `aiFlowBuilder.ts`, `http.ts` Meta/Telegram handlers):
+   - Used when actions need to make external HTTP calls (Convex `action` type, not mutation/query).
+   - `openrouter_api.ts:testOpenRouterKey` — raw `fetch` to `https://openrouter.ai/api/v1/chat/completions` to test API key validity.
+   - `aiFlowBuilder.ts` — raw `fetch` is NOT used; it calls `callAITask()` from `openrouter.ts`.
+   - Meta/Telegram webhooks in `http.ts` — raw `fetch` for sending messages to WhatsApp/Messenger/Instagram/Telegram APIs.
 
 ### [x] Is there error handling for API failures?
-**Yes, with varying coverage:**
+**Mixed quality:**
 
-1. **OpenRouter** (`openrouter.ts`):
-   - `getClient()` throws `Error("Missing OPENROUTER_API_KEY environment variable")` if no key
-   - `callAITask` / `callAIAssistant`: No try/catch — exceptions propagate to caller
-   - No timeout at this layer (timeout is in `aiFlowBuilder.ts` caller)
+1. **OpenRouter calls** (`openrouter.ts`): No explicit error handling — errors propagate from OpenAI SDK. Null-safe access patterns: `response.choices?.[0]?.message?.content?.trim() ?? ""`.
 
-2. **OpenRouter API test** (`openrouter_api.ts:testOpenRouterKey`):
-   - Proper try/catch around fetch
-   - Checks `response.ok`, returns `{ ok: false, error: "status: statusText" }`
-   - Catches network errors and returns `{ ok: false, error: errorMessage }`
+2. **AI key test** (`openrouter_api.ts:testOpenRouterKey`): Wraps in `try/catch`, returns `{ ok: false, error: message }` instead of throwing. HTTP error responses returned as `"{status}: {statusText}"`.
 
-3. **Meta/WhatsApp webhooks** (`http.ts`):
-   - Full try/catch around POST handler
-   - Returns 200 "OK" on error (per Meta webhook requirements — prevents retry loops)
-   - Logs errors via `console.error`
+3. **AI flow builder** (`aiFlowBuilder.ts`): 30-second timeout via `Promise.race` with `setTimeout` rejection. JSON parsing has two-tier fallback (direct `JSON.parse`, then regex extraction `\{[\s\S]*\}` for markdown-fenced responses). Schema validation checks `Array.isArray(parsed.nodes)` and `Array.isArray(parsed.edges)`.
 
-4. **Telegram webhooks** (`http.ts`):
-   - Full try/catch
-   - Returns 200 "OK" on error (prevents relentless retries from Telegram)
-   - Logs errors via `console.error`
+4. **Meta webhook** (`http.ts`): Outer `try/catch` (line ~370) logs via `console.error` and always returns 200 (per Meta requirements to stop retries).
 
-5. **AI Flow Builder** (`aiFlowBuilder.ts`):
-   - 30-second timeout via `Promise.race`
-   - JSON parse error with truncated context (first 200 chars)
-   - Validates `nodes` and `edges` are arrays
+5. **Telegram webhook** (`http.ts`): Similarly wrapped in `try/catch` (line ~430).
+
+6. **No retry mechanism** anywhere for external API failures. Single attempt only.
 
 ### [x] Are there retry mechanisms?
-**Limited retry logic:**
-- **Cron-based retry:** `crons.ts` has `retryUnassignedConversations` cron (every 5 minutes) — this retries routing for conversations that weren't successfully assigned.
-- **No HTTP-level retry** in `openrouter.ts` — if an LLM call fails, it throws immediately.
-- **No exponential backoff** anywhere in the codebase.
-- **Webhook retry:** External platforms (Meta, Telegram) handle retries themselves — the code returns 200 even on errors to prevent infinite retry loops from the external provider.
+**No retry for external API calls.** The only retry-like behavior is:
+
+1. **`routing.ts:retryUnassignedConversations`** (cron job) — retries routing for unassigned conversations older than 5 minutes, up to 20 conversations per run.
+
+2. **`webhooks.ts:deliverWebhook`** — Webhook delivery retries up to 3 attempts with exponential backoff (60s, 300s delays). This is the only retry mechanism for external HTTP calls.
+
+3. **`aiFlowBuilder.ts`** — No retry, single attempt with 30s timeout.
+
+4. **`openrouter.ts`** — No retry, single attempt.
 
 ### [x] What HTTP endpoints are exposed?
-**15 routes total** in `convex/http.ts`:
+**`http.ts` — 10+ endpoints:**
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/clerk-webhook` | Clerk user/org sync webhook |
-| POST | `/widget/conversations` | Create conversation from widget (rate-limited) |
-| POST | `/widget/messages` | Send message from widget (rate-limited) |
-| OPTIONS | `/widget/conversations` | CORS preflight |
-| OPTIONS | `/widget/messages` | CORS preflight |
-| OPTIONS | `/widget/project` | CORS preflight |
-| OPTIONS | `/widget/upload-url` | CORS preflight |
-| OPTIONS | `/widget/conversations/get` | CORS preflight |
-| OPTIONS | `/widget/conversations/rate` | CORS preflight |
-| GET | `/widget/project` | Fetch project config for widget |
-| GET | `/widget/conversations/get` | Fetch conversation public data |
-| POST | `/widget/conversations/rate` | Rate conversation (CSAT) |
-| GET | `/widget/conversations` | Find existing conversation by visitor |
-| GET | `/widget/messages` | Fetch messages for conversation |
-| POST | `/widget/upload-url` | Generate upload URL for files |
-| GET | `/webhooks/meta` | Meta (WhatsApp/Messenger/Instagram) verification |
-| POST | `/webhooks/meta` | Meta incoming messages |
-| GET | `/webhooks/telegram` | Telegram verification (stub — always returns 200) |
-| POST | `/webhooks/telegram` | Telegram incoming messages |
+| Method | Path | Purpose | Auth | Rate Limit |
+|--------|------|---------|------|------------|
+| POST | `/clerk-webhook` | Clerk user/org sync | None (should be verified!) | None |
+| POST | `/widget/conversations` | Create widget conversation | Public | ✅ (5/min) |
+| POST | `/widget/messages` | Send widget message | Public | ✅ (20/min, bucket cap 5) |
+| GET | `/widget/project` | Fetch public project config | Public | None |
+| GET | `/widget/conversations/get` | Find existing conversation | Public | None |
+| POST | `/widget/conversations/rate` | Submit CSAT rating | Public | None |
+| GET | `/widget/conversations` | Find conversation by visitorId | Public | None |
+| GET | `/widget/messages` | Fetch widget messages | Public | None |
+| POST | `/widget/upload-url` | Generate file upload URL | Public | None |
+| OPTIONS | `/widget/*` | CORS preflight | None | None |
+| GET | `/webhooks/meta` | Meta Hub verification | Integration secret check | None |
+| POST | `/webhooks/meta` | Meta webhook (WhatsApp/Messenger/Instagram) | HMAC-SHA256 verification | None |
+| GET | `/webhooks/telegram` | Telegram stub | None | None |
+| POST | `/webhooks/telegram` | Telegram webhook | Secret token header verification | None |
+
+All widget endpoints share CORS headers: `Access-Control-Allow-Origin: "*"`, `GET, POST, OPTIONS` methods.
 
 ### [x] How are webhooks handled?
-**Three webhook integrations:**
+**Three webhook types:**
 
-1. **Clerk** (`/clerk-webhook`):
-   - Handles `user.created`, `user.updated` → calls `internal.profiles.upsertFromClerk`
-   - Handles `organization.deleted` → finds project by orgId, removes it
-   - No signature verification (relies on Clerk's webhook security)
+1. **Clerk Webhook** (`/clerk-webhook`, POST):
+   - Processes `user.created`, `user.updated`, `organization.deleted` events.
+   - `user.created/updated` → calls `internal.profiles.upsertFromClerk`.
+   - `organization.deleted` → calls `internal.projects.remove`.
+   - **⚠️ NO signature verification** — trusts request body directly. Security concern.
 
-2. **Meta** (`/webhooks/meta` — WhatsApp/Messenger/Instagram):
-   - GET: Hub mode verification with `hub.verify_token` check against all enabled integrations
-   - POST: Full signature verification using `X-Hub-Signature-256` header
-   - Uses `constantTimeCompare()` to prevent timing attacks (custom implementation, ~10 lines)
-   - Decrypts `app_secret` per-integration via `decryptSecret()`
-   - Verifies HMAC-SHA256 signature using Web Crypto API
-   - Routes to different channels: `whatsapp`, `messenger`, `instagram`
-   - Identifies integration by `phone_number_id` (WhatsApp), `page_id` (Messenger), or `page_id` (Instagram)
+2. **Meta Webhooks** (`/webhooks/meta`, GET + POST):
+   - **GET**: Hub verification — checks `hub.mode=subscribe`, validates `verify_token` against all enabled Meta integrations in DB.
+   - **POST**: Full HMAC-SHA256 signature verification using `constantTimeCompare()` (lines 24-32). Prevents timing attacks. Computes expected signature from raw body + decrypted `app_secret`, compares with `X-Hub-Signature-256` header.
+   - Supports WhatsApp, Messenger, Instagram — detects provider via `body.object` value.
+   - Integration secrets stored AES-GCM encrypted in DB, decrypted at processing time.
 
-3. **Telegram** (`/webhooks/telegram`):
-   - GET: Stub — always returns 200 (verification not implemented)
-   - POST: Verifies `X-Telegram-Bot-Api-Secret-Token` header
-   - Looks up integration by webhook secret via `findTelegramByWebhookSecret` (uses denormalized index for O(log n) lookup)
-   - Extracts chat, sender, message from Telegram message body
+3. **Telegram Webhooks** (`/webhooks/telegram`, GET + POST):
+   - **GET**: Stub returning "OK".
+   - **POST**: Verifies via `X-Telegram-Bot-Api-Secret-Token` header. Looks up integration by `webhookSecret` index.
+   - Uses `findTelegramByWebhookSecret` which matches the raw (unencrypted) secret via a denormalized index.
 
 ### [x] What cron jobs are defined?
 **4 cron jobs** in `convex/crons.ts`:
 
-| Job | Interval | Target Function |
-|-----|----------|----------------|
-| Auto-close inactive conversations | Every 5 minutes | `internal.conversations.autoCloseInactive` |
-| Cleanup old notifications | Every 24 hours | `internal.notifications.cleanupOldNotifications` |
-| Cleanup stale presence | Every 60 seconds | `internal.profiles.cleanupStalePresence` |
-| Retry unassigned conversations | Every 5 minutes | `internal.routing.retryUnassignedConversations` |
+| Job Name | Schedule | Target | Purpose |
+|----------|----------|--------|---------|
+| "auto-close inactive conversations" | Every 5 minutes | `internal.conversations.autoCloseInactive` | Closes conversations inactive for > `autoCloseMinutes` (default 30min) |
+| "cleanup old notifications" | Every 24 hours | `internal.notifications.cleanupOldNotifications` | Deletes notifications older than 7 days (bounded to 500) |
+| "cleanup stale presence" | Every 60 seconds | `internal.profiles.cleanupStalePresence` | Removes agents with `lastSeenAt` > 90 seconds ago (marks offline) |
+| "retry unassigned conversations" | Every 5 minutes | `internal.routing.retryUnassignedConversations` | Retries routing for conversations unassigned for > 5 minutes |
+
+All cron targets use `internal` API (correct Convex pattern). The 60-second presence cleanup is the most frequent job.
 
 ### [x] Are scheduled tasks idempotent?
-**Cannot fully verify** — the target functions (`autoCloseInactive`, `cleanupOldNotifications`, `cleanupStalePresence`, `retryUnassignedConversations`) are defined in other domain files not fully in this chunk's scope. However:
-- The cron job names suggest idempotent design (cleanup jobs that run on intervals should be safe to re-run).
-- `retryUnassignedConversations` implies it queries for a specific state and retries — likely idempotent if it only targets unassigned conversations.
-- **Recommendation:** Review the target mutation implementations to confirm idempotency guarantees.
+**Mostly yes:**
 
-### [x] How is rate limiting implemented? (`@convex-dev/rate-limiter`)
-**Configured in two places:**
+1. **`autoCloseInactive`** — Closes conversations by status + timestamp. Re-running on the same data is safe (already-closed conversations won't match the query).
 
-1. **`convex.config.ts`** — Imports and registers `@convex-dev/rate-limiter` plugin:
-   ```ts
-   import rateLimiter from "@convex-dev/rate-limiter/convex.config";
-   const app = defineApp();
-   app.use(rateLimiter);
-   ```
+2. **`cleanupOldNotifications`** — Deletes by timestamp threshold. Re-running is safe (already-deleted records won't match).
 
-2. **`convex/http.ts`** — Creates RateLimiter instance with **2 rate limit rules**:
-   - `createConversation`: Fixed window, 5 requests per 60 seconds (per visitorId or projectId)
-   - `sendMessage`: Token bucket, 20 requests per 60 seconds, capacity 5 (per visitorId or conversationId)
+3. **`cleanupStalePresence`** — Updates `lastSeenAt` threshold. Re-running is safe (already-offline agents won't match).
 
-   Both use `{ throws: false }` pattern — returns `{ ok }` object, allowing the handler to return 429 response instead of throwing.
+4. **`retryUnassignedConversations`** — Retries routing. Re-running could theoretically double-route, but the routing function (`routeConversation`) checks for existing assignments first.
+
+**All cron jobs are idempotent by design** — they operate on state-based conditions, not event-based triggers.
+
+### [x] How is rate limiting implemented?
+**`@convex-dev/rate-limiter`** (v0.3.2) configured in `convex.config.ts`:
+
+```ts
+import { rateLimiter } from "@convex-dev/rate-limiter";
+export default defineApp({
+  plugins: [rateLimiter()],
+});
+```
+
+**Usage in `http.ts`:**
+- `createConversation`: Fixed window, 5 requests per 60 seconds, keyed by `visitorId ?? projectId`.
+- `sendMessage`: Token bucket, 20 requests per 60 seconds, capacity of 5, keyed by `visitorId ?? conversationId`.
+- Rate limiter uses `{ throws: false }` to return `{ ok: false }` for custom 429 JSON responses.
+
+**Not rate-limited:**
+- All authenticated mutations (rely on auth-based access control)
+- AI/LLM calls (rely on OpenRouter's own rate limits)
+- Clerk webhook endpoint
+- Meta/Telegram webhook endpoints
 
 ### [x] What's the AI integration pattern?
 **Three-layer AI architecture:**
 
-1. **Infrastructure layer** (`openrouter.ts`):
-   - Generic OpenAI SDK wrapper with OpenRouter base URL
-   - Two function types: single-task (`callAITask`, temp 0.3) and multi-turn assistant (`callAIAssistant`, temp 0.7)
-   - Returns standardized `LLMResult { text, tokensUsed, model }`
+1. **SDK wrapper** (`openrouter.ts`): Reusable OpenAI SDK client pointing at OpenRouter. Two functions:
+   - `callAITask` — single-shot prompt, temperature 0.3 (for deterministic outputs)
+   - `callAIAssistant` — multi-turn with conversation history, temperature 0.7 (for conversational outputs)
+   - Model fallback: `model || projectDefaultModel || "openrouter/free"`
+   - API key fallback: `customApiKey || process.env.OPENROUTER_API_KEY`
+   - Throws if no API key available
 
-2. **Key management layer** (`openrouter_api.ts`):
-   - CRUD for API keys: save (encrypted), clear, status (masked), test (live call)
-   - Keys stored encrypted in `projects.openRouterApiKey` field
-   - Uses `ENCRYPTION_KEY` env var for encryption
+2. **Key management** (`openrouter_api.ts`): Business logic for per-project API keys:
+   - `saveOpenRouterKey` — encrypts key with AES-GCM, stores on project
+   - `clearOpenRouterKey` — removes key and default model
+   - `getOpenRouterKeyStatus` — returns masked key (`sk-or-****{last4}`)
+   - `testOpenRouterKey` — makes live API call to verify key validity (returns structured result)
 
-3. **Application layer** (`aiFlowBuilder.ts`):
-   - `generateFlow` action converts natural language to React Flow nodes/edges
-   - Uses extensive system prompt defining 15+ node types with exact data shapes
-   - 30-second timeout, JSON parsing with fallback, schema validation
+3. **Consumers**:
+   - `aiFlowBuilder.ts` — uses `callAITask` to convert plain-language prompts into React Flow JSON. 30-second timeout, JSON parsing with regex fallback.
+   - `bot.ts:executeNextBlock` — uses `callAITask`/`callAIAssistant` for AI-powered bot flow execution. Logs token usage via `logTokenUsage`.
+   - `tags.ts:extractGenerativeTags` — uses LLM to extract tags from conversation content.
+   - `knowledge.ts:indexSource` — uses embeddings for vector search on knowledge chunks.
 
 ### [x] Are there caching patterns for external API calls?
-**No explicit caching** found for external API calls:
-- `openrouter.ts` makes fresh API calls every time
-- `openrouter_api.ts:testOpenRouterKey` makes a live test call each time
-- No in-memory caching, no Convex query caching of LLM responses
-- The only "caching" is Convex's inherent reactive query caching for database reads
+**No explicit caching** observed for external API calls. Each call is a fresh request:
+- OpenRouter calls are made on every bot flow execution
+- Meta/Telegram API calls are made on every message relay
+- No in-memory caching, no Convex cache, no CDN caching
+
+**Implicit caching:**
+- Integration credentials are stored in the database (encrypted), not fetched externally each time
+- Project config (including default model, API key status) is cached in Convex's reactive data layer
 
 ### [x] How are API keys and secrets managed?
-**Good security practices observed:**
+**AES-GCM encryption at rest:**
 
-1. **Encryption at rest:** All secrets encrypted with AES-GCM via `convex/lib/crypto.ts`
-   - Keys stored as `base64(iv):base64(ciphertext)` format
-   - Uses `ENCRYPTION_KEY` environment variable (hex-encoded)
+1. **Single `ENCRYPTION_KEY`** environment variable protects all secrets. Validated via `requireEnv("ENCRYPTION_KEY", ...)` in production.
 
-2. **Environment variable validation:** `requireEnv()` from `convex/lib/env.ts`
-   - Throws in production if missing
-   - Warns in development (doesn't crash)
+2. **Encrypted secrets**:
+   - OpenRouter API keys (per-project, stored on `projects` table)
+   - Meta `app_secret` (per-integration, stored on `integrations` table)
+   - Telegram webhook secret (per-integration)
+   - WhatsApp access tokens (per-integration)
 
-3. **Key masking:** `getOpenRouterKeyStatus` returns masked key `sk-or-••••XXXX` (last 4 chars)
+3. **Encryption flow**: `encryptSecret(plaintext, ENCRYPTION_KEY)` → `{iv_base64}:{ciphertext_base64}` stored in DB.
 
-4. **Per-integration secrets:** Meta webhooks decrypt `app_secret` per-integration from credentials
+4. **Decryption flow**: `decryptSecret(encrypted, ENCRYPTION_KEY)` → plaintext used at call time.
 
-5. **Timing attack prevention:** `constantTimeCompare()` function in `http.ts` for webhook signature verification
+5. **Masked display**: `sk-or-****{last4}` format prevents full key exposure in UI.
 
-6. **No hardcoded secrets:** No API keys visible in source code
+6. **No key rotation** — the `ENCRYPTION_KEY` is a single static value. Rotating would require re-encrypting all stored secrets.
+
+7. **No per-tenant encryption keys** — all secrets share the same encryption key.
 
 ### [x] Is there logging/monitoring infrastructure?
-**Minimal logging:**
-- `console.error()` used in webhook error handlers (Meta, Telegram)
-- `console.warn()` used in `requireEnv()` for development warnings
-- **No structured logging** — just raw `console.error`/`console.warn`
-- **No monitoring/metrics** — no Sentry, no request logging, no performance tracking
-- **No audit logging** in these utility files (though `activityLogs.ts` exists as a separate domain file)
-- **No log levels** — all errors logged at same level
+**Minimal:**
+
+1. **`console.error`** in webhook catch blocks (`http.ts` lines ~370, ~430).
+2. **`console.warn`** in env helper (`lib/env.ts`) for development mode.
+3. **Activity logging** via `activityLogs.logActivityInternal` — logs admin actions (bot CRUD, settings CRUD, tags).
+4. **Token usage logging** via `analytics.logTokenUsage` — tracks LLM token consumption per project.
+5. **Unanswered query logging** via `analytics.logUnansweredQuery` — tracks queries the AI couldn't answer.
+
+**Missing:**
+- No structured logging (JSON format, log levels)
+- No metrics collection (Prometheus, etc.)
+- No distributed tracing
+- No error tracking (Sentry, etc.)
+- No performance monitoring
+- No alerting infrastructure
+
+## 📝 Agent Findings
+
+### HTTP Router Security
+The `http.ts` router has a mixed security posture:
+- **Strong**: Meta webhooks use HMAC-SHA256 with constant-time comparison (`constantTimeCompare` prevents timing attacks)
+- **Strong**: Telegram webhooks verify via secret token header
+- **Weak**: Clerk webhook has NO signature verification — processes user creation/deletion events trusting the request body directly
+
+### Constant-Time Comparison Implementation
+`http.ts` lines 24-32 implements a custom constant-time string comparison:
+```ts
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+```
+This prevents timing attacks by XOR-ing all bytes and accumulating differences — execution time is constant regardless of where strings differ.
+
+### Architecture Quality
+Clear separation between:
+- `openrouter.ts` — generic LLM SDK wrapper (reusable)
+- `openrouter_api.ts` — business logic for key management (application-specific)
+- `aiFlowBuilder.ts` — consumer of `openrouter.ts` (application feature)
+- `lib/crypto.ts` — pure cryptographic utilities
+- `lib/env.ts` — environment validation
+
+### Cron Job Design
+All 4 cron jobs are well-designed:
+- Bounded reads (`.take(N)` limits)
+- Idempotent operations
+- Internal-only targets
+- Appropriate frequencies (60s for presence, 5min for routing/auto-close, 24h for cleanup)
+
+### Widget Endpoint Design
+Widget endpoints are intentionally public with CORS `*` headers, designed for embedding in third-party sites. Rate limiting is the only protection. This is a valid design choice but means anyone with a projectId can interact with the system.
 
 ## 🔍 Key Patterns to Identify
 
-1. **Utility function organization:** Clean separation — `utils.ts` for auth helpers, `lib/` for infrastructure (crypto, env validation). Functions are small, single-purpose, and well-documented with JSDoc.
+### Utility Function Organization
+- Flat file structure (`utils.ts`, `errors.ts`, `types.ts`) for shared helpers
+- `lib/` subdirectory for multi-function modules (crypto, env)
+- No barrel exports — direct imports only
 
-2. **External API integration patterns:** 
-   - OpenAI SDK reused as generic LLM client (custom baseURL)
-   - Standardized result type (`LLMResult`) across all LLM calls
-   - API key encryption at rest (AES-GCM)
-   - Per-integration credential decryption in webhooks
+### External API Integration Patterns
+- OpenAI SDK wrapper for OpenRouter (type-safe, reusable)
+- Raw `fetch` for non-OpenAI APIs (Meta, Telegram, key testing)
+- Three-tier model fallback: explicit → project default → free
+- Three-tier API key fallback: per-project → env var → throw
 
-3. **Error handling strategies:**
-   - Webhooks: Always return 200 to prevent external retry loops
-   - LLM calls: Timeout at caller level, exceptions propagate from low-level functions
-   - Signature verification: Constant-time comparison for security
+### Error Handling Strategies
+- `try/catch` with structured `{ ok: false, error }` return for external calls
+- `console.error` logging in webhook handlers
+- Always-return-200 for Meta/Telegram webhooks (stop retries)
+- Timeout rejection via `Promise.race` + `setTimeout`
 
-4. **Rate limiting approach:**
-   - Uses `@convex-dev/rate-limiter` package
-   - Different algorithms per endpoint (fixed window vs token bucket)
-   - Keyed by visitor identity where available, falls back to project/conversation
+### Retry and Resilience Patterns
+- Only webhook delivery has retry (3 attempts, 60s/300s delays)
+- No retry for LLM calls or external API calls
+- Cron jobs provide implicit retry for failed operations (next run)
 
-5. **Cron job patterns:**
-   - Uses `crons.interval()` exclusively (no `crons.monthly()` etc.)
-   - Shortest interval: 60 seconds (presence cleanup)
-   - All target `internal.*` functions
+### Rate Limiting Approach
+- `@convex-dev/rate-limiter` plugin for widget endpoints
+- Fixed window + token bucket strategies
+- Only public endpoints rate-limited — authenticated endpoints rely on auth
 
-6. **Security-conscious design:**
-   - AES-GCM encryption for all stored secrets
-   - Constant-time string comparison for webhook signatures
-   - HMAC-SHA256 verification for Meta webhooks
-   - Environment variable validation in production
+### Cron Job Patterns
+- All target `internal` functions (correct Convex pattern)
+- Bounded reads with `.take(N)`
+- Idempotent by design (state-based conditions)
 
 ## ⚠️ Potential Concerns
 
-| Severity | Concern | Details |
-|----------|---------|---------|
-| **HIGH** | No retry logic for LLM calls | `openrouter.ts` functions throw immediately on failure. If OpenRouter is down, AI features break completely with no fallback or retry. |
-| **HIGH** | Telegram webhook GET returns 200 unconditionally | `http.ts` line ~370: GET `/webhooks/telegram` always returns 200 without verification. This means anyone can verify a webhook without a valid token. |
-| **MEDIUM** | No structured logging or monitoring | All error logging uses raw `console.error`. No correlation IDs, no log levels, no monitoring integration. Makes debugging production issues difficult. |
-| **MEDIUM** | Loosely typed `identity` objects | Throughout `utils.ts` and `openrouter_api.ts`, identity is cast as `(identity as unknown as { org_id: string })` — fragile pattern that bypasses type safety. |
-| **MEDIUM** | No timeout on OpenRouter API calls in `openrouter.ts` | Only `aiFlowBuilder.ts` adds a 30s timeout. Direct `callAITask`/`callAIAssistant` callers have no timeout protection. |
-| **LOW** | 6 redundant CORS OPTIONS routes | 6 separate OPTIONS handlers doing identical work could be consolidated or handled by middleware. |
-| **LOW** | Cron idempotency not verified | Target functions for cron jobs are in other files — idempotency should be confirmed during Part 15 (features) analysis. |
-| **LOW** | No caching for external API calls | Every LLM call hits OpenRouter. For high-traffic scenarios, caching common responses could reduce costs and latency. |
-| **LOW** | `getAny.ts` provides minimal utility | Only exports `getFirstProject` (6 lines). File name doesn't match its purpose. Consider renaming or removing. |
+| # | Concern | Severity | Details |
+|---|---------|----------|---------|
+| 1 | **Clerk webhook no signature verification** | HIGH | `http.ts:/clerk-webhook` (lines 35-57) processes `user.created`, `user.updated`, `organization.deleted` without verifying the request. An attacker could forge POST requests to create/delete users or projects. Should use Clerk's webhook verification SDK. |
+| 2 | **No retry for LLM calls** | MEDIUM | `openrouter.ts` and `aiFlowBuilder.ts` make single-attempt LLM calls. Transient failures (network errors, OpenRouter downtime) cause user-facing errors with no automatic retry. |
+| 3 | **No explicit caching for external APIs** | MEDIUM | Every bot flow execution makes a fresh LLM call. For high-traffic bots, this could be expensive and slow. Consider caching responses for identical inputs. |
+| 4 | **Single encryption key for all secrets** | MEDIUM | All API keys and secrets share one `ENCRYPTION_KEY`. If compromised, all secrets are exposed. No key rotation mechanism. Consider per-tenant or per-secret key derivation. |
+| 5 | **No structured logging or monitoring** | MEDIUM | Only `console.error` and `console.warn` used. No log levels, no structured format, no metrics collection, no tracing, no alerting. Production incidents would be hard to detect and debug. |
+| 6 | **`hexToBytes` has no validation** | LOW | Malformed hex strings produce incorrect byte arrays silently. Should validate hex input length and character set. |
+| 7 | **No timeout handling for API calls** | LOW | `openrouter.ts` has no timeout — relies on OpenAI SDK defaults. `aiFlowBuilder.ts` has 30s timeout but the underlying `callAITask` does not. |
+| 8 | **Widget endpoints fully public** | MEDIUM | CORS `*` with no auth means any website can embed and use the widget. Rate limiting is the only protection. Consider domain allowlisting or CAPTCHA for high-risk actions. |
+| 9 | **No rate limiting on AI calls** | LOW | `openrouter.ts` has no rate limiting — relies on OpenRouter's own limits. A rapid bot flow execution could exhaust OpenRouter rate limits. |
+| 10 | **Cron jobs without idempotency guarantees** | LOW | While current cron jobs appear idempotent, there's no explicit idempotency key or dedup mechanism. If a cron run overlaps with the previous one, duplicate processing could occur. |

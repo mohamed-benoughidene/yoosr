@@ -2,7 +2,7 @@
 
 > Generated from 18-part chunked codebase analysis
 > Date: April 5, 2026
-> Total Issues: 64 (17 HIGH, 25 MEDIUM, 22 LOW)
+> Total Issues: 73 (21 HIGH, 24 MEDIUM, 28 LOW)
 
 ---
 
@@ -60,6 +60,27 @@
 | 32 | Hardcoded Toaster theme="light" | ✅ Fixed — installed `next-themes`; toasts now follow light/dark mode |
 | 53 | No toast notifications for mutation errors | ✅ Fixed — added error toasts to `SiteHeader`, `NotificationBell`, `BotEditorClient` |
 
+### April 5, 2026 — Phase 5 Discovered (4 new HIGH + 5 new MEDIUM from full analysis review)
+
+> Discovered during comprehensive review of all 18 analysis findings documents. These issues were missed in the initial sweep.
+
+**New HIGH Issues (6 remaining):**
+| # | Issue | Status |
+|---|---|---|
+| 65 | Clerk webhook NO signature verification | ⬜ Not started — `http.ts` accepts forged requests |
+| 66 | No form validation (Zod unused) | ⬜ Not started — `react-hook-form` + Zod installed but unused |
+| 67 | i18n navigation inconsistency | ⬜ Not started — 25+ files break locale prefixes |
+| 68 | Dual design token system | ⬜ Not started — landing and app use separate color systems |
+
+**New MEDIUM Issues (5 added):**
+| # | Issue | Status |
+|---|---|---|
+| 69 | No rate limiting on AI calls | ⬜ Not started — unbounded LLM usage |
+| 70 | No feature flagging | ⬜ Not started — no gradual rollout or emergency disable |
+| 71 | Frontend deployment not in CI | ⬜ Not started — Vercel Git integration bypasses quality gate |
+| 72 | Mixed concerns in settings.ts | ⬜ Not started — 4 entities in one file |
+| 73 | Analytics `useAction` anti-pattern | ⬜ Not started — 6 calls with manual `useEffect` + state |
+
 ---
 
 ## How to Use This Document
@@ -72,7 +93,7 @@
 
 ---
 
-## 🔴 HIGH — Must Fix Before Launch (17 issues) → 2 remaining
+## 🔴 HIGH — Must Fix Before Launch (21 issues) → 6 remaining
 
 ### Dependencies & Build
 
@@ -194,9 +215,41 @@
   - **Risk:** No schema validation for bot flow structure. Invalid flow data saves without errors, causing runtime crashes in bot engine.
   - **Fix:** Define `v.object()` schemas for node and edge structures, or add strict validation in `botFlows.save` mutation
 
+### Security (NEW — Phase 5 Discovery)
+
+- [ ] **65. Clerk webhook NO signature verification**
+  - **Part:** 08
+  - **File:** `convex/http.ts` — `/clerk-webhook` endpoint (lines 35-57)
+  - **Risk:** Processes `user.created`, `user.updated`, `organization.deleted` events without verifying request origin. An attacker can forge POST requests to create/delete users or entire projects. This is a critical security vulnerability — no auth, no HMAC check, no Clerk SDK verification.
+  - **Fix:** Use Clerk's webhook verification SDK to verify the `Svix-Signature` header. Alternatively, verify the webhook secret from Clerk dashboard. This is the #1 priority — a 1-2 hour fix that closes the largest security hole.
+
+### Quality & Functionality (NEW — Phase 5 Discovery)
+
+- [ ] **66. No form validation**
+  - **Part:** 13, 14
+  - **Risk:** `react-hook-form` + Zod are installed and shadcn `form.tsx` infrastructure exists, but ZERO forms use them. All forms use manual `useState`/`useReducer` with no schema validation:
+    - Widget settings (680 lines, `useReducer` with 12 action types)
+    - Integration configuration forms
+    - Contact import/edit dialogs
+    - Order forms
+    - No client-side validation, no error messages on invalid fields, no form-level validation state
+  - **Fix:** Start with the most critical form (widget settings or integration config). Add Zod schemas + `useForm` + `zodResolver`. The shadcn `FormProvider`/`FormField` infrastructure is already built — just needs to be consumed.
+
+- [ ] **67. i18n navigation inconsistency**
+  - **Part:** 12
+  - **Risk:** 25+ files import `useRouter`, `usePathname`, `redirect` from `next/navigation` instead of `@/i18n/navigation`. This breaks locale awareness in programmatic navigation — `router.push('/dashboard/bots')` will NOT include the locale prefix, resulting in broken URLs like `/dashboard/bots` instead of `/en/dashboard/bots`.
+  - **Fix:** Create a lint rule or codemod to replace all `next/navigation` imports with `@/i18n/navigation` in locale-scoped routes. Alternatively, create a `@/lib/navigation` wrapper that re-exports the correct imports.
+
+### Maintainability (NEW — Phase 5 Discovery)
+
+- [ ] **68. Dual design token system**
+  - **Part:** 11
+  - **Risk:** Landing pages use `--lp-*` variables (hex/RGBA, dark-first, no light mode) while the app uses shadcn OKLCH tokens (`--background`, `--primary`, etc.) with full light/dark support. These are completely separate systems with no mapping between them. Makes theming inconsistent and hard to maintain.
+  - **Fix:** Map `--lp-*` variables to `@theme inline` so they become Tailwind utilities, OR migrate landing page to use shadcn tokens. At minimum, document which token system to use where.
+
 ---
 
-## 🟡 MEDIUM — Should Fix Before Launch (25 issues)
+## 🟡 MEDIUM — Should Fix Before Launch (24 issues)
 
 ### Dependencies & Build
 
@@ -319,6 +372,39 @@
   - **Risk:** No guidance on PR format, code review process, branch naming, commit conventions
   - **Fix:** Create CONTRIBUTING.md with PR template, conventions, testing requirements
 
+### Cost & Operations (NEW — Phase 5 Discovery)
+
+- [ ] **69. No rate limiting on AI calls**
+  - **Part:** 08
+  - **File:** `convex/openrouter.ts`
+  - **Risk:** `openrouter.ts` has no rate limiting — relies entirely on OpenRouter's own limits. A rapid bot flow execution or infinite loop in bot logic could exhaust OpenRouter rate limits or generate unexpected costs. No per-project quota enforcement.
+  - **Fix:** Add application-level rate limiting (e.g., `@convex-dev/rate-limiter`) keyed by `projectId`, with configurable limits. Add request counting and alerting for unusual usage patterns.
+
+- [ ] **70. No feature flagging**
+  - **Part:** 15
+  - **Risk:** No system for gradual rollout, A/B testing, or emergency feature disable. All features are either fully deployed or hardcoded "Coming Soon". If a new integration causes issues, you must deploy a code fix — can't flip a switch.
+  - **Fix:** Start simple: add `features` table with boolean flags, check at key entry points. Or integrate a lightweight solution like ConfigCat. At minimum, add env-based feature toggles for emergency disable.
+
+### Deployment (NEW — Phase 5 Discovery)
+
+- [ ] **71. Frontend deployment not in CI**
+  - **Part:** 17
+  - **Risk:** Next.js deployment appears to be via Vercel Git integration (separate from GitHub Actions). The CI quality gate (lint → test → build) runs but does NOT block frontend deployments — Vercel deploys on any push to connected branch regardless of CI status.
+  - **Fix:** Either: (a) Connect Vercel to require GitHub Actions status check before deploying, or (b) Add Next.js deployment step to CI workflow using `vercel` CLI, or (c) Use Vercel's deployment protection rules to require manual approval.
+
+### Code Quality (NEW — Phase 5 Discovery)
+
+- [ ] **72. Mixed concerns in `convex/settings.ts`**
+  - **Part:** 05, 06
+  - **Risk:** `settings.ts` contains CRUD for 4 different entities: departments, canned responses, labels, AND operating hours. 18 functions in one file. A TODO comment in the file acknowledges: "TODO: move createLabel and removeLabel to convex/labels.ts for consistency."
+  - **Fix:** Split into 4 files: `departments.ts`, `cannedResponses.ts`, `labels.ts`, `operatingHours.ts`. Each file gets its own queries + mutations. Update all import sites.
+
+- [ ] **73. Analytics `useAction` anti-pattern**
+  - **Part:** 13, 14
+  - **File:** `src/app/[locale]/dashboard/analytics/page.tsx`
+  - **Risk:** 6 `useAction` calls each paired with manual `useEffect` + `isMounted` guard + `useState` for data storage. This is a verbose, error-prone pattern repeated 6 times. No cleanup if component unmounts during fetch, no shared loading state, no error handling consistency.
+  - **Fix:** Create `useAnalyticsData(projectId, dateRange)` custom hook that abstracts the 6 action calls, handles loading/error state uniformly, and provides cleanup on unmount.
+
 ---
 
 ## 🟢 LOW — Fix Post-Launch (22 issues)
@@ -419,14 +505,16 @@
 |----------|------|--------|-----|-------|
 | Dependencies & Build | 0 | 2 | 2 | 7 |
 | Testing | 0 | 0 | 1 | 3 |
-| Security & Auth | 0 | 1 | 1 | 8 |
+| Security & Auth | 1 | 1 | 1 | 9 |
 | Performance | 0 | 4 | 2 | 8 |
 | UI & UX | 0 | 0 | 2 | 8 |
 | Documentation | 1 | 1 | 4 | 7 |
 | Schema & Data | 1 | 5 | 5 | 15 |
-| Backend & Ops | 0 | 4 | 2 | 6 |
-| Developer Experience | 0 | 2 | 3 | 5 |
-| **Total** | **2** | **19** | **21** | **64** |
+| Backend & Ops | 0 | 7 | 2 | 12 |
+| Developer Experience | 0 | 4 | 3 | 7 |
+| Quality | 1 | 0 | 0 | 1 |
+| Maintainability | 1 | 0 | 0 | 1 |
+| **Total** | **6** | **24** | **22** | **73** |
 
 ---
 
@@ -438,19 +526,19 @@
 | 02 | Build Tooling Config | 4 |
 | 03 | Project Structure | 0 (covered by other parts) |
 | 04 | Database Schema | 14 |
-| 05 | Queries | 3 |
+| 05 | Queries | 4 (+1: #72 settings.ts) |
 | 06 | Mutations | 3 |
 | 07 | Auth & Authorization | 6 |
-| 08 | Backend Utilities | 5 |
+| 08 | Backend Utilities | 7 (+2: #65 Clerk webhook, #69 AI rate limiting) |
 | 09 | Core UI Components | 1 |
 | 10 | Layout Components | 5 |
-| 11 | Design Tokens & Styling | 4 |
-| 12 | App Routing | 0 (covered by other parts) |
-| 13 | Page Components | 0 (covered by other parts) |
-| 14 | State Management | 3 |
-| 15 | Feature Modules | 0 (covered by other parts) |
+| 11 | Design Tokens & Styling | 5 (+1: #68 dual token system) |
+| 12 | App Routing | 1 (+1: #67 i18n navigation) |
+| 13 | Page Components | 1 (+1: #73 analytics anti-pattern) |
+| 14 | State Management | 4 (+1: #66 form validation) |
+| 15 | Feature Modules | 2 (+2: #70 feature flagging, #71 frontend deploy) |
 | 16 | Testing Infrastructure | 3 |
-| 17 | CI/CD & Deployment | 5 |
+| 17 | CI/CD & Deployment | 6 (+1: #71 frontend deploy) |
 | 18 | Documentation & DX | 6 |
 
 ---
@@ -469,5 +557,17 @@ Issues: 9 ✅, 10 ✅, 18 ✅, 22 ✅, 23 ✅, 24 ✅, 25 ✅, 26 ✅ → **8/8 
 ### Phase 4: UX & Polish (Week 4)
 Issues: 27 ✅, 28 ✅, 29 ✅, 30 ✅, 31 ✅, 32 ✅, 53 ✅ → **7/7 DONE**
 
-### Phase 5: Post-Launch LOW Priority
+### Phase 5: New HIGH Priority — Security & Quality Blockers
+Issues: 65, 66, 67, 68 → **0/4 DONE** (all newly discovered)
+
+> **Priority order:**
+> 1. **#65 Clerk webhook signature** — Critical security hole, 1-2 hour fix
+> 2. **#66 Form validation** — All forms unvalidated, Zod infrastructure already exists
+> 3. **#67 i18n navigation** — 25+ files breaking locale prefixes
+> 4. **#68 Dual design tokens** — Landing/app token inconsistency
+
+### Phase 6: New MEDIUM — Code Quality & Ops
+Issues: 69, 70, 71, 72, 73 → **0/5 DONE** (can be done post-launch if needed)
+
+### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)

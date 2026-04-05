@@ -1,528 +1,355 @@
-# Part 06: Mutations (Write Operations)
+# Part 06: Mutations (Write Operations) - Findings
 
 ## 📊 Visual Map
 
 ```
-convex/ (26 Mutation Files Found)
-│
-├── Core CRUD Mutations
-│   ├── contacts.ts            → Contact CRUD (create, update, remove, batchImport)
-│   ├── conversations.ts       → Conversation lifecycle (17 mutations, complex state machine)
-│   ├── messages.ts            → Message send pipeline (4 mutations)
-│   ├── projects.ts            → Project lifecycle (7 mutations incl. cascading delete)
-│   └── orders.ts              → Order CRUD + batch import (4 mutations)
-│
-├── Bot/AI Mutations
-│   ├── bot.ts                 → Internal bot state (3 internal mutations)
-│   ├── botFlows.ts            → Bot flow visual editor save (1 mutation)
-│   └── bots.ts                → Bot CRUD + batch deletion (4 mutations)
-│
-├── User/Profile Mutations
-│   ├── profiles.ts            → Profile management (8 mutations, presence tracking)
-│   └── feedback.ts            → Feedback submission (1 mutation)
-│
-├── Settings/Configuration
-│   ├── settings.ts            → Departments, canned responses, labels, hours (12 mutations)
-│   ├── knowledgeBases.ts      → KB CRUD + source management (6 mutations)
-│   ├── knowledge.ts           → Internal chunk/source status (2 internal)
-│   ├── integrations.ts        → Integration upsert/remove (5 mutations)
-│   ├── webhooks.ts            → Webhook subscription management (5 mutations)
-│   └── routing.ts             → Internal conversation routing (2 internal)
-│
-├── Messaging/Communication
-│   ├── notifications.ts       → Notification lifecycle (5 mutations)
-│   ├── tags.ts                → Tag assignment/removal (3 mutations)
-│   ├── labels.ts              → NO MUTATIONS (query-only file)
-│   ├── pushActions.ts         → NO MUTATIONS (action-only file)
-│   └── pushMutations.ts       → Push subscription management (3 mutations)
-│
-├── Utility/Ops
-│   ├── activityLogs.ts        → Activity log append (2 mutations)
-│   ├── migrations.ts          → DISABLED migration (1 mutation, permanently blocked)
-│   ├── seed.ts                → Demo data seeding (1 mutation, NO AUTH)
-│   ├── wipe.ts                → Full data wipe (1 mutation, NO AUTH)
-│   └── utils.ts               → NO MUTATIONS (helper functions only)
-│
-└── External/Channel
-    ├── analytics.ts           → (not analyzed - may contain mutations)
-    └── dashboard.ts           → (not analyzed - may contain mutations)
+convex/ (Mutation Files) — 30 files, ~181 total Convex functions
+├── contacts.ts            → 6 functions (2 queries, 4 mutations)
+├── conversations.ts       → 28 functions (8 queries, 12 mutations, 3 internalQueries, 3 internalMutations, 2 internalActions)
+├── messages.ts            → 9 functions (4 queries, 3 mutations, 1 internalQuery, 1 internalMutation)
+├── projects.ts            → 11 functions (4 queries, 4 mutations, 1 internalQuery, 2 internalMutations)
+├── bots.ts                → 6 functions (2 queries, 3 mutations, 1 internalMutation)
+├── botFlows.ts            → 2 functions (1 query, 1 mutation)
+├── bot.ts                 → 12 functions (5 internalQueries, 5 internalMutations, 2 internalActions) — BOT ENGINE
+├── profiles.ts            → 10 functions (3 queries, 5 mutations, 2 internalMutations)
+├── settings.ts            → 18 functions (4 queries, 14 mutations) — departments, canned, labels, hours
+├── knowledgeBases.ts      → 10 functions (4 queries, 4 mutations, 1 action, 1 internalMutation)
+├── notifications.ts       → 7 functions (2 queries, 4 mutations, 1 internalMutation)
+├── activityLogs.ts        → 4 functions (2 queries, 1 mutation, 1 internalMutation)
+├── feedback.ts            → 1 function (1 mutation)
+├── tags.ts                → 5 functions (1 query, 2 mutations, 1 internalQuery, 1 internalMutation, 1 internalAction)
+├── labels.ts              → 1 function (1 query)
+├── integrations.ts        → 20 functions (7 queries, 3 mutations, 5 internalQueries, 3 internalMutations, 2 actions)
+├── knowledge.ts           → 6 functions (2 internalQueries, 3 internalMutations, 1 internalAction)
+├── orders.ts              → 6 functions (3 queries, 3 mutations)
+├── routing.ts             → 3 functions (1 internalMutation, 1 internalMutation, 1 internalAction)
+├── webhooks.ts            → 10 functions (1 query, 4 mutations, 2 internalQueries, 1 internalMutation, 2 internalActions)
+├── pushActions.ts         → 2 functions (2 internalActions)
+├── pushMutations.ts       → 5 functions (1 query, 1 mutation, 2 internalQueries, 2 internalMutations)
+├── analytics.ts           → 18 functions (6 queries, 1 mutation, 4 internalQueries, 4 actions, 3 internalMutations)
+├── dashboard.ts           → 1 function (1 query)
+├── migrations.ts          → 1 function (1 internalMutation) — DISABLED (throws to prevent re-execution)
+├── seed.ts                → 1 function (1 internalMutation)
+├── wipe.ts                → 1 function (1 internalMutation) — wipes 18 tables
+├── utils.ts               → 0 Convex functions (auth helper utilities)
+├── errors.ts              → 0 Convex functions (error factory functions)
+├── types.ts               → 0 Convex functions (ClerkIdentity type definition)
+├── openrouter_api.ts      → 5 functions (2 queries, 2 mutations, 1 action)
+├── openrouter.ts          → 0 Convex functions (SDK wrapper utilities)
+├── aiFlowBuilder.ts       → 1 function (1 action)
+├── getAny.ts              → 1 function (1 internalQuery)
+├── http.ts                → 0 Convex functions (HTTP router — see Part 08)
+├── crons.ts               → 0 Convex functions (cron definitions — see Part 08)
+├── convex.config.ts       → 0 Convex functions (app configuration)
+├── schema.ts              → 0 Convex functions (schema definitions — see Part 04)
+└── diagnostic.ts          → (not analyzed — diagnostic/debug functions)
+
+MUTATION SUMMARY BY TYPE:
+  Public mutations:        ~55
+  Internal mutations:      ~25
+  Actions (external HTTP): ~10
+  Internal actions:        ~6
+  Queries (read):          ~55
+  Internal queries:        ~30
+  TOTAL:                   ~181 Convex functions
 ```
 
 ## 📁 File Inventory
 
-| File | Purpose | Mutations | Internal Mutations |
-|------|---------|-----------|-------------------|
-| `convex/contacts.ts` | Contact CRUD + batch import | 3 | 0 |
-| `convex/conversations.ts` | Conversation lifecycle management | 10 | 7 |
-| `convex/messages.ts` | Message sending pipeline | 2 | 2 |
-| `convex/projects.ts` | Project CRUD + cascading delete | 5 | 2 |
-| `convex/bot.ts` | Bot execution state management | 0 | 3 |
-| `convex/botFlows.ts` | Bot flow visual editor | 1 | 0 |
-| `convex/bots.ts` | Bot entity CRUD | 2 | 1 |
-| `convex/profiles.ts` | Profile management + presence | 4 | 4 |
-| `convex/settings.ts` | Departments, canned responses, labels, hours | 12 | 0 |
-| `convex/knowledgeBases.ts` | Knowledge base CRUD + sources | 5 | 1 |
-| `convex/knowledge.ts` | Internal knowledge chunk operations | 0 | 2 |
-| `convex/notifications.ts` | Notification lifecycle | 3 | 2 |
-| `convex/activityLogs.ts` | Activity log append-only | 1 | 1 |
-| `convex/feedback.ts` | User feedback submission | 1 | 0 |
-| `convex/tags.ts` | Tag assignment to conversations | 2 | 1 |
-| `convex/labels.ts` | **NO MUTATIONS** (query-only) | 0 | 0 |
-| `convex/integrations.ts` | Channel integration management | 2 | 3 |
-| `convex/orders.ts` | Order management | 4 | 0 |
-| `convex/routing.ts` | Conversation routing logic | 0 | 2 |
-| `convex/webhooks.ts` | Webhook subscription management | 4 | 1 |
-| `convex/pushActions.ts` | **NO MUTATIONS** (actions only) | 0 | 0 |
-| `convex/pushMutations.ts` | Push notification subscriptions | 1 | 2 |
-| `convex/migrations.ts` | Database migrations (DISABLED) | 0 | 1 |
-| `convex/seed.ts` | Development seed data | 1 | 0 |
-| `convex/wipe.ts` | Full data reset | 1 | 0 |
-| `convex/utils.ts` | **NO MUTATIONS** (helper functions only) | 0 | 0 |
-
-**Totals:** ~64 public mutations, ~33 internal mutations across 22 files with mutation content
+| File | Purpose | Mutations |
+|------|---------|-----------|
+| `convex/contacts.ts` | Contact CRUD with dedup validation | 4 mutations |
+| `convex/conversations.ts` | Conversation lifecycle (create, update, resolve, join, leave, transfer, auto-close, Meta/Telegram integration) | 12 mutations + 3 internalMutations |
+| `convex/messages.ts` | Message sending (authenticated + widget), widget file upload | 3 mutations + 1 internalMutation |
+| `convex/projects.ts` | Project CRUD, ensure, deletion with cascading scheduler, widget locale | 4 mutations + 2 internalMutations |
+| `convex/bots.ts` | Bot CRUD with cascading flow deletion | 3 mutations + 1 internalMutation |
+| `convex/botFlows.ts` | Bot flow save/compile to execution nodes | 1 mutation |
+| `convex/bot.ts` | Bot engine: execute, state management, human handoff | 5 internalMutations + 2 internalActions |
+| `convex/profiles.ts` | Profile sync from Clerk, availability, presence heartbeat | 5 mutations + 2 internalMutations |
+| `convex/settings.ts` | Departments, canned responses, labels, operating hours CRUD | 14 mutations |
+| `convex/knowledgeBases.ts` | KB CRUD, source management, file upload URL generation | 4 mutations + 1 internalMutation |
+| `convex/notifications.ts` | Notification CRUD, mark as read, cleanup | 4 mutations + 1 internalMutation |
+| `convex/activityLogs.ts` | Activity logging (public-ish) | 1 mutation + 1 internalMutation |
+| `convex/feedback.ts` | Feedback submission | 1 mutation |
+| `convex/tags.ts` | Tag assignment/removal, generative AI tag extraction | 2 mutations + 1 internalMutation |
+| `convex/labels.ts` | Label listing (queries only, mutations in settings.ts) | 0 mutations |
+| `convex/integrations.ts` | Integration CRUD, channel setup (WhatsApp, Messenger, Instagram, Telegram), key encryption | 3 mutations + 3 internalMutations + 2 actions |
+| `convex/knowledge.ts` | Knowledge chunk indexing, vector search (all internal) | 3 internalMutations + 1 internalAction |
+| `convex/orders.ts` | Order CRUD, batch import | 3 mutations |
+| `convex/routing.ts` | Conversation routing (bot-first, least-busy human, department pooling) | 2 internalMutations + 1 internalAction |
+| `convex/webhooks.ts` | Webhook subscription CRUD, delivery with retries, HMAC signing | 4 mutations + 1 internalMutation + 2 internalActions |
+| `convex/pushActions.ts` | Web push notification sending | 2 internalActions |
+| `convex/pushMutations.ts` | Push subscription management | 1 mutation + 2 internalMutations |
+| `convex/analytics.ts` | Stats aggregation, CSAT, token usage logging | 1 mutation + 3 internalMutations |
+| `convex/migrations.ts` | Disabled migration (migrateStatuses) | 1 internalMutation (disabled) |
+| `convex/seed.ts` | Demo data seeding | 1 internalMutation |
+| `convex/wipe.ts` | Full data wipe across 18 tables | 1 internalMutation |
+| `convex/openrouter_api.ts` | OpenRouter API key management | 2 mutations |
+| `convex/aiFlowBuilder.ts` | AI-powered flow generation | 0 mutations (1 action) |
 
 ## ✅ Analysis Checklist
 
-### What mutation functions exist in each file?
-
-**[x] Answered in File Inventory above.** The codebase contains 26 TypeScript files in `convex/`, of which 22 contain mutation functions. Total: ~64 public mutations + ~33 internal mutations = ~97 mutation functions.
-
-Breakdown by category:
-- **Core CRUD:** contacts (4), conversations (17), messages (4), projects (7), orders (4)
-- **Bot/AI:** bot (3 internal), botFlows (1), bots (4)
-- **User/Profile:** profiles (8), feedback (1)
-- **Settings/Config:** settings (12), knowledgeBases (6), knowledge (2 internal), integrations (5), webhooks (5), routing (2 internal)
-- **Messaging:** notifications (5), tags (3), pushMutations (3)
-- **Utility/Ops:** activityLogs (2), migrations (1 disabled), seed (1), wipe (1)
-
-Notable: `labels.ts`, `pushActions.ts`, and `utils.ts` contain zero mutations.
-
-### What validation is performed before writes?
-
-**[x]** Validation occurs at multiple levels:
-
-1. **Schema-level validation (Convex built-in):** All mutations use `v.string()`, `v.id()`, `v.optional()`, `v.number()`, `v.union()` etc. in their argument validators. This is enforced by the Convex runtime automatically.
-
-2. **Bounds checking:**
-   - `contacts.batchImport`: rejects if `args.contacts.length === 0 || args.contacts.length > 500` (throws `ConvexError`)
-   - `orders.batchImportOrders`: same pattern, validates 1-500 range
-   - `notifications.markAllRead`/`clearAll`: bounded to MAX_BATCH=200
-   - `notifications.cleanupOldNotifications`: bounded to MAX_BATCH=500
-   - `profiles.cleanupStalePresence`: bounded to 500 profiles with 90-second stale threshold
-   - `conversations.autoCloseInactive`: processes up to 100 conversations
-   - `routing.retryUnassignedConversations`: bounded to 100 projects, 50 conversations each
-
-3. **Existence checks:** Most update/remove mutations verify the target entity exists before operating:
-   - `conversations.update`: checks conversation exists
-   - `bots.update`: checks bot exists
-   - `settings.removeDepartment`: checks department exists
-   - `knowledgeBases.removeSource`: checks source and KB exist
-
-4. **Range validation:**
-   - `conversations.rate`: explicit check `args.rating < 1 || args.rating > 5`
-
-5. **Enum validation:**
-   - `feedback.submitFeedback`: `v.union(v.literal("bug"), v.literal("feature"), v.literal("general"))`
-   - `orders.batchImportOrders`: normalizes status to valid literals
-
-6. **Deduplication:**
-   - `contacts.batchImport`: deduplicates by email within a project, skips existing
-   - `settings.addMemberToDepartment`: only adds if not already a member
-   - `conversations.createOrUpdateFromMeta`: deduplicates via `channelMessageId`
-   - `conversations.createOrUpdateFromTelegram`: same dedup pattern
-   - `tags.assignTagToConversation`: checks if tag already exists before adding
-
-7. **Business rule validation:**
-   - `conversations.update`: HITL safeguard - if `assignedTo` is set, forces `status = 200`, `botPaused = true`
-   - `contacts.remove`: blocks deletion if contact is linked to an active conversation (`status !== 1000`)
-   - `settings.removeDepartment`: blocks deletion of default department (`isDefault` check throws `ConvexError`)
-   - `routing.routeConversation`: guards against routing resolved conversations (status 1000)
-
-8. **Input sanitization (undefined filtering):**
-   - `contacts.update`, `conversations.update`, `conversations.updateVisitorInfo`: filter out `undefined` values into `cleanUpdates` object to avoid overwriting with undefined
-
-### Are mutations transactional?
-
-**[x]** Yes, by design of the Convex platform. Every mutation function runs as a single atomic transaction. If any part of the mutation fails, the entire mutation rolls back.
-
-Additionally, the codebase uses a **step-based batch pattern** for large operations that exceed Convex's transaction limits:
-- `projects.deleteProjectData`: 19-step cascading delete, each step processes up to 100 records, self-reschedules via `ctx.scheduler.runAfter()` if more remain
-- `bots._deleteBotFlowsBatch`: deletes bot_flows in batches of 100, then deletes the bot
-- `knowledgeBases.deleteSourcesBatch`: deletes sources in batches of 100, then deletes the KB
-- `conversations.autoCloseInactive`: processes up to 100, self-reschedules if more exist
-- `routing.retryUnassignedConversations`: processes 50 conversations per project, reschedules remaining
-
-This self-rescheduling pattern is the codebase's strategy for handling operations that exceed Convex's per-transaction limits.
-
-### How are authorization checks handled?
-
-**[x]** Authorization is **inconsistent** across mutation files. There are several patterns:
-
-1. **`requireAdmin()` from `utils.ts`** — strongest check, requires `org_role === "org:admin"`:
-   - `projects.update`
-   - `bots.create`, `bots.update`, `bots.remove`
-   - `settings` — ALL 12 mutations
-   - `integrations.upsert`, `integrations.remove`
-   - `orders.createOrder`, `orders.updateOrderStatus`, `orders.deleteOrder`
-   - `webhooks.create`, `webhooks.update`, `webhooks.remove`
-
-2. **`assertProjectOwnership()` from `utils.ts`** — verifies user's org owns the project:
-   - `contacts.update`
-   - `knowledgeBases.create`, `knowledgeBases.addSource`, `knowledgeBases.removeSource`
-
-3. **Manual orgId verification:**
-   - `knowledgeBases.remove`: manually checks `project.orgId === identity.org_id`
-   - `contacts.batchImport`: derives orgId from identity and queries projects
-   - `orders.batchImportOrders`: same pattern
-
-4. **Auth-only checks (`getUserIdentity()` without role):**
-   - `contacts.create`, `contacts.remove`
-   - `conversations.create`, `conversations.update`, `conversations.resolve`, etc.
-   - `messages.sendMessage`
-   - `profiles.updateMe`, `profiles.setAvailability`, etc.
-   - `notifications.markAsRead`, `notifications.markAllRead`, `notifications.clearAll`
-   - `feedback.submitFeedback`
-   - `tags.assignTagToConversation`, `tags.removeTagFromConversation`
-   - `pushMutations.registerPushSubscription`
-   - `webhooks.backfillWebhookSecrets` (no auth at all!)
+### [x] What mutation functions exist in each file?
+See the File Inventory table above and the Visual Map. Total: ~55 public mutations, ~25 internal mutations, ~6 internal actions across 30 files. The heaviest files are `conversations.ts` (15 write functions), `settings.ts` (14 mutations), `integrations.ts` (8 write functions), and `bot.ts` (7 write functions).
 
-5. **No authentication (internal mutations or public endpoints):**
-   - All `internalMutation()` functions (by design, called from actions/HTTP)
-   - `conversations.createFromWidget`, `conversations.createOrUpdateFromMeta`, `conversations.createOrUpdateFromTelegram` (webhook/widget facing)
-   - `messages.send`, `messages.sendFromWidget` (widget facing)
-   - `seed.seedDemoData` — **SECURITY CONCERN: no auth, anyone with projectId can seed**
-   - `wipe.wipeAll` — **SECURITY CONCERN: no auth, anyone with projectId can wipe all data**
-   - `webhooks.backfillWebhookSecrets` — **SECURITY CONCERN: no auth check**
+### [x] What validation is performed before writes?
+Validation is multi-layered:
 
-6. **`activityLogs.log`** — checks identity but does NOT throw if null; stores `undefined` as the actor.
+1. **Convex schema-level validation**: All mutation args use `v.string()`, `v.number()`, `v.optional()`, `v.union()`, `v.array()` validators — enforced by Convex runtime.
 
-**Critical gaps:**
-- `messages.send` has no auth check — only validates conversation exists
-- `wipe.ts` and `seed.ts` are completely unprotected
-- `webhooks.backfillWebhookSecrets` has no auth
+2. **Dedup checks via unique indexes**:
+   - `contacts.ts`: `by_projectId_email` and `by_projectId_phone` indexes prevent duplicate contacts. On create: `if (existingContact) throw userError("A contact with this email already exists")`.
+   - `conversations.ts`: `channelMessageId` dedup for Meta/Telegram messages.
 
-### Is there input sanitization?
+3. **Existence checks**: `notFoundError()` thrown when referenced resource doesn't exist (e.g., `projects.ts:update` throws if project not found).
 
-**[x]** Minimal explicit input sanitization:
+4. **Union/enum validation**: Status codes are validated (e.g., `updateConversationStatus` accepts 100/200/1000), order status uses union type.
 
-1. **Undefined filtering pattern** — used in `contacts.update`, `conversations.update`, `conversations.updateVisitorInfo`:
-   ```typescript
-   const cleanUpdates: Partial<...> = {};
-   for (const [key, value] of Object.entries(args)) {
-     if (value !== undefined) {
-       (cleanUpdates as any)[key] = value;
-     }
-   }
-   ```
-   This prevents accidental overwrites with `undefined` values.
+5. **Array bounds**: `contacts.ts:batchImport` validates array length 1-500. `orders.ts:batchImport` same pattern.
 
-2. **Cryptographic secret generation** — `webhooks.create`:
-   ```typescript
-   crypto.getRandomValues(new Uint8Array(32))
-   ```
-   Generates 32 bytes of cryptographically secure random data for webhook secrets.
+6. **Rating clamping**: CSAT ratings clamped to 1-5 in `analytics.ts:submitCSATInternal` and `conversations.ts:rate`.
 
-3. **No XSS/HTML sanitization** — The codebase relies on Convex's type-safe API and frontend sanitization. No server-side HTML/content sanitization was found in mutation files.
+7. **Resource protection**: `contacts.ts:remove` blocks deletion if contact is linked to a non-resolved conversation (`status !== 1000`). `settings.ts:removeDepartment` blocks deleting the default department.
 
-4. **No SQL injection concern** — Convex is a document database (not SQL), so SQL injection is not applicable.
+8. **Filtered updates**: `projects.ts:update` filters out `undefined` values to avoid overwriting with nulls.
 
-### What side effects do mutations trigger?
+### [x] Are mutations transactional?
+**Convex guarantees single-mutation atomicity** — each mutation runs in its own transaction. For multi-step operations, the codebase uses several strategies:
 
-**[x]** Side effects are extensive, especially in conversation-related mutations:
+1. **Scheduler-based batch processing**: Cascading deletes (`projects.ts:deleteProjectData`, `bots.ts:_deleteBotFlowsBatch`, `knowledgeBases.ts:deleteSourcesBatch`) use the Convex scheduler to process in batches of 100, re-enqueuing if more remains. This is NOT transactional across batches but IS bounded to avoid timeouts.
 
-| Mutation | Side Effects |
-|----------|-------------|
-| `conversations.create` | Updates `project_usage.conversationsCount`, schedules `routing.routeConversation` |
-| `conversations.update` | Creates notification (assigned), push notification to agent, activity log (`conversation_assigned`), webhook (`agent.assigned`), webhook (`conversation.closed`), notification (resolved) |
-| `conversations.createFromWidget` | Updates project_usage, creates contact, inserts welcome message, inserts initial message, fires webhook (`conversation.opened`), push to org, schedules routing |
-| `conversations.resolve` | Logs conversation event, fires webhook (`conversation.closed`), notifies assigned agent, schedules tag extraction, inserts system "resolved" message, sends Telegram message, logs activity |
-| `conversations.join` | Inserts system message, sends Telegram message, updates SLA deadline |
-| `conversations.transferToDepartment` | Schedules routing, logs activity (`conversation_department_changed`) |
-| `conversations.autoCloseInactive` | Patches status, logs event, fires webhook, schedules tag extraction, inserts system message, sends Telegram, self-reschedules |
-| `messages.send` | Updates conversation (lastMessage, unreadCount, updatedAt), creates notification for assigned agent, fires webhook (`message.create`) |
-| `messages.sendFromWidget` | Schedules metadata update, creates notification, schedules routing or bot execution, fires webhook (`message.create`) |
-| `messages.sendMessage` | Patches conversation (status 200, botPaused, participants, firstResponseAt), fires webhook for non-internal messages |
-| `contacts.create` | Schedules webhook (`contact.created`) |
-| `contacts.remove` | Blocks if active conversation exists |
-| `bot.createBotMessage` | Schedules `sendMetaMessage` (messenger/instagram/whatsapp), schedules `sendTelegramMessage` |
-| `bot.assignToHuman` | Clears bot state (currentNodeId to null), sets SLA deadline |
-| `bots.create` | Logs activity (`bot_created`) |
-| `bots.update` | Logs activity (`bot_updated`) |
-| `bots.remove` | Schedules `_deleteBotFlowsBatch`, logs activity (`bot_deleted`) |
-| `knowledgeBases.addSource` | Schedules `indexSource` action |
-| `knowledgeBases.remove` | Schedules `deleteSourcesBatch` |
-| `settings.*` (all CRUD) | Logs activity for every operation (department/label/canned_response created/updated/deleted, member added/removed) |
-| `settings.removeLabel` | CASCADE: removes label name from all conversation tags in project (up to 500 conversations) |
-| `tags.assignTagToConversation` | Logs activity (`label_applied`) |
-| `tags.removeTagFromConversation` | Logs activity (`label_removed`) |
-| `profiles.setAvailability` | Schedules `retryRoutingForAgent` when becoming available |
-
-Side effect delivery mechanism: Most side effects are scheduled via `ctx.scheduler.runAfter(0, internal.xxx.fn())` to decouple the mutation from the side effect execution.
-
-### Are there optimistic concurrency control patterns?
-
-**[x]** **Minimal explicit OCC.** No mutation uses Convex's `_creationTime` or explicit version fields for optimistic concurrency control.
-
-The only OCC-like patterns found:
-
-1. **`conversations.updateMetadataInternal`**: reads conversation, checks `status === 100` before patching — a soft guard to prevent updates on resolved conversations.
-
-2. **Deduplication by `channelMessageId`** in `conversations.createOrUpdateFromMeta` and `conversations.createOrUpdateFromTelegram`: checks for existing message ID before creating, preventing duplicate conversations from webhook retries.
-
-3. **Convex platform-level OCC:** Convex automatically handles concurrent mutation conflicts at the platform level. Mutations that conflict are retried automatically.
-
-4. **Self-rescheduling batch pattern:** Large batch operations use a pattern of processing up to N records, then checking if more remain and self-rescheduling. This avoids transaction limit errors but is not OCC per se.
-
-**Gap:** No explicit version fields or `_creationTime` checks for update-conflict detection on contested resources.
-
-### How are errors handled and reported?
-
-**[x]** Error handling is **uniform but minimal**:
-
-1. **Public mutations:** Throw `Error("Not authenticated")` or `Error("Conversation not found")` — plain JavaScript Error with string message.
-
-2. **Authorization failures:** Throw `ConvexError({ message: "..." })` from `requireAdmin()` and `assertProjectOwnership()` in `utils.ts`.
-
-3. **Validation failures:** Throw `ConvexError({ message: "..." })` for business rule violations:
-   - `contacts.batchImport`: `ConvexError` for >500 contacts
-   - `settings.removeDepartment`: `ConvexError` for attempting to delete default department
-
-4. **Internal mutations:** Use early returns instead of throws:
-   - `bot.updateConversationState`: `if (!conversation) return;`
-   - `bot.assignToHuman`: `if (!conversation) return;`
-
-5. **No try/catch blocks** in any mutation function. All mutations rely on Convex's automatic error handling and retry logic.
-
-6. **Actions** (not mutations) use try/catch with `console.error` — but these are in the action files, not mutation files.
-
-7. **No error codes or structured errors** — all errors are string messages. Clients must parse error messages to determine error type.
-
-### Is there rate limiting on mutations?
-
-**[x]** **No application-level rate limiting exists on any mutation.**
-
-The only rate limiting is at the Convex platform level (which enforces default rate limits on API calls). The codebase does not implement:
-- Per-user rate limits
-- Per-IP rate limits
-- Per-project rate limits
-- Token bucket or sliding window rate limiters
-
-**Gap:** High-frequency mutations like `messages.send`, `conversations.createFromWidget`, and `pushMutations.registerPushSubscription` have no rate limiting, making them potentially vulnerable to abuse.
-
-### Are mutations idempotent? (safe to retry)
-
-**[x]** **Mixed idempotency:**
-
-**Idempotent mutations:**
-- `contacts.batchImport` — deduplicates by email, skips existing
-- `projects.ensureProject` — checks existing before creating
-- `projects.deleteProjectData` — step-based, only deletes what exists
-- `botFlows.save` — upsert pattern (checks existing by botId)
-- `bots._deleteBotFlowsBatch` — batch delete with self-reschedule
-- `profiles.updateMe` — upsert
-- `profiles.ensureCurrent` — upsert with sync
-- `profiles.upsertFromClerk` — upsert
-- `settings.addMemberToDepartment` — checks before adding
-- `settings.removeMemberFromDepartment` — checks before removing
-- `settings.upsertOperatingHours` — upsert
-- `knowledgeBases.getOrCreateDefault` — upsert
-- `knowledgeBases.deleteSourcesBatch` — batch delete with self-reschedule
-- `notifications.markAsRead` — patching `read: true` on already-read is no-op
-- `notifications.markAllRead` — idempotent
-- `notifications.clearAll` — idempotent
-- `tags.assignTagToConversation` — checks if tag exists before adding
-- `tags.removeTagFromConversation` — filter on non-existent tag is no-op
-- `integrations.upsert` — upsert
-- `integrations.upsertInternal` — upsert
-- `integrations.patchCredentials` — overwrites (effectively idempotent)
-- `integrations.patchWebhookSecret` — overwrites (effectively idempotent)
-- `webhooks.backfillWebhookSecrets` — checks `!sub.secret` before patching
-- `pushMutations.savePushSubscription` — upsert
-- `pushMutations.registerPushSubscription` — upsert
-
-**NOT idempotent:**
-- `contacts.create` — always inserts
-- `messages.send` — always inserts new message
-- `messages.sendFromWidget` — always inserts
-- `messages.sendMessage` — always inserts
-- `conversations.create` — always inserts
-- `conversations.resolve` — not idempotent (side effects re-fire)
-- `bots.create` — always inserts (but logs activity each time)
-- `knowledgeBases.create` — always inserts
-- `knowledgeBases.addSource` — always inserts
-- `feedback.submitFeedback` — always inserts
-- `orders.createOrder` — always inserts
-- `orders.batchImportOrders` — always inserts, no dedup
-- `webhooks.create` — always creates with new secret
-- `activityLogs.log` — always inserts (append-only by design)
-- `seed.seedDemoData` — always inserts
-- `wipe.wipeAll` — idempotent in effect (data already wiped) but not in execution
-
-### What's the rollback strategy for failed mutations?
-
-**[x]** **No explicit rollback strategy exists.**
-
-1. **Convex atomicity:** All mutations run as atomic transactions. If any part fails, the entire mutation is rolled back automatically by Convex.
-
-2. **No manual rollback/compensating transactions:** No mutation implements a compensating action on failure (e.g., undo a partial write).
-
-3. **Scheduled side effects are fire-and-forget:** Side effects scheduled via `ctx.scheduler.runAfter()` run independently. If they fail, they don't roll back the originating mutation.
-
-4. **No retry logic for transient failures:** Mutations do not implement retry loops. Convex retries mutations automatically on conflict, but application-level transient failures (e.g., external API calls in scheduled actions) are not retried by mutations.
-
-5. **`migrations.migrateStatuss`** is permanently disabled by throwing an error — this is the only explicit "undo prevention" in the codebase.
-
-### Are there audit logs for mutations?
-
-**[x]** **Partial audit logging.** The codebase has an `activityLogs.ts` module with `log()` and `logActivityInternal()` mutations that append to an append-only activity log table.
-
-**What IS logged:**
-- `bots.create` → `bot_created`
-- `bots.update` → `bot_updated`
-- `bots.remove` → `bot_deleted`
-- `conversations.update` → `conversation_assigned`
-- `conversations.resolve` → `conversation_resolved`
-- `conversations.transferToDepartment` → `conversation_department_changed`
-- `conversations.join` → `conversation_joined`
-- `conversations.autoCloseInactive` → conversation event logged
-- `settings` — ALL department, label, canned_response CRUD operations log activity
-- `tags.assignTagToConversation` → `label_applied`
-- `tags.removeTagFromConversation` → `label_removed`
-
-**What is NOT logged:**
-- `contacts.*` — no activity logging
-- `messages.*` — no activity logging
-- `projects.*` — no activity logging
-- `knowledgeBases.*` — no activity logging
-- `integrations.*` — no activity logging
-- `orders.*` — no activity logging
-- `webhooks.*` — no activity logging
-- `profiles.*` — no activity logging
-- `notifications.*` — no activity logging
-- `pushMutations.*` — no activity logging
-
-**Gap:** Many mutation categories have zero audit trail. The audit log is append-only with no expiration/cleanup policy found.
-
-### How are batch operations handled?
-
-**[x]** Batch operations use two patterns:
-
-1. **In-transaction batch loops:**
-   - `contacts.batchImport`: loops over up to 500 contacts, inserting one at a time within a single mutation transaction
-   - `orders.batchImportOrders`: same pattern, up to 500 orders
-   - `notifications.markAllRead`/`clearAll`: processes up to 200 notifications in one mutation
-   - `notifications.cleanupOldNotifications`: deletes up to 500 old notifications
-
-2. **Self-rescheduling batch pattern (for operations exceeding Convex limits):**
-   - `projects.deleteProjectData`: 19-step process, each step deletes up to 100 records from one table, then self-reschedules for next step via `ctx.scheduler.runAfter()`
-   - `bots._deleteBotFlowsBatch`: deletes up to 100 bot_flows, self-reschedules if more exist, then deletes bot
-   - `knowledgeBases.deleteSourcesBatch`: deletes up to 100 sources, self-reschedules if more, then deletes KB
-   - `conversations.autoCloseInactive`: processes up to 100, self-reschedules if batch was full
-   - `routing.retryUnassignedConversations`: 50 conversations per project, reschedules remaining
-
-The self-rescheduling pattern is:
-```typescript
-const batch = await ctx.db.query("table").limit(BATCH_SIZE).collect();
-for (const item of batch) { /* process */ }
-if (batch.length === BATCH_SIZE) {
-  await ctx.scheduler.runAfter(0, internal.self, args);
-}
-```
-
-### What happens with cascading deletes?
-
-**[x]** Cascading deletes are implemented in three places:
-
-1. **`projects.remove` + `projects.deleteProjectData`:** Most comprehensive cascading delete. Deletes across 19 tables in dependency order:
-   - Step 1-3: bot_flows, bots, knowledge_base_sources
-   - Step 4-6: knowledge_bases, messages, conversations
-   - Step 7-9: contacts, integrations, activity_logs
-   - Step 10-12: departments, canned_responses, labels
-   - Step 13-15: operating_hours, project_usage, unanswered_queries
-   - Step 16-18: webhook_subscriptions, webhook_deliveries, projects
-   - Uses BATCH_SIZE=100 with self-rescheduling
-
-2. **`bots.remove` + `bots._deleteBotFlowsBatch`:** Deletes all bot_flows for the bot, then the bot itself. Batch size 100.
-
-3. **`knowledgeBases.remove` + `knowledgeBases.deleteSourcesBatch`:** Deletes all knowledge_base_sources for the KB, then the KB itself. Batch size 100.
-
-4. **`settings.removeLabel`:** Cascades to remove label name from all conversation tags in the project. Bounded to 500 conversations (not self-rescheduling — may leave orphaned tags if >500).
-
-5. **`contacts.remove`:** **Guards against cascading** — blocks deletion if contact is linked to an active conversation (status !== 1000). Does not force-delete.
-
-**Gap:** `settings.removeDepartment` does NOT cascade — it deletes the department without checking for orphaned references (e.g., conversations assigned to that department, members of the department). This could leave orphaned references.
+2. **Internal mutation chaining**: Operations like `conversations.ts:createFromWidget` do multiple writes (create conversation, sync to contacts, send welcome message, trigger routing, fire webhook) — all within a single `internalMutation` transaction.
+
+3. **Upsert patterns**: Many mutations use upsert (`ctx.db.query(...).first()` then `replace` or `insert`) — e.g., `profiles.ts:updateMe`, `integrations.ts:upsert`, `settings.ts:upsertOperatingHours`.
+
+### [x] How are authorization checks handled?
+Six-tier authorization model:
+
+1. **No auth (public)**: Widget endpoints (`http.ts`), `activityLogs.ts:log`, `analytics.ts:submitCSAT` — no identity check, rate-limited instead.
+
+2. **Identity optional**: `activityLogs.ts:log` — `getUserIdentity()` returns null if unauthenticated, still logs.
+
+3. **Auth required (early return)**: Most queries return `[]` or `null` if no identity — e.g., `contacts.ts:list`, `profiles.ts:getMe`.
+
+4. **Auth required (throw)**: Mutations throw `authError()` if `getUserIdentity()` returns null — e.g., `messages.ts:send`, `projects.ts:create`.
+
+5. **Admin-only**: `requireAdmin(identity)` checks `org_role === "org:admin"`, throws `ConvexError("Unauthorized: admin access required")` — used in `bots.ts:create/update/remove`, `settings.ts` department/label/canned CRUD, `integrations.ts:upsert/remove`, `webhooks.ts:create/update/remove`, `orders.ts:createOrder/updateOrderStatus/deleteOrder`.
+
+6. **Project ownership**: `assertProjectOwnership(ctx, projectId, identity)` throws `ConvexError("Unauthorized")` if `project.orgId !== identity.org_id`. Used in `contacts.ts:create/update`, `messages.ts:send`, `knowledgeBases.ts:create/addSource/removeSource`, `tags.ts:assignTagToConversation/removeTagFromConversation`.
+
+7. **Org-scoped forbidden**: `forbiddenError()` used for explicit org mismatch after auth — e.g., `orders.ts:listOrders`, `analytics.ts:getProjectUsageSummary`.
+
+### [x] Is there input sanitization?
+Limited but present:
+
+1. **HTML stripping**: `knowledgeBases.ts:addSource` strips HTML from URL-based sources before indexing.
+
+2. **Undefined filtering**: `projects.ts:update` and `conversations.ts:updateVisitorInfo` filter out `undefined` values before patching.
+
+3. **Conversation data filtering**: `http.ts:/widget/conversations/get` explicitly strips sensitive fields, returning only `_id`, `status`, `rating`, `projectId`.
+
+4. **No explicit XSS/SQL injection sanitization observed**: The codebase relies on Convex's type-safe API and parameterized queries for injection prevention. Convex's `ctx.db` API does not use string concatenation for queries.
+
+5. **No email/phone normalization**: Contacts store email/phone as-is without normalization (lowercase email, formatted phone).
+
+### [x] What side effects do mutations trigger?
+Extensive side-effect chains:
+
+1. **Notifications**: `conversations.ts:update` fires `pushActions.sendPushToAgent` for new messages. `conversations.ts:resolve`, `conversations.ts:join`, `conversations.ts:leave` fire notifications. `routing.ts:routeConversation` notifies all agents if no match found.
+
+2. **Activity logging**: `bots.ts:create/update/remove`, `settings.ts` department/label/canned CRUD all call `activityLogs.logActivityInternal`.
+
+3. **Webhooks**: `conversations.ts:update` fires `webhooks.fireWebhookEvent` for conversation.status_changed. `messages.ts:send` fires webhook for new_message. `conversations.ts:resolve` fires conversation.resolved.
+
+4. **Contact sync**: `conversations.ts:createFromWidget` syncs visitor info to contacts.
+
+5. **Routing triggers**: `conversations.ts:createFromWidget`, `conversations.ts:transferToDepartment`, `messages.ts:sendFromWidget` all call `routing.routeConversation`.
+
+6. **Bot engine**: `messages.ts:sendFromWidget` triggers `bot.executeNextBlock` if a bot is assigned to the conversation.
+
+7. **Tag extraction**: `conversations.ts:resolve` triggers `tags.extractGenerativeTags` (AI-powered tagging).
+
+8. **Meta/Telegram relay**: `conversations.ts:relayToMeta` schedules `sendMetaMessage` action. `bot.ts:createBotMessage` relays to Meta/Telegram channels.
+
+9. **CSAT sync**: `analytics.ts:submitCSATInternal` clamps rating AND syncs `conversation.rating` field.
+
+10. **Profile sync**: `profiles.ts:ensureCurrent` syncs email/name/avatar/org from Clerk on each dashboard load.
+
+### [x] Are there optimistic concurrency control patterns?
+**Yes, two notable OCC patterns:**
+
+1. **Dedicated `conversation_bot_state` table** (`bot.ts`): Bot execution state is stored in a separate `conversation_bot_state` table, NOT on the `conversations` table. This prevents OCC conflicts between bot state updates and message/conversation updates happening concurrently. `bot.ts:getConversationState` reads from this dedicated table.
+
+2. **Deferred metadata updates** (`messages.ts:sendFromWidget`): Instead of updating conversation metadata directly (which could conflict with other writes), `sendFromWidget` schedules `updateMetadataInternal` via the Convex scheduler. The `updateMetadataInternal` mutation (`conversations.ts`) only sets `status=100` if it's already 100, designed to avoid OCC conflicts.
+
+3. **Internal mutations for scheduler tasks**: Many scheduler-targeted mutations are `internalMutation` to prevent client-side OCC conflicts — e.g., `conversations.ts:updateMetadataInternal`, `conversations.ts:autoCloseInactive`.
+
+### [x] How are errors handled and reported?
+**Typed ConvexError strategy** (`convex/errors.ts`):
+- `userError(message)` → `ConvexError(message)` — user-facing validation errors
+- `authError()` → `ConvexError("Unauthorized")` — unauthenticated
+- `notFoundError(resource)` → `ConvexError("{resource} not found")` — resource not found (often doubles as auth guard)
+- `forbiddenError()` → `ConvexError("Forbidden")` — authenticated but unauthorized
+
+**Patterns observed:**
+- Errors are thrown (not returned) from mutations, relying on Convex's error propagation to the client.
+- Actions that make external HTTP calls (e.g., `openrouter_api.ts:testOpenRouterKey`, `integrations.ts:registerTelegramWebhook`) catch errors and return structured `{ ok: false, error: message }` instead of throwing — preventing unhandled promise rejections.
+- Webhook handlers (`http.ts`) wrap everything in `try/catch` and always return 200 (per Meta/Telegram requirements to stop retries), logging errors via `console.error`.
+- **Bug found**: `webhooks.ts` lines 214-216 has dead code — `requireAdmin()` is called before a null check on identity, making the null check unreachable since `requireAdmin` already throws if identity is null.
+
+### [x] Is there rate limiting on mutations?
+**Yes, but only on public/widget endpoints:**
+
+1. **`@convex-dev/rate-limiter`** configured in `convex.config.ts` and used in `http.ts`:
+   - `createConversation`: Fixed window, 5 requests per 60 seconds, keyed by `visitorId ?? projectId`.
+   - `sendMessage`: Token bucket, 20 requests per 60 seconds, capacity of 5, keyed by `visitorId ?? conversationId`.
+   - Rate limiter uses `{ throws: false }` to return `{ ok: false }` for custom 429 responses.
+
+2. **No rate limiting on authenticated mutations**: All dashboard mutations (bot CRUD, settings, contacts, etc.) have NO rate limiting — they rely on auth-based access control instead.
+
+3. **No rate limiting on AI calls**: `openrouter.ts` and `aiFlowBuilder.ts` make unbounded LLM calls — relies on OpenRouter's own rate limits.
+
+### [x] Are mutations idempotent? (safe to retry)
+**Mixed:**
+
+1. **Upsert patterns are idempotent**: `profiles.ts:upsertFromClerk`, `integrations.ts:upsert`, `settings.ts:upsertOperatingHours`, `pushMutations.ts:savePushSubscription` — safe to retry.
+
+2. **Create mutations are NOT idempotent**: `contacts.ts:create`, `conversations.ts:create`, `messages.ts:send`, `projects.ts:create` — retrying creates duplicates (though contacts have dedup checks that prevent email/phone duplicates).
+
+3. **Dedup-based creates are semi-idempotent**: `contacts.ts:create` throws on duplicate email/phone, so retrying the same data is safe (returns error). `conversations.ts:createOrUpdateFromMeta` dedups by `channelMessageId`, making it idempotent for the same message.
+
+4. **Counter/increment mutations are NOT idempotent**: `analytics.ts:logTokenUsage` (upsert with count increment), `analytics.ts:logUnansweredQuery` — retrying inflates counts.
+
+5. **No explicit idempotency keys** observed on non-upsert mutations.
+
+### [x] What's the rollback strategy for failed mutations?
+**Convex auto-rollback**: All Convex mutations are transactional — if a mutation throws, all database writes within that transaction are automatically rolled back by Convex.
+
+**No manual rollback strategy** observed for multi-step operations. The scheduler-based batch deletions (`projects.ts:deleteProjectData`, `bots.ts:_deleteBotFlowsBatch`) don't have rollback — if a batch fails mid-process, partial deletion has occurred. This is a concern for data integrity.
+
+### [x] Are there audit logs for mutations?
+**Yes, partial audit logging via `activityLogs.ts`:**
+
+1. `activityLogs.log` (public mutation) and `activityLogs.logActivityInternal` (internal mutation) log events to the `activity_logs` table.
+
+2. **Logged mutations** (call `logActivityInternal`):
+   - `bots.ts:create`, `bots.ts:update`, `bots.ts:remove`
+   - `settings.ts:createDepartment`, `settings.ts:updateDepartment`, `settings.ts:removeDepartment`
+   - `settings.ts:createCannedResponse`, `settings.ts:updateCannedResponse`, `settings.ts:removeCannedResponse`
+   - `settings.ts:createLabel`, `settings.ts:updateLabel`, `settings.ts:removeLabel`
+   - `settings.ts:upsertOperatingHours`
+   - `tags.ts:assignTagToConversation`, `tags.ts:removeTagFromConversation`
+
+3. **NOT logged**: Contact CRUD, conversation CRUD, message sending, project CRUD, order CRUD, integration CRUD, webhook CRUD, push subscription management. Significant gap for sensitive operations.
+
+4. The `activity_logs` table stores `userId`, `action`, `resource`, `resourceId`, `metadata`, `createdAt`.
+
+### [x] How are batch operations handled?
+**Three batch patterns:**
+
+1. **Scheduler-based batching with re-enqueue**: Used for cascading deletes (`projects.ts:deleteProjectData` across 20 tables, `bots.ts:_deleteBotFlowsBatch`, `knowledgeBases.ts:deleteSourcesBatch`). Processes 100 records per batch, re-schedules if more remain. Also used for `conversations.ts:autoCloseInactive` (re-enqueues if `.take(100)` returns full batch).
+
+2. **Bounded batch reads**: `.take(N)` limits on non-paginated queries (50-2000). Sentinel values ("1000+", "100+", "50+") when limits are exceeded.
+
+3. **Client-side batch arrays**: `contacts.ts:batchImport` and `orders.ts:batchImportOrders` accept arrays of 1-500 items, iterate and skip invalid/duplicate entries.
+
+4. **Notification cap**: `notifications.ts:createNotification` caps at 50 per recipient, deleting oldest when exceeded.
+
+5. **Bot step limit**: `bot.ts:executeNextBlock` has a hard limit of 50 steps per conversation with infinite loop guard.
+
+6. **KB chunk cap**: `knowledge.ts:indexSource` caps at 200 chunks, processes in batches of 20 for embedding.
+
+### [x] What happens with cascading deletes?
+**Explicit cascading delete patterns:**
+
+1. **Project deletion** (`projects.ts:deleteProjectData`): Most comprehensive — deletes across 20 tables in order: conversations, messages, contacts, bots, bot_flows, knowledge_base_sources, knowledge_base_chunks, notifications, activity_logs, webhook_subscriptions, push_subscriptions, orders, labels, tags, conversation_tags, departments (members first), profiles, projects. Uses scheduler batching (100/table, re-enqueues).
+
+2. **Bot deletion** (`bots.ts:remove`): Sets bot `status="deleting"`, schedules `_deleteBotFlowsBatch` which deletes all flows (100/batch) then the bot. Logs activity.
+
+3. **Knowledge Base deletion** (`knowledgeBases.ts:remove`): Sets KB `status="deleting"`, schedules `deleteSourcesBatch` which deletes sources (100/batch) then the KB.
+
+4. **Label deletion** (`settings.ts:removeLabel`): Cascades tag removal from ALL conversations using the label — bounded to `.take(500)` conversation_tags. This is a potential performance concern for large datasets.
+
+5. **Contact deletion protection** (`contacts.ts:remove`): Blocks deletion if contact is linked to non-resolved conversations (`status !== 1000`). Returns `userError`.
+
+6. **Department deletion protection** (`settings.ts:removeDepartment`): Blocks deletion of the default department. Returns `userError`.
+
+7. **Organization deletion** (via Clerk webhook `http.ts`): `organization.deleted` event removes the associated project via `internal.projects.remove`.
+
+**Concern**: Department member removal (`settings.ts:removeMemberFromDepartment`) does NOT cascade — orphaned member references may persist.
+
+## 📝 Agent Findings
+
+### Mutation Architecture
+The codebase has a well-organized mutation layer with clear separation between public mutations (auth-required), internal mutations (Convex-only callable), and actions (external HTTP calls). The use of `internalMutation` for scheduler jobs and engine logic is correct Convex practice.
+
+### Function Count by Domain
+- **Conversation management**: 28 functions (largest domain)
+- **Integrations**: 20 functions
+- **Settings**: 18 functions (departments + canned responses + labels + hours)
+- **Analytics**: 18 functions (+ 7 internal helpers)
+- **Bot engine**: 12 functions (all internal)
+- **Projects**: 11 functions
+- **Profiles**: 10 functions
+- **Knowledge Bases**: 10 functions
+- **Webhooks**: 10 functions
+- **Notifications**: 7 functions
+
+### Authorization Utility Functions
+`convex/utils.ts` provides three core auth helpers used across ~40+ mutation/query call sites:
+- `requireAdmin(identity)` — checks `org_role === "org:admin"`
+- `assertProjectOwnership(ctx, projectId, identity)` — throws on org mismatch
+- `checkProjectOwnership(ctx, projectId, identity)` — returns null on org mismatch
+
+### Error Handling Factory
+`convex/errors.ts` provides four typed error factories: `userError()`, `authError()`, `notFoundError()`, `forbiddenError()` — all returning `ConvexError` with consistent messages.
 
 ## 🔍 Key Patterns to Identify
 
-### Mutation naming conventions
-- **Standard CRUD:** `create`, `update`, `remove`, `send`, `resolve`, `join`, `leave` — short, verb-based names
-- **Internal naming:** Internal mutations use descriptive names like `updateConversationState`, `createBotMessage`, `assignToHuman`, `deleteProjectData`
-- **No consistent prefix for internal mutations** — some use `_` prefix (`_deleteBotFlowsBatch`), others don't
+### Mutation Naming Conventions
+- CRUD standard: `list`, `get`, `create`, `update`, `remove` (not `delete`)
+- Internal variants: `*Internal` suffix (e.g., `upsertFromClerk`, `logActivityInternal`)
+- Action verbs: `send`, `resolve`, `join`, `leave`, `transferToDepartment`, `markAsRead`
+- Batch operations: `batchImport`, `*Batch` suffix for scheduler functions
 
-### Validation patterns
-- Schema validation via Convex `v.*` validators is universal
-- Bounds checking for batch operations (typically 100-500 limits)
-- Existence checks before updates/deletes
-- Deduplication on upsert and batch import operations
-- Business rule validation (HITL safeguards, status guards, default protection)
-- Undefined filtering in update mutations to prevent accidental overwrites
+### Validation Patterns
+- Convex `v.*` validators on all mutation args
+- Unique index dedup checks before insert
+- Existence checks with `notFoundError()` before updates
+- Array bounds validation for batch operations
+- Union/enum validation for status fields
 
-### Authorization patterns
-- **Three-tier model:** `requireAdmin()` (strongest) → `assertProjectOwnership()` → `getUserIdentity()` (weakest)
-- Internal mutations have no auth (by design)
-- Public-facing mutations (widget/webhook) have no auth (by design)
-- **Inconsistent application:** Some mutations that modify org data only check identity without role verification
+### Authorization Patterns
+- Six-tier: public → optional auth → required auth → admin → project ownership → org-scoped forbidden
+- Consistent use of `ClerkIdentity` type with `subject`, `org_id`, `org_role`
+- `requireAdmin()` for all admin-only operations
+- `assertProjectOwnership()` for project-scoped mutations
 
-### Error handling strategies
-- Throw `Error` for not-found/auth failures
-- Throw `ConvexError` for validation failures and authorization
-- No try/catch in mutations (Convex handles retries)
-- Early returns in internal mutations
-- No structured error codes
+### Error Handling Strategies
+- Typed `ConvexError` via factory functions
+- Actions return `{ ok: false, error }` for external call failures
+- Webhook handlers always return 200 with error logging
 
-### Side effect management
-- Side effects are scheduled via `ctx.scheduler.runAfter(0, internal.xxx.fn())` for decoupling
-- Heavy side effects in conversation lifecycle mutations
-- Activity logging is manually called in specific mutations, not automatic
-- Webhook notifications are the most common side effect
+### Side Effect Management
+- Notifications, webhooks, activity logs, routing, bot engine triggers
+- Internal mutations used for side-effect chains within transactions
+- Scheduler used for deferred side effects (auto-close, cleanup, retry)
 
-### Audit logging approach
-- Append-only activity log table
-- Manually invoked in specific mutations (not automatic)
-- Covers bot, conversation, settings, and tag operations
-- Missing coverage for contacts, messages, projects, knowledge, integrations, orders, webhooks, profiles, notifications
+### Audit Logging Approach
+- `activityLogs.logActivityInternal` called from settings/bots/tags mutations
+- Partial coverage — many mutation domains lack audit logging
 
 ## ⚠️ Potential Concerns
 
-### HIGH Severity
-
-| # | Concern | Details | Files |
-|---|---------|---------|-------|
-| 1 | **No authentication on `wipe.wipeAll`** | Anyone with a projectId can delete all data across 18 tables using `.collect()` (unbounded). This is a critical data loss risk. | `convex/wipe.ts` |
-| 2 | **No authentication on `seed.seedDemoData`** | Anyone with a projectId can inject arbitrary demo data into a project. | `convex/seed.ts` |
-| 3 | **No authentication on `webhooks.backfillWebhookSecrets`** | Can regenerate webhook secrets for all subscriptions without authentication. | `convex/webhooks.ts` |
-| 4 | **`messages.send` has no auth check** | Only validates conversation exists. Any caller who knows a conversation ID can send messages. | `convex/messages.ts` |
-| 5 | **No application-level rate limiting** | All mutations rely solely on Convex platform rate limits. High-frequency mutations are unprotected. | All mutation files |
-
-### MEDIUM Severity
-
-| # | Concern | Details | Files |
-|---|---------|-------|
-| 6 | **Inconsistent authorization patterns** | Some mutations check `requireAdmin()`, others only check identity. Same data category may have different auth levels. | `contacts.ts` vs `orders.ts` |
-| 7 | **`wipe.wipeAll` uses unbounded `.collect()`** | On large datasets, this will timeout or exceed Convex limits. Should use batch delete with self-reschedule. | `convex/wipe.ts` |
-| 8 | **`settings.removeLabel` cascade bounded to 500** | If >500 conversations have the label, orphaned tags remain. Should use self-rescheduling batch pattern. | `convex/settings.ts` |
-| 9 | **`settings.removeDepartment` no cascade** | Deleting a department may leave orphaned references in conversations, members. | `convex/settings.ts` |
-| 10 | **Partial audit log coverage** | Many mutation categories (contacts, messages, projects, orders, integrations, webhooks, profiles, notifications) have zero audit trail. | Multiple files |
-| 11 | **Non-idempotent batch imports** | `orders.batchImportOrders` always inserts, no dedup. Retrying will create duplicates. | `convex/orders.ts` |
-| 12 | **No explicit OCC on contested resources** | No version fields or `_creationTime` checks for update-conflict detection on conversations, profiles. | `conversations.ts`, `profiles.ts` |
-
-### LOW Severity
-
-| # | Concern | Details | Files |
-|---|---------|-------|
-| 13 | **No structured error codes** | All errors are string messages. Clients must parse strings to determine error type. | All mutation files |
-| 14 | **No retry logic in mutations** | Mutations rely on Convex's automatic retry. No application-level retry for transient failures. | All mutation files |
-| 15 | **Inconsistent internal mutation naming** | Some use `_` prefix (`_deleteBotFlowsBatch`), others don't (`deleteProjectData`). | `bots.ts` vs `projects.ts` |
-| 16 | **`activityLogs.log` stores undefined actor** | If unauthenticated, stores `undefined` as actor instead of rejecting. | `convex/activityLogs.ts` |
-| 17 | **No error handling in `deleteProjectData`** | Cascading delete has no try/catch. If one step fails mid-way, partial deletion has occurred. | `convex/projects.ts` |
-| 18 | **`seed.ts` is included in production build** | Development-only code is shipped to production. Should be behind feature flag or excluded. | `convex/seed.ts` |
+| # | Concern | Severity | Details |
+|---|---------|----------|---------|
+| 1 | **Dead code in webhooks.ts** | MEDIUM | Lines 214-216: `requireAdmin()` called before null check, making null check unreachable. Should reorder or remove dead code. |
+| 2 | **Incomplete audit logging** | MEDIUM | Contact CRUD, conversation CRUD, message sending, project CRUD, integration CRUD, webhook CRUD are NOT logged. Sensitive operations should all have audit trails. |
+| 3 | **No rate limiting on authenticated mutations** | LOW | All dashboard mutations are unbounded. While auth-gated, a compromised admin account could abuse mutations without rate limits. |
+| 4 | **Non-idempotent create mutations** | LOW | Retrying `contacts:create`, `messages:send`, etc. creates duplicates (contacts have dedup, messages don't). Consider idempotency keys for critical paths. |
+| 5 | **Partial rollback for cascading deletes** | MEDIUM | Scheduler-based batch deletes (`deleteProjectData`) are NOT transactional across batches. If a batch fails mid-process, partial data loss occurs with no rollback. |
+| 6 | **Label deletion scans 500 conversations** | LOW | `settings.ts:removeLabel` cascades tag removal across up to 500 conversation_tags. For large datasets, this could be slow or hit Convex limits. |
+| 7 | **No input normalization** | LOW | Emails not lowercased, phone numbers not formatted. Could cause dedup inconsistencies. |
+| 8 | **Counter mutations not idempotent** | LOW | `logTokenUsage`, `logUnansweredQuery` increment counters — retrying inflates values. |
+| 9 | **Widget endpoints fully public** | MEDIUM | `http.ts` widget endpoints have no auth, only rate limiting. Anyone with a projectId can create conversations and send messages. This is by design but worth noting. |
+| 10 | **Bot infinite loop guard at 50 steps** | LOW | The 50-step limit in `bot.ts:executeNextBlock` is arbitrary. Complex flows could hit this limit. No configurable threshold. |

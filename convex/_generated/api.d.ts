@@ -27,6 +27,7 @@ import type * as integrations from "../integrations.js";
 import type * as knowledge from "../knowledge.js";
 import type * as knowledgeBases from "../knowledgeBases.js";
 import type * as labels from "../labels.js";
+import type * as lib_aiRateLimiter from "../lib/aiRateLimiter.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_env from "../lib/env.js";
 import type * as messages from "../messages.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   knowledge: typeof knowledge;
   knowledgeBases: typeof knowledgeBases;
   labels: typeof labels;
+  "lib/aiRateLimiter": typeof lib_aiRateLimiter;
   "lib/crypto": typeof lib_crypto;
   "lib/env": typeof lib_env;
   messages: typeof messages;

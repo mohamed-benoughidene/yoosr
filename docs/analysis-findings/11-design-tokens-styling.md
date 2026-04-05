@@ -1,398 +1,193 @@
-# Part 11: Design Tokens & Styling - Analysis Findings
+# Part 11: Design Tokens & Styling - Findings
 
 ## 📊 Visual Map
 
 ```
 Styling Configuration
-├── postcss.config.mjs         → PostCSS for Tailwind processing (@tailwindcss/postcss)
-├── src/app/globals.css        → ALL design tokens, Tailwind v4 CSS config, animations, utilities
-│   ├── Tailwind v4 imports   → @import "tailwindcss"
-│   ├── Plugins               → @tailwindcss/typography, tw-animate-css
-│   ├── Custom variants       → dark mode, data-state handling
-│   ├── Custom keyframes      → rotate, float-card, driftGold, driftViolet, aurora, etc.
-│   ├── :root variables       → Light theme (oklch colors), marketing tokens (--lp-*)
-│   ├── .dark variables       → Dark theme overrides
-│   ├── @theme inline         → Maps CSS vars → Tailwind utilities (colors, radii, shadows, fonts, breakpoints, animations)
-│   ├── Custom utilities      → .perspective-distant, .transform-3d, .backface-hidden, .rotate-y-180
-│   ├── Custom components     → .scrollbar-thin, button rules, [class*="border"]
-│   └── Base layer resets     → *, body, headings, text elements
+├── postcss.config.mjs          → PostCSS with @tailwindcss/postcss plugin (v4)
+├── src/app/globals.css         → ALL design tokens, Tailwind v4 @theme, animations, utilities
+├── src/components/landing/     → Landing-specific CSS (landing.css)
+│   └── landing.css             → Landing page component styles (hero, design studio, channels)
+├── components.json             → shadcn/ui config: default style, slate base, CSS vars enabled
 │
-├── components.json            → shadcn/ui configuration (style: default, CSS variables: true, baseColor: slate)
-│
-├── design-system/yoosr/MASTER.md → Design system documentation (colors, typography, spacing, shadows, components, anti-patterns)
+├── Design Tokens (DUAL SYSTEM)
+│   ├── System A: shadcn/ui (OKLCH, light+dark)
+│   │   ├── --background, --foreground, --primary, --secondary, --muted, --accent, --destructive
+│   │   ├── --card, --popover, --border, --input, --ring
+│   │   ├── --chart-1..5, --sidebar-* (full set)
+│   │   ├── --gradient-1..3, --error, --success, --info, --warning
+│   │   └── --color-1..5 (MagicUI)
+│   │
+│   ├── System B: Landing Page (hex/RGBA, dark-first)
+│   │   ├── --lp-bg, --lp-surface, --lp-surface-2, --lp-border
+│   │   ├── --lp-gold (actually blue #3B82F6), --lp-gold-glow
+│   │   ├── --lp-violet, --lp-violet-glow
+│   │   └── --lp-text, --lp-text-secondary, --lp-text-muted
+│   │
+│   ├── Typography
+│   │   ├── --font-sans: Inter (default)
+│   │   ├── --font-mono: IBM Plex Mono
+│   │   ├── --font-serif: Playfair Display
+│   │   ├── --font-display: Inter (headings h1-h6)
+│   │   ├── --font-cabinet-grotesk: Cabinet Grotesk (600-800, landing headlines)
+│   │   ├── --font-noto-naskh-arabic: Arabic support
+│   │   └── --font-handwriting: Caveat
+│   │
+│   ├── Spacing
+│   │   └── Standard Tailwind spacing scale (no custom scale defined)
+│   │
+│   ├── Borders
+│   │   └── --radius: 8px (base)
+│   │       ├── --radius-xs: 2px (--radius - 6px)
+│   │       ├── --radius-sm: 4px (--radius - 4px)
+│   │       ├── --radius-md: 6px (--radius - 2px)
+│   │       ├── --radius-lg: 8px (--radius)
+│   │       └── --radius-xl: 12px (--radius + 4px)
+│   │
+│   └── Shadows (8-level scale)
+│       ├── --shadow-2xs: 0 1px 3px 0px (0.05 alpha)
+│       ├── --shadow-xs: 0 1px 3px 0px (0.05 alpha)
+│       ├── --shadow-sm: 0 1px 3px + 0 1px 2px (0.10 alpha)
+│       ├── --shadow: 0 1px 3px + 0 1px 2px (0.10 alpha)
+│       ├── --shadow-md: 0 1px 3px + 0 2px 4px (0.10 alpha)
+│       ├── --shadow-lg: 0 1px 3px + 0 4px 6px (0.10 alpha)
+│       ├── --shadow-xl: 0 1px 3px + 0 8px 10px (0.10 alpha)
+│       └── --shadow-2xl: 0 1px 3px (0.25 alpha)
 │
 └── Styling Approach
-    ├── Tailwind CSS v4       → Utility-first CSS (CSS-based config, no tailwind.config.ts)
-    ├── shadcn/ui themes      → Pre-built component styles with CVA variants
-    ├── CSS variables         → Extensive custom theme tokens (oklch + custom --lp-* tokens)
-    ├── framer-motion         → Animation library (used in VideoPlayer, AnimatePresence)
-    └── CSS animations        → @theme inline defines 25+ animations (accordion, fade-in, shimmer, aurora, etc.)
+    ├── Tailwind CSS v4         → CSS-based config via @theme inline
+    ├── shadcn/ui themes        → 32 UI components, OKLCH tokens
+    ├── CSS variables           → Extensive (200+ custom properties)
+    ├── CSS Animations          → 35+ @keyframes in globals.css + landing.css
+    └── framer-motion           → ONLY in VideoPlayer.tsx (clipPath animation)
 ```
 
 ## 📁 File Inventory
 
 | File | Purpose |
 |------|---------|
-| `postcss.config.mjs` | PostCSS configuration for Tailwind (uses `@tailwindcss/postcss`) |
-| `src/app/globals.css` | **Central design token file** — 500+ lines of CSS variables, theme config, animations, utilities |
-| `components.json` | shadcn/ui style configuration (default style, CSS variables, slate base color) |
-| `design-system/yoosr/MASTER.md` | Design system documentation (color palette, typography, spacing, shadows, component specs, anti-patterns) |
-| `src/lib/utils.ts` | `cn()` utility — combines `clsx` + `tailwind-merge` for class composition |
-| `src/components/ui/button.tsx` | CVA pattern example (variants: default/destructive/outline/secondary/ghost/link × sizes: default/sm/lg/icon) |
-| `src/components/ui/badge.tsx` | CVA pattern example (variants: default/secondary/destructive/outline) |
-| `src/components/ui/alert.tsx` | CVA pattern example |
-| `src/components/ui/label.tsx` | CVA pattern example |
-| `src/components/ui/sheet.tsx` | CVA pattern example |
-| `src/components/ui/toggle.tsx` | CVA pattern example |
-| `src/components/ui/toggle-group.tsx` | Uses VariantProps from CVA |
-| `src/components/ui/navigation-menu.tsx` | CVA pattern (navigationMenuTriggerStyle) |
-| `src/components/ui/sidebar.tsx` | CVA pattern (sidebarMenuButtonVariants) |
-| `src/components/landing/VideoPlayer.tsx` | Only file using framer-motion (AnimatePresence, motion) |
-| `src/components/landing/ScrollReveal.tsx` | CSS-based scroll animations (IntersectionObserver + CSS classes) |
-| `package.json` | Dependencies: `class-variance-authority@^0.7.1`, `framer-motion@^12.38.0` |
+| `postcss.config.mjs` | PostCSS config with `@tailwindcss/postcss` plugin |
+| `src/app/globals.css` | **Central design system** - 600+ lines: tokens, @theme, keyframes, utilities |
+| `components.json` | shadcn/ui configuration (default style, slate base, CSS variables) |
+| `src/components/landing/landing.css` | Landing page specific styles (hero, design studio, channels sections) |
+| `public/fonts/cabinet-grotesk/cabinet-grotesk.css` | Self-hosted Cabinet Grotesk @font-face (woff2, weights 600-800) |
+| `src/lib/utils.ts` | `cn()` utility using clsx + tailwind-merge |
 
 ## ✅ Analysis Checklist
 
-### What Tailwind CSS version? (v4 detected)
-**[x] Tailwind CSS v4** — Confirmed. The project uses Tailwind CSS v4, which is evident from:
-- No `tailwind.config.*` file exists (v4 uses CSS-based configuration)
-- `@import "tailwindcss"` in globals.css (v4 syntax)
-- `@theme inline` block for defining custom utilities (v4 feature)
-- `@plugin "@tailwindcss/typography"` syntax
-- `@custom-variant` syntax for custom variants
-- PostCSS uses `@tailwindcss/postcss` plugin
+- [x] **What Tailwind CSS version?** Tailwind CSS v4 (`^4` in package.json). Uses `@tailwindcss/postcss` and CSS-based configuration via `@theme inline` block. No `tailwind.config.*` file exists.
 
-### How is Tailwind configured? (v4 uses CSS-based config)
-**[x] CSS-based configuration in `globals.css`** — All Tailwind v4 configuration is in `src/app/globals.css`:
-- `@import "tailwindcss"` — Core import
-- `@plugin "@tailwindcss/typography"` — Typography plugin
-- `@import "tw-animate-css"` — Additional animation plugin
-- `@theme inline { ... }` — Maps all custom tokens to Tailwind utilities (colors, radii, shadows, fonts, breakpoints, animations)
-- `@custom-variant dark (&:where(.dark, .dark *))` — Dark mode variant
-- `@utility container` — Custom container utility
+- [x] **How is Tailwind configured?** Via CSS in `globals.css` using `@theme inline { }` block (lines 154-484). Imports: `@import "tailwindcss"`, `@plugin "@tailwindcss/typography"`, `@import "tw-animate-css"`. PostCSS plugin: `@tailwindcss/postcss` in `postcss.config.mjs`.
 
-### What's the color palette? (custom vs default)
-**[x] Extensive custom color palette** — Uses both shadcn default tokens AND custom marketing tokens:
+- [x] **What's the color palette?** DUAL system:
+  - **System A (shadcn/ui)**: OKLCH color space. Light mode: `--background: oklch(1 0 0)` (white), `--foreground: oklch(0.141 0.005 285.823)`, `--primary: oklch(0.21 0.006 285.885)` (dark slate), `--destructive: oklch(0.577 0.245 27.325)` (red). Dark mode: inverted OKLCH values. Base color: slate.
+  - **System B (Landing)**: Hex/RGBA. `--lp-bg: #0C0B0F`, `--lp-surface: #161420`, `--lp-border: rgba(255,255,255,0.08)`, `--lp-gold: #3B82F6` (actually blue, not gold), `--lp-violet: #6C63FF`, `--lp-text: #F2EFE9` (warm white).
 
-**Custom Marketing Tokens (`--lp-*` prefix)** defined in `:root`:
-```css
---lp-bg: #0C0B0F;
---lp-surface: #161420;
---lp-surface-2: #1E1C2A;
---lp-border: rgba(255,255,255,0.08);
---lp-gold: #3B82F6;  /* Note: Named "gold" but is actually blue (#3B82F6) */
---lp-gold-glow: rgba(59,130,246,0.15);
---lp-violet: #6C63FF;
---lp-violet-glow: rgba(108,99,255,0.12);
---lp-text: #F2EFE9;
---lp-text-secondary: #9E9AA8;
---lp-text-muted: #9E9AAD;
-```
+- [x] **Are CSS custom properties used for theming?** Extensively. 200+ custom properties defined in `globals.css`. shadcn tokens mapped to Tailwind via `@theme inline` (e.g., `--color-background: var(--background)`). Landing page uses `var(--lp-*)` directly without Tailwind mapping.
 
-**Shadcn Semantic Colors** (oklch format, ~50 variables):
-- Standard shadcn tokens: `--background`, `--foreground`, `--primary`, `--secondary`, `--accent`, `--muted`, `--destructive`, `--card`, `--popover`, `--ring`, `--border`, `--input`
-- Chart colors: `--chart-1` through `--chart-5`
-- Sidebar colors: `--sidebar*` (10+ variables)
-- Semantic colors: `--gradient-1/2/3`, `--error`, `--success`, `--info`, `--warning`
-- MagicUI colors: `--color-1` through `--color-5`
+- [x] **Is dark mode supported? How is it toggled?** YES. Library: `next-themes` v0.4.6. CSS: `@custom-variant dark (&:where(.dark, .dark *))` (line 6). Triggered by `.dark` class on `<html>`. Complete dark mode overrides in `.dark` block (lines 101-151) for all shadcn tokens. Theme color meta tags in `layout.tsx` (lines 31-34). **No visible ThemeToggle component found in codebase** - dark mode toggle may not be implemented in the UI yet. Landing page tokens (`--lp-*`) do NOT have dark mode overrides - landing is dark-first by design.
 
-**Color system uses oklch color space** for semantic tokens (modern, perceptually uniform).
+- [x] **What typography setup?** `@tailwindcss/typography` plugin loaded via `@plugin` in globals.css. Font stack via `next/font`:
+  - Inter → `--font-sans` (default body text)
+  - Playfair Display → `--font-serif`
+  - IBM Plex Mono → `--font-mono` (weights 400, 600)
+  - Cabinet Grotesk → self-hosted (weights 600-700, 800), used for landing headlines
+  - Noto Naskh Arabic → referenced for Arabic support
+  - Caveat → handwriting font (referenced but not loaded in root layout)
+  - `h1-h6` → `font-display` (Inter), all text → `font-text` (Inter)
 
-### Are CSS custom properties used for theming?
-**[x] Extensively used** — The entire theming system is built on CSS custom properties:
-- All colors defined as CSS variables in `:root` and `.dark`
-- `@theme inline` maps CSS vars → Tailwind utilities (`--color-background: var(--background)`, etc.)
-- Radius scale: `--radius: 8px` with calculated variants (`--radius-xs`, `--radius-sm`, etc.)
-- Shadow scale: `--shadow-2xs` through `--shadow-2xl`
-- Font families: `--font-sans`, `--font-mono`, `--font-serif`, `--font-display`, `--font-text`, etc.
-- Breakpoints: `--breakpoint-sm` (640px) through `--breakpoint-2xl` (1560px)
+- [x] **Are there custom Tailwind utilities?** YES:
+  - `@utility container` (lines 497-500): `margin-inline: auto; padding-inline: 2rem;`
+  - `.scrollbar-thin` (lines 486-489): Custom 4px scrollbar
+  - 3D transform helpers: `.perspective-distant`, `.transform-3d`, `.backface-hidden`, `.rotate-y-180`
+  - `.lp-section`, `.lp-label` (landing page section utilities)
+  - Custom variants: `data-active`, `data-checked`, `data-unchecked`
 
-### Is dark mode supported? How is it toggled?
-**[x] Yes, dark mode is fully supported** via CSS class-based toggling:
-- **Mechanism**: Class-based (`&:where(.dark, .dark *)`)
-- **Implementation**: `.dark` class overrides all semantic CSS variables (background, foreground, primary, secondary, etc.)
-- **Toggling**: No built-in theme toggle component found in the codebase. The `Toaster` is hardcoded to `theme="light"`. Dark mode would need to be toggled by adding `.dark` class to `<html>` or a parent element (likely via Clerk auth or system preference).
-- **Coverage**: Dark mode covers all shadcn semantic tokens, gradients, alerts, MagicUI colors, and sidebar tokens.
+- [x] **What's the spacing scale?** Standard Tailwind v4 spacing scale used. No custom spacing scale defined in `@theme inline`. Uses Tailwind's default (0, 1px, 2px, 4px, 8px, 12px, 16px, 24px, 32px, 40px, 48px, 56px, 64px, 80px, 96px, etc.).
 
-### What typography setup? (Tailwind typography plugin)
-**[x] Tailwind Typography plugin + Custom font variables**:
+- [x] **How are animations handled?** Primarily CSS `@keyframes` (35+ defined). Only 1 file uses framer-motion (`VideoPlayer.tsx` - clipPath animation).
+  - **globals.css** defines: `accordion-down/up`, `fade-in-out`, `fade-in`, `progress`, `infinite-slider`, `shadow-ping`, `flip-btn`, `rotate-btn`, `marquee`, `shimmer-slide`, `shine`, `ripple`, `orbit`, `meteor`, `line-shadow`, `aurora`, `slideDown/up/left/right`, `rainbow`
+  - **landing.css** defines: `drawEdge`, `nodeAppear`, `badgeEnter`, `wordFade`
+  - `tailwindcss-animate` and `tw-animate-css` packages provide additional animation utilities
+  - All animations mapped to Tailwind via `--animate-*` in `@theme inline`
 
-**Plugin**: `@plugin "@tailwindcss/typography"` enabled (provides `prose` class)
-- Used in legal pages: `className="prose prose-zinc dark:prose-invert max-w-none"`
+- [x] **Are there responsive breakpoints defined?** YES, in `@theme inline`:
+  - `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1560px`
 
-**Custom font system** (via CSS variables):
-```css
---font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
---font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
---font-serif: var(--font-playfair), ui-serif, Georgia, serif;
---font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
---font-text: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
---font-handwriting: "Caveat", cursive;
---font-cabinet-grotesk: var(--font-cabinet-grotesk), ...;
---font-noto-naskh-arabic: var(--font-noto-naskh-arabic), ...;
-```
+- [x] **Is there a consistent border radius system?** YES, 5-level scale based on `--radius: 8px`:
+  - `--radius-xs: 2px`, `--radius-sm: 4px`, `--radius-md: 6px`, `--radius-lg: 8px`, `--radius-xl: 12px`
 
-**Font loading**: Via `next/font` in layout files (Inter, IBM Plex Mono, Playfair, Cabinet Grotesk, Noto Naskh Arabic, Caveat)
+- [x] **How are shadows/elevation handled?** 8-level shadow scale (`--shadow-2xs` through `--shadow-2xl`). Uses `hsl(0 0% 0% / alpha)` syntax. Light mode: 0.05-0.10 alpha, dark mode: lower alpha values for subtler shadows. No box-shadow elevation system (e.g., no `--elevation-*` tokens), but shadow scale serves similar purpose.
 
-**Base layer applies fonts**: All h1-h6 get `font-display`, all text elements get `font-text`.
+- [x] **Are design tokens documented?** NO dedicated design system documentation file. Tokens are defined in `globals.css` but not documented externally. No `design-system/` directory exists.
 
-**Note**: Design system MASTER.md specifies "Fira Code + Fira Sans" but actual implementation uses **Inter + IBM Plex Mono + Playfair**. The design system doc is **out of sync** with implementation.
+- [x] **Is there a design system file?** NO. The design system is distributed across:
+  - `globals.css` (tokens, animations, base styles)
+  - `components.json` (shadcn/ui config)
+  - `src/components/ui/` (32 shadcn/ui components)
+  - `landing.css` (landing page specific tokens and styles)
 
-### Are there custom Tailwind utilities?
-**[x] Yes, several custom utilities**:
+- [x] **How are component variants styled?** CVA (class-variance-authority) used in **8 UI components**:
+  - `button.tsx`: 6 variants (default, destructive, outline, secondary, ghost, link) × 4 sizes
+  - `badge.tsx`: 4 variants (default, secondary, destructive, outline)
+  - `alert.tsx`: 2 variants (default, destructive)
+  - `sheet.tsx`: 4 side variants (top, bottom, left, right)
+  - `toggle.tsx`: 2 variants × 3 sizes
+  - `sidebar.tsx`: 2 variants × 3 sizes
+  - `label.tsx`: no variants (base classes only)
+  - `navigation-menu.tsx`: no variants (base classes only)
+  - All use `cn()` utility (clsx + tailwind-merge) from `@/lib/utils`
 
-**Via `@utility container`**:
-```css
-@utility container {
-  margin-inline: auto;
-  padding-inline: 2rem;
-}
-```
+## 📝 Agent Findings
 
-**Via `@layer utilities`**:
-```css
-.perspective-distant   → perspective: 1000px;
-.transform-3d          → transform-style: preserve-3d;
-.backface-hidden       → backface-visibility: hidden;
-.rotate-y-180          → transform: rotateY(180deg);
-```
+### Dual Design Token System
+The project has TWO parallel design token systems that are NOT integrated:
+1. **shadcn/ui system**: OKLCH-based, full light/dark support, Tailwind-integrated via `@theme inline`, used by all `src/components/ui/*` components
+2. **Landing page system**: Hex/RGBA, dark-first design (no dark mode toggle), used via `var(--lp-*)` directly, NOT mapped to Tailwind
 
-**Custom scrollbar utility** (via class pattern):
-```css
-.scrollbar-thin::-webkit-scrollbar      → width: 4px;
-.scrollbar-thin::-webkit-scrollbar-thumb → bg: muted-foreground, radius: 20px;
-.scroll-thin::-webkit-scrollbar-track   → transparent;
-```
+This means landing pages and app pages use completely different color systems with no easy way to unify them.
 
-**Marketing section utilities** (raw CSS):
-```css
-.lp-section  → max-width: 1200px, centered, responsive padding
-.lp-label    → 11px uppercase gold text
-```
+### Extensive Animation Library
+35+ CSS `@keyframes` animations defined across `globals.css` and `landing.css`, all mapped to Tailwind via `--animate-*`. However, framer-motion is included as a dependency but only used in ONE file (`VideoPlayer.tsx`) for a clipPath reveal animation. This suggests either:
+- framer-motion was planned for more use but abandoned in favor of CSS animations
+- VideoPlayer was a prototype that hasn't been extended to other components
 
-### What's the spacing scale? (consistent?)
-**[x] Mixed approach — Tailwind default scale + custom design system tokens**:
+### Typography Hierarchy
+- 6 font families configured (Inter, Playfair, IBM Plex Mono, Cabinet Grotesk, Noto Naskh Arabic, Caveat)
+- h1-h6 all use `font-display` (Inter) via `@layer base` rule
+- Landing page uses Cabinet Grotesk for headlines (800 weight for hero, 700 for sections)
+- Arabic support referenced but implementation unclear if actually functional
 
-**Design system spec** (`design-system/yoosr/MASTER.md`) defines:
-```
---space-xs: 4px / 0.25rem
---space-sm: 8px / 0.5rem
---space-md: 16px / 1rem
---space-lg: 24px / 1.5rem
---space-xl: 32px / 2rem
---space-2xl: 48px / 3rem
---space-3xl: 64px / 4rem
-```
+### shadcn/ui Component Library
+32 shadcn/ui components installed, using "default" style variant with "slate" base color. CSS variables enabled. Uses Lucide React for icons. Additional registry: shadcnblocks.com.
 
-**Actual implementation**: These custom spacing tokens are **NOT used** in `globals.css`. Instead, the codebase relies on:
-- **Tailwind's default spacing scale** (e.g., `p-4`, `m-6`, `gap-2`)
-- **Hard-coded values** in marketing sections (e.g., `padding:64px 24px`)
-- **Radix-based dynamic values** (e.g., `var(--radix-accordion-content-height)`)
+### Landing Page CSS
+`landing.css` contains 171+ CSS class references across components, with its own animation keyframes (`drawEdge`, `nodeAppear`, `badgeEnter`, `wordFade`) and staggered animation delays for SVG flow diagram visualization.
 
-**⚠️ Concern**: Design system spacing tokens are documented but not implemented as CSS variables.
+### Custom Variants
+Three custom data-state variants defined: `data-active`, `data-checked`, `data-unchecked` - used for form components that need state-based styling.
 
-### How are animations handled? (framer-motion vs CSS)
-**[x] Dual approach — CSS animations + framer-motion for complex cases**:
-
-**CSS Animations** (primary method, defined in `@theme inline`):
-- 25+ keyframes defined: `accordion-down`, `accordion-up`, `fade-in-out`, `fade-in`, `progress`, `infinite-slider`, `infinite-slider-reverse`, `shadow-ping`, `flip-btn`, `rotate-btn`, `light-to-right`, `marquee`, `marquee-vertical`, `slide-to-right`, `slide-to-top`, `shimmer-slide`, `spin-around`, `shine`, `ripple`, `orbit`, `meteor`, `line-shadow`, `aurora`, `aurora-background`, `slideDown`, `slideUp`, `slideLeft`, `slideRight`, `rainbow`
-
-**Custom keyframes** (outside @theme):
-```css
-@keyframes rotate       → CSS angle rotation
-@keyframes float-card   → 10px vertical float
-@keyframes driftGold    → 40px/30px translation + scale
-@keyframes driftViolet  → -30px/40px translation + scale
-```
-
-**Framer Motion** (used sparingly):
-- Only in `src/components/landing/VideoPlayer.tsx`
-- Uses `AnimatePresence`, `motion`
-- Video popover uses spring animations with clip-path transitions
-
-**Scroll Reveal** (`src/components/landing/ScrollReveal.tsx`):
-- Uses `IntersectionObserver` + CSS class addition (`animate-fade-in`)
-- No framer-motion, pure CSS-based
-
-**⚠️ Note**: Massive animation library in globals.css but most appear to be from MagicUI/shadcnblocks — many may be unused.
-
-### Are there responsive breakpoints defined?
-**[x] Yes, standard Tailwind breakpoints**:
-```css
---breakpoint-sm: 640px;
---breakpoint-md: 768px;
---breakpoint-lg: 1024px;
---breakpoint-xl: 1280px;
---breakpoint-2xl: 1560px;
-```
-
-These map to standard Tailwind utilities: `sm:`, `md:`, `lg:`, `xl:`, `2xl:`
-
-Marketing sections also use responsive CSS:
-```css
-.lp-section { padding: 64px 24px; }
-@media(min-width:1024px){ .lp-section { padding: 96px 24px; } }
-```
-
-### Is there a consistent border radius system?
-**[x] Yes, calculated from base radius**:
-```css
---radius: 8px;  /* Base */
---radius-xs: calc(var(--radius) - 6px);  /* 2px */
---radius-sm: calc(var(--radius) - 4px);  /* 4px */
---radius-md: calc(var(--radius) - 2px);  /* 6px */
---radius-lg: var(--radius);              /* 8px */
---radius-xl: calc(var(--radius) + 4px);  /* 12px */
-```
-
-Mapped to Tailwind utilities: `rounded-xs`, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-xl`
-
-**Note**: Some components use hard-coded values (e.g., button uses `rounded-md`, badge uses `rounded-full`).
-
-### How are shadows/elevation handled?
-**[x] 8-level shadow scale defined**:
-```css
---shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
---shadow-xs:  0 1px 3px 0px hsl(0 0% 0% / 0.05);
---shadow-sm:  0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
---shadow:     0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
---shadow-md:  0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
---shadow-lg:  0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
---shadow-xl:  0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
---shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-```
-
-**Note**: Design system MASTER.md defines different shadow values (`--shadow-md: 0 4px 6px rgba(0,0,0,0.1)`) vs actual implementation. Another **out-of-sync** issue.
-
-**Mapped to Tailwind utilities**: `shadow-2xs`, `shadow-xs`, `shadow-sm`, `shadow`, `shadow-md`, `shadow-lg`, `shadow-xl`, `shadow-2xl`
-
-### Are design tokens documented?
-**[x] Yes, in `design-system/yoosr/MASTER.md`** — But significantly out of sync:
-
-**Documented**:
-- Color palette (different values from actual: `#6366F1` primary vs actual oklch-based system)
-- Typography (Fira Code + Fira Sans vs actual Inter + IBM Plex Mono)
-- Spacing tokens (--space-xs through --space-3xl, NOT implemented as CSS vars)
-- Shadow depths (different values from actual)
-- Component specs (buttons, cards, inputs, modals with CSS classes, not Tailwind)
-
-**NOT documented**:
-- Dark mode token overrides
-- MagicUI colors
-- Sidebar token group
-- Chart colors
-- Gradient tokens
-- Alert semantic colors
-- The 25+ CSS animations
-- Custom utilities (perspective, 3D transforms)
-- `--lp-*` marketing tokens
-- `tw-animate-css` plugin
-
-### Is there a design system file? (`design-system/`)
-**[x] Yes: `design-system/yoosr/MASTER.md`**:
-- Generated: 2026-03-06
-- Category: Micro SaaS
-- Includes: Global rules (colors, typography, spacing, shadows), component specs (buttons, cards, inputs, modals), style guidelines (Flat Design), anti-patterns, pre-delivery checklist
-- Structure: Supports page-specific overrides via `design-system/pages/[page-name].md` pattern (none found yet)
-- **⚠️ Major issue**: Content is **significantly out of sync** with actual implementation (see "Potential Concerns" below)
-
-### How are component variants styled? (CVA - class-variance-authority)
-**[x] Consistently uses CVA pattern across all UI components**:
-
-**8 components use CVA**:
-1. `button.tsx` — `buttonVariants` (6 variants × 4 sizes)
-2. `badge.tsx` — `badgeVariants` (4 variants)
-3. `alert.tsx` — `alertVariants`
-4. `label.tsx` — `labelVariants`
-5. `sheet.tsx` — `sheetVariants`
-6. `toggle.tsx` — `toggleVariants`
-7. `toggle-group.tsx` — uses `VariantProps`
-8. `navigation-menu.tsx` — `navigationMenuTriggerStyle`
-9. `sidebar.tsx` — `sidebarMenuButtonVariants`
-
-**Pattern**:
-```typescript
-const componentVariants = cva("base-classes", {
-  variants: { variant: {...}, size: {...} },
-  defaultVariants: { variant: "default", size: "default" }
-})
-```
-
-**Class composition**: Uses `cn()` utility (`clsx` + `tailwind-merge`) for safe class merging:
-```typescript
-import { cn } from "@/lib/utils"
-className={cn(componentVariants({ variant, size, className }))}
-```
+### Scroll Lock Fix
+Custom override for `body[data-scroll-locked]` to prevent layout shift when modals/sheets open (sets `margin-right: 0px !important`).
 
 ## 🔍 Key Patterns to Identify
 
-### Design Token Organization
-- **Single source of truth**: `globals.css` contains ALL tokens (500+ lines)
-- **No Tailwind config file**: v4 CSS-only configuration
-- **Token naming**: Mix of shadcn semantic names (`--background`, `--primary`) and custom prefixes (`--lp-*` for marketing)
-- **Color space**: oklch for semantic tokens, hex/rgba for marketing tokens
-
-### Theming Approach
-- **CSS variables**: Primary theming mechanism
-- **Dark mode**: `.dark` class overrides all semantic variables
-- **Theme mapping**: `@theme inline` exposes CSS vars as Tailwind utilities
-- **No runtime theme switching**: No theme context provider or toggle component found
-
-### Animation Strategy
-- **CSS-first**: 25+ keyframe animations defined in globals.css
-- **Framer-motion**: Used ONLY in VideoPlayer for complex clip-path/spring animations
-- **Scroll-based**: Pure CSS + IntersectionObserver for scroll reveals
-- **Plugin-based**: `tw-animate-css` provides additional utilities
-
-### Responsive Design Philosophy
-- **Standard breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px), 2xl (1560px)
-- **Mobile-first**: Implicit via Tailwind's mobile-first approach
-- **RTL support**: `@radix-ui/react-direction` provider for Arabic locale (`dir="rtl"`)
-
-### Component Styling Patterns
-- **CVA**: Consistent variant system across all UI primitives
-- **cn() utility**: Safe class composition with tailwind-merge
-- **Dark mode in components**: `dark:` variants inline (e.g., `dark:bg-destructive/60`)
-- **Focus states**: Comprehensive focus-visible rings using `--ring` token
+- **Dual token system**: shadcn/ui (OKLCH, Tailwind-mapped) vs Landing page (hex, direct var() usage)
+- **CSS-first animations**: 35+ @keyframes, minimal framer-motion usage (1 file)
+- **Tailwind v4 CSS config**: `@theme inline` replaces traditional `tailwind.config.js`
+- **CVA for variants**: Consistent pattern across 8 UI components
+- **Dark mode via next-themes**: Class-based, but no visible toggle in codebase
+- **OKLCH color space**: Modern perceptually-uniform colors for shadcn tokens
 
 ## ⚠️ Potential Concerns
 
-### HIGH Severity
-
-| Concern | Details |
-|---------|---------|
-| **Design system out of sync** | `design-system/yoosr/MASTER.md` documents completely different colors (`#6366F1`), fonts (Fira Code vs Inter), spacing tokens, and shadow values than what's actually implemented. This will mislead developers. |
-| **`--lp-gold` misnamed** | CSS variable `--lp-gold` is actually blue (`#3B82F6`), not gold. This is confusing and will cause errors when developers try to use it. |
-| **No theme toggle component** | Dark mode is fully implemented with tokens but no UI toggle exists. Toaster is hardcoded to `theme="light"`. Users can't switch themes. |
-
-### MEDIUM Severity
-
-| Concern | Details |
-|---------|---------|
-| **Potential animation bloat** | 25+ keyframe animations defined, most from MagicUI/shadcnblocks. Likely many unused, increasing CSS bundle size. Should audit and remove unused ones. |
-| **Spacing tokens undocumented in CSS** | Design system documents `--space-xs` through `--space-3xl` but these are NOT defined in `globals.css`. Developers may try to use them and fail. |
-| **components.json references non-existent file** | Points to `"tailwind.config.ts"` which doesn't exist (v4 doesn't use it). Should be removed or updated. |
-| **Hardcoded light Toaster** | Both `providers.tsx` and `MarketingProviders.tsx` hardcode `theme="light"` for Sonner toasts, which will look wrong in dark mode. |
-
-### LOW Severity
-
-| Concern | Details |
-|---------|---------|
-| **Duplicate keyframe definitions** | `rotate` keyframe is defined both inside and outside `@theme inline` blocks. May cause conflicts or redundancy. |
-| **Inconsistent font documentation** | Design system says "Fira Code + Fira Sans" but actual uses "Inter + IBM Plex Mono + Playfair". Also notes `--font-display` and `--font-text` both point to Inter, making the distinction meaningless. |
-| **Marketing tokens isolated** | `--lp-*` tokens are defined but NOT mapped to `@theme inline`, so they can't be used as Tailwind utilities (e.g., `bg-lp-gold`). Must use CSS var syntax `var(--lp-gold)`. |
-| **`@layer components` underutilized** | Only has basic button cursor, border utility, and link spacing. Could be used more for common component patterns. |
-| **Design system component specs use raw CSS** | MASTER.md shows `.btn-primary { background: #10B981; ... }` but actual codebase uses Tailwind + CVA. The specs are not actionable for this tech stack. |
-
----
-
-## Summary
-
-The project uses **Tailwind CSS v4** with a **comprehensive CSS variable-based design token system** in `globals.css` (500+ lines). It implements:
-- **Full dark mode** via `.dark` class overrides (but no toggle UI)
-- **oklch color space** for semantic tokens
-- **CVA pattern** consistently across 8+ UI components
-- **25+ CSS animations** (likely overkill)
-- **framer-motion** used minimally (only VideoPlayer)
-
-**Biggest issue**: The design system documentation (`design-system/yoosr/MASTER.md`) is **significantly out of sync** with the actual implementation — different colors, fonts, spacing, and shadows. This should be updated or removed to avoid confusion.
+| Severity | Concern |
+|----------|---------|
+| **HIGH** | **Dual token system** - Landing pages (`--lp-*`) and app (`--background`, `--primary`, etc.) use completely separate color systems. No mapping between them makes theming inconsistent and hard to maintain. |
+| **HIGH** | **No design system documentation** - 200+ CSS custom properties, 35+ animations, 6 font families, 8-level shadow scale - all undocumented except as raw CSS. No single source of truth for design tokens. |
+| **MEDIUM** | **Dark mode toggle missing** - `next-themes` is installed and configured but no ThemeToggle component found in the codebase. Users may not be able to switch themes. |
+| **MEDIUM** | **framer-motion underutilized** - Package installed but used in only 1 file. If CSS animations are the chosen approach, framer-motion could be removed to reduce bundle size. If framer-motion was intended, it should be used more broadly. |
+| **MEDIUM** | **Landing page has no dark mode** - `--lp-*` variables are dark-first with no light mode override block. If light mode landing page is needed, a full `.dark` inverse system would need to be built. |
+| **LOW** | **`--lp-gold` is actually blue** - Variable named `--lp-gold` has value `#3B82F6` (Tailwind blue-500), not gold. Misleading naming. |
+| **LOW** | **No custom spacing scale** - Using standard Tailwind spacing, which may not align with the 8px base radius system for consistent design tokens. |
+| **LOW** | **Caveat font referenced but not loaded** - `--font-handwriting: "Caveat"` defined in globals.css but not imported via `next/font` in layout.tsx. |

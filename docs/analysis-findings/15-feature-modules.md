@@ -1,501 +1,284 @@
-# Part 15: Feature Modules — Analysis Findings
+# Part 15: Feature Modules - Findings
 
 ## 📊 Visual Map
 
 ```
-Feature Domains (Actual Implementation)
+Feature Domains
 ├── User Management
-│   ├── Profiles          → convex/profiles.ts (7 functions: getMe, getByUserId, list, updateMe, upsertFromClerk, ensureCurrent, setAvailability, updateHeartbeat, setOffline, cleanupStalePresence)
-│   └── Settings          → src/app/[locale]/dashboard/settings/ (settings, canned-responses, departments, groups, integrations, labels, operating-hours, webhooks, widget)
+│   ├── Authentication    → Clerk (useAuth, useUser, useOrganization)
+│   ├── Profiles          → convex/profiles.ts (ensureCurrent, list, updateHeartbeat)
+│   └── Settings          → Dashboard settings section (8 sub-pages)
 │
 ├── Bot/AI Features
-│   ├── Bot CRUD          → convex/bots.ts (list, get, create, update, remove, _deleteBotFlowsBatch)
-│   ├── Bot Flows         → convex/botFlows.ts (get, save, compileToExecutionNodes — 20+ node types)
-│   ├── Bot Engine        → convex/bot.ts (executeNextBlock, executeAction — 20+ action types)
-│   ├── AI Flow Builder   → convex/aiFlowBuilder.ts (generateFlow action — LLM-powered flow generation)
-│   ├── AI Integration    → convex/openrouter.ts (callAITask, callAIAssistant — shared LLM helper)
-│   └── OpenRouter API    → convex/openrouter_api.ts (saveKey, clearKey, testKey, getStatus — per-org key management)
+│   ├── Bot Management    → convex/bots.ts (list, create, update, remove, activate, deactivate, duplicate)
+│   ├── Bot Types         → Chatbot (agents) vs Automation (flows)
+│   ├── Design Studio     → Visual flow builder with node graph (src/components/design-studio/)
+│   ├── AI Integration    → convex/openrouter.ts, convex/openrouter_api.ts
+│   └── Conversations     → convex/conversations.ts (list, listResolved, update, resolve)
 │
 ├── Contact Management
-│   ├── Contacts CRUD     → convex/contacts.ts (list, findByConversation, create, update, remove, batchImport)
-│   └── Tags/Labels       → convex/labels.ts (separate module)
+│   ├── Contacts          → convex/contacts.ts (list, create, update, remove, batchImport)
+│   ├── Import/Export     → CSV (papaparse), XLSX (xlsx), JSON formats
+│   └── Tags/Labels       → Contact tags displayed as badges in table
 │
 ├── Project Management
-│   ├── Projects CRUD     → convex/projects.ts (list, get, getByOrgId, create, update, remove, ensureProject, updateWidgetLocale, clearWidgetLocale)
-│   └── Project Deletion  → convex/projects.ts (deleteProjectData — cascading batch deletion across 19 tables)
+│   ├── Projects          → convex/projects.ts (list, create, update, getWidgetConfig)
+│   ├── Activity Logs     → convex/activityLogs.ts (getActivityLog)
+│   ├── Analytics         → convex/analytics.ts (getConversationStats, getConversationVolume, getTokenUsage, getTagsSummary, getCSATSummary, getSLABreachRate, getCSATComments, getUnansweredQueries, getProjectUsage)
+│   └── Dashboard         → convex/dashboard.ts (getHomeStats)
 │
 ├── Messaging
-│   ├── Conversations     → convex/conversations.ts (list, get, create, update, resolve, join, leave, updateVisitorInfo, +6 internal functions)
-│   ├── Messages          → convex/messages.ts (list, send, getMessages, sendMessage, sendFromWidget, listPublic, +3 internal)
-│   └── Bot State         → convex/bot.ts (getConversationState, updateConversationState — separated to avoid OCC conflicts)
+│   ├── Messages          → convex/messages.ts (list, sendMessage, list with pagination)
+│   ├── Conversations     → ChatShell with real-time updates
+│   └── History           → Resolved conversation archive with search, date range, CSV export
 │
 ├── Notifications
-│   ├── In-app            → convex/notifications.ts (createNotification, listForCurrentUser, unreadCount, markAsRead, markAllRead, clearAll, cleanupOldNotifications)
-│   └── Push              → convex/pushActions.ts (sendPushToOrg, sendPushToAgent) + convex/pushMutations.ts (savePushSubscription, removePushSubscription, registerPushSubscription)
+│   ├── Push              → PushNotificationInit in dashboard layout
+│   └── In-app            → Toast via sonner (AppToaster in providers)
 │
 ├── Orders/Commerce
-│   └── Orders            → convex/orders.ts (createOrder, listOrders, listOrdersPaginated, updateOrderStatus, deleteOrder, batchImportOrders)
+│   └── Orders            → convex/orders.ts (listOrders, updateOrderStatus, deleteOrder, batchImportOrders)
 │
 ├── Integrations
-│   ├── Channel Integrations → convex/integrations.ts (list, upsert, remove, saveChannelIntegration, registerTelegramWebhook, getDecryptedWhatsAppCredentials, +6 lookup queries)
-│   └── AI Integration       → convex/openrouter_api.ts (per-org API key management with encryption)
+│   ├── Apps/Catalog      → convex/integrations.ts (list, upsert, saveChannelIntegration, registerTelegramWebhook)
+│   ├── Channels          → Telegram, Messenger, Instagram, WhatsApp
+│   ├── AI Providers      → OpenRouter (API key management, test connection, default model selection)
+│   └── Webhooks          → Webhook configuration pages
 │
-├── Analytics
-│   └── Analytics         → convex/analytics.ts (getConversationVolume, getTokenUsage, getUnansweredQueries, getCSATSummary, getCSATComments, getProjectUsage, getTagsSummary, getProjectUsageSummary)
+├── Knowledge Base
+│   ├── KB CRUD           → convex/knowledgeBases.ts (if exists)
+│   └── Sources           → KB sources management per knowledge base
 │
-├── Knowledge Bases
-│   ├── KB Management     → convex/knowledgeBases.ts, convex/knowledge.ts
-│   └── KB Chunks         → convex/schema.ts (knowledge_base_chunks with vector index)
+├── Support/Requests
+│   ├── Request Queue     → Unassigned, Assigned to Me, Bot Escalated filters
+│   ├── Departments       → convex/settings.ts (getMyDepartments)
+│   └── Assignment        → Assign to Me, Resolve actions
 │
-├── Activity & Audit
-│   └── Activity Logs     → convex/activityLogs.ts
-│
-├── Routing
-│   └── Smart Routing     → convex/routing.ts
-│
-├── Webhooks
-│   └── Webhook System    → convex/webhooks.ts
-│
-└── Feedback
-    └── Feedback          → convex/feedback.ts
+└── Widget
+    ├── Embed Widget      → /widget route with session management
+    ├── Configuration     → Settings/widget page with live preview
+    └── API               → /api/widget/project (CORS-enabled, 60s cache)
 ```
 
 ## 📁 File Inventory
 
-| File/Directory | Purpose | Status |
-|----------------|---------|--------|
-| `convex/bots.ts` | Bot CRUD (list, get, create, update, remove) | ✅ Found |
-| `convex/botFlows.ts` | Flow builder — save/get/compile flows | ✅ Found |
-| `convex/bot.ts` | Bot execution engine — executeNextBlock + 20 action types | ✅ Found (not in original template) |
-| `convex/aiFlowBuilder.ts` | AI-generated flow creation via LLM | ✅ Found |
-| `convex/contacts.ts` | Contact management (CRUD + batch import) | ✅ Found |
-| `convex/conversations.ts` | Conversation management (1401 lines, 15+ functions) | ✅ Found |
-| `convex/messages.ts` | Message management (CRUD, widget, monitor) | ✅ Found |
-| `convex/projects.ts` | Project CRUD + cascading deletion | ✅ Found |
-| `convex/notifications.ts` | In-app notification system | ✅ Found |
-| `convex/pushActions.ts` | Web push notification sending | ✅ Found |
-| `convex/pushMutations.ts` | Push subscription management | ✅ Found |
-| `convex/orders.ts` | Order management (CRUD + batch import) | ✅ Found |
-| `convex/integrations.ts` | Third-party channel integrations | ✅ Found |
-| `convex/openrouter.ts` | Shared AI task/assistant LLM caller | ✅ Found |
-| `convex/openrouter_api.ts` | OpenRouter API key management | ✅ Found |
-| `convex/profiles.ts` | User profile management + presence | ✅ Found (not in original template) |
-| `convex/analytics.ts` | Analytics & reporting (844 lines) | ✅ Found (not in original template) |
-| `convex/utils.ts` | Shared auth/ownership utilities | ✅ Found (not in original template) |
-| `convex/schema.ts` | Full schema definition (30+ tables) | ✅ Found (not in original template) |
-| `convex/activityLogs.ts` | Activity logging | ✅ Found (not in original template) |
-| `convex/routing.ts` | Smart conversation routing | ✅ Found (not in original template) |
-| `convex/webhooks.ts` | Outbound webhook system | ✅ Found (not in original template) |
-| `convex/feedback.ts` | User feedback collection | ✅ Found (not in original template) |
-| `convex/knowledgeBases.ts` | Knowledge base CRUD | ✅ Found (not in original template) |
-| `convex/knowledge.ts` | KB search/embeddings | ✅ Found (not in original template) |
-| `convex/tags.ts` | Tag/label management | ✅ Found (not in original template) |
-| `convex/settings.ts` | App settings (departments, canned responses, etc.) | ✅ Found (not in original template) |
-| `convex/labels.ts` | Label management | ✅ Found (not in original template) |
-| `convex/crons.ts` | Scheduled jobs | ✅ Found (not in original template) |
-| `src/app/[locale]/dashboard/bots/page.tsx` | Bot list UI with filter/search | ✅ Found |
-| `src/app/[locale]/dashboard/contacts/page.tsx` | Contacts UI with import/export | ✅ Found |
-| `src/app/[locale]/dashboard/orders/page.tsx` | Orders UI with import/export | ✅ Found |
-| `src/app/[locale]/dashboard/settings/integrations/page.tsx` | Integrations settings (603 lines) | ✅ Found |
-| `src/app/[locale]/design-studio/[botId]/page.tsx` | Bot flow editor page | ✅ Found |
+| File/Directory | Purpose |
+|----------------|---------|
+| `convex/bots.ts` | Bot CRUD operations |
+| `convex/contacts.ts` | Contact management with batch import |
+| `convex/conversations.ts` | Conversation listing and management |
+| `convex/messages.ts` | Message sending and listing with pagination |
+| `convex/projects.ts` | Project CRUD and widget config |
+| `convex/orders.ts` | Order management with import/export |
+| `convex/integrations.ts` | Third-party integration management |
+| `convex/openrouter.ts` | OpenRouter AI integration |
+| `convex/openrouter_api.ts` | OpenRouter API key management |
+| `convex/profiles.ts` | User profiles and heartbeats |
+| `convex/activityLogs.ts` | Activity logging |
+| `convex/analytics.ts` | Analytics data endpoints |
+| `convex/dashboard.ts` | Dashboard home stats |
+| `convex/settings.ts` | Settings data (departments, canned responses, etc.) |
+| `convex/schema.ts` | Database schema definition |
+| `src/app/[locale]/dashboard/` | Frontend dashboard feature pages |
+| `src/app/[locale]/design-studio/` | Frontend bot editor |
+| `src/components/design-studio/` | Visual flow builder components |
+| `src/app/widget/` | Embeddable widget |
+| `src/config/apps.ts` | Integration app catalog (AVAILABLE_APPS) |
 
 ## ✅ Analysis Checklist
 
-### [x] What are the main feature domains?
-
-The codebase has **12 main feature domains**, each backed by dedicated Convex modules:
-
-1. **User/Profile Management** — `convex/profiles.ts` (10 functions for CRUD, presence, availability, Clerk sync)
-2. **Project Management** — `convex/projects.ts` (9 functions + cascading deletion across 19 tables)
-3. **Bot/AI Features** — `convex/bots.ts` + `convex/botFlows.ts` + `convex/bot.ts` + `convex/aiFlowBuilder.ts` (bot CRUD, flow design, AI-powered flow generation, execution engine with 20+ action types)
-4. **AI Integration** — `convex/openrouter.ts` + `convex/openrouter_api.ts` (shared LLM caller + per-org key management with encryption/testing)
-5. **Contact Management** — `convex/contacts.ts` (6 functions including batch import with deduplication)
-6. **Conversation/Messaging** — `convex/conversations.ts` (1401 lines, 15+ functions) + `convex/messages.ts` (8 functions + 3 internal)
-7. **Notifications** — `convex/notifications.ts` (7 functions for in-app) + `convex/pushActions.ts` + `convex/pushMutations.ts` (web push via VAPID)
-8. **Orders** — `convex/orders.ts` (6 functions for order CRUD, status management, batch import)
-9. **Integrations** — `convex/integrations.ts` (15+ functions for Telegram, WhatsApp, Messenger, Instagram channel integrations with encrypted credentials)
-10. **Analytics** — `convex/analytics.ts` (844 lines, 15+ functions for volume, token usage, CSAT, tags, usage quotas)
-11. **Knowledge Bases** — `convex/knowledgeBases.ts` + `convex/knowledge.ts` (KB CRUD + vector search with embeddings)
-12. **Platform Features** — `convex/routing.ts` (smart routing), `convex/webhooks.ts` (outbound webhooks), `convex/activityLogs.ts` (audit trail), `convex/feedback.ts` (user feedback), `convex/tags.ts` (tagging), `convex/settings.ts` (departments, canned responses, operating hours)
-
-### [x] How is each feature structured? (frontend + backend)
-
-**Backend structure (Convex):**
-- Every feature module follows a consistent pattern: `convex/<feature>.ts`
-- Functions are typed as `query`, `mutation`, `action`, `internalQuery`, `internalMutation`, or `internalAction`
-- Schema is centralized in `convex/schema.ts` with 30+ tables using Convex's `defineTable` API
-- Cross-cutting concerns in shared modules: `convex/utils.ts` (auth helpers), `convex/lib/crypto.ts` (encryption), `convex/lib/env.ts` (env validation)
-
-**Frontend structure (Next.js):**
-- Pages at `src/app/[locale]/dashboard/<feature>/page.tsx` — one page per feature
-- Uses React components from `src/components/dashboard/<feature>/`
-- State management via Convex React hooks (`useQuery`, `useMutation`, `useAction`)
-- Shared project context via `@/context/ProjectContext`
-- UI components from shadcn/ui (`@/components/ui/*`)
-- Internationalization via `next-intl` (`useTranslations`)
-
-**Pattern example — Contacts:**
-- Backend: `convex/contacts.ts` exports `list`, `findByConversation`, `create`, `update`, `remove`, `batchImport`
-- Frontend: `src/app/[locale]/dashboard/contacts/page.tsx` uses `useQuery(api.contacts.list)` and `useMutation(api.contacts.create)`
-- Components: `@/components/dashboard/contacts/contacts-list` (imported separately)
-
-### [x] Are features isolated or coupled?
-
-**Features are moderately coupled** with a shared-project ownership model:
-
-- **Multi-tenancy via orgId**: All features scope data to `projects`, which belong to an `orgId` (Clerk organization). Ownership checks use `checkProjectOwnership` / `assertProjectOwnership` from `convex/utils.ts`.
-- **Cross-feature coupling exists**:
-  - `conversations` references `bots` (via `botId`), `departments` (via `departmentId`), `contacts` (bidirectional link via `conversationId`)
-  - `contacts` links to `conversations` (conversationId field)
-  - `orders` link to `conversations` (optional conversationId)
-  - `notifications` reference `conversations`
-  - `messages` require `conversations` and `projects`
-  - `botFlows` require `bots`
-  - `activity_logs` reference `projects` and actors
-  - `token_usage`, `unanswered_queries`, `project_usage` reference `projects`
-  - `knowledge_base_sources` reference `knowledge_bases`, which reference `projects`
-  - `webhook_deliveries` reference `webhook_subscriptions`, which reference `projects`
-
-- **Bot engine coupling**: `convex/bot.ts` internally calls `conversations`, `notifications`, `analytics`, `knowledge`, `routing`, `tags` modules via `internal.*` API
-- **Webhook system coupling**: `contacts.create`, `conversations.create`, `messages.send` all trigger webhooks via `internal.webhooks.fireWebhookEvent`
-- **Notification coupling**: Conversation assignment triggers push notifications and in-app notifications
-
-**Isolation quality**: Modules are separated by file but share the same database schema (single Convex backend). No module-level boundaries enforced at runtime — any internal function can call any other internal function.
-
-### [x] What's the AI/ML integration approach?
-
-**OpenRouter as the AI abstraction layer** — the codebase uses OpenRouter API as a unified gateway to multiple LLM providers:
-
-1. **Shared LLM client** (`convex/openrouter.ts`):
-   - Uses OpenAI SDK with `baseURL: "https://openrouter.ai/api/v1"`
-   - Two call patterns: `callAITask` (single-shot, temp=0.3) and `callAIAssistant` (multi-turn with history, temp=0.7)
-   - Returns `{ text, tokensUsed, model }` for token tracking
-
-2. **Per-org API key management** (`convex/openrouter_api.ts`):
-   - Keys stored encrypted in `projects.openRouterApiKey` using `convex/lib/crypto.ts`
-   - `saveOpenRouterKey`, `clearOpenRouterKey`, `getOpenRouterKeyStatus`, `testOpenRouterKey` mutations
-   - Test endpoint makes a live API call to verify key validity
-   - Default model configurable per project (`projects.defaultModel`)
-
-3. **Token usage tracking** (`convex/analytics.ts`):
-   - `logTokenUsage` internal mutation after every LLM call
-   - Stored in `token_usage` table with model, operation type, timestamp
-   - Aggregated into `project_usage.tokensConsumed` for quota tracking
-   - `getTokenUsage` action with paginated aggregation by model
-
-4. **AI Flow Builder** (`convex/aiFlowBuilder.ts`):
-   - `generateFlow` action takes a plain-language prompt and returns `{ nodes, edges }` for React Flow
-   - Uses a detailed system prompt defining all 14 node types with exact JSON schemas
-   - 30-second timeout with `Promise.race`
-   - Strips markdown code fences and parses JSON with fallback
-
-5. **AI in bot flows**:
-   - `aiTask` node: Single-shot LLM call with configurable prompt/system prompt
-   - `ai_assistant` node: Multi-turn AI assistant with full conversation history
-   - `ask_kb` node: RAG pattern — vector search + LLM synthesis with configurable max turns
-
-6. **Bot engine LLM error handling**: AI failures return error in attributes (`ai_error`) and can route to failure paths; the engine does not crash on LLM failures
-
-### [x] How does the bot flow builder work?
-
-**Two-layer architecture: visual editor → compiled execution graph**
-
-1. **Frontend (Design Studio)**: `src/app/[locale]/design-studio/[botId]/page.tsx` renders `BotEditorClient` — a React Flow-based visual editor where users create nodes and edges
-
-2. **Flow compilation** (`convex/botFlows.ts`):
-   - `save` mutation accepts `{ botId, nodes[], edges[], variables }` from React Flow
-   - `compileToExecutionNodes()` transforms visual nodes into a semantic execution format
-   - Supports **20+ node types**: start, reply, setAttribute, condition, webRequest, aiTask, ai_assistant, hitlHandoff, close, if_operating_hours, if_online_agent, ask_kb, capture_user_reply, wait, replace_bot, change_department, code_action, clear_transcript, applyLabel, setPriority
-
-3. **Condition compilation**: Visual condition nodes with operators (equals, notEquals, contains, greaterThan, lessThan) are compiled into string expressions like `{{attributeKey}} == 'value'`
-
-4. **Edge resolution**: True/false branches from condition nodes resolve to target node IDs by matching `sourceHandle` on edges
-
-5. **AI-generated flows** (`convex/aiFlowBuilder.ts`): `generateFlow` action accepts a plain-language prompt and uses OpenRouter to generate `{ nodes, edges }` that can be loaded directly into React Flow
-
-6. **Bot execution engine** (`convex/bot.ts`):
-   - `executeNextBlock` internal action reads conversation state + flow, executes actions sequentially
-   - Each action returns `ActionResult` with instructions: `newAttributes`, `nextNodeId`, `suspend`, `newBotId`, `resetNodeId`, `scheduleNextBlockAfter`
-   - **Infinite loop guard**: 50-step limit per conversation
-   - **HITL guard**: Stops bot if `botPaused === true`
-   - **Suspension model**: Nodes like `capture_user_reply`, `wait`, `hitl_handoff` suspend execution and wait for triggers
-   - **Scheduled execution**: `wait` actions schedule next block via `ctx.scheduler.runAfter(delay, executeNextBlock, ...)`
-   - **Bot swapping**: `replace_bot` action can swap to a different bot mid-conversation
-
-### [x] What external services are integrated?
-
-**Channel integrations** (`convex/integrations.ts`):
-
-1. **Telegram** — Bot token auth, webhook registration with secret token validation, encrypted credential storage
-2. **WhatsApp (Cloud API)** — Phone number ID, access token, verify token, app secret. Encrypted token storage. Lookup by phoneNumberId index.
-3. **Messenger** — Page ID, access token, app secret. Lookup by pageId index.
-4. **Instagram** — Account ID, access token, app secret. Lookup by pageId index.
-
-**AI integration**:
-5. **OpenRouter** — Unified LLM gateway supporting multiple model providers. Per-org API key management with encryption. Model selection (default: `openrouter/free`). Token usage tracking.
-
-**Push notifications**:
-6. **Web Push (VAPID)** — FCM (Google), Mozilla Push, Windows Push, Apple Push. Endpoint validation against trusted origins. Automatic cleanup of expired (410/404) subscriptions.
-
-**Webhooks**:
-7. **Outbound Webhooks** — RestHooks-style webhook subscriptions with event filtering, payload signing (secret per subscription), retry logic (3 attempts), delivery tracking in `webhook_deliveries` table
-
-**Crypto/security**:
-- All sensitive credentials (tokens, API keys) encrypted via `convex/lib/crypto.ts` using an `ENCRYPTION_KEY` environment variable
-- `encryptSecret` / `decryptSecret` functions used across integrations, OpenRouter, and webhook secrets
-
-### [x] How are web push notifications implemented?
-
-**Two-tier push system** (`convex/pushActions.ts` + `convex/pushMutations.ts`):
-
-1. **Subscription management**:
-   - `push_subscriptions` table: `{ userId, orgId, subscription, createdAt }`
-   - Indexed by `userId` and `orgId`
-   - `registerPushSubscription` public mutation saves/updates subscription for current user
-   - One subscription per user (upserts on existing)
-
-2. **Sending push notifications**:
-   - `sendPushToOrg`: Sends to all users in an organization (used for "new conversation" events)
-   - `sendPushToAgent`: Sends to a specific agent (used for assignment events)
-   - Both use `web-push` library with VAPID details from env vars (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`)
-   - Endpoint validation against trusted origins: FCM, Mozilla, Windows, Apple
-
-3. **Error handling**:
-   - 410/404 errors → auto-remove stale subscription
-   - All other errors silently ignored
-   - Uses `Promise.allSettled` for parallel sends
-
-4. **Trigger points**:
-   - `conversations.createFromWidget` → `sendPushToOrg` (new conversation alert)
-   - `conversations.update` (assignment) → `sendPushToAgent` (assigned to you)
-   - VAPID setup is wrapped in try/catch — gracefully degrades if env vars are missing
-
-### [x] Is there feature flagging?
-
-**No dedicated feature flagging system found.** The codebase does not use LaunchDarkly, Flagsmith, or any feature flag service. Feature enablement is handled through:
-
-1. **Integration `enabled` field**: Each integration has an `enabled: v.optional(v.boolean())` field that gates whether it's active
-2. **Widget config flags**: `projects.widgetConfig` is a flexible JSON field that stores UI toggles (e.g., `enableWelcomeNotification`)
-3. **Bot `status` field**: Bots have `status: "draft" | "active" | "archived"` controlling whether they're deployed
-4. **Operating hours**: `operating_hours.enabled` boolean gates time-based routing
-
-There is no A/B testing infrastructure or gradual rollout mechanism.
-
-### [x] How are feature-specific errors handled?
-
-**Multi-layered error handling:**
-
-1. **Authentication errors**: Every public function checks `ctx.auth.getUserIdentity()` first. Returns `null`/`[]` for queries, throws `"Not authenticated"` for mutations
-
-2. **Authorization errors**: `requireAdmin()` throws `ConvexError("Unauthorized: admin access required")`. `checkProjectOwnership()` returns null for queries, `assertProjectOwnership()` throws `ConvexError("Unauthorized")` for mutations
-
-3. **External service errors**:
-   - AI calls: `callAITask`/`callAIAssistant` throw on missing API keys; bot engine catches errors and stores in `ai_error` attribute, routes to failure paths
-   - HTTP requests: `web_request` action catches fetch errors, routes to `failurePath`
-   - Telegram webhook: `registerTelegramWebhook` catches Telegram API errors and returns descriptive error messages
-   - Push notifications: Silently ignores errors except for 410/404 (subscription cleanup)
-   - OpenRouter test: Returns `{ ok: false, error: "..." }` instead of throwing
-
-4. **Validation errors**: `ConvexError` with descriptive messages (e.g., `"Contact not found"`, `"Array must contain between 1 and 500 contacts"`, `"Cannot delete a contact with active conversations"`)
-
-5. **Frontend error handling**:
-   - Toast notifications via `sonner` for user-facing errors
-   - try/catch in mutation handlers with `toast.error()` calls
-   - Loading states with spinner indicators
-
-6. **Graceful degradation**: Push notifications silently fail if VAPID keys are missing; AI flows return empty responses on LLM errors; bot engine continues on unknown action types with a warning
-
-### [x] Are features independently testable?
-
-**Architecture supports testability but test coverage is limited:**
-
-1. **Convex functions are independently testable** — each `query`, `mutation`, `action` is a pure function with typed inputs/outputs. The `internal.*` API enables isolated testing of individual functions
-2. **No test files found in the `convex/` directory** — the `coverage/` directory exists but no `.test.ts` or `.spec.ts` files under `convex/`
-3. **Frontend has some tests** — based on the `coverage/` directory, there appear to be tests for frontend components
-4. **Shared utilities** (`convex/utils.ts`, `convex/lib/crypto.ts`, `convex/lib/env.ts`) are pure functions that could be unit tested
-5. **Bot engine testability**: The `executeAction` function is exported and could be tested with mock contexts, but the tight coupling to `ctx.runQuery`, `ctx.runMutation`, and `ctx.scheduler` makes mocking complex
-6. **No mocking infrastructure** found in the Convex codebase
-
-### [x] What's the data flow for each feature?
-
-**Unified Convex real-time data flow:**
-
-```
-Client (React) → useQuery (reactive) → Convex Query → Real-time updates
-Client (React) → useMutation → Convex Mutation → DB Write → Push to all useQuery subscribers
-Client (React) → useAction → Convex Action → External API calls → Return result
-Internal triggers: ctx.scheduler.runAfter() → internalMutation/internalAction → DB/Webhook/Notifications
-```
-
-**Feature-specific flows:**
-
-1. **Bot flow**: Widget message → `messages.sendFromWidget` → triggers `routing.routeConversation` → triggers `bot.executeNextBlock` → reads `bot_flows` → executes actions → writes messages/updates conversation state
-2. **Contact flow**: Agent creates contact → `contacts.create` → fires `contact.created` webhook → contact linked to conversation
-3. **Order flow**: Agent creates order → `orders.createOrder` → stored with project/conversation linkage → status updates via `updateOrderStatus`
-4. **Notification flow**: Event occurs → `scheduler.runAfter(0, internal.notifications.createNotification, ...)` → in-app notification stored → `pushActions.sendPushToAgent` → web push sent
-5. **Analytics flow**: LLM call → `analytics.logTokenUsage` → stored in `token_usage` + increments `project_usage.tokensConsumed` → `analytics.getTokenUsage` aggregates with pagination
-6. **Integration flow**: Agent saves credentials → `integrations.saveChannelIntegration` → encrypts sensitive fields → stores with denormalized indexes → webhooks register external endpoints
-
-### [x] Are there shared feature utilities?
-
-**Yes — several shared utility modules:**
-
-1. **`convex/utils.ts`** — Auth/ownership helpers:
-   - `requireAdmin(identity)` — throws if not org:admin
-   - `assertProjectOwnership(ctx, projectId, identity)` — throws if no access
-   - `checkProjectOwnership(ctx, projectId, identity)` — returns null if no access
-
-2. **`convex/lib/crypto.ts`** — Encryption utilities:
-   - `encryptSecret(value, key)` — encrypts secrets with AES
-   - `decryptSecret(encrypted, key)` — decrypts stored secrets
-
-3. **`convex/lib/env.ts`** — Environment validation:
-   - `requireEnv(name, value)` — validates required env vars
-
-4. **`convex/_generated/api.ts`** — Auto-generated type-safe API for cross-module calls via `internal.*`
-
-5. **Frontend utilities**:
-   - `@/lib/utils.ts` — `cn()` className merging
-   - `@/context/ProjectContext` — Shared project state across all dashboard pages
-   - `@/components/ui/*` — Shared shadcn/ui components
-   - `next-intl` — Internationalization (`useTranslations`, locale routing)
-
-6. **`compileToExecutionNodes()`** in `convex/botFlows.ts` — shared compilation logic used by both manual saves and the AI flow builder
-
-### [x] How are feature permissions handled?
-
-**Three-tier permission model via Clerk organization roles:**
-
-1. **Authentication** — All functions require `ctx.auth.getUserIdentity()`. Public/widget functions use `internal*` variants to bypass auth
-
-2. **Organization scoping** — All data is scoped to `orgId` (Clerk organization):
-   - Projects belong to an org (`projects.orgId`)
-   - Profiles linked to org (`profiles.orgId`)
-   - Push subscriptions linked to org (`push_subscriptions.orgId`)
-   - Every query filters by orgId to prevent cross-org data leakage
-
-3. **Role-based access** — Two roles via Clerk:
-   - `org:admin` — Full CRUD access (create/delete bots, integrations, orders, projects)
-   - `member` — Read access + limited mutations (view bots, conversations, contacts; cannot create/delete)
-
-**Implementation pattern:**
-```typescript
-// Public functions
-const identity = await ctx.auth.getUserIdentity();
-if (!identity) throw new Error("Not authenticated");
-
-// Admin-gated functions
-requireAdmin(identity as { org_role?: string });
-
-// Ownership checks
-const project = await checkProjectOwnership(ctx, projectId, { org_id: identity.org_id });
-if (!project) throw new ConvexError("Unauthorized");
-```
-
-4. **Frontend permission gates**: `isAdmin = activeProject?.userRole === "org:admin"` — used to conditionally render admin-only UI elements (create buttons, delete options, settings access)
-
-5. **No row-level permissions** — ownership is at the org level. All org members can see all org data. No per-resource ACLs.
-
-### [x] Is there analytics/telemetry per feature?
-
-**Yes — comprehensive analytics via `convex/analytics.ts` (844 lines):**
-
-1. **Conversation volume** — `getConversationVolume`: Daily buckets split by bot vs agent handled
-2. **Token usage** — `getTokenUsage`: Summed by model, with date range filtering
-3. **CSAT** — `getCSATSummary`: Average rating + per-star distribution + `getCSATComments`
-4. **Unanswered queries** — `getUnansweredQueries`: Top KB queries with no results, sorted by count
-5. **Tags summary** — `getTagsSummary`: Top 10 LLM-generated tags from closed conversations
-6. **Usage quotas** — `getProjectUsage`: Real-time tokens consumed + conversation count for billing
-7. **Usage summary** — `getProjectUsageSummary`: Conversations, bots, KBs, tokens for current billing cycle
-
-**Analytics logging:**
-- `logTokenUsage` — Called after every LLM call (ai_task, ai_assistant, ask_kb)
-- `logUnansweredQuery` — Called when KB returns no results
-- `logConversationEvent` — Called on conversation open/close, tracking bot vs agent handling
-- `submitCSAT` — Public mutation from widget for satisfaction ratings
-
-**No third-party telemetry** (no Sentry, PostHog, Mixpanel, or Google Analytics found in the Convex backend).
+- [x] **What are the main feature domains?** 9 feature domains identified:
+  1. **User/Auth** - Clerk integration, profiles, heartbeat tracking
+  2. **Bot Management** - Bot CRUD, activation/deactivation, duplication
+  3. **Design Studio** - Visual flow builder with node graph
+  4. **Contact Management** - Contacts with import/export (CSV/XLSX/JSON)
+  5. **Messaging** - Real-time chat with pagination, conversation management
+  6. **Analytics** - Conversation volume, token usage, CSAT, SLA, tags summary
+  7. **Orders** - Order management with status tracking and import/export
+  8. **Integrations** - Telegram, Messenger, Instagram, WhatsApp, OpenRouter
+  9. **Widget** - Embeddable chat widget with configuration and live preview
+
+- [x] **How is each feature structured? (frontend + backend)**
+  - **Backend**: Each feature has a dedicated `convex/{feature}.ts` file exposing queries, mutations, and actions
+  - **Frontend**: Each feature has `src/app/[locale]/dashboard/{feature}/page.tsx` + components in `src/components/{feature}/`
+  - **Pattern**: Page → data fetching (Convex hooks) → feature components → UI rendering
+
+- [x] **Are features isolated or coupled?** Features share common infrastructure:
+  - All depend on `activeProject` from ProjectContext
+  - All use the same `useQuery`/`useMutation` patterns
+  - Integrations are shared across features (WhatsApp bot, OpenRouter for AI)
+  - Conversations link bots, contacts, orders, and messages together
+  - Not truly isolated - they share the Convex database and project context
+
+- [x] **What's the AI/ML integration approach?** OpenRouter integration:
+  - `convex/openrouter.ts` - OpenRouter API calls
+  - `convex/openrouter_api.ts` - API key management (get, save, clear, test)
+  - Settings page has dedicated OpenRouter section with API key input, test button, result display
+  - Default model selector (OpenRouter Free models)
+  - Bots use OpenRouter for AI responses in conversations
+
+- [x] **How does the bot flow builder work?** Visual node-based editor:
+  - `src/components/design-studio/` contains the flow builder UI
+  - Node graph with drag-and-drop or click-to-connect
+  - `FlowEditor` component with styled nodes mapping
+  - `NodePropertiesPanel` for node configuration
+  - `FlowToolbar` for flow actions
+  - `DebuggerPanel` for execution log extraction
+  - Bot types: Chatbot (agents) vs Automation (flows)
+
+- [x] **What external services are integrated?** 4 channel integrations + 1 AI provider:
+  - **Telegram** - Webhook registration via `registerTelegramWebhook` action
+  - **Messenger** - Facebook Messenger channel
+  - **Instagram** - Instagram DM channel
+  - **WhatsApp** - Requires phone number ID, access token, verify token (UUID), app secret
+  - **OpenRouter** - AI model provider for bot responses
+
+- [x] **How are web push notifications implemented?** `PushNotificationInit` component in dashboard layout. Details of implementation not fully explored, but it's initialized once per dashboard session.
+
+- [x] **Is there feature flagging?** NO feature flagging system found. Features are controlled by:
+  - Admin-only actions (Clerk role checks)
+  - "Pro" badges on features that may require subscription
+  - "Coming Soon" badges for unreleased integrations
+  - No LaunchDarkly, Unleash, or custom feature flag system
+
+- [x] **How are feature-specific errors handled?** Two patterns:
+  1. **Page-level**: Each feature route has `error.tsx` with `ErrorFallback`
+  2. **Operation-level**: `toast.error(errorMessage)` in try/catch around mutations
+  3. **Inline**: Loading spinner for undefined data, empty state for no results
+
+- [x] **Are features independently testable?** Features are modular at the component level but tightly coupled through:
+  - Shared `activeProject` dependency
+  - Shared Convex database
+  - Shared authentication (Clerk)
+  - No feature-level mock providers or test isolation
+
+- [x] **What's the data flow for each feature?**
+  1. User authenticates via Clerk → ConvexProviderWithClerk gets auth tokens
+  2. ProjectContext derives `activeProject` from Clerk org + URL param + Convex query
+  3. Feature page uses `useQuery(api.{feature}.{operation}, activeProject ? { projectId } : "skip")`
+  4. Mutations use `useMutation(api.{feature}.{operation}).withOptimisticUpdate()`
+  5. Errors caught → `toast.error()`
+  6. Success → `toast.success()`
+
+- [x] **Are there shared feature utilities?** YES:
+  - `src/lib/utils.ts` - `cn()` utility (clsx + tailwind-merge)
+  - `src/config/apps.ts` - `AVAILABLE_APPS` catalog for integrations
+  - `downloadBlob` helper for CSV/XLSX/JSON exports
+  - `getSnippet()` function for widget code generation (9 platforms)
+
+- [x] **How are feature permissions handled?** Via Clerk auth:
+  - Middleware protects `/dashboard(.*)` and `/design-studio(.*)` routes
+  - Admin-only actions in UI (e.g., CreateBotDialog, dropdown menu actions only for admins)
+  - `useUser()` and `useOrganization()` hooks for role checks
+  - No RBAC (role-based access control) beyond admin vs non-admin
+
+- [x] **Is there analytics/telemetry per feature?** YES, dedicated analytics feature:
+  - `convex/analytics.ts` exposes 9 endpoints:
+    - `getConversationStats` - Stats cards data
+    - `getConversationVolume` - Daily volume for bar chart
+    - `getTokenUsage` - Token usage tracking
+    - `getTagsSummary` - Tag distribution for pie chart
+    - `getCSATSummary` - Customer satisfaction average
+    - `getSLABreachRate` - SLA compliance
+    - `getCSATComments` - Customer feedback comments
+    - `getUnansweredQueries` - Unanswered bot queries
+    - `getProjectUsage` - Usage/quota tracking
+  - Activity logs via `convex/activityLogs.ts`
+  - Heartbeat tracking via `api.profiles.updateHeartbeat` every 30 seconds
+
+## 📝 Agent Findings
+
+### Feature Backend Architecture
+Each feature domain has a dedicated Convex file following a consistent pattern:
+- **Queries** (`query`) - Read operations, reactive, auto-revalidating
+- **Mutations** (`mutation`) - Write operations, with validation
+- **Actions** (`action`) - External service calls (OpenRouter API, webhooks)
+
+### Bot Feature (convex/bots.ts)
+Exposes: `list`, `get`, `create`, `update`, `remove`, `activate`, `deactivate`, `duplicate`
+- Bots belong to projects (projectId required)
+- Two types: chatbot (agents) and automation (flows)
+- Activation/deactivation controls bot availability
+- Duplication clones bot configuration
+
+### Contact Feature (convex/contacts.ts)
+Exposes: `list`, `create`, `update`, `remove`, `batchImport`
+- Batch import supports chunking (500 at a time)
+- Frontend handles CSV (papaparse), XLSX (xlsx), JSON parsing
+- Export via `downloadBlob` helper
+
+### Messaging Feature (convex/messages.ts, conversations.ts)
+- `messages.list` uses pagination via `paginationOptsValidator`
+- `conversations.list` and `conversations.listResolved` separate active vs resolved
+- `sendMessage` mutation with content validation
+- Real-time updates via Convex reactive queries
+
+### Orders Feature (convex/orders.ts)
+Exposes: `listOrders`, `updateOrderStatus`, `deleteOrder`, `batchImportOrders`
+- Order statuses: New, Confirmed, Cancelled (color-coded badges)
+- Import/export same pattern as contacts (CSV/XLSX/JSON)
+- Optimistic updates for status changes
+
+### Integrations Feature (convex/integrations.ts)
+Exposes: `list`, `upsert`, `saveChannelIntegration`, `registerTelegramWebhook`
+- Catalog defined in `src/config/apps.ts` as `AVAILABLE_APPS`
+- 4 channel integrations: Telegram, Messenger, Instagram, WhatsApp
+- WhatsApp requires specialized setup (phone ID, access token, verify token, app secret)
+- Pro badge on some integrations (requires subscription)
+
+### OpenRouter AI Feature (convex/openrouter.ts, openrouter_api.ts)
+Exposes: `getOpenRouterKeyStatus`, `saveOpenRouterKey`, `clearOpenRouterKey`, `testOpenRouterKey`
+- API key management with test connection
+- Default model selector (OpenRouter Free models)
+- Used by bots for AI-powered responses
+
+### Analytics Feature (convex/analytics.ts)
+9 endpoints covering: conversation stats, volume, tokens, tags, CSAT, SLA, comments, unanswered, usage
+- Uses `useAction` (not `useQuery`) for complex server-side computations
+- Date range filtering (default: last 30 days)
+- Charts: Bar chart (volume), Pie chart (tags)
+
+### Widget Feature
+- Embeddable via iframe or script tag
+- 9 platform snippets generated: HTML, Next.js, React, Vue, Nuxt, Angular, WordPress, Shopify, Webflow, GTM
+- `/api/widget/project` API endpoint (CORS-enabled, 60s cache)
+- Configuration stored in project's `widgetConfig` field
+- Live preview via iPhone-framed iframe
+
+### Design Studio Feature
+- Visual node-based flow builder
+- Components: `FlowEditor`, `NodePropertiesPanel`, `FlowToolbar`, `DebuggerPanel`
+- Node graph with drag-and-drop or click-to-connect
+- Execution debugging via log extraction
+
+### No Feature Flagging
+Features are either fully available or gated by:
+- Admin role checks (Clerk)
+- "Pro" subscription badges
+- "Coming Soon" placeholders
+No A/B testing or gradual rollout capability exists.
 
 ## 🔍 Key Patterns to Identify
 
-### 1. Internal Function Pattern
-- Every feature exposes `internal*` variants (`internalQuery`, `internalMutation`, `internalAction`) for cross-module calls without auth overhead
-- Used by webhooks, bot engine, scheduler, and cron jobs
-- Access via `internal.<module>.<function>` from `convex/_generated/api`
-
-### 2. Bounded Batch Processing
-- All bulk operations use `.take(N)` with N typically 100-500 to prevent runaway reads
-- Cascading deletion re-schedules via `ctx.scheduler.runAfter(0, ...)` for batches of 100
-- Notification cleanup processes MAX_BATCH=200
-- Presence cleanup takes 500 profiles
-
-### 3. Optimistic Concurrency Control (OCC) Avoidance
-- `conversation_bot_state` is a **separate table** from `conversations` to prevent write conflicts between the bot engine and agent UI
-- Deferred conversation metadata updates via `updateMetadataInternal` scheduled mutations
-- Bot state updates use dedicated table with `by_conversationId` index
-
-### 4. Event-Driven Architecture via Scheduler
-- All cross-cutting concerns triggered via `ctx.scheduler.runAfter(0, internal.*, ...)` for async execution:
-  - Webhook firing
-  - Notification creation
-  - Push notification sending
-  - Activity logging
-  - Smart routing
-  - Tag extraction
-  - Bot execution
-
-### 5. Encrypted Credential Storage
-- All channel credentials (Telegram bot tokens, WhatsApp access tokens, Messenger app secrets) encrypted with AES using `ENCRYPTION_KEY`
-- Decryption only happens at call time, never stored plaintext
-- Denormalized lookup fields (phoneNumberId, pageId, webhookSecret) stored alongside encrypted credentials for O(log n) queries
-
-### 6. Multi-Tenancy via Organization Scoping
-- Every query filters by `orgId` or `projectId` → project belongs to org
-- No cross-org data leakage possible (every function checks org membership)
-- `ClerkIdentity` type extended with `org_id` and `org_role` from Clerk tokens
-
-### 7. AI Flow Generation
-- `generateFlow` action converts natural language to React Flow nodes/edges
-- Detailed system prompt defines 14 node types with exact JSON schemas
-- Layout rules enforced (start at y=50, steps at y+180, branches at x=80/420)
-- 30-second timeout with graceful error handling
-
-### 8. Webhook System (RestHooks Pattern)
-- Subscriptions stored with event filters and signing secrets
-- Fire via scheduler for async delivery
-- Delivery attempts tracked in `webhook_deliveries` table
-- Retry logic (3 attempts implied by delivery tracking)
+- **Convex feature files**: One .ts file per feature domain (bots, contacts, orders, etc.)
+- **Query/Mutation/Action separation**: Read (query), Write (mutation), External (action)
+- **Project-scoped data**: All feature queries require projectId filter
+- **Optimistic CRUD**: Consistent `.withOptimisticUpdate()` across all features
+- **Import/Export pattern**: CSV/XLSX/JSON with papaparse + xlsx libraries
+- **Integration catalog**: `AVAILABLE_APPS` in `src/config/apps.ts`
+- **Admin-gated actions**: UI shows/hides actions based on Clerk admin role
+- **Analytics via useAction**: Complex computations handled by server actions, not queries
 
 ## ⚠️ Potential Concerns
 
-### HIGH Severity
-
-1. **No rate limiting on AI calls** — `callAITask`/`callAIAssistant` have no rate limiting or quota enforcement beyond per-org API key management. A runaway bot could exhaust OpenRouter credits rapidly.
-
-2. **No fallback for external service failures** — If OpenRouter is down, all bot AI features fail silently. No fallback model or graceful degradation beyond storing error in attributes.
-
-3. **Hard-coded step limit (50) in bot engine** — `executeNextBlock` stops at 50 steps. Complex flows may hit this limit. No configurable threshold.
-
-4. **Silent push notification failures** — All push errors except 410/404 are silently ignored. Failed delivery is not logged or retried.
-
-### MEDIUM Severity
-
-5. **No feature tests for Convex functions** — The `convex/` directory has zero test files. Critical business logic (bot engine, payment orders, contact management) is untested.
-
-6. **Inconsistent error handling** — Some functions throw `ConvexError`, others throw plain `Error`, some return `null`/`[]`. No standardized error envelope for frontend consumption.
-
-7. **Denormalized `orgId` in profiles** — The `profiles` table has its own `orgId` field that can diverge from the project's `orgId` if a user switches orgs. This could lead to stale membership data.
-
-8. **No idempotency on batch imports** — `batchImport` for contacts/orders deduplicates by email but not by other fields. Re-importing the same CSV could create duplicates if email is empty.
-
-9. **Widget creates conversations without auth** — `createFromWidget` is an `internalMutation` called from untrusted client code. No rate limiting or CAPTCHA protection visible.
-
-### LOW Severity
-
-10. **TODO comments for pagination** — `contacts.list` and `conversations.findByVisitor` use `.take(500)` with TODO comments noting they should use paginated aggregation.
-
-11. **No feature flagging** — Features are either fully on or fully off. No gradual rollouts or A/B testing capability.
-
-12. **Magic numbers in conversation status** — Status codes `100` (unassigned), `200` (assigned), `1000` (resolved) are used throughout without named constants.
-
-13. **Missing user feedback for async operations** — Bot deletion uses async scheduler pattern (`_deleteBotFlowsBatch`) but frontend gets immediate success toast before deletion completes.
+| Severity | Concern |
+|----------|---------|
+| **HIGH** | **No feature flagging** - No system for gradual rollout, A/B testing, or emergency feature disable. All features are either fully deployed or require code changes to disable. "Coming Soon" badges are hardcoded, not dynamically controlled. |
+| **HIGH** | **Tightly coupled features** - All features depend on shared `activeProject` from ProjectContext and share the same Convex database. No feature isolation means a breaking change in one feature (e.g., contacts schema) could affect others. No feature-level error boundaries. |
+| **MEDIUM** | **No rate limiting for AI calls** - OpenRouter API calls via bots have no apparent rate limiting or quota enforcement. Could lead to unexpected costs if a bot is heavily used. |
+| **MEDIUM** | **WhatsApp integration complexity** - WhatsApp requires 4 configuration values (phone number ID, access token, verify token, app secret) with no validation guidance. Users may misconfigure this. |
+| **MEDIUM** | **No fallback for external service failures** - If OpenRouter API is down, bots have no fallback model or graceful degradation. If webhook registration fails (Telegram), there's no retry mechanism. |
+| **MEDIUM** | **Activity logs may grow unbounded** - `convex/activityLogs.ts` stores logs with no apparent retention policy or cleanup. Could lead to database bloat over time. |
+| **LOW** | **Pro badges without enforcement** - "Pro" badges on integrations and features suggest subscription gating, but no actual enforcement mechanism found (no Stripe integration, no subscription checks). |
+| **LOW** | **No per-feature analytics** - Analytics is project-level only. No per-feature usage tracking (e.g., how many bots created, how many contacts imported, which integrations are most used). |
+| **LOW** | **Heartbeat every 30 seconds** - `api.profiles.updateHeartbeat` fires every 30 seconds in DashboardShell. For large orgs with many active users, this could be significant Convex function call volume. |
