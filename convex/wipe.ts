@@ -1,7 +1,7 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-export const wipeAll = mutation({
+export const wipeAll = internalMutation({
   args: { projectId: v.id("projects") },
   handler: async (ctx, { projectId }) => {
     const tables = [

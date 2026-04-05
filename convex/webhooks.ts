@@ -269,9 +269,17 @@ export const remove = mutation({
  * One-time migration to backfill secrets for existing webhook subscriptions
  */
 export const backfillWebhookSecrets = mutation({
-    args: {},
-    handler: async (ctx) => {
-        const subscriptions = await ctx.db.query("webhook_subscriptions").collect();
+    args: { projectId: v.id("projects") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        requireAdmin(identity as unknown as { org_role?: string; org_id: string });
+        if (!identity) throw new ConvexError("Unauthorized");
+
+        // Scope to the caller's project only
+        const subscriptions = await ctx.db
+            .query("webhook_subscriptions")
+            .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
+            .collect();
         let updatedCount = 0;
 
         for (const sub of subscriptions) {

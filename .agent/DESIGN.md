@@ -1,9 +1,16 @@
 # Yoosr Design System
 
-> Single source of truth for all UI decisions.
+> **Single source of truth** for all UI decisions.
 > Stack: Next.js App Router · shadcn/ui · Tailwind CSS v4 · lucide-react
 > Style: Clean minimal light (Linear / Notion)
 > Last updated: 2026-03-28
+>
+> **AUTHORITY:** This file (`.agent/DESIGN.md`) is the definitive design system reference.
+> Any other design document in this repo (e.g. `design-system/yoosr/MASTER.md`) is deprecated.
+> When in conflict, this file always wins.
+>
+> **FOR AGENTS:** Always read this file before writing UI code. Page-level specs in
+> `design-system/pages/` may override individual page patterns, but all tokens come from here.
 
 Every spacing value, color, component dimension, and animation curve in this file is **exact**.
 Agents must read this file before writing any UI code. No approximation permitted.

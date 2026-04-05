@@ -1,7 +1,8 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { assertProjectOwnership } from "./utils";
 
 // List messages for a conversation (real-time by default!)
 export const list = query({
@@ -49,9 +50,15 @@ export const send = mutation({
         attachments: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new ConvexError("Not authenticated");
+
         // Get the conversation to find the projectId
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw new ConvexError("Conversation not found");
+
+        // Verify caller has access to the conversation's project
+        await assertProjectOwnership(ctx, conversation.projectId, identity as { org_id?: string });
 
         const messageId = await ctx.db.insert("messages", {
             conversationId: args.conversationId,
