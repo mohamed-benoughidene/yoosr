@@ -2,7 +2,7 @@
  * Hook to manage active project selection via URL search params.
  * Falls back to first project if no projectId is specified.
  */
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { useSearchParams, useRouter, usePathname } from "@/i18n/navigation"
 import { useCallback } from "react"
 import { Id } from "../../convex/_generated/dataModel"
 

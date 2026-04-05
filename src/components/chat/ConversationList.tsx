@@ -12,7 +12,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useProject } from "@/context/ProjectContext"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter } from "@/i18n/navigation"
 import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"

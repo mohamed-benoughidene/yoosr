@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Search, Bot, Zap, LayoutTemplate, MoreHorizontal, Copy, Trash, Play, Pause } from "lucide-react"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import {
     DropdownMenu,
     DropdownMenuContent,

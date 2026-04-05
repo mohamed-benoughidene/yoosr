@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Bell, MessageSquare, UserCheck, Bot, CheckCircle, UserX } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"

@@ -6,7 +6,7 @@ import { VisitorPanel } from "@/components/dashboard/shared/VisitorPanel"
 import { ThreePanelLayout } from "@/components/layout/ThreePanelLayout"
 import { Suspense, useState } from "react"
 import { useTranslations } from "next-intl"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams } from "@/i18n/navigation"
 import { Id } from "../../../../../convex/_generated/dataModel"
 
 function VisitorPanelWrapper() {

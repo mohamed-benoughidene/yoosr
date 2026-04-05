@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 

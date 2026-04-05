@@ -11,7 +11,7 @@ import { api } from "../../../../convex/_generated/api"
 import { useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
 import { useLocale } from "next-intl"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter, usePathname } from "@/i18n/navigation"
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

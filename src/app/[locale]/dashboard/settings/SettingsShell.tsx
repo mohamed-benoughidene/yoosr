@@ -5,7 +5,7 @@ import { SettingsSidebar } from "@/components/settings/SettingsSidebar"
 import { AppErrorBoundary } from "@/components/error-boundary"
 import { useProject } from "@/context/ProjectContext"
 import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 

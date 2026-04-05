@@ -21,7 +21,7 @@ import { formatDistanceToNow } from "date-fns"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { Id } from "../../../../../convex/_generated/dataModel"
 import { toast } from "sonner"
 

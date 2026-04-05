@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl"
 import { useUser } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { Languages } from "lucide-react"
 import {
   DropdownMenuSub,

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState, useRef } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams } from "@/i18n/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react"

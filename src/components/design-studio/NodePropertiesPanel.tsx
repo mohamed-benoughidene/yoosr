@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, X } from "lucide-react";
 import { type Node } from "@xyflow/react";
 import { useCallback, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from "@/i18n/navigation";
 import Link from "next/link";
 import { useProject } from "@/context/ProjectContext";
 import { useQuery } from "convex/react";

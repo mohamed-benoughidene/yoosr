@@ -14,7 +14,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Globe, FileText, Trash2, RefreshCw, Type } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams } from "@/i18n/navigation"
 import { AddContentDialog } from "@/components/dashboard/kb/add-content-dialog"
 import { useMutation, usePaginatedQuery } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"

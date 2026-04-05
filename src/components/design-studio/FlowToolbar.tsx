@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Check, Loader2, Save, Sparkles, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 interface FlowToolbarProps {

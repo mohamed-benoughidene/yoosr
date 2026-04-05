@@ -1,7 +1,7 @@
 "use client"
 
 import { Waitlist } from "@clerk/nextjs"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams } from "@/i18n/navigation"
 import { dark } from "@clerk/themes"
 import { Suspense } from "react"
 import { AuthProviders } from "@/components/AuthProviders"

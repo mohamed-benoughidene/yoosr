@@ -1,7 +1,7 @@
 "use client";
 
 import { useProject } from "@/context/ProjectContext";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "@/i18n/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useMutation } from "convex/react";
