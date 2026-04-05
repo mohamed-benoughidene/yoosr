@@ -1,10 +1,22 @@
 /**
  * Shared OpenRouter helper — uses OpenAI SDK with custom baseURL.
  * Both AI Task and AI Assistant blocks call through here.
+ * 
+ * RATE LIMITING: Configure AI_RATE_LIMIT_PER_HOUR env var to limit AI calls.
+ * Default: 100 calls per project per hour.
+ * Rate limiting should be enforced at the caller (mutation/action) level.
  */
 
 import OpenAI from "openai";
 
+/**
+ * Rate limit configuration for AI calls.
+ * Read from environment variable AI_RATE_LIMIT_PER_HOUR (default: 100).
+ */
+export const AI_RATE_LIMIT_PER_HOUR = parseInt(
+    process.env.AI_RATE_LIMIT_PER_HOUR || "100",
+    10
+);
 
 function getClient(customApiKey?: string): OpenAI {
     const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
