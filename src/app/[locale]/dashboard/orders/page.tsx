@@ -35,8 +35,6 @@ import { Button } from "@/components/ui/button"
 import { MoreHorizontal, ShoppingBag, Trash2, Check, X, Loader2, Download, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import * as xlsx from "xlsx"
-import Papa from "papaparse"
 
 type FilterType = "all" | "new" | "confirmed" | "cancelled"
 
@@ -139,7 +137,7 @@ export default function OrdersPage() {
         window.URL.revokeObjectURL(url)
     }
 
-    const handleExport = (formatType: "csv" | "json" | "xlsx") => {
+    const handleExport = async (formatType: "csv" | "json" | "xlsx") => {
         if (!orders || orders.length === 0) {
             toast.error(t("no_orders_export"))
             return
@@ -171,6 +169,7 @@ export default function OrdersPage() {
         } else if (formatType === "json") {
             downloadBlob(new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" }), filename)
         } else if (formatType === "xlsx") {
+            const xlsx = await import("xlsx")
             const worksheet = xlsx.utils.json_to_sheet(exportData)
             const workbook = xlsx.utils.book_new()
             xlsx.utils.book_append_sheet(workbook, worksheet, "Orders")
@@ -178,7 +177,7 @@ export default function OrdersPage() {
         }
     }
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -186,6 +185,7 @@ export default function OrdersPage() {
         importDispatch({ type: "SET_PARSED", payload: { data: [], skipped: 0 } })
 
         const fileExt = file.name.split('.').pop()?.toLowerCase()
+        const Papa = (await import("papaparse")).default
 
         const processData = (data: Record<string, unknown>[]) => {
             let skipped = 0
@@ -228,6 +228,7 @@ export default function OrdersPage() {
                 }
             })
         } else if (fileExt === 'xlsx') {
+            const xlsx = await import("xlsx")
             const reader = new FileReader()
             reader.onload = (evt) => {
                 try {
