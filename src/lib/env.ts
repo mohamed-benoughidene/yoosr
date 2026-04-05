@@ -26,6 +26,8 @@ const serverEnvSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().optional(),
   ENCRYPTION_KEY: z.string().optional(),
   CLERK_WEBHOOK_SECRET: z.string().optional(),
+  FEATURE_FLAGS: z.string().optional().default(""),
+  AI_RATE_LIMIT_PER_HOUR: z.string().optional(),
 });
 
 const envSchema = clientEnvSchema.merge(serverEnvSchema);
