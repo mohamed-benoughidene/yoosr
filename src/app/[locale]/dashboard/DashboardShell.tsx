@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/dashboard/AppSidebar"
 import { SiteHeader } from "@/components/dashboard/SiteHeader"
+import { AppErrorBoundary } from "@/components/error-boundary"
 import { useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useEffect } from "react"
@@ -62,9 +63,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <AppSidebar />
             <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    {children}
-                </div>
+                <AppErrorBoundary>
+                    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                        {children}
+                    </div>
+                </AppErrorBoundary>
             </SidebarInset>
         </SidebarProvider>
     )

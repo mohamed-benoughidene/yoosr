@@ -65,7 +65,7 @@ interface DraftDept {
     newDesc: string;
     routingMode: "assigned" | "pooled";
     useBot: boolean;
-    botId: string | undefined;
+    botId: Id<"bots"> | undefined;
     tags: string[];
     tagInput: string;
 }
@@ -87,7 +87,7 @@ type DepartmentsAction =
     | { type: "SET_NEW_DESC"; payload: string }
     | { type: "SET_ROUTING_MODE"; payload: "assigned" | "pooled" }
     | { type: "SET_USE_BOT"; payload: boolean }
-    | { type: "SET_BOT_ID"; payload: string | undefined }
+    | { type: "SET_BOT_ID"; payload: Id<"bots"> | undefined }
     | { type: "SET_TAGS"; payload: string[] }
     | { type: "SET_TAG_INPUT"; payload: string }
     | { type: "SET_EDITING_DEPT_ID"; payload: Id<"departments"> | null }
@@ -354,7 +354,7 @@ export default function DepartmentsPage() {
                                     {useBot && (
                                         <div className="grid gap-2 pl-2">
                                             <Label htmlFor="bot-select" className="text-xs">{t("selected_bot")}</Label>
-                                            <Select value={botId} onValueChange={(v) => dispatch({ type: "SET_BOT_ID", payload: v })}>
+                                            <Select value={botId} onValueChange={(v) => dispatch({ type: "SET_BOT_ID", payload: v as Id<"bots"> })}>
                                                 <SelectTrigger id="bot-select">
                                                     <SelectValue placeholder={t("select_bot_placeholder")} />
                                                 </SelectTrigger>

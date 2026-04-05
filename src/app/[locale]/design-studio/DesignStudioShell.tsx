@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
+import { AppErrorBoundary } from "@/components/error-boundary";
 
 import { Suspense } from "react";
 
@@ -55,7 +56,11 @@ function DesignStudioLayoutContent({
     }
 
     // Render children directly (standalone layout, no sidebar/header)
-    return <div className="h-screen w-full bg-background">{children}</div>;
+    return (
+        <div className="h-screen w-full bg-background">
+            <AppErrorBoundary>{children}</AppErrorBoundary>
+        </div>
+    );
 }
 
 export default function DesignStudioShell({

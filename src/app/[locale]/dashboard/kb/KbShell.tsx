@@ -17,6 +17,7 @@ import { api } from "../../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { AppErrorBoundary } from "@/components/error-boundary"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -172,9 +173,11 @@ export default function KbShell({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-                {children}
-            </div>
+            <AppErrorBoundary>
+                <div className="flex-1 overflow-auto">
+                    {children}
+                </div>
+            </AppErrorBoundary>
 
             {/* Create Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>

@@ -657,15 +657,18 @@ const SidebarMenuBadge = React.forwardRef<
 ))
 SidebarMenuBadge.displayName = "SidebarMenuBadge"
 
-// Generate a random skeleton width once at module load
-const SKELETON_WIDTH = `${Math.floor(Math.random() * 40) + 50}%`
-
 const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     showIcon?: boolean
   }
 >(({ className, showIcon = false, ...props }, ref) => {
+  const [skeletonWidth, setSkeletonWidth] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    setSkeletonWidth(`${Math.floor(Math.random() * 40) + 50}%`)
+  }, [])
+
   return (
     <div
       ref={ref}
@@ -683,9 +686,9 @@ const SidebarMenuSkeleton = React.forwardRef<
         className="h-4 max-w-[--skeleton-width] flex-1"
         data-sidebar="menu-skeleton-text"
         style={
-          {
-            "--skeleton-width": SKELETON_WIDTH,
-          } as React.CSSProperties
+          skeletonWidth
+            ? { "--skeleton-width": skeletonWidth } as React.CSSProperties
+            : undefined
         }
       />
     </div>

@@ -63,8 +63,11 @@ export function UsageCard({ projectId }: UsageCardProps) {
             <CardContent className="space-y-6">
                 <div className="grid gap-6">
                     {items.map((item) => {
-                        const percentage = Math.min(100, (item.value / item.limit) * 100)
-                        
+                        const numericValue = typeof item.value === "string"
+                            ? parseInt(item.value, 10)
+                            : item.value;
+                        const percentage = Math.min(100, (numericValue / item.limit) * 100)
+
                         let indicatorColor = "bg-primary"
                         if (percentage >= 100) {
                             indicatorColor = "bg-red-500"
@@ -72,16 +75,18 @@ export function UsageCard({ projectId }: UsageCardProps) {
                             indicatorColor = "bg-amber-500"
                         }
 
+                        const displayValue = typeof item.value === "string" ? item.value : item.value.toLocaleString()
+
                         return (
                             <div key={item.label} className="space-y-2">
                                 <div className="flex justify-between text-sm font-medium">
                                     <span>{item.label}</span>
                                     <span className="text-muted-foreground">
-                                        {item.value.toLocaleString()} / {item.limit.toLocaleString()}
+                                        {displayValue} / {item.limit.toLocaleString()}
                                     </span>
                                 </div>
-                                <Progress 
-                                    value={percentage} 
+                                <Progress
+                                    value={percentage}
                                     indicatorClassName={indicatorColor}
                                     className="h-2"
                                 />

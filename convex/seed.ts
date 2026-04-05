@@ -27,8 +27,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "أحمد بن علي", visitorEmail: "ahmed@example.com",
         status: 100 as const, priority: "urgent" as const,
-        tags: ["Urgent", "Technical"], channel: "widget" as const,
-        firstText: "الموقع لا يعمل عندي منذ الصباح",
+        channel: "widget" as const,
         lastMessage: "الموقع لا يعمل عندي منذ الصباح",
         departmentId: supportDept,
         msgs: [
@@ -46,8 +45,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Fatima Zahra", visitorEmail: "fatima@example.com",
         status: 100 as const, priority: "high" as const,
-        tags: ["Billing"], channel: "widget" as const,
-        firstText: "I was charged twice this month",
+        channel: "widget" as const,
         lastMessage: "I was charged twice this month",
         departmentId: supportDept,
         msgs: [
@@ -63,8 +61,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "كريم مرسي", visitorEmail: "karim@example.com",
         status: 200 as const, priority: "normal" as const,
-        tags: ["Sales"], channel: "messenger" as const,
-        firstText: "أريد الاستفسار عن الباقات",
+        channel: "messenger" as const,
         lastMessage: "شكراً سنتواصل معك قريباً",
         departmentId: salesDept,
         msgs: [
@@ -81,8 +78,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Sara Benali", visitorEmail: "sara@example.com",
         status: 200 as const, priority: "normal" as const,
-        tags: ["Technical"], channel: "widget" as const,
-        firstText: "How do I reset my password?",
+        channel: "widget" as const,
         lastMessage: "Please check your email for the reset link",
         departmentId: supportDept,
         msgs: [
@@ -99,8 +95,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "يوسف الإدريسي", visitorEmail: "youssef@example.com",
         status: 1000 as const, priority: "low" as const,
-        tags: ["Billing"], channel: "telegram" as const,
-        firstText: "متى يتجدد اشتراكي؟",
+        channel: "telegram" as const,
         lastMessage: "تم حل المشكلة، شكراً",
         departmentId: supportDept,
         msgs: [
@@ -115,8 +110,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Nadia Mansouri", visitorEmail: "nadia@example.com",
         status: 100 as const, priority: "high" as const,
-        tags: ["Sales"], channel: "whatsapp" as const,
-        firstText: "Do you offer annual plans?",
+        channel: "whatsapp" as const,
         lastMessage: "Do you offer annual plans?",
         departmentId: salesDept,
         msgs: [
@@ -132,8 +126,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "David Thompson", visitorEmail: "david@example.com",
         status: 100 as const, priority: "normal" as const,
-        tags: ["Technical"], channel: "widget" as const,
-        firstText: "Integration with Slack not working",
+        channel: "widget" as const,
         lastMessage: "Integration with Slack not working",
         departmentId: supportDept,
         msgs: [
@@ -147,8 +140,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Steve Wilson", visitorEmail: "steve@example.com",
         status: 200 as const, priority: "high" as const,
-        tags: ["Billing", "Urgent"], channel: "messenger" as const,
-        firstText: "Need invoice for last month",
+        channel: "messenger" as const,
         lastMessage: "Invoice sent to steve@example.com",
         departmentId: supportDept,
         msgs: [
@@ -163,8 +155,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Emily Chen", visitorEmail: "emily@example.com",
         status: 100 as const, priority: "normal" as const,
-        tags: ["Sales"], channel: "widget" as const,
-        firstText: "Looking for enterprise pricing",
+        channel: "widget" as const,
         lastMessage: "Looking for enterprise pricing",
         departmentId: salesDept,
         msgs: [
@@ -177,8 +168,7 @@ export const seedDemoData = internalMutation({
       {
         visitorName: "Michael Brown", visitorEmail: "michael@example.com",
         status: 1000 as const, priority: "low" as const,
-        tags: ["Technical"], channel: "telegram" as const,
-        firstText: "Bot not responding",
+        channel: "telegram" as const,
         lastMessage: "Issue resolved — bot flow was paused",
         departmentId: supportDept,
         msgs: [
@@ -201,9 +191,7 @@ export const seedDemoData = internalMutation({
         visitorEmail: def.visitorEmail,
         status: def.status,
         priority: def.priority,
-        tags: def.tags,
         channel: def.channel,
-        firstText: def.firstText,
         lastMessage: def.lastMessage,
         departmentId: def.departmentId,
         updatedAt: now - Math.floor(Math.random() * 3600000),
@@ -215,7 +203,6 @@ export const seedDemoData = internalMutation({
         name: def.visitorName,
         email: def.visitorEmail,
         conversationId: convId,
-        tags: def.tags,
       });
 
       for (let i = 0; i < def.msgs.length; i++) {

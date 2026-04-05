@@ -554,29 +554,29 @@ export const getProjectUsageSummary = query({
         const billingCycleStart = usage?.billingCycleStart ?? project._creationTime;
         const tokensConsumed = usage?.tokensConsumed ?? 0;
 
-        // 2. Count conversations in the current billing cycle
+        // 2. Count conversations in the current billing cycle — use .take() with sentinel
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .filter((q) => q.gte(q.field("_creationTime"), billingCycleStart))
-            .collect();
+            .take(1001);
 
-        // 3. Count bots
+        // 3. Count bots — use .take() with sentinel
         const bots = await ctx.db
             .query("bots")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(101);
 
-        // 4. Count knowledge bases
+        // 4. Count knowledge bases — use .take() with sentinel
         const knowledgeBases = await ctx.db
             .query("knowledge_bases")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .collect();
+            .take(51);
 
         return {
-            conversations: conversations.length,
-            bots: bots.length,
-            knowledgeBases: knowledgeBases.length,
+            conversations: conversations.length === 1001 ? "1000+" : conversations.length,
+            bots: bots.length === 101 ? "100+" : bots.length,
+            knowledgeBases: knowledgeBases.length === 51 ? "50+" : knowledgeBases.length,
             tokensConsumed,
             billingCycleStart,
         };

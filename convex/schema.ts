@@ -23,7 +23,24 @@ export default defineSchema({
         description: v.optional(v.string()),
         orgId: v.string(), // Clerk Organization ID
         status: v.optional(v.string()), // "active" | "inactive" | "archived"
-        widgetConfig: v.optional(v.any()), // JSON config for widget appearance
+        widgetConfig: v.optional(v.object({
+            primaryColor: v.optional(v.string()),
+            logoUrl: v.optional(v.string()),
+            align: v.optional(v.union(v.literal("left"), v.literal("right"))),
+            welcomeDelay: v.optional(v.number()),
+            enableWelcomeNotification: v.optional(v.boolean()),
+            autoCloseMinutes: v.optional(v.number()),
+            preChatFormEnabled: v.optional(v.boolean()),
+            contactMethod: v.optional(v.union(v.literal("email"), v.literal("phone"), v.literal("both"))),
+            translations: v.optional(v.object({
+                welcomeMessage: v.optional(v.string()),
+                headerTitle: v.optional(v.string()),
+                onlineStatus: v.optional(v.string()),
+                preChatTitle: v.optional(v.string()),
+                preChatSubtitle: v.optional(v.string()),
+                startChat: v.optional(v.string()),
+            })),
+        })), // JSON config for widget appearance
         widgetLocale: v.optional(v.union(v.literal("en"), v.literal("ar"), v.literal("fr"))),
         defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
         openRouterApiKey: v.optional(v.string()),
@@ -34,12 +51,12 @@ export default defineSchema({
     // Conversations (chat threads from visitors)
     conversations: defineTable({
         projectId: v.id("projects"),
-        visitorId: v.optional(v.string()),
+        visitorId: v.optional(v.string()), // Clerk user ID (external reference, not a Convex doc)
         visitorName: v.optional(v.string()),
-        assignedTo: v.optional(v.string()), // Clerk user ID of assigned agent
+        assignedTo: v.optional(v.string()), // Clerk user ID of assigned agent (external reference)
         status: v.optional(v.union(v.literal(100), v.literal(200), v.literal(1000))), // 100: unassigned, 200: assigned, 1000: closed
         lastMessage: v.optional(v.string()),
-        resolvedBy: v.optional(v.string()), // Clerk user ID of who resolved it
+        resolvedBy: v.optional(v.string()), // Clerk user ID of who resolved it (external reference)
         visitorEmail: v.optional(v.string()),
         visitorPhone: v.optional(v.string()),
         visitorAddress: v.optional(v.string()),
@@ -48,7 +65,7 @@ export default defineSchema({
         rating: v.optional(v.number()), // 1-5
         feedback: v.optional(v.string()), // Optional feedback text
         updatedAt: v.optional(v.number()),
-        // Execution engine state
+        // Execution engine state — kept for backward compat; new code should use conversation_bot_state
         currentNodeId: v.optional(v.union(v.string(), v.null())),
         botStepCount: v.optional(v.number()),
         executionLog: v.optional(v.array(v.object({
@@ -57,13 +74,14 @@ export default defineSchema({
             action: v.string(),
             timestamp: v.number()
         }))),
-        botId: v.optional(v.string()),
-        // Legacy fields to prevent schema validation errors
-        leadId: v.optional(v.string()),
-        firstText: v.optional(v.string()),
+        botId: v.optional(v.id("bots")), // Reference to bots table
+        // Actively used fields: participants, tags, attributes (see routing.ts, conversations.ts, tags.ts, bot.ts)
         participants: v.optional(v.array(v.string())),
         tags: v.optional(v.array(v.string())),
-        attributes: v.optional(v.any()),
+        attributes: v.optional(v.any()), // Bot attribute storage — flexible key-value bag
+        // Deprecated legacy fields — kept for backward compatibility with existing data
+        leadId: v.optional(v.string()),
+        firstText: v.optional(v.string()),
         typing: v.optional(v.any()),
         // HITL Handoff
         botPaused: v.optional(v.boolean()), // true = bot will not respond to new messages
@@ -92,7 +110,7 @@ export default defineSchema({
             action: v.string(),
             timestamp: v.number(),
         }))),
-        attributes: v.optional(v.any()),
+        attributes: v.optional(v.any()), // Bot attribute storage — flexible key-value bag
     }).index("by_conversationId", ["conversationId"]),
 
     // Messages within conversations
@@ -102,7 +120,7 @@ export default defineSchema({
         senderType: v.string(), // "visitor" | "agent" | "bot"
         senderId: v.optional(v.string()),
         content: v.string(),
-        attachments: v.optional(v.any()), // JSON array
+        attachments: v.optional(v.any()), // JSON array of attachments (various channel formats)
         fileId: v.optional(v.string()), // Convex storage ID
         fileName: v.optional(v.string()), // Original filename for display
         // Legacy fields
@@ -123,7 +141,15 @@ export default defineSchema({
         description: v.optional(v.string()),
         type: v.string(), // "chatbot" | "automation"
         status: v.optional(v.string()), // "draft" | "active" | "archived"
-        configuration: v.optional(v.any()), // JSON flow definition
+        configuration: v.optional(v.object({
+            model: v.optional(v.string()), // AI model name
+            temperature: v.optional(v.number()),
+            maxTokens: v.optional(v.number()),
+            systemPrompt: v.optional(v.string()),
+            knowledgeBaseId: v.optional(v.id("knowledge_bases")),
+            fallbackBot: v.optional(v.id("bots")),
+            additionalSettings: v.optional(v.object({})),
+        })), // JSON flow definition
     }).index("by_projectId", ["projectId"]),
 
     // Bot flows (Design Studio graph data)
@@ -131,10 +157,26 @@ export default defineSchema({
         botId: v.id("bots"),
         slug: v.optional(v.string()), // target identifier for Replace Bot action
         version: v.optional(v.string()),
-        nodes: v.array(v.any()), // JSON array of flow nodes
-        edges: v.optional(v.any()), // Legacy ReactFlow Edge[]
-        executionNodes: v.optional(v.array(v.any())), // Compiled engine schema
-        variables: v.optional(v.any()), // Flow-level variables
+        nodes: v.array(v.any()), // ReactFlow nodes — full validation deferred; engine validates at runtime
+        edges: v.optional(v.array(v.object({
+            id: v.string(),
+            source: v.string(),
+            target: v.string(),
+            sourceHandle: v.optional(v.string()),
+            targetHandle: v.optional(v.string()),
+            type: v.optional(v.string()),
+            label: v.optional(v.string()),
+            markerEnd: v.optional(v.any()), // ReactFlow arrow marker config
+            style: v.optional(v.any()), // CSS style object
+        }))), // ReactFlow Edge[]
+        executionNodes: v.optional(v.array(v.object({
+            _id: v.optional(v.string()), // Node identifier (from node.id)
+            name: v.optional(v.any()), // Display name (from data.label or node.type)
+            type: v.optional(v.string()),
+            actions: v.optional(v.any()), // Action documents
+            nextBlock: v.optional(v.string()), // Next node ID
+        }))), // Compiled engine schema
+        variables: v.optional(v.object({})), // Flow-level variables
     })
         .index("by_botId", ["botId"])
         .index("by_slug", ["slug"]),
@@ -145,7 +187,7 @@ export default defineSchema({
         userId: v.optional(v.string()), // Clerk user ID (null for system events)
         actionType: v.string(), // "login", "update_project", etc.
         description: v.optional(v.string()),
-        metadata: v.optional(v.any()), // JSON
+        metadata: v.optional(v.any()), // JSON — flexible for event-specific data
         ipAddress: v.optional(v.string()),
         // Extended fields for rich activity tracking
         actorId: v.optional(v.string()),
@@ -163,7 +205,7 @@ export default defineSchema({
     integrations: defineTable({
         projectId: v.id("projects"),
         provider: v.string(), // "telegram", "openai", "whatsapp", "messenger", "instagram"
-        credentials: v.optional(v.any()), // JSON (encrypted tokens)
+        credentials: v.optional(v.any()), // JSON (encrypted tokens) — flexible per-provider structure
         enabled: v.optional(v.boolean()),
         // Denormalized lookup fields for O(log n) queries (stored inside credentials but also indexed here)
         phoneNumberId: v.optional(v.string()), // WhatsApp: external_phone_number_id
@@ -182,7 +224,7 @@ export default defineSchema({
         description: v.optional(v.string()),
         isDefault: v.optional(v.boolean()),
         routingMode: v.optional(v.string()), // "pooled" | "assigned"
-        botId: v.optional(v.string()), // Bot ID if AI-assigned
+        botId: v.optional(v.id("bots")), // Reference to bots table
         tags: v.optional(v.array(v.string())),
         memberIds: v.optional(v.array(v.string())),
     }).index("by_projectId", ["projectId"]),
@@ -192,7 +234,7 @@ export default defineSchema({
         projectId: v.id("projects"),
         trigger: v.string(),
         message: v.string(),
-        createdBy: v.optional(v.string()), // Clerk user ID
+        createdBy: v.optional(v.string()), // Clerk user ID (external reference)
     }).index("by_projectId", ["projectId"]),
 
     // Labels (for tagging conversations)
@@ -200,7 +242,7 @@ export default defineSchema({
         projectId: v.id("projects"),
         name: v.string(),
         color: v.string(), // "red" | "orange" | "yellow" | "green" | "blue" | "violet"
-        createdBy: v.optional(v.string()),
+        createdBy: v.optional(v.string()), // Clerk user ID (external reference)
     }).index("by_projectId", ["projectId"]),
 
     // Operating hours
@@ -208,7 +250,15 @@ export default defineSchema({
         projectId: v.id("projects"),
         enabled: v.boolean(),
         timezone: v.string(),
-        schedule: v.any(), // JSON array of day schedules
+        schedule: v.array(v.object({
+            day: v.string(), // "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+            open: v.optional(v.boolean()), // Whether the business is open on this day
+            slots: v.optional(v.array(v.object({
+                start: v.string(), // HH:MM format
+                end: v.string(), // HH:MM format
+            }))), // Time slots for the day
+            enabled: v.optional(v.boolean()),
+        })), // Array of day schedules
     }).index("by_projectId", ["projectId"]),
 
     // Knowledge bases

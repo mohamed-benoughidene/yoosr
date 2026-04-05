@@ -1,5 +1,6 @@
 import { internalMutation, internalAction } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
 // The Smart Assignment Engine for Yoosr architecture
@@ -20,7 +21,7 @@ export const routeConversation = internalMutation({
 
         // 1. Check for AI Bot (Highest Priority)
         if (!args.skipBot) {
-            let botIdToAssign: string | null = null;
+            let botIdToAssign: Id<"bots"> | null = null;
 
             // Check department for specific bot override
             if (args.departmentId) {

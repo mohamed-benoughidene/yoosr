@@ -592,7 +592,7 @@ export const updateConversationState = internalMutation({
 
         // botId stays on conversations (it's a routing field, not bot execution state)
         if (args.botId) {
-            await ctx.db.patch(args.id, { botId: args.botId });
+            await ctx.db.patch(args.id, { botId: args.botId as Id<"bots"> });
         }
 
         // Upsert bot execution state into the dedicated table

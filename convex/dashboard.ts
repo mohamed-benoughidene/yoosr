@@ -105,23 +105,26 @@ export const getHomeStats = query({
 
         const botResolvedToday = todayEvents.filter(e => e.handledBy === "bot" && e.closed).length;
 
-        // Avg Wait Time Today 
-        // We'll roughly estimate as time from conversation creation to the first message by an agent.
-        // For accurate computation, we just fetch agent messages for today's active/closed ones.
+        // Avg Wait Time Today — parallel fetch instead of serial loop
         let totalWaitMs = 0;
         let waitCount = 0;
 
-        // To avoid looping hundreds of messages, take top 20 recent convos for today
+        // Fetch first agent message for each sampled conversation in parallel
         const sampledTodayConv = conversationsToday.slice(0, 20);
-        for (const conv of sampledTodayConv) {
-            const firstAgentMessage = await ctx.db
-                .query("messages")
-                .withIndex("by_conversationId", q => q.eq("conversationId", conv._id))
-                .filter(q => q.eq(q.field("senderType"), "agent"))
-                .first();
+        const firstAgentMessages = await Promise.all(
+            sampledTodayConv.map(conv =>
+                ctx.db
+                    .query("messages")
+                    .withIndex("by_conversationId", q => q.eq("conversationId", conv._id))
+                    .filter(q => q.eq(q.field("senderType"), "agent"))
+                    .first()
+            )
+        );
 
+        for (let i = 0; i < sampledTodayConv.length; i++) {
+            const firstAgentMessage = firstAgentMessages[i];
             if (firstAgentMessage) {
-                totalWaitMs += (firstAgentMessage._creationTime - conv._creationTime);
+                totalWaitMs += (firstAgentMessage._creationTime - sampledTodayConv[i]._creationTime);
                 waitCount++;
             }
         }

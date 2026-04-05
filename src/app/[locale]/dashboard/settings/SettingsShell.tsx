@@ -2,6 +2,7 @@
 
 import { Separator } from "@/components/ui/separator"
 import { SettingsSidebar } from "@/components/settings/SettingsSidebar"
+import { AppErrorBoundary } from "@/components/error-boundary"
 import { useProject } from "@/context/ProjectContext"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
@@ -39,7 +40,9 @@ export default function SettingsShell({ children }: SettingsShellProps) {
                 <aside className="lg:w-48 shrink-0">
                     <SettingsSidebar />
                 </aside>
-                <div className="flex-1">{children}</div>
+                <AppErrorBoundary>
+                    <div className="flex-1">{children}</div>
+                </AppErrorBoundary>
             </div>
         </div>
     )
