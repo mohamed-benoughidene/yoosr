@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery, useAction } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useProject } from "@/context/ProjectContext";
+import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import dynamic from "next/dynamic";
 
 const ConversationVolumeChart = dynamic(
@@ -35,72 +36,37 @@ import {
     Clock,
 } from "lucide-react";
 
-function toMs(dateStr: string): number {
-    return new Date(dateStr).getTime();
-}
-
-function formatDateInput(d: Date): string {
-    return d.toISOString().slice(0, 10);
-}
-
 export default function AnalyticsPage() {
     const t = useTranslations("analytics");
     const { activeProject } = useProject();
 
     // Default range: last 30 days
-    const defaultTo = useMemo(() => formatDateInput(new Date()), []);
+    const defaultTo = useMemo(() => new Date().toISOString().slice(0, 10), []);
     const defaultFrom = useMemo(() => {
         const d = new Date();
         d.setDate(d.getDate() - 30);
-        return formatDateInput(d);
+        return d.toISOString().slice(0, 10);
     }, []);
 
     const [fromDate, setFromDate] = useState(defaultFrom);
     const [toDate, setToDate] = useState(defaultTo);
 
-    const from = toMs(fromDate);
-    const to = toMs(toDate) + 86399999; // end of day
+    const from = new Date(fromDate).getTime();
+    const to = new Date(toDate).getTime() + 86399999; // end of day
 
-    const [convStatsData, setConvStatsData] = useState<{total: number, open: number, closed: number} | undefined>(undefined);
-    const fetchStats = useAction(api.analytics.getConversationStats);
+    // Fetch all analytics data in a single hook
+    const {
+        conversationStats,
+        conversationVolume,
+        tokenUsage,
+        tagsSummary,
+        csatSummary,
+        slaBreachRate,
+        loading,
+        error,
+    } = useAnalyticsData(activeProject?._id, { from, to });
 
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchStats({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setConvStatsData(data);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchStats]);
-
-    const [volumeData, setVolumeData] = useState<{total: number, botHandled: number, agentHandled: number, daily: { date: string; bot: number; agent: number; total: number }[]} | undefined>(undefined);
-    const fetchVolume = useAction(api.analytics.getConversationVolume);
-
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchVolume({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setVolumeData(data);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchVolume]);
-    const [tokenData, setTokenData] = useState<{totalTokens: number, byModel: { model: string; tokens: number }[]} | undefined>(undefined);
-    const fetchTokens = useAction(api.analytics.getTokenUsage);
-
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchTokens({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setTokenData(data);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchTokens]);
+    // Non-action queries (don't need to be in the hook)
     const csatCommentsData = useQuery(
         api.analytics.getCSATComments,
         activeProject ? { projectId: activeProject._id, limit: 5 } : "skip"
@@ -113,100 +79,68 @@ export default function AnalyticsPage() {
         api.analytics.getProjectUsage,
         activeProject ? { projectId: activeProject._id } : "skip"
     );
-    const [tagsData, setTagsData] = useState<{name: string, value: number}[] | undefined>(undefined);
-    const fetchTags = useAction(api.analytics.getTagsSummary);
-
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchTags({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setTagsData(data);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchTags]);
-
-    // CSAT summary — paginated action (was query, now fetches all records)
-    const [csatData, setCsatData] = useState<{ average: number; total: number; distribution: Record<number, number> } | undefined>(undefined);
-    const fetchCSAT = useAction(api.analytics.getCSATSummary);
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchCSAT({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setCsatData(data ?? undefined);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchCSAT]);
-
-    // SLA breach rate — paginated action (was query, now fetches all records)
-    const [slaData, setSlaData] = useState<{ total: number; slaTracked: number; breached: number; breachRate: number } | undefined>(undefined);
-    const fetchSLA = useAction(api.analytics.getSLABreachRate);
-    useEffect(() => {
-        if (!activeProject) return;
-        let isMounted = true;
-        fetchSLA({ projectId: activeProject._id, from, to })
-            .then(data => {
-                if (isMounted) setSlaData(data ?? undefined);
-            })
-            .catch(console.error);
-        return () => { isMounted = false; };
-    }, [activeProject, from, to, fetchSLA]);
 
     if (!activeProject) {
         return <div className="p-8 text-muted-foreground">{t("select_project_message")}</div>;
     }
 
+    if (error) {
+        return (
+            <div className="p-8 text-center">
+                <p className="text-destructive">Failed to load analytics data</p>
+                <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+            </div>
+        );
+    }
+
     const statsCards = [
         {
             label: t("total_conversations"),
-            value: convStatsData?.total ?? "—",
+            value: conversationStats?.total ?? "—",
             icon: MessageSquare,
             sub: t("in_selected_period"),
         },
         {
             label: t("bot_handled"),
-            value: volumeData?.botHandled ?? "—",
+            value: conversationVolume?.botHandled ?? "—",
             icon: Bot,
-            sub: volumeData && convStatsData && convStatsData.total > 0
-                ? t("percent_of_total", { percent: Math.round((volumeData.botHandled / convStatsData.total) * 100) })
+            sub: conversationVolume && conversationStats && conversationStats.total > 0
+                ? t("percent_of_total", { percent: Math.round((conversationVolume.botHandled / conversationStats.total) * 100) })
                 : "—",
         },
         {
             label: t("agent_handled"),
-            value: volumeData?.agentHandled ?? "—",
+            value: conversationVolume?.agentHandled ?? "—",
             icon: User,
-            sub: volumeData && convStatsData && convStatsData.total > 0
-                ? t("percent_of_total", { percent: Math.round((volumeData.agentHandled / convStatsData.total) * 100) })
+            sub: conversationVolume && conversationStats && conversationStats.total > 0
+                ? t("percent_of_total", { percent: Math.round((conversationVolume.agentHandled / conversationStats.total) * 100) })
                 : "—",
         },
         {
             label: t("avg_csat"),
-            value: csatData && csatData.total > 0 ? `${csatData.average}/5` : "—",
+            value: csatSummary && csatSummary.total > 0 ? `${csatSummary.average}/5` : "—",
             icon: Star,
-            sub: csatData && csatData.total > 0 ? t("ratings_count", { count: csatData.total }) : t("no_ratings_yet"),
+            sub: csatSummary && csatSummary.total > 0 ? t("ratings_count", { count: csatSummary.total }) : t("no_ratings_yet"),
         },
         {
             label: t("total_tokens"),
-            value: tokenData
-                ? tokenData.totalTokens >= 1000
-                    ? `${(tokenData.totalTokens / 1000).toFixed(1)}k`
-                    : tokenData.totalTokens
+            value: tokenUsage
+                ? tokenUsage.totalTokens >= 1000
+                    ? `${(tokenUsage.totalTokens / 1000).toFixed(1)}k`
+                    : tokenUsage.totalTokens
                 : "—",
             icon: Zap,
             sub: t("ai_tokens_consumed"),
         },
         {
             label: t("sla_breach_rate"),
-            value: slaData ? (slaData.slaTracked > 0 ? `${slaData.breachRate}%` : t("no_sla_data")) : "—",
+            value: slaBreachRate ? (slaBreachRate.slaTracked > 0 ? `${slaBreachRate.breachRate}%` : t("no_sla_data")) : "—",
             icon: Clock,
-            sub: slaData ? (slaData.slaTracked > 0 ? t("sla_tracked", { breached: slaData.breached, tracked: slaData.slaTracked }) : "—") : "—",
-            valueClassName: slaData && slaData.slaTracked > 0
-                ? slaData.breachRate > 20
+            sub: slaBreachRate ? (slaBreachRate.slaTracked > 0 ? t("sla_tracked", { breached: slaBreachRate.breached, tracked: slaBreachRate.slaTracked }) : "—") : "—",
+            valueClassName: slaBreachRate && slaBreachRate.slaTracked > 0
+                ? slaBreachRate.breachRate > 20
                     ? "text-destructive"
-                    : slaData.breachRate > 10
+                    : slaBreachRate.breachRate > 10
                         ? "text-amber-500"
                         : "text-green-500"
                 : "",
@@ -278,15 +212,15 @@ export default function AnalyticsPage() {
                     isLoading={usageData === undefined}
                 />
                 <AnalyticsTagsChart
-                    data={tagsData}
-                    isLoading={tagsData === undefined}
+                    data={tagsSummary ?? undefined}
+                    isLoading={tagsSummary === null || loading}
                 />
             </div>
 
             {/* Conversation Volume chart */}
             <ConversationVolumeChart
-                data={volumeData?.daily}
-                isLoading={volumeData === undefined}
+                data={conversationVolume?.daily ?? undefined}
+                isLoading={conversationVolume === null || loading}
             />
 
             {/* Bottom row: Unanswered Queries + CSAT */}
@@ -296,8 +230,8 @@ export default function AnalyticsPage() {
                     isLoading={unansweredData === undefined}
                 />
                 <AnalyticsCSAT
-                    data={csatData}
-                    isLoading={csatData === undefined}
+                    data={csatSummary ?? undefined}
+                    isLoading={csatSummary === null || loading}
                     comments={csatCommentsData}
                 />
             </div>
