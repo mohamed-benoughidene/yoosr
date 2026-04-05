@@ -25,7 +25,7 @@ function SignupContent() {
 
             <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
                 <div className="flex flex-col space-y-2 text-center">
-                    <h1 style={{ fontFamily: "'Cabinet Grotesk', sans-serif", fontWeight: 700, fontSize: 28, color: 'var(--lp-text)' }}>
+                    <h1 style={{ fontFamily: "var(--font-cabinet-grotesk), sans-serif", fontWeight: 700, fontSize: 28, color: 'var(--lp-text)' }}>
                         {t("title")}
                     </h1>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: 'var(--lp-text-secondary)', marginBottom: 24 }}>

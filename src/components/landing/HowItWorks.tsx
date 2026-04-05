@@ -65,7 +65,7 @@ export function HowItWorks() {
             <span className="font-['Inter'] font-[500] text-[11px] text-[var(--lp-gold)] uppercase tracking-[0.1em] mb-4">
               {t("badge")}
             </span>
-            <h2 className="font-['Cabinet_Grotesk'] font-[700] text-[36px] md:text-[48px] text-[var(--lp-text)] tracking-tight max-w-[800px] leading-tight">
+            <h2 style={{ fontFamily: "var(--font-cabinet-grotesk), sans-serif", fontWeight: 700, fontSize: "36px" }} className="md:text-[48px] text-[var(--lp-text)] tracking-tight max-w-[800px] leading-tight">
               {t("headline")}
             </h2>
           </div>
@@ -95,13 +95,13 @@ export function HowItWorks() {
                   <div className="absolute left-[24px] md:left-[40px] top-0 bottom-0 w-[2px] bg-[var(--lp-gold)] -ml-[0.5px] z-10" />
 
                   {/* Background Numeral */}
-                  <div className="absolute left-[64px] md:left-[96px] top-[-36px] md:top-[-44px] font-['Cabinet_Grotesk'] font-[800] text-[56px] md:text-[64px] text-[var(--lp-gold)] opacity-15 pointer-events-none select-none leading-none">
+                  <div className="absolute left-[64px] md:left-[96px] top-[-36px] md:top-[-44px] text-[56px] md:text-[64px] text-[var(--lp-gold)] opacity-15 pointer-events-none select-none leading-none" style={{ fontFamily: "var(--font-cabinet-grotesk), sans-serif", fontWeight: 800 }}>
                     {step.num}
                   </div>
 
                   {/* Step Content */}
                   <div className="relative pt-1 w-full">
-                    <h3 className="font-['Cabinet_Grotesk'] font-[700] text-[20px] md:text-[22px] text-[var(--lp-text)] mb-3">
+                    <h3 style={{ fontFamily: "var(--font-cabinet-grotesk), sans-serif", fontWeight: 700 }} className="text-[20px] md:text-[22px] text-[var(--lp-text)] mb-3">
                       {step.title}
                     </h3>
                     <p className="font-['Inter'] font-[400] text-[14px] md:text-[15px] text-[var(--lp-text-secondary)] max-w-[520px] leading-[1.6]">
@@ -118,7 +118,7 @@ export function HowItWorks() {
         {/* Closing Line */}
         <div className="mt-16 md:mt-24 text-center">
           <ScrollReveal delay={200}>
-            <p className="font-['Cabinet_Grotesk'] font-[700] text-[20px] md:text-[24px] text-[var(--lp-gold)]">
+            <p style={{ fontFamily: "var(--font-cabinet-grotesk), sans-serif", fontWeight: 700 }} className="text-[20px] md:text-[24px] text-[var(--lp-gold)]">
               {t("closing")}
             </p>
           </ScrollReveal>

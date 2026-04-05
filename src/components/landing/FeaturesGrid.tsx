@@ -72,7 +72,7 @@ export function FeaturesGrid() {
             <h2 
               className="font-bold text-4xl lg:text-[48px] leading-tight"
               style={{
-                fontFamily: "'Cabinet Grotesk', sans-serif",
+                fontFamily: "var(--font-cabinet-grotesk), sans-serif",
                 color: "var(--lp-text)",
               }}
             >
@@ -123,10 +123,10 @@ function FeatureCard({ feature }: { feature: Feature }) {
       <div>
         {feature.icon}
       </div>
-      <h3 
+      <h3
         className="font-semibold"
         style={{
-          fontFamily: "'Cabinet Grotesk', sans-serif",
+          fontFamily: "var(--font-cabinet-grotesk), sans-serif",
           fontSize: "18px",
           color: "var(--lp-text)",
           marginTop: "16px"

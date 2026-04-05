@@ -72,10 +72,10 @@ export function FinalCTA() {
           </div>
         </div>
 
-        <h2 
+        <h2
           className="mb-6 font-extrabold text-[40px] md:text-[56px]"
-          style={{ 
-            fontFamily: "'Cabinet Grotesk', sans-serif",
+          style={{
+            fontFamily: "var(--font-cabinet-grotesk), sans-serif",
             lineHeight: 1.1,
             color: "var(--lp-text)",
             letterSpacing: "-0.03em"
@@ -106,7 +106,7 @@ export function FinalCTA() {
             borderRadius: '8px',
             border: 'none',
             cursor: 'pointer',
-            fontFamily: "'Cabinet Grotesk', sans-serif",
+            fontFamily: "var(--font-cabinet-grotesk), sans-serif",
             fontWeight: 600,
             fontSize: '14px',
             transition: '100ms',

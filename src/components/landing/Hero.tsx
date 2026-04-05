@@ -95,7 +95,7 @@ export function Hero() {
             borderRadius: '8px',
             border: 'none',
             cursor: 'pointer',
-            fontFamily: "'Cabinet Grotesk', sans-serif",
+            fontFamily: "var(--font-cabinet-grotesk), sans-serif",
             fontWeight: 600,
             fontSize: '14px',
             transition: '100ms',

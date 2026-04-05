@@ -12,7 +12,7 @@
 }
 
 .ds-headline {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 700;
   color: var(--lp-text);
   font-size: 36px;
@@ -47,7 +47,7 @@
 }
 
 .ds-card-number {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 700;
   font-size: 13px;
   color: var(--lp-gold);
@@ -55,7 +55,7 @@
 }
 
 .ds-card-title {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 600;
   font-size: 16px;
   color: var(--lp-text);
@@ -172,7 +172,7 @@
 }
 
 .hero-headline {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 800;
   color: var(--lp-text);
   letter-spacing: -0.03em;
@@ -256,7 +256,7 @@
   background: var(--lp-gold);
   color: #0C0B0F;
   border-radius: 8px;
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 600;
   font-size: 14px;
   border: none;
@@ -300,13 +300,13 @@
 
 /* Channels Section */
 .ch-heading {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
 .ch-card-title {
-  font-family: 'Cabinet Grotesk', sans-serif;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: var(--lp-text);

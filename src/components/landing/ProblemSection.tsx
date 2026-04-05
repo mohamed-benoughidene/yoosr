@@ -45,10 +45,10 @@ export function ProblemSection() {
             THE PROBLEM
           </div>
 
-          <h2 
+          <h2
             className="font-bold text-4xl lg:text-[48px] leading-tight mb-12"
             style={{
-              fontFamily: "'Cabinet Grotesk', sans-serif",
+              fontFamily: "var(--font-cabinet-grotesk), sans-serif",
               color: "var(--lp-text)",
               maxWidth: "520px",
             }}

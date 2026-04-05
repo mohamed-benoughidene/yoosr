@@ -16,7 +16,7 @@ function WaitlistForm() {
             <h1
                 className="text-center"
                 style={{
-                    fontFamily: "'Cabinet Grotesk', sans-serif",
+                    fontFamily: "var(--font-cabinet-grotesk), sans-serif",
                     fontWeight: 700,
                     fontSize: 20,
                     color: 'var(--lp-text)'
