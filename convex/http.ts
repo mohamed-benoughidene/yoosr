@@ -4,6 +4,7 @@ import { internal, components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { RateLimiter } from "@convex-dev/rate-limiter";
 import { decryptSecret } from "./lib/crypto";
+import { Webhook } from "svix";
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   createConversation: { kind: "fixed window", rate: 5, period: 60000 },
@@ -29,30 +30,56 @@ function constantTimeCompare(a: string, b: string): boolean {
 }
 
 // Clerk webhook to sync user data
+// SECURITY: Uses Svix to verify webhook signatures before processing
 http.route({
     path: "/clerk-webhook",
     method: "POST",
     handler: httpAction(async (ctx, request) => {
-        const body = await request.json();
-        const eventType = body.type;
+        try {
+            // Read raw body BEFORE parsing (Svix needs raw string)
+            const rawBody = await request.text();
+            const headers = Object.fromEntries(request.headers.entries());
 
-        if (eventType === "user.created" || eventType === "user.updated") {
-            const user = body.data;
-            await ctx.runMutation(internal.profiles.upsertFromClerk, {
-                userId: user.id,
-                fullName: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || undefined,
-                email: user.email_addresses?.[0]?.email_address,
-                avatarUrl: user.image_url,
-            });
-        } else if (eventType === "organization.deleted") {
-            const orgId = body.data.id;
-            const project = await ctx.runQuery(internal.projects.getByOrgIdInternal, { orgId });
-            if (project) {
-                await ctx.runMutation(internal.projects.remove, { id: project._id });
+            // Verify signature - reject if webhook secret not configured
+            const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+            if (!webhookSecret) {
+                console.error("CLERK_WEBHOOK_SECRET not configured - rejecting webhook");
+                return new Response("Webhook secret not configured", { status: 500 });
             }
-        }
 
-        return new Response("OK", { status: 200 });
+            const webhook = new Webhook(webhookSecret);
+            try {
+                webhook.verify(rawBody, headers);
+            } catch (err) {
+                console.error("Invalid Clerk webhook signature:", err);
+                return new Response("Invalid signature", { status: 401 });
+            }
+
+            // Now safe to parse
+            const body = JSON.parse(rawBody);
+            const eventType = body.type;
+
+            if (eventType === "user.created" || eventType === "user.updated") {
+                const user = body.data;
+                await ctx.runMutation(internal.profiles.upsertFromClerk, {
+                    userId: user.id,
+                    fullName: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || undefined,
+                    email: user.email_addresses?.[0]?.email_address,
+                    avatarUrl: user.image_url,
+                });
+            } else if (eventType === "organization.deleted") {
+                const orgId = body.data.id;
+                const project = await ctx.runQuery(internal.projects.getByOrgIdInternal, { orgId });
+                if (project) {
+                    await ctx.runMutation(internal.projects.remove, { id: project._id });
+                }
+            }
+
+            return new Response("OK", { status: 200 });
+        } catch (error) {
+            console.error("Error processing Clerk webhook:", error);
+            return new Response("Internal Server Error", { status: 500 });
+        }
     }),
 });
 

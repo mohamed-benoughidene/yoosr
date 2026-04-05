@@ -25,6 +25,7 @@ const serverEnvSchema = z.object({
   OPENROUTER_API_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   ENCRYPTION_KEY: z.string().optional(),
+  CLERK_WEBHOOK_SECRET: z.string().optional(),
 });
 
 const envSchema = clientEnvSchema.merge(serverEnvSchema);
