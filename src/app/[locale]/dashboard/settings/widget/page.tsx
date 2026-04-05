@@ -16,7 +16,10 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useReducer, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useForm, FormProvider } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { widgetConfigSchema, type WidgetConfigForm } from "./schema"
 import { toast } from "sonner"
 import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, UserMinus } from "lucide-react"
 import { useMutation } from "convex/react"
@@ -28,6 +31,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    FormField,
+    FormItem,
+    FormLabel,
+    FormControl,
+    FormMessage,
+    FormDescription,
+} from "@/components/ui/form"
 
 // Theme Presets
 const THEMES = {
@@ -38,119 +49,30 @@ const THEMES = {
     dark: { translationKey: "color_midnight", color: "#0f172a" },
 }
 
-
-interface WidgetConfig {
-    primaryColor: string;
-    align: "left" | "right";
-    logoUrl: string;
-    welcomeDelay: number;
-    enableWelcomeNotification: boolean;
-    autoCloseMinutes: number;
-    preChatFormEnabled: boolean;
-    contactMethod: "email" | "phone";
-    translations: {
-        headerTitle: string;
-        onlineStatus: string;
-        startChat: string;
-        welcomeMessage: string;
-        preChatTitle: string;
-        preChatSubtitle: string;
-    };
-}
-
-interface UiState {
-    loading: boolean;
-    iframeKey: number;
-    copiedHtml: boolean;
-    copiedNext: boolean;
-    copiedSnippet: boolean;
-    selectedPlatform: string;
-}
-
-interface WidgetSettingsState {
-    widgetConfig: WidgetConfig;
-    uiState: UiState;
-}
-
-type WidgetSettingsAction = 
-    | { type: "SET_THEME"; payload: string }
-    | { type: "SET_ALIGN"; payload: "left" | "right" }
-    | { type: "SET_LOGO_URL"; payload: string }
-    | { type: "SET_WELCOME_DELAY"; payload: number }
-    | { type: "SET_ENABLE_WELCOME"; payload: boolean }
-    | { type: "SET_AUTO_CLOSE"; payload: number }
-    | { type: "SET_PRE_CHAT_ENABLED"; payload: boolean }
-    | { type: "SET_CONTACT_METHOD"; payload: "email" | "phone" }
-    | { type: "UPDATE_TRANSLATION"; payload: { key: string; value: string } }
-    | { type: "SET_TRANSLATIONS"; payload: WidgetConfig["translations"] }
-    | { type: "SET_LOADING"; payload: boolean }
-    | { type: "INC_IFRAME_KEY" }
-    | { type: "SET_COPIED_HTML"; payload: boolean }
-    | { type: "SET_COPIED_NEXT"; payload: boolean }
-    | { type: "SET_COPIED_SNIPPET"; payload: boolean }
-    | { type: "SET_SELECTED_PLATFORM"; payload: string }
-
-const initialState: WidgetSettingsState = {
-    widgetConfig: {
-        primaryColor: "#000000",
-        align: "right",
-        logoUrl: "",
-        welcomeDelay: 3,
-        enableWelcomeNotification: true,
-        autoCloseMinutes: 30,
-        preChatFormEnabled: true,
-        contactMethod: "email",
-        translations: {
-            headerTitle: "",
-            onlineStatus: "",
-            startChat: "",
-            welcomeMessage: "",
-            preChatTitle: "",
-            preChatSubtitle: ""
-        }
-    },
-    uiState: {
-        loading: false,
-        iframeKey: 0,
-        copiedHtml: false,
-        copiedNext: false,
-        copiedSnippet: false,
-        selectedPlatform: "html"
-    }
-}
-
-function widgetSettingsReducer(state: WidgetSettingsState, action: WidgetSettingsAction): WidgetSettingsState {
-    switch (action.type) {
-        case "SET_THEME": return { ...state, widgetConfig: { ...state.widgetConfig, primaryColor: action.payload } }
-        case "SET_ALIGN": return { ...state, widgetConfig: { ...state.widgetConfig, align: action.payload } }
-        case "SET_LOGO_URL": return { ...state, widgetConfig: { ...state.widgetConfig, logoUrl: action.payload } }
-        case "SET_WELCOME_DELAY": return { ...state, widgetConfig: { ...state.widgetConfig, welcomeDelay: action.payload } }
-        case "SET_ENABLE_WELCOME": return { ...state, widgetConfig: { ...state.widgetConfig, enableWelcomeNotification: action.payload } }
-        case "SET_AUTO_CLOSE": return { ...state, widgetConfig: { ...state.widgetConfig, autoCloseMinutes: action.payload } }
-        case "SET_PRE_CHAT_ENABLED": return { ...state, widgetConfig: { ...state.widgetConfig, preChatFormEnabled: action.payload } }
-        case "SET_CONTACT_METHOD": return { ...state, widgetConfig: { ...state.widgetConfig, contactMethod: action.payload } }
-        case "UPDATE_TRANSLATION": return {
-            ...state,
-            widgetConfig: { ...state.widgetConfig, translations: { ...state.widgetConfig.translations, [action.payload.key]: action.payload.value } }
-        }
-        case "SET_TRANSLATIONS": return { ...state, widgetConfig: { ...state.widgetConfig, translations: action.payload } }
-        case "SET_LOADING": return { ...state, uiState: { ...state.uiState, loading: action.payload } }
-        case "INC_IFRAME_KEY": return { ...state, uiState: { ...state.uiState, iframeKey: state.uiState.iframeKey + 1 } }
-        case "SET_COPIED_HTML": return { ...state, uiState: { ...state.uiState, copiedHtml: action.payload } }
-        case "SET_COPIED_NEXT": return { ...state, uiState: { ...state.uiState, copiedNext: action.payload } }
-        case "SET_COPIED_SNIPPET": return { ...state, uiState: { ...state.uiState, copiedSnippet: action.payload } }
-        case "SET_SELECTED_PLATFORM": return { ...state, uiState: { ...state.uiState, selectedPlatform: action.payload } }
-        default: return state;
-    }
-}
-
 export default function WidgetSetupPage() {
     const t = useTranslations("settings.widget")
     const { activeProject } = useProject()
-    const [state, dispatch] = useReducer(widgetSettingsReducer, undefined, () => ({
-        ...initialState,
-        widgetConfig: {
-            ...initialState.widgetConfig,
+    const [loading, setLoading] = useState(false)
+    const [iframeKey, setIframeKey] = useState(0)
+    const [copiedSnippet, setCopiedSnippet] = useState(false)
+    const [selectedPlatform, setSelectedPlatform] = useState("html")
+    const iframeRef = useRef<HTMLIFrameElement>(null)
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com')
+
+    const updateProject = useMutation(api.projects.update)
+
+    const form = useForm<WidgetConfigForm>({
+        resolver: zodResolver(widgetConfigSchema),
+        defaultValues: {
+            primaryColor: "#000000",
+            align: "right",
+            logoUrl: "",
+            welcomeDelay: 3,
+            enableWelcomeNotification: true,
+            autoCloseMinutes: 30,
+            preChatFormEnabled: true,
+            contactMethod: "email",
             translations: {
                 headerTitle: t("default_title"),
                 onlineStatus: t("status_online"),
@@ -160,21 +82,7 @@ export default function WidgetSetupPage() {
                 preChatSubtitle: t("default_form_description")
             }
         }
-    }))
-    const { widgetConfig, uiState } = state
-    const {
-        primaryColor, align, logoUrl, welcomeDelay, enableWelcomeNotification,
-        autoCloseMinutes, preChatFormEnabled, contactMethod, translations
-    } = widgetConfig
-    const {
-        loading, iframeKey, copiedSnippet, selectedPlatform
-    } = uiState
-
-    const iframeRef = useRef<HTMLIFrameElement>(null)
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com')
-
-    const updateProject = useMutation(api.projects.update)
+    })
 
     useEffect(() => {
         if (activeProject?.widgetConfig) {
@@ -189,67 +97,55 @@ export default function WidgetSetupPage() {
                 contactMethod?: "email" | "phone";
                 translations?: Record<string, string>;
             }
-            dispatch({ type: "SET_THEME", payload: config.primaryColor || "#6366f1" })
-            dispatch({ type: "SET_ALIGN", payload: config.align || "right" })
-            dispatch({ type: "SET_LOGO_URL", payload: config.logoUrl || "" })
-            dispatch({ type: "SET_WELCOME_DELAY", payload: config.welcomeDelay ?? 3 })
-            dispatch({ type: "SET_ENABLE_WELCOME", payload: config.enableWelcomeNotification ?? true })
-            dispatch({ type: "SET_AUTO_CLOSE", payload: config.autoCloseMinutes ?? 30 })
-            dispatch({ type: "SET_PRE_CHAT_ENABLED", payload: config.preChatFormEnabled ?? true })
-            dispatch({ type: "SET_CONTACT_METHOD", payload: config.contactMethod || "email" })
-            dispatch({ type: "SET_TRANSLATIONS", payload: {
-                headerTitle: config.translations?.headerTitle || t("default_title"),
-                onlineStatus: config.translations?.onlineStatus || t("status_online"),
-                startChat: config.translations?.startChat || t("start_conversation"),
-                welcomeMessage: config.translations?.welcomeMessage || t("default_welcome_message"),
-                preChatTitle: config.translations?.preChatTitle || t("default_greeting"),
-                preChatSubtitle: config.translations?.preChatSubtitle || t("default_form_description")
-            }})
+            form.reset({
+                primaryColor: config.primaryColor || "#6366f1",
+                align: config.align || "right",
+                logoUrl: config.logoUrl || "",
+                welcomeDelay: config.welcomeDelay ?? 3,
+                enableWelcomeNotification: config.enableWelcomeNotification ?? true,
+                autoCloseMinutes: config.autoCloseMinutes ?? 30,
+                preChatFormEnabled: config.preChatFormEnabled ?? true,
+                contactMethod: config.contactMethod || "email",
+                translations: {
+                    headerTitle: config.translations?.headerTitle || t("default_title"),
+                    onlineStatus: config.translations?.onlineStatus || t("status_online"),
+                    startChat: config.translations?.startChat || t("start_conversation"),
+                    welcomeMessage: config.translations?.welcomeMessage || t("default_welcome_message"),
+                    preChatTitle: config.translations?.preChatTitle || t("default_greeting"),
+                    preChatSubtitle: config.translations?.preChatSubtitle || t("default_form_description")
+                }
+            })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeProject])
 
-    const handleSave = async () => {
+    const handleSave = form.handleSubmit(async (data) => {
         if (!activeProject) return
-        dispatch({ type: "SET_LOADING", payload: true })
-
-        const config = {
-            primaryColor,
-            align,
-            logoUrl,
-            welcomeDelay,
-            enableWelcomeNotification,
-            autoCloseMinutes,
-            preChatFormEnabled,
-            contactMethod,
-            translations,
-        }
+        setLoading(true)
 
         try {
             await updateProject({
                 id: activeProject._id,
-                widgetConfig: config,
+                widgetConfig: data,
             })
             toast.success(t("settings_updated"))
             // Reload preview to reflect changes
-            dispatch({ type: "INC_IFRAME_KEY" })
+            setIframeKey(prev => prev + 1)
         } catch {
             toast.error(t("settings_update_failed"))
         }
-        dispatch({ type: "SET_LOADING", payload: false })
-    }
+        setLoading(false)
+    })
 
     const copyToClipboard = (text: string, type: 'html' | 'next' | 'generic') => {
         navigator.clipboard.writeText(text)
         if (type === 'html') {
-            dispatch({ type: "SET_COPIED_HTML", payload: true })
-            setTimeout(() => dispatch({ type: "SET_COPIED_HTML", payload: false }), 2000)
+            // Legacy - not used anymore
         } else if (type === 'next') {
-            dispatch({ type: "SET_COPIED_NEXT", payload: true })
-            setTimeout(() => dispatch({ type: "SET_COPIED_NEXT", payload: false }), 2000)
+            // Legacy - not used anymore
         } else {
-            dispatch({ type: "SET_COPIED_SNIPPET", payload: true })
-            setTimeout(() => dispatch({ type: "SET_COPIED_SNIPPET", payload: false }), 2000)
+            setCopiedSnippet(true)
+            setTimeout(() => setCopiedSnippet(false), 2000)
         }
         toast.success(t("snippet_copied"))
     }
@@ -298,15 +194,16 @@ export default function WidgetSetupPage() {
     const applyTheme = (key: string) => {
         const theme = THEMES[key as keyof typeof THEMES]
         if (theme) {
-            dispatch({ type: "SET_THEME", payload: theme.color })
+            form.setValue("primaryColor", theme.color, { shouldValidate: true, shouldDirty: true })
         }
     }
 
-    const updateTranslation = (key: string, value: string) => {
-        dispatch({ type: "UPDATE_TRANSLATION", payload: { key, value } })
-    }
+    // Watch form values for live preview
+    const primaryColor = form.watch("primaryColor")
 
     return (
+        <FormProvider {...form}>
+        <form onSubmit={handleSave}>
         <div className="flex flex-col lg:flex-row gap-8 relative items-start">
             <div className="flex-1 min-w-0 space-y-6 pb-20">
                 <div>
@@ -362,19 +259,39 @@ export default function WidgetSetupPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="color">{t("primary_color")}</Label>
+                                    <Label>{t("primary_color")}</Label>
                                     <div className="flex gap-2">
-                                        <Input
-                                            id="color"
-                                            type="color"
-                                            className="w-12 h-10 p-1 cursor-pointer"
-                                            value={primaryColor}
-                                            onChange={(e) => dispatch({ type: "SET_THEME", payload: e.target.value })}
+                                        <FormField
+                                            control={form.control}
+                                            name="primaryColor"
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormControl>
+                                                        <Input
+                                                            {...field}
+                                                            type="color"
+                                                            className="w-12 h-10 p-1 cursor-pointer"
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
                                         />
-                                        <Input
-                                            value={primaryColor}
-                                            onChange={(e) => dispatch({ type: "SET_THEME", payload: e.target.value })}
-                                            className="font-mono"
+                                        <FormField
+                                            control={form.control}
+                                            name="primaryColor"
+                                            render={({ field, fieldState }) => (
+                                                <FormItem className="flex-[2]">
+                                                    <FormControl>
+                                                        <Input
+                                                            {...field}
+                                                            className="font-mono"
+                                                        />
+                                                    </FormControl>
+                                                    {fieldState.error && (
+                                                        <FormMessage>{fieldState.error.message}</FormMessage>
+                                                    )}
+                                                </FormItem>
+                                            )}
                                         />
                                     </div>
                                 </div>
@@ -387,12 +304,23 @@ export default function WidgetSetupPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="logo">{t("logo_url")}</Label>
-                                    <Input
-                                        id="logo"
-                                        placeholder="https://example.com/logo.png"
-                                        value={logoUrl}
-                                        onChange={(e) => dispatch({ type: "SET_LOGO_URL", payload: e.target.value })}
+                                    <FormField
+                                        control={form.control}
+                                        name="logoUrl"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("logo_url")}</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        placeholder="https://example.com/logo.png"
+                                                    />
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
                                     />
                                     <p className="text-xs text-muted-foreground">{t("logo_url_desc")}</p>
                                 </div>
@@ -409,70 +337,111 @@ export default function WidgetSetupPage() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex items-center justify-between space-x-2">
-                                    <Label htmlFor="auto-open" className="flex flex-col space-y-1">
-                                        <span>{t("auto_open_title")}</span>
-                                        <span className="font-normal text-xs text-muted-foreground">
-                                            {t("auto_open_desc")}
-                                        </span>
-                                    </Label>
-                                    <Switch
-                                        id="auto-open"
-                                        checked={enableWelcomeNotification}
-                                        onCheckedChange={(v) => dispatch({ type: "SET_ENABLE_WELCOME", payload: v })}
+                                    <FormField
+                                        control={form.control}
+                                        name="enableWelcomeNotification"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-x-0">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">{t("auto_open_title")}</FormLabel>
+                                                    <FormDescription className="text-xs">
+                                                        {t("auto_open_desc")}
+                                                    </FormDescription>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
 
                                 <div className="flex items-center justify-between space-x-2">
-                                    <Label htmlFor="pre-chat" className="flex flex-col space-y-1">
-                                        <span>{t("pre_chat_form")}</span>
-                                        <span className="font-normal text-xs text-muted-foreground">
-                                            {t("pre_chat_desc")}
-                                        </span>
-                                    </Label>
-                                    <Switch
-                                        id="pre-chat"
-                                        checked={preChatFormEnabled}
-                                        onCheckedChange={(v) => dispatch({ type: "SET_PRE_CHAT_ENABLED", payload: v })}
+                                    <FormField
+                                        control={form.control}
+                                        name="preChatFormEnabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-x-0">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">{t("pre_chat_form")}</FormLabel>
+                                                    <FormDescription className="text-xs">
+                                                        {t("pre_chat_desc")}
+                                                    </FormDescription>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
 
-                                {preChatFormEnabled && (
+                                {form.watch("preChatFormEnabled") && (
                                     <div className="space-y-3 pt-2">
-                                        <Label>{t("contact_method")}</Label>
-                                        <RadioGroup
-                                            value={contactMethod}
-                                            onValueChange={(v) => dispatch({ type: "SET_CONTACT_METHOD", payload: v as "email" | "phone" })}
-                                            className="flex gap-4"
-                                        >
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="email" id="c-email" />
-                                                <Label htmlFor="c-email">{t("method_email")}</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="phone" id="c-phone" />
-                                                <Label htmlFor="c-phone">{t("method_phone")}</Label>
-                                            </div>
-                                        </RadioGroup>
+                                        <FormField
+                                            control={form.control}
+                                            name="contactMethod"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{t("contact_method")}</FormLabel>
+                                                    <FormControl>
+                                                        <RadioGroup
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                            className="flex gap-4"
+                                                        >
+                                                            <div className="flex items-center space-x-2">
+                                                                <RadioGroupItem value="email" id="c-email" />
+                                                                <Label htmlFor="c-email">{t("method_email")}</Label>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <RadioGroupItem value="phone" id="c-phone" />
+                                                                <Label htmlFor="c-phone">{t("method_phone")}</Label>
+                                                            </div>
+                                                        </RadioGroup>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 )}
 
-                                {enableWelcomeNotification && (
+                                {form.watch("enableWelcomeNotification") && (
                                     <div className="space-y-2">
-                                        <Label htmlFor="delay">{t("delay_seconds")}</Label>
-                                        <div className="flex items-center gap-4">
-                                            <Input
-                                                id="delay"
-                                                type="number"
-                                                min="0"
-                                                max="60"
-                                                value={welcomeDelay}
-                                                onChange={(e) => dispatch({ type: "SET_WELCOME_DELAY", payload: Number(e.target.value) })}
-                                                className="w-24"
-                                            />
-                                            <span className="text-sm text-muted-foreground">
-                                                {t("delay_desc")}
-                                            </span>
-                                        </div>
+                                        <FormField
+                                            control={form.control}
+                                            name="welcomeDelay"
+                                            render={({ field, fieldState }) => (
+                                                <FormItem>
+                                                    <FormLabel>{t("delay_seconds")}</FormLabel>
+                                                    <FormControl>
+                                                        <div className="flex items-center gap-4">
+                                                            <Input
+                                                                {...field}
+                                                                type="number"
+                                                                min="0"
+                                                                max="60"
+                                                                className="w-24"
+                                                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                                            />
+                                                            <span className="text-sm text-muted-foreground">
+                                                                {t("delay_desc")}
+                                                            </span>
+                                                        </div>
+                                                    </FormControl>
+                                                    {fieldState.error && (
+                                                        <FormMessage>{fieldState.error.message}</FormMessage>
+                                                    )}
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 )}
                             </CardContent>
@@ -485,21 +454,34 @@ export default function WidgetSetupPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="auto-close">{t("close_inactivity")}</Label>
-                                    <div className="flex items-center gap-4">
-                                        <Input
-                                            id="auto-close"
-                                            type="number"
-                                            min="0"
-                                            max="1440"
-                                            value={autoCloseMinutes}
-                                            onChange={(e) => dispatch({ type: "SET_AUTO_CLOSE", payload: Number(e.target.value) })}
-                                            className="w-24"
-                                        />
-                                        <span className="text-sm text-muted-foreground">
-                                            {t("disable_auto_close_desc")}
-                                        </span>
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="autoCloseMinutes"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel htmlFor="auto-close">{t("close_inactivity")}</FormLabel>
+                                                <FormControl>
+                                                    <div className="flex items-center gap-4">
+                                                        <Input
+                                                            {...field}
+                                                            id="auto-close"
+                                                            type="number"
+                                                            min="0"
+                                                            max="1440"
+                                                            className="w-24"
+                                                            onChange={(e) => field.onChange(Number(e.target.value))}
+                                                        />
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {t("disable_auto_close_desc")}
+                                                        </span>
+                                                    </div>
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -514,35 +496,71 @@ export default function WidgetSetupPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="t-header">{t("header_title")}</Label>
-                                    <Input
-                                        id="t-header"
-                                        value={translations.headerTitle}
-                                        onChange={(e) => updateTranslation('headerTitle', e.target.value)}
+                                    <FormField
+                                        control={form.control}
+                                        name="translations.headerTitle"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel htmlFor="t-header">{t("header_title")}</FormLabel>
+                                                <FormControl>
+                                                    <Input id="t-header" {...field} />
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="t-welcome">{t("welcome_message")}</Label>
-                                    <Input
-                                        id="t-welcome"
-                                        value={translations.welcomeMessage}
-                                        onChange={(e) => updateTranslation('welcomeMessage', e.target.value)}
+                                    <FormField
+                                        control={form.control}
+                                        name="translations.welcomeMessage"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel htmlFor="t-welcome">{t("welcome_message")}</FormLabel>
+                                                <FormControl>
+                                                    <Input id="t-welcome" {...field} />
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="t-pretitle">{t("pre_chat_title")}</Label>
-                                    <Input
-                                        id="t-pretitle"
-                                        value={translations.preChatTitle}
-                                        onChange={(e) => updateTranslation('preChatTitle', e.target.value)}
+                                    <FormField
+                                        control={form.control}
+                                        name="translations.preChatTitle"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel htmlFor="t-pretitle">{t("pre_chat_title")}</FormLabel>
+                                                <FormControl>
+                                                    <Input id="t-pretitle" {...field} />
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="t-presub">{t("pre_chat_subtitle")}</Label>
-                                    <Input
-                                        id="t-presub"
-                                        value={translations.preChatSubtitle}
-                                        onChange={(e) => updateTranslation('preChatSubtitle', e.target.value)}
+                                    <FormField
+                                        control={form.control}
+                                        name="translations.preChatSubtitle"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel htmlFor="t-presub">{t("pre_chat_subtitle")}</FormLabel>
+                                                <FormControl>
+                                                    <Input id="t-presub" {...field} />
+                                                </FormControl>
+                                                {fieldState.error && (
+                                                    <FormMessage>{fieldState.error.message}</FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
                             </CardContent>
@@ -561,7 +579,7 @@ export default function WidgetSetupPage() {
                             <CardContent className="space-y-4">
                                 <div className="max-w-[300px]">
                                     <Label className="mb-2 block">{t("platform_label")}</Label>
-                                    <Select value={selectedPlatform} onValueChange={(v) => dispatch({ type: "SET_SELECTED_PLATFORM", payload: v })}>
+                                    <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder={t("select_platform_placeholder")} />
                                         </SelectTrigger>
@@ -601,11 +619,12 @@ export default function WidgetSetupPage() {
                 </Tabs>
 
                 <div className="pt-4 flex gap-4">
-                    <Button onClick={handleSave} disabled={loading} className="flex-1 md:flex-none">
+                    <Button type="submit" disabled={loading} className="flex-1 md:flex-none">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {t("save_config")}
                     </Button>
                     <Button
+                        type="button"
                         variant="outline"
                         onClick={() => window.open(`/test-widget?projectId=${activeProject?._id}`, '_blank')}
                         className="flex-1 md:flex-none"
@@ -638,7 +657,7 @@ export default function WidgetSetupPage() {
                                 title="Widget Live Preview"
                             />
                             {/* Mock Launcher Button */}
-                            <div 
+                            <div
                                 className="absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer"
                                 style={{ backgroundColor: primaryColor }}
                             >
@@ -651,6 +670,7 @@ export default function WidgetSetupPage() {
                     </Card>
 
                     <Button
+                        type="button"
                         variant="ghost"
                         size="sm"
                         className="text-muted-foreground hover:text-foreground text-xs gap-2"
@@ -659,12 +679,12 @@ export default function WidgetSetupPage() {
                                 const win = iframeRef.current?.contentWindow
                                 if (win) {
                                     win.localStorage.removeItem("yoosr_visitor_id")
-                                    dispatch({ type: "INC_IFRAME_KEY" })
+                                    setIframeKey(prev => prev + 1)
                                     toast.success(t("session_reset"))
                                 }
                             } catch {
                                 localStorage.removeItem("yoosr_visitor_id")
-                                dispatch({ type: "INC_IFRAME_KEY" })
+                                setIframeKey(prev => prev + 1)
                                 toast.success(t("session_reset_global"))
                             }
                         }}
@@ -675,5 +695,7 @@ export default function WidgetSetupPage() {
                 </div>
             </div>
         </div>
+        </form>
+        </FormProvider>
     )
 }
