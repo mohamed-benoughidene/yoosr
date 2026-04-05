@@ -9,7 +9,7 @@ import OpenAI from "openai";
 function getClient(customApiKey?: string): OpenAI {
     const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-        throw new Error("Missing OPENROUTER_API_KEY environment variable");
+        throw new Error("Missing OPENROUTER_API_KEY environment variable. Set it in your Convex deployment.");
     }
     return new OpenAI({
         baseURL: "https://openrouter.ai/api/v1",

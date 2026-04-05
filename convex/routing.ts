@@ -14,7 +14,7 @@ export const routeConversation = internalMutation({
     },
     handler: async (ctx, args) => {
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw new Error("Conversation not found in routing");
 
         // Do not route if conversation is already resolved (1000)
         if (conversation.status === 1000) return;
@@ -71,7 +71,7 @@ export const routeConversation = internalMutation({
 
         // 2. No Bot -> Check for Available Human Agents (Second Priority)
         const project = await ctx.db.get(args.projectId);
-        if (!project) throw new Error("Project not found");
+        if (!project) throw new Error("Project not found in routing");
 
         let availableAgents = await ctx.db
             .query("profiles")

@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { requireAdmin } from "./utils";
+import { authError, notFoundError, forbiddenError, userError } from "./errors";
 
 // ========================
 // DEPARTMENTS
@@ -55,7 +56,7 @@ export const createDepartment = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const id = await ctx.db.insert("departments", args);
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: args.projectId,
@@ -82,11 +83,11 @@ export const updateDepartment = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const { id, ...updates } = args;
 
         const department = await ctx.db.get(id);
-        if (!department) throw new Error("Department not found");
+        if (!department) throw notFoundError("Department");
 
         const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
@@ -109,11 +110,11 @@ export const removeDepartment = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const department = await ctx.db.get(args.id);
-        if (!department) throw new Error("Department not found");
-        if (department.isDefault) throw new ConvexError("Cannot delete the default department");
+        if (!department) throw notFoundError("Department");
+        if (department.isDefault) throw userError("Cannot delete the default department");
 
         await ctx.db.delete(args.id);
 
@@ -136,17 +137,17 @@ export const addMemberToDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated or missing org_id");
+        if (!identity) throw authError();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
         const orgId = (identity as unknown as { org_id: string }).org_id;
-        if (!orgId) throw new Error("Not authenticated or missing org_id");
+        if (!orgId) throw authError();
 
         const department = await ctx.db.get(args.departmentId);
-        if (!department) throw new Error("Department not found");
+        if (!department) throw notFoundError("Department");
 
         const project = await ctx.db.get(department.projectId);
         if (!project || project.orgId !== orgId) {
-            throw new Error("Unauthorized to modify this department");
+            throw forbiddenError();
         }
 
         const memberIds = department.memberIds ?? [];
@@ -175,16 +176,16 @@ export const removeMemberFromDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated or missing org_id");
+        if (!identity) throw authError();
         const orgId = (identity as unknown as { org_id: string }).org_id;
-        if (!orgId) throw new Error("Not authenticated or missing org_id");
+        if (!orgId) throw authError();
 
         const department = await ctx.db.get(args.departmentId);
-        if (!department) throw new Error("Department not found");
+        if (!department) throw notFoundError("Department");
 
         const project = await ctx.db.get(department.projectId);
         if (!project || project.orgId !== orgId) {
-            throw new Error("Unauthorized to modify this department");
+            throw forbiddenError();
         }
 
         const memberIds = department.memberIds ?? [];
@@ -231,7 +232,7 @@ export const createCannedResponse = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const id = await ctx.db.insert("canned_responses", {
             ...args,
             createdBy: identity.subject,
@@ -260,7 +261,7 @@ export const updateCannedResponse = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const { id, ...updates } = args;
         const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
@@ -285,10 +286,10 @@ export const removeCannedResponse = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const cannedResponse = await ctx.db.get(args.id);
-        if (!cannedResponse) throw new Error("Canned response not found");
+        if (!cannedResponse) throw notFoundError("Canned response");
 
         await ctx.db.delete(args.id);
 
@@ -316,7 +317,7 @@ export const createLabel = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const id = await ctx.db.insert("labels", {
             ...args,
             createdBy: identity.subject,
@@ -345,7 +346,7 @@ export const updateLabel = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         const { id, ...updates } = args;
         const clean: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
@@ -371,10 +372,10 @@ export const removeLabel = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const label = await ctx.db.get(args.id);
-        if (!label) throw new Error("Label not found");
+        if (!label) throw notFoundError("Label");
 
         await ctx.db.delete(args.id);
 
@@ -431,7 +432,7 @@ export const upsertOperatingHours = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const existing = await ctx.db
             .query("operating_hours")

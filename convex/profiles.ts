@@ -1,6 +1,7 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { authError, forbiddenError, userError } from "./errors";
 
 // Get the current user's profile
 export const getMe = query({
@@ -22,7 +23,7 @@ export const getByUserId = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-            throw new Error("Unauthenticated");
+            throw authError();
         }
 
         const profile = await ctx.db
@@ -35,7 +36,7 @@ export const getByUserId = query({
         }
 
         if (profile.orgId !== (identity as unknown as { org_id: string }).org_id) {
-            throw new Error("Unauthorized");
+            throw forbiddenError();
         }
 
         return profile;
@@ -47,12 +48,12 @@ export const list = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-            throw new Error("Unauthenticated");
+            throw authError();
         }
 
         const orgId = (identity as unknown as { org_id: string }).org_id;
         if (!orgId) {
-            throw new Error("No organization context");
+            throw userError("No organization context");
         }
 
         return await ctx.db

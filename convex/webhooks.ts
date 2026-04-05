@@ -2,6 +2,7 @@ import { internalAction, internalQuery, internalMutation, query, mutation } from
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { requireAdmin } from "./utils";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 /**
  * Action triggered to fetch outbound URLs and fire POST requests
@@ -212,7 +213,7 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Unauthorized");
+        if (!identity) throw authError();
 
         const bytes = new Uint8Array(32);
         crypto.getRandomValues(bytes);
@@ -240,7 +241,7 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new Error("Unauthorized");
+        if (!identity) throw authError();
 
         await ctx.db.patch(args.id, { isActive: args.isActive });
     }
@@ -251,14 +252,14 @@ export const remove = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as { org_id: string; org_role?: string } | null;
         requireAdmin(identity);
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const subscription = await ctx.db.get(args.id);
-        if (!subscription) throw new Error("Webhook subscription not found");
+        if (!subscription) throw notFoundError("Webhook subscription");
 
         const project = await ctx.db.get(subscription.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new ConvexError("Unauthorized");
+            throw forbiddenError();
         }
 
         await ctx.db.delete(args.id);
@@ -273,7 +274,7 @@ export const backfillWebhookSecrets = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        if (!identity) throw new ConvexError("Unauthorized");
+        if (!identity) throw authError();
 
         // Scope to the caller's project only
         const subscriptions = await ctx.db

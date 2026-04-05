@@ -2,6 +2,7 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, checkProjectOwnership } from "./utils";
+import { authError, notFoundError } from "./errors";
 
 // List bots for a project
 export const list = query({
@@ -45,7 +46,7 @@ export const create = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_id: string; org_role?: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const botId = await ctx.db.insert("bots", {
             projectId: args.projectId,
@@ -82,10 +83,10 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_id: string; org_role?: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const bot = await ctx.db.get(args.id);
-        if (!bot) throw new Error("Bot not found");
+        if (!bot) throw notFoundError("Bot");
 
         const { ...updates } = args;
         const cleanUpdates: Record<string, unknown> = {};
@@ -151,10 +152,10 @@ export const remove = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         requireAdmin(identity as unknown as { org_id: string; org_role?: string });
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const bot = await ctx.db.get(args.id);
-        if (!bot) throw new Error("Bot not found");
+        if (!bot) throw notFoundError("Bot");
 
         await ctx.db.patch(args.id, { status: "deleting" });
 

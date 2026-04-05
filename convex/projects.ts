@@ -2,14 +2,8 @@ import { query, mutation, internalQuery, internalMutation } from "./_generated/s
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin } from "./utils";
-
-// Extend the Identity type to include custom claims from Clerk
-type ClerkIdentity = {
-    subject: string;
-    org_id?: string;
-    org_role?: string;
-    [key: string]: unknown;
-};
+import { ClerkIdentity } from "./types";
+import { authError, notFoundError } from "./errors";
 
 // Internal: get project for widget (no auth required)
 export const getPublic = internalQuery({
@@ -156,7 +150,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-        if (!identity || !identity.org_id) throw new Error("Not authenticated or no active organization");
+        if (!identity || !identity.org_id) throw authError();
 
         const projectId = await ctx.db.insert("projects", {
             name: args.name,
@@ -183,11 +177,11 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         requireAdmin(identity);
-        if (!identity || !identity.org_id) throw new Error("Not authenticated");
+        if (!identity || !identity.org_id) throw authError();
 
         const project = await ctx.db.get(args.id);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw notFoundError("Project");
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -208,7 +202,7 @@ export const remove = internalMutation({
     args: { id: v.id("projects") },
     handler: async (ctx, args) => {
         const project = await ctx.db.get(args.id);
-        if (!project) throw new Error("Project not found");
+        if (!project) throw notFoundError("Project");
 
         await ctx.db.patch(args.id, { status: "deleting" });
 
@@ -328,7 +322,7 @@ export const updateWidgetLocale = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+        if (!identity) throw authError();
         await ctx.db.patch(args.projectId, { widgetLocale: args.locale });
     },
 });
@@ -339,7 +333,7 @@ export const clearWidgetLocale = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+        if (!identity) throw authError();
         await ctx.db.patch(args.projectId, { widgetLocale: undefined });
     },
 });

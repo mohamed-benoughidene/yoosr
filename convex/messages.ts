@@ -1,8 +1,9 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { assertProjectOwnership } from "./utils";
+import { authError, notFoundError } from "./errors";
 
 // List messages for a conversation (real-time by default!)
 export const list = query({
@@ -51,11 +52,11 @@ export const send = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new ConvexError("Not authenticated");
+        if (!identity) throw authError();
 
         // Get the conversation to find the projectId
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new ConvexError("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         // Verify caller has access to the conversation's project
         await assertProjectOwnership(ctx, conversation.projectId, identity as { org_id?: string });
@@ -125,7 +126,7 @@ export const sendFromWidget = internalMutation({
         let conversationId = args.conversationId;
         const conversation = await ctx.db.get(conversationId);
 
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         // If conversation is resolved, create a new one
         if (conversation.status === 1000) {
@@ -220,7 +221,7 @@ export const getMessages = query({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const result = await ctx.db
             .query("messages")
@@ -256,10 +257,10 @@ export const sendMessage = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         const messageId = await ctx.db.insert("messages", {
             conversationId: args.conversationId,

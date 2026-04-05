@@ -4,6 +4,7 @@ import { v, ConvexError } from "convex/values";
 import { encryptSecret, decryptSecret } from "./lib/crypto";
 import { requireAdmin } from "./utils";
 import { requireEnv } from "./lib/env";
+import { authError, notFoundError, forbiddenError, userError } from "./errors";
 
 // List integrations for a project
 export const list = query({
@@ -29,7 +30,7 @@ export const upsert = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
 
         // Check if we already have this provider for this project
@@ -112,15 +113,15 @@ export const remove = mutation({
     args: { id: v.id("integrations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
 
         const integration = await ctx.db.get(args.id);
-        if (!integration) throw new Error("Integration not found");
+        if (!integration) throw notFoundError("Integration");
 
         const project = await ctx.db.get(integration.projectId);
         if (!project || project.orgId !== (identity as unknown as { org_id: string }).org_id) {
-            throw new ConvexError("Unauthorized");
+            throw forbiddenError();
         }
 
         await ctx.db.delete(args.id);
@@ -146,7 +147,7 @@ export const saveChannelIntegration = action({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
@@ -250,7 +251,7 @@ export const registerTelegramWebhook = action({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
@@ -274,7 +275,7 @@ export const registerTelegramWebhook = action({
         const result = await response.json();
 
         if (!response.ok || !result.ok) {
-            throw new Error(result.description || "Failed to set Telegram webhook");
+            throw userError(result.description || "Failed to set Telegram webhook");
         }
 
         // Store the encrypted webhook secret alongside the bot_token

@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { decryptSecret } from "./lib/crypto";
 import { requireEnv } from "./lib/env";
+import { authError, notFoundError, userError } from "./errors";
 
 const GRAPH_API_VERSION = "v24.0";
 
@@ -138,7 +139,7 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _id, ...updates } = args;
@@ -267,7 +268,7 @@ export const updateConversationStatus = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const updates: { status: 100 | 200 | 1000; updatedAt: number; botPaused?: boolean } = {
             status: args.status as 100 | 200 | 1000,
@@ -443,10 +444,10 @@ export const resolve = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         await ctx.db.patch(args.id, {
             status: 1000, // 1000: resolved
@@ -518,10 +519,10 @@ export const join = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         const participants = conversation.participants || [];
         if (!participants.includes(identity.subject)) {
@@ -575,10 +576,10 @@ export const leave = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         const participants = (conversation.participants || []).filter(
             (id) => id !== identity.subject
@@ -616,7 +617,7 @@ export const updateVisitorInfo = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const { id, ...updates } = args;
         const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
@@ -638,7 +639,7 @@ export const updateMetadataInternal = internalMutation({
     },
     handler: async (ctx, args) => {
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         const patch: Record<string, unknown> = {
             lastMessage: args.lastMessage,
@@ -659,7 +660,7 @@ export const markAsRead = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         await ctx.db.patch(args.id, {
             unreadCount: 0,
@@ -678,11 +679,11 @@ export const rate = internalMutation({
     handler: async (ctx, args) => {
         // Validation
         if (args.rating < 1 || args.rating > 5) {
-            throw new Error("Rating must be between 1 and 5");
+            throw userError("Rating must be between 1 and 5");
         }
 
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         await ctx.db.patch(args.id, {
             rating: args.rating,
@@ -700,13 +701,13 @@ export const transferToDepartment = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         const department = await ctx.db.get(args.departmentId);
-        if (!department) throw new Error("Department not found");
+        if (!department) throw notFoundError("Department");
 
         await ctx.db.patch(args.id, {
             assignedTo: undefined,
@@ -831,7 +832,7 @@ export const getConversations = query({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         let convos = await ctx.db
             .query("conversations")
@@ -1352,7 +1353,7 @@ export const relayToTelegram = mutation({
     },
     handler: async (ctx, args): Promise<void> => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+        if (!identity) throw authError();
 
         await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
             conversationId: args.conversationId,

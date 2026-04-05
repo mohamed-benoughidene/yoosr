@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { checkProjectOwnership } from "./utils";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 // Generic pagination wrapper to avoid implicit 'any'
 type PageResult<T> = { page: T[]; continueCursor: string | null; isDone: boolean };
@@ -433,7 +434,7 @@ export const getCSATComments = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-            throw new Error("Unauthenticated: identity required");
+            throw authError();
         }
 
         const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
@@ -540,10 +541,10 @@ export const getProjectUsageSummary = query({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const project = await checkProjectOwnership(ctx, args.projectId, identity as { org_id?: string });
-        if (!project) throw new Error("Unauthorized: Project does not belong to your organization");
+        if (!project) throw forbiddenError();
 
         // 1. Fetch project_usage record
         const usage = await ctx.db
@@ -718,7 +719,7 @@ export const submitCSAT = mutation({
     },
     handler: async (ctx, args) => {
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         // Clamp rating to 1-5
         const rating = Math.min(5, Math.max(1, Math.round(args.rating)));
@@ -824,18 +825,18 @@ export const dismissUnansweredQuery = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as { org_id?: string } | null;
         if (!identity || !identity.org_id) {
-            throw new Error("No active organization found in identity.");
+            throw authError();
         }
 
         const queryRow = await ctx.db.get(args.id);
         if (!queryRow) {
-            throw new Error("Unanswered query not found");
+            throw notFoundError("Unanswered query");
         }
 
         // Verify multi-tenancy: does the project this query belongs to match the user's org?
         const project = await ctx.db.get(queryRow.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Unauthorized: Unanswered query does not belong to your organization.");
+            throw forbiddenError();
         }
 
         await ctx.db.delete(args.id);

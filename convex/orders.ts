@@ -2,14 +2,8 @@ import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAdmin } from "./utils";
 import { paginationOptsValidator } from "convex/server";
-
-// Extend the Identity type to include custom claims from Clerk
-type ClerkIdentity = {
-    subject: string;
-    org_id?: string;
-    org_role?: string;
-    [key: string]: unknown;
-};
+import { ClerkIdentity } from "./types";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 export const createOrder = mutation({
     args: {
@@ -25,12 +19,12 @@ export const createOrder = mutation({
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         requireAdmin(identity);
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         const project = await ctx.db.get(args.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw forbiddenError();
         }
 
         const orderId = await ctx.db.insert("orders", {
@@ -55,12 +49,12 @@ export const listOrders = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         const project = await ctx.db.get(args.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw forbiddenError();
         }
 
         // Bounded to 500 — safe for most use cases. Use listOrdersPaginated for full pagination.
@@ -81,12 +75,12 @@ export const listOrdersPaginated = query({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         const project = await ctx.db.get(args.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw forbiddenError();
         }
 
         return await ctx.db
@@ -106,17 +100,17 @@ export const updateOrderStatus = mutation({
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         requireAdmin(identity);
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         const order = await ctx.db.get(args.orderId);
         if (!order) {
-            throw new Error("Order not found");
+            throw notFoundError("Order");
         }
 
         const project = await ctx.db.get(order.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw forbiddenError();
         }
 
         await ctx.db.patch(args.orderId, {
@@ -135,17 +129,17 @@ export const deleteOrder = mutation({
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         requireAdmin(identity);
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         const order = await ctx.db.get(args.orderId);
         if (!order) {
-            throw new Error("Order not found");
+            throw notFoundError("Order");
         }
 
         const project = await ctx.db.get(order.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new Error("Project not found");
+            throw forbiddenError();
         }
 
         await ctx.db.delete(args.orderId);
@@ -167,7 +161,7 @@ export const batchImportOrders = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
         if (!identity || !identity.org_id) {
-            throw new Error("Not authenticated or no active organization");
+            throw authError();
         }
 
         if (args.orders.length === 0 || args.orders.length > 500) {
@@ -180,7 +174,7 @@ export const batchImportOrders = mutation({
             .first();
 
         if (!project) {
-            throw new Error("Project not found");
+            throw notFoundError("Project");
         }
 
         const projectId = project._id;

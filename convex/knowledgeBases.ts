@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { paginationOptsValidator } from "convex/server";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 // List knowledge bases for a project
 export const list = query({
@@ -40,7 +41,7 @@ export const getOrCreateDefault = mutation({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const existing = await ctx.db
             .query("knowledge_bases")
@@ -70,7 +71,7 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         await assertProjectOwnership(ctx, args.projectId, identity as unknown as { org_id: string });
 
@@ -97,10 +98,10 @@ export const listSourcesPaginated = query({
     args: { kbId: v.id("knowledge_bases"), paginationOpts: paginationOptsValidator },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const kb = await ctx.db.get(args.kbId);
-        if (!kb) throw new Error("Knowledge base not found");
+        if (!kb) throw notFoundError("Knowledge base");
 
         await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
@@ -120,10 +121,10 @@ export const addSource = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const kb = await ctx.db.get(args.kbId);
-        if (!kb) throw new ConvexError("Knowledge base not found");
+        if (!kb) throw notFoundError("Knowledge base");
 
         await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
@@ -148,13 +149,13 @@ export const removeSource = mutation({
     args: { id: v.id("knowledge_base_sources") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const source = await ctx.db.get(args.id);
-        if (!source) throw new ConvexError("Source not found");
+        if (!source) throw notFoundError("Source");
 
         const kb = await ctx.db.get(source.kbId);
-        if (!kb) throw new ConvexError("Knowledge base not found");
+        if (!kb) throw notFoundError("Knowledge base");
 
         await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
@@ -167,7 +168,7 @@ export const generateKbUploadUrl = action({
     args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         return await ctx.storage.generateUploadUrl();
     },
@@ -178,14 +179,14 @@ export const remove = mutation({
     args: { kbId: v.id("knowledge_bases") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new ConvexError("Not authenticated");
+        if (!identity) throw authError();
 
         const kb = await ctx.db.get(args.kbId);
-        if (!kb) throw new ConvexError("Not found");
+        if (!kb) throw notFoundError("Knowledge base");
 
         const project = await ctx.db.get(kb.projectId);
         if (!project || project.orgId !== identity.org_id) {
-            throw new ConvexError("Unauthorized");
+            throw forbiddenError();
         }
 
         // Schedule the batched deletion job

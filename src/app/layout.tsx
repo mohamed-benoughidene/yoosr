@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import "@/lib/env"; // Validates required env vars at startup (side-effect import)
 
 const inter = Inter({
   variable: "--font-inter",

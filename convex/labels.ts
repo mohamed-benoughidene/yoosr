@@ -1,11 +1,12 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { authError } from "./errors";
 
 export const listLabels = query({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         return await ctx.db
             .query("labels")

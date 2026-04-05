@@ -1,7 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
+import { authError, notFoundError, forbiddenError, userError } from "./errors";
 
 // List contacts for a project
 export const list = query({
@@ -52,7 +53,35 @@ export const create = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
+
+        await assertProjectOwnership(ctx, args.projectId, identity as unknown as { org_id: string });
+
+        // Dedup check: email
+        if (args.email) {
+            const existingEmail = await ctx.db
+                .query("contacts")
+                .withIndex("by_projectId_email", (q) =>
+                    q.eq("projectId", args.projectId).eq("email", args.email)
+                )
+                .first();
+            if (existingEmail) {
+                throw userError("A contact with this email already exists");
+            }
+        }
+
+        // Dedup check: phone
+        if (args.phone) {
+            const existingPhone = await ctx.db
+                .query("contacts")
+                .withIndex("by_projectId_phone", (q) =>
+                    q.eq("projectId", args.projectId).eq("phone", args.phone)
+                )
+                .first();
+            if (existingPhone) {
+                throw userError("A contact with this phone number already exists");
+            }
+        }
 
         const contactId = await ctx.db.insert("contacts", args);
 
@@ -80,12 +109,38 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const contact = await ctx.db.get(args.id);
-        if (!contact) throw new ConvexError("Contact not found");
+        if (!contact) throw notFoundError("Contact");
 
         await assertProjectOwnership(ctx, contact.projectId, identity as unknown as { org_id: string });
+
+        // Dedup check: email (exclude current contact)
+        if (args.email !== undefined && args.email !== contact.email) {
+            const existingEmail = await ctx.db
+                .query("contacts")
+                .withIndex("by_projectId_email", (q) =>
+                    q.eq("projectId", contact.projectId).eq("email", args.email)
+                )
+                .first();
+            if (existingEmail) {
+                throw userError("A contact with this email already exists");
+            }
+        }
+
+        // Dedup check: phone (exclude current contact)
+        if (args.phone !== undefined && args.phone !== contact.phone) {
+            const existingPhone = await ctx.db
+                .query("contacts")
+                .withIndex("by_projectId_phone", (q) =>
+                    q.eq("projectId", contact.projectId).eq("phone", args.phone)
+                )
+                .first();
+            if (existingPhone) {
+                throw userError("A contact with this phone number already exists");
+            }
+        }
 
         const { id, ...updates } = args;
         const cleanUpdates: Record<string, unknown> = {};
@@ -102,16 +157,16 @@ export const remove = mutation({
     args: { id: v.id("contacts") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const contact = await ctx.db.get(args.id);
-        if (!contact) throw new Error("Contact not found");
+        if (!contact) throw notFoundError("Contact");
 
         // Block deletion if the contact is linked to an active (non-resolved) conversation
         if (contact.conversationId) {
             const conversation = await ctx.db.get(contact.conversationId);
             if (conversation && conversation.status !== 1000) {
-                throw new ConvexError("Cannot delete a contact with active conversations");
+                throw userError("Cannot delete a contact with active conversations");
             }
         }
 
@@ -135,14 +190,14 @@ export const batchImport = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         if (args.contacts.length === 0 || args.contacts.length > 500) {
-            throw new ConvexError("Array must contain between 1 and 500 contacts");
+            throw userError("Array must contain between 1 and 500 contacts");
         }
 
         const orgId = (identity as unknown as { org_id: string }).org_id;
-        if (!orgId) throw new Error("No organization ID found in identity");
+        if (!orgId) throw authError();
 
         const project = await ctx.db
             .query("projects")
@@ -150,7 +205,7 @@ export const batchImport = mutation({
             .first();
 
         if (!project) {
-            throw new Error("Project not found");
+            throw notFoundError("Project");
         }
 
         const projectId = project._id;
@@ -161,11 +216,27 @@ export const batchImport = mutation({
             if (contact.email) {
                 const existing = await ctx.db
                     .query("contacts")
-                    .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
-                    .filter((q) => q.eq(q.field("email"), contact.email))
+                    .withIndex("by_projectId_email", (q) =>
+                        q.eq("projectId", projectId).eq("email", contact.email)
+                    )
                     .first();
 
                 if (existing) {
+                    skipped++;
+                    continue;
+                }
+            }
+
+            // Phone dedup check
+            if (contact.phone) {
+                const existingPhone = await ctx.db
+                    .query("contacts")
+                    .withIndex("by_projectId_phone", (q) =>
+                        q.eq("projectId", projectId).eq("phone", contact.phone)
+                    )
+                    .first();
+
+                if (existingPhone) {
                     skipped++;
                     continue;
                 }

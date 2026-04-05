@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v, ConvexError } from "convex/values";
 import { callAITask } from "./openrouter";
 import { assertProjectOwnership } from "./utils";
+import { authError, notFoundError } from "./errors";
 
 /**
  * Scheduled action to extract Generative AI tags from closed conversations
@@ -130,10 +131,10 @@ export const assignTagToConversation = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new ConvexError("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new ConvexError("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         await assertProjectOwnership(ctx, conversation.projectId, identity as unknown as { org_id: string });
 
@@ -166,10 +167,10 @@ export const removeTagFromConversation = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new ConvexError("Not authenticated");
+        if (!identity) throw authError();
 
         const conversation = await ctx.db.get(args.conversationId);
-        if (!conversation) throw new ConvexError("Conversation not found");
+        if (!conversation) throw notFoundError("Conversation");
 
         await assertProjectOwnership(ctx, conversation.projectId, identity as unknown as { org_id: string });
 

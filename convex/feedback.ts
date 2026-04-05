@@ -1,12 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-
-type ClerkIdentity = {
-  subject: string;
-  org_id?: string;
-  org_role?: string;
-  [key: string]: unknown;
-};
+import { ClerkIdentity } from "./types";
+import { authError } from "./errors";
 
 export const submitFeedback = mutation({
   args: {
@@ -18,12 +13,12 @@ export const submitFeedback = mutation({
   handler: async (ctx, args) => {
     const identity = (await ctx.auth.getUserIdentity()) as ClerkIdentity | null;
     if (!identity) {
-      throw new Error("Unauthorized");
+      throw authError();
     }
 
     const orgId = identity.org_id;
     if (!orgId) {
-      throw new Error("No org");
+      throw authError();
     }
 
     const submittedBy = identity.subject;

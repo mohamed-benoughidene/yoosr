@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 export const createNotification = internalMutation({
     args: {
@@ -45,7 +46,7 @@ export const listForCurrentUser = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
-            throw new Error("Unauthenticated call");
+            throw authError();
         }
 
         const orgId = identity.org_id;
@@ -115,13 +116,13 @@ export const markAsRead = mutation({
     args: { notificationId: v.id("notifications") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated call");
+        if (!identity) throw authError();
 
         const notification = await ctx.db.get(args.notificationId);
-        if (!notification) throw new Error("Notification not found");
+        if (!notification) throw notFoundError("Notification");
 
         if (notification.recipientId !== identity.subject) {
-            throw new Error("Not authorized");
+            throw forbiddenError();
         }
 
         await ctx.db.patch(args.notificationId, { read: true });
@@ -132,7 +133,7 @@ export const markAllRead = mutation({
     args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated call");
+        if (!identity) throw authError();
 
         const orgId = identity.org_id;
         const userId = identity.subject;
@@ -166,7 +167,7 @@ export const clearAll = mutation({
     args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated call");
+        if (!identity) throw authError();
 
         const orgId = identity.org_id;
         const userId = identity.subject;

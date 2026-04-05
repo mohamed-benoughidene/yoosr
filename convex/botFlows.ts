@@ -1,14 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
-
-// Extend the Identity type to include custom claims from Clerk
-type ClerkIdentity = {
-    subject: string;
-    org_id?: string;
-    org_role?: string;
-    [key: string]: unknown;
-};
+import { ClerkIdentity } from "./types";
+import { authError, notFoundError, forbiddenError } from "./errors";
 
 // Types for bot flow nodes and edges
 interface FlowNodeData {
@@ -269,14 +263,14 @@ export const save = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-        if (!identity) throw new Error("Not authenticated");
+        if (!identity) throw authError();
 
         const bot = await ctx.db.get(args.botId);
-        if (!bot) throw new Error("Not found");
+        if (!bot) throw notFoundError("Bot");
 
         const project = await ctx.db.get(bot.projectId);
-        if (!project) throw new Error("Not found");
-        if (project.orgId !== identity.org_id) throw new Error("Unauthorized");
+        if (!project) throw notFoundError("Project");
+        if (project.orgId !== identity.org_id) throw forbiddenError();
 
         const executionNodes = compileToExecutionNodes(args.nodes, args.edges);
 

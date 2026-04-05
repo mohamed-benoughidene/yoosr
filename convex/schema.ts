@@ -290,7 +290,8 @@ export default defineSchema({
     })
         .index("by_projectId", ["projectId"])
         .index("by_conversationId", ["conversationId"])
-        .index("by_projectId_email", ["projectId", "email"]),
+        .index("by_projectId_email", ["projectId", "email"])
+        .index("by_projectId_phone", ["projectId", "phone"]),
 
     // Knowledge base document chunks + embeddings
     knowledge_base_chunks: defineTable({

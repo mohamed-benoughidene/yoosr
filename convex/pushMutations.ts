@@ -1,5 +1,6 @@
 import { internalQuery, internalMutation, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { authError } from "./errors";
 
 // Internal queries required by actions to fetch subscriptions
 
@@ -75,7 +76,7 @@ export const registerPushSubscription = mutation({
   args: { subscription: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw authError();
     await ctx.db
       .query("push_subscriptions")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
