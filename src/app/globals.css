@@ -154,6 +154,31 @@
 }
 
 @theme inline {
+  /* ============================================================
+   * DESIGN TOKENS
+   *
+   * App components → use shadcn tokens (--background, --primary, etc.)
+   * Landing pages → use --lp-* tokens (mapped below to @theme inline)
+   *
+   * All --lp-* tokens are mapped to shadcn equivalents above,
+   * ensuring consistent theming across light/dark modes.
+   * ============================================================ */
+  
+  /* Landing page tokens → mapped to shadcn semantic equivalents */
+  --color-lp-bg: var(--background);
+  --color-lp-surface: var(--card);
+  --color-lp-surface-2: var(--muted);
+  --color-lp-border: var(--border);
+  --color-lp-text: var(--foreground);
+  --color-lp-text-secondary: var(--muted-foreground);
+  --color-lp-text-muted: var(--muted-foreground);
+  
+  /* Brand colors — map to shadcn semantic tokens */
+  --color-lp-gold: var(--warning);
+  --color-lp-gold-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+  --color-lp-violet: var(--primary);
+  --color-lp-violet-glow: color-mix(in srgb, var(--primary) 12%, transparent);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
