@@ -1,5 +1,5 @@
 import { query, mutation, action, internalMutation } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { paginationOptsValidator } from "convex/server";

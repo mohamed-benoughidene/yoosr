@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2 } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
 
@@ -32,8 +33,8 @@ export function KbCreateDialog({ open, onOpenChange }: KbCreateDialogProps) {
                 localStore.setQuery(api.knowledgeBases.list, { projectId: args.projectId }, [
                     ...existing,
                     {
-                        _id: `temp_${Date.now()}` as any,
-                        _creationTime: Date.now(),
+                        _id: `temp_${Math.random().toString(36).slice(2)}` as Id<"knowledge_bases">,
+                        _creationTime: 0,
                         projectId: args.projectId,
                         name: args.name,
                         description: args.description,

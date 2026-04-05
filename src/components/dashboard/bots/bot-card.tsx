@@ -2,17 +2,11 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Bot, Zap, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { Bot, Zap, Pencil, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { formatDistanceToNow } from "date-fns"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 export type BotStatus = "online" | "offline" | "learning"
 export type BotType = "chatbot" | "automation"

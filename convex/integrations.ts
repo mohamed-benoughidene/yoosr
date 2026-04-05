@@ -1,6 +1,6 @@
 import { query, mutation, internalMutation, internalQuery, action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { encryptSecret, decryptSecret } from "./lib/crypto";
 import { requireAdmin } from "./utils";
 import { requireEnv } from "./lib/env";

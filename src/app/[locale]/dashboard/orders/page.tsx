@@ -4,7 +4,7 @@ import { useState, useReducer } from "react"
 import { useTranslations } from "next-intl"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
-import { Id } from "../../../../../convex/_generated/dataModel"
+import { Id, Doc } from "../../../../../convex/_generated/dataModel"
 import { useProject } from "@/context/ProjectContext"
 import {
     Table,
@@ -96,7 +96,7 @@ export default function OrdersPage() {
                     localStore.setQuery(
                         api.orders.listOrders,
                         q.args,
-                        (q.value as any[]).map((o: any) =>
+                        (q.value as Doc<"orders">[]).map((o) =>
                             o._id === args.orderId ? { ...o, status: args.status } : o
                         )
                     );
@@ -112,7 +112,7 @@ export default function OrdersPage() {
                     localStore.setQuery(
                         api.orders.listOrders,
                         q.args,
-                        (q.value as any[]).filter((o: any) => o._id !== args.orderId)
+                        (q.value as Doc<"orders">[]).filter((o) => o._id !== args.orderId)
                     );
                 }
             }

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Loader2 } from "lucide-react"
 import { api } from "../../../../../../convex/_generated/api"
-import { Id } from "../../../../../../convex/_generated/dataModel"
+import { Id, Doc } from "../../../../../../convex/_generated/dataModel"
 import { toast } from "sonner"
 
 interface KbDeleteDialogProps {
@@ -37,7 +37,7 @@ export function KbDeleteDialog({ kbId, kbName, onOpenChange }: KbDeleteDialogPro
                     localStore.setQuery(
                         api.knowledgeBases.list,
                         q.args,
-                        (q.value as any[]).filter((kb: any) => kb._id !== args.kbId)
+                        (q.value as Doc<"knowledge_bases">[]).filter((kb) => kb._id !== args.kbId)
                     );
                 }
             }

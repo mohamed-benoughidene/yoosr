@@ -1,6 +1,6 @@
 import { internalAction, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { callAITask } from "./openrouter";
 import { assertProjectOwnership } from "./utils";
 import { authError, notFoundError } from "./errors";

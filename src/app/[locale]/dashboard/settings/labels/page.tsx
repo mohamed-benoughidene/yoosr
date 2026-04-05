@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
+import { Id, Doc } from "../../../../../../convex/_generated/dataModel"
 import { useUser } from "@clerk/nextjs"
 
 const colorOptions = [
@@ -40,6 +41,8 @@ const colorOptions = [
 function getColorConfig(color: string) {
     return colorOptions.find((c) => c.value === color) || colorOptions[4]
 }
+
+let nextTempId = 0;
 
 export default function LabelsPage() {
     const t = useTranslations("settings.labels")
@@ -58,11 +61,12 @@ export default function LabelsPage() {
         (localStore, args) => {
             const existing = localStore.getQuery(api.labels.listLabels, { projectId: args.projectId });
             if (existing) {
+                const id = `temp_${(nextTempId++).toString(36)}`;
                 localStore.setQuery(api.labels.listLabels, { projectId: args.projectId }, [
                     ...existing,
                     {
-                        _id: `temp_${Date.now()}` as any,
-                        _creationTime: Date.now(),
+                        _id: id as Id<"labels">,
+                        _creationTime: 0,
                         projectId: args.projectId,
                         name: args.name,
                         color: args.color,
@@ -80,7 +84,7 @@ export default function LabelsPage() {
                     localStore.setQuery(
                         api.labels.listLabels,
                         q.args,
-                        (q.value as any[]).filter((l) => l._id !== args.id)
+                        (q.value as Doc<"labels">[]).filter((l) => l._id !== args.id)
                     );
                 }
             }

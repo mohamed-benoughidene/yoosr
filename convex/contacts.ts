@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { v } from "convex/values";
-import { authError, notFoundError, forbiddenError, userError } from "./errors";
+import { authError, notFoundError, userError } from "./errors";
 
 // List contacts for a project
 export const list = query({

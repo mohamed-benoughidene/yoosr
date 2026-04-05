@@ -171,7 +171,7 @@ function BotEditor() {
                 }
             }, 1500);
         },
-        [botId, saveFlow, toast]
+        [botId, saveFlow]
     );
 
     // Manual save
@@ -196,7 +196,7 @@ function BotEditor() {
             setSaveState("error");
             toast.error("Failed to save bot flow");
         }
-    }, [botId, saveFlow, toast]);
+    }, [botId, saveFlow]);
 
     // Cleanup timeout on unmount
     useEffect(() => {

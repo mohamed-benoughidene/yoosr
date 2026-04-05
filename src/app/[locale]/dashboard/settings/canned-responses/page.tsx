@@ -57,8 +57,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
-import { Id } from "../../../../../../convex/_generated/dataModel"
+import { Id, Doc } from "../../../../../../convex/_generated/dataModel"
 import { useUser } from "@clerk/nextjs"
+
+let nextTempId = 0;
 
 
 export default function CannedResponsesPage() {
@@ -93,11 +95,12 @@ export default function CannedResponsesPage() {
         (localStore, args) => {
             const existing = localStore.getQuery(api.settings.listCannedResponses, { projectId: args.projectId });
             if (existing) {
+                const id = `temp_${(nextTempId++).toString(36)}`;
                 localStore.setQuery(api.settings.listCannedResponses, { projectId: args.projectId }, [
                     ...existing,
                     {
-                        _id: `temp_${Date.now()}` as any,
-                        _creationTime: Date.now(),
+                        _id: id as Id<"canned_responses">,
+                        _creationTime: 0,
                         projectId: args.projectId,
                         trigger: args.trigger,
                         message: args.message,
@@ -115,7 +118,7 @@ export default function CannedResponsesPage() {
                     localStore.setQuery(
                         api.settings.listCannedResponses,
                         q.args,
-                        (q.value as any[]).map((r: any) =>
+                        (q.value as Doc<"canned_responses">[]).map((r) =>
                             r._id === args.id
                                 ? { ...r, trigger: args.trigger ?? r.trigger, message: args.message ?? r.message }
                                 : r
@@ -133,7 +136,7 @@ export default function CannedResponsesPage() {
                     localStore.setQuery(
                         api.settings.listCannedResponses,
                         q.args,
-                        (q.value as any[]).filter((r: any) => r._id !== args.id)
+                        (q.value as Doc<"canned_responses">[]).filter((r) => r._id !== args.id)
                     );
                 }
             }

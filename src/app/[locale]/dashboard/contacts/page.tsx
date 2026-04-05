@@ -34,8 +34,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { useState, useReducer } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
+import { Id } from "../../../../../convex/_generated/dataModel"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
+
+let nextTempId = 0;
 
 interface ImportState {
     importOpen: boolean;
@@ -87,11 +90,12 @@ export default function ContactsPage() {
         (localStore, args) => {
             const existing = localStore.getQuery(api.contacts.list, { projectId: args.projectId });
             if (existing) {
+                const id = `temp_${(nextTempId++).toString(36)}`;
                 localStore.setQuery(api.contacts.list, { projectId: args.projectId }, [
                     ...existing,
                     {
-                        _id: `temp_${Date.now()}` as any,
-                        _creationTime: Date.now(),
+                        _id: id as Id<"contacts">,
+                        _creationTime: 0,
                         projectId: args.projectId,
                         name: args.name,
                         email: args.email,

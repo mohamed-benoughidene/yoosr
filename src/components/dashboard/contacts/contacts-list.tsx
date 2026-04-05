@@ -51,7 +51,7 @@ import {
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { useProject } from "@/context/ProjectContext"
-import { Id } from "../../../../convex/_generated/dataModel"
+import { Id, Doc } from "../../../../convex/_generated/dataModel"
 import { toast } from "sonner"
 import { EditContactDialog } from "./edit-contact-dialog"
 
@@ -82,7 +82,7 @@ export function ContactsList() {
                     localStore.setQuery(
                         api.contacts.list,
                         q.args,
-                        (q.value as any[]).filter((c: any) => c._id !== args.id)
+                        (q.value as Doc<"contacts">[]).filter((c) => c._id !== args.id)
                     );
                 }
             }

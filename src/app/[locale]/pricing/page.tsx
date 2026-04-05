@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 import { PricingTable } from "@/components/pricing/PricingTable"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-    const { locale } = await params;
+export async function generateMetadata(): Promise<Metadata> {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
     const ogUrl = `${baseUrl}/og/image?title=Pricing&description=Simple,%20transparent%20pricing%20for%20teams%20of%20all%20sizes`;
     return {

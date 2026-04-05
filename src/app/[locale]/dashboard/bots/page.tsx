@@ -36,7 +36,9 @@ import { CreateBotDialog } from "@/components/dashboard/bots/create-bot-dialog"
 import { useProject } from "@/context/ProjectContext"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
-import { Id } from "../../../../../convex/_generated/dataModel"
+import { Id, Doc } from "../../../../../convex/_generated/dataModel"
+
+let nextTempId = 0;
 
 export default function BotsPage() {
     const t = useTranslations("bots")
@@ -56,11 +58,12 @@ export default function BotsPage() {
         (localStore, args) => {
             const existing = localStore.getQuery(api.bots.list, { projectId: args.projectId });
             if (existing) {
+                const id = `temp_${(nextTempId++).toString(36)}`;
                 localStore.setQuery(api.bots.list, { projectId: args.projectId }, [
                     ...existing,
                     {
-                        _id: `temp_${Date.now()}` as any,
-                        _creationTime: Date.now(),
+                        _id: id as Id<"bots">,
+                        _creationTime: 0,
                         projectId: args.projectId,
                         name: args.name,
                         description: args.description,
@@ -78,7 +81,7 @@ export default function BotsPage() {
                     localStore.setQuery(
                         api.bots.list,
                         q.args,
-                        (q.value as any[]).map((b: any) =>
+                        (q.value as Doc<"bots">[]).map((b) =>
                             b._id === args.id
                                 ? { ...b, name: args.name ?? b.name, description: args.description ?? b.description }
                                 : b
@@ -96,7 +99,7 @@ export default function BotsPage() {
                     localStore.setQuery(
                         api.bots.list,
                         q.args,
-                        (q.value as any[]).filter((b: any) => b._id !== args.id)
+                        (q.value as Doc<"bots">[]).filter((b) => b._id !== args.id)
                     );
                 }
             }

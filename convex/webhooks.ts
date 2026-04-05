@@ -1,5 +1,5 @@
 import { internalAction, internalQuery, internalMutation, query, mutation } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { requireAdmin } from "./utils";
 import { authError, notFoundError, forbiddenError } from "./errors";
