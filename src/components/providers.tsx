@@ -5,6 +5,21 @@ import { ProjectProvider } from "@/context/ProjectContext"
 import { Toaster } from "sonner"
 import { DirectionProvider } from "@radix-ui/react-direction"
 import { useLocale } from "next-intl"
+import { useTheme } from "next-themes"
+
+function AppToaster({ dir }: { dir: "ltr" | "rtl" }) {
+    const { theme } = useTheme()
+    return (
+        <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            duration={10000}
+            theme={theme as "light" | "dark" | "system"}
+            dir={dir}
+        />
+    )
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const locale = useLocale()
@@ -15,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ConvexClientProvider>
                 <ProjectProvider>
                     {children}
-                    <Toaster position="top-right" richColors closeButton duration={10000} theme="light" dir={dir} />
+                    <AppToaster dir={dir} />
                 </ProjectProvider>
             </ConvexClientProvider>
         </DirectionProvider>

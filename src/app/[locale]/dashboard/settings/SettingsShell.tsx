@@ -7,6 +7,7 @@ import { useProject } from "@/context/ProjectContext"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { Loader2 } from "lucide-react"
 
 interface SettingsShellProps {
     children: React.ReactNode
@@ -24,8 +25,22 @@ export default function SettingsShell({ children }: SettingsShellProps) {
         }
     }, [isLoading, isAdmin, router])
 
-    if (isLoading) return null
-    if (!isAdmin) return null
+    // Show loading skeleton during auth check to prevent flash of protected content
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+    
+    if (!isAdmin) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">

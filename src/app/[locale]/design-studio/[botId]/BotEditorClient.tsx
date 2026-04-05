@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
+import { toast } from "sonner";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -166,10 +167,11 @@ function BotEditor() {
                 } catch (error) {
                     console.error("Save failed:", error);
                     setSaveState("error");
+                    toast.error("Failed to save bot flow");
                 }
             }, 1500);
         },
-        [botId, saveFlow]
+        [botId, saveFlow, toast]
     );
 
     // Manual save
@@ -192,8 +194,9 @@ function BotEditor() {
         } catch (error) {
             console.error("Save failed:", error);
             setSaveState("error");
+            toast.error("Failed to save bot flow");
         }
-    }, [botId, saveFlow]);
+    }, [botId, saveFlow, toast]);
 
     // Cleanup timeout on unmount
     useEffect(() => {

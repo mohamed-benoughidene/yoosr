@@ -7,8 +7,10 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Switch } from "@/components/ui/switch"
 import { SignedIn } from "@clerk/nextjs"
 import { NotificationBell } from "@/components/dashboard/NotificationBell"
+import { ProjectSwitcher } from "@/components/dashboard/ProjectSwitcher"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
+import { toast } from "sonner"
 
 const PAGE_LABELS: Record<string, string> = {
     "/dashboard": "Home",
@@ -46,6 +48,7 @@ export function SiteHeader() {
             await setAvailability({ isAvailable: val })
         } catch (error) {
             console.error("Failed to update availability:", error)
+            toast.error(t("availability_update_failed"))
         }
     }
 
@@ -60,6 +63,9 @@ export function SiteHeader() {
                 </span>
             </div>
             <div className="ms-auto flex items-center gap-3">
+                <SignedIn>
+                    <ProjectSwitcher />
+                </SignedIn>
                 <SignedIn>
                     <NotificationBell />
                 </SignedIn>

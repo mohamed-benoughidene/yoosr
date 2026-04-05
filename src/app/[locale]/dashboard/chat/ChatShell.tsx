@@ -1,17 +1,11 @@
 "use client"
 
-import {
-    ResizableHandle,
-    ResizablePanel,
-    ResizablePanelGroup,
-} from "@/components/ui/resizable"
 import { ConversationList } from "@/components/chat/ConversationList"
 import { ChatArea } from "@/components/chat/ChatArea"
 import { VisitorPanel } from "@/components/dashboard/shared/VisitorPanel"
-import { AppErrorBoundary } from "@/components/error-boundary"
+import { ThreePanelLayout } from "@/components/layout/ThreePanelLayout"
 import { Suspense, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Loader2 } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Id } from "../../../../../convex/_generated/dataModel"
 
@@ -40,7 +34,7 @@ function ChatLayoutContent({
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
 
     return (
-        <div className="h-[calc(100vh-64px)] w-full border rounded-lg bg-background overflow-hidden">
+        <div className="h-[calc(100vh-64px)] w-full">
             {/* Mobile View */}
             <div className="flex flex-col h-full lg:hidden">
                 {mobileView === "list" && (
@@ -68,40 +62,16 @@ function ChatLayoutContent({
                 )}
             </div>
 
-            {/* Desktop View */}
-            <div className="hidden lg:flex h-full w-full">
-                <AppErrorBoundary>
-                    <ResizablePanelGroup direction="horizontal" autoSaveId="dashboard-chat-layout">
-                        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                            <Suspense fallback={
-                                <div className="flex h-full items-center justify-center">
-                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                </div>
-                            }>
-                                <ConversationList />
-                            </Suspense>
-                        </ResizablePanel>
-
-                        <ResizableHandle />
-
-                        <ResizablePanel defaultSize={55} minSize={30}>
-                            {children}
-                        </ResizablePanel>
-
-                        <ResizableHandle />
-
-                        <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                            <Suspense fallback={
-                                <div className="flex h-full items-center justify-center">
-                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                </div>
-                            }>
-                                <VisitorPanelWrapper />
-                            </Suspense>
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
-                </AppErrorBoundary>
-            </div>
+            {/* Desktop View - using shared ThreePanelLayout */}
+            <ThreePanelLayout
+                autoSaveId="dashboard-chat-layout"
+                leftPanel={<ConversationList />}
+                mainPanel={children}
+                rightPanel={<VisitorPanelWrapper />}
+                leftPanelSize={{ default: 20, min: 15, max: 30 }}
+                mainPanelSize={{ default: 55, min: 30 }}
+                rightPanelSize={{ default: 25, min: 20, max: 40 }}
+            />
         </div>
     )
 }

@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import { Id } from "../../convex/_generated/dataModel"
 import { useOrganization } from "@clerk/nextjs"
+import { useProjectId } from "@/hooks/useProjectId"
 
 interface Project {
     _id: Id<"projects">
@@ -25,19 +26,25 @@ interface ProjectContextType {
     activeProject: Project | null
     isLoading: boolean
     createProject: (name: string, description?: string) => Promise<Id<"projects"> | null>
+    setProjectId: (id: Id<"projects">) => void
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
     const { isLoaded: isOrgLoaded } = useOrganization()
+    const { projectId: urlProjectId, setProjectId } = useProjectId()
 
     // Convex query — automatically reactive and scoped to current org by the backend
     const projectsResult = useQuery(api.projects.list)
     const projects = projectsResult ?? []
 
-    // The active project is logically the first one in the current org
-    const activeProject = projects.length > 0 ? projects[0] : null
+    // The active project is determined by URL param, or falls back to first one
+    const activeProject = projects.length > 0 
+        ? urlProjectId 
+            ? projects.find(p => p._id === urlProjectId) ?? projects[0]
+            : projects[0]
+        : null
 
     // We are loading if Clerk is still resolving org state or Convex hasn't returned projects
     const isLoading = !isOrgLoaded || projectsResult === undefined
@@ -61,6 +68,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
                 activeProject,
                 isLoading,
                 createProject,
+                setProjectId,
             }}
         >
             {children}

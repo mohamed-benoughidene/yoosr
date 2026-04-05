@@ -5,6 +5,7 @@ import { Bell, MessageSquare, UserCheck, Bot, CheckCircle, UserX } from "lucide-
 import { useRouter } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -29,6 +30,7 @@ export function NotificationBell() {
             await markAsRead({ notificationId: notifId })
         } catch (e) {
             console.error("Failed to mark as read:", e)
+            toast.error("Failed to mark notification as read")
         }
         setOpen(false)
         router.push(`/dashboard/monitor?conversation=${conversationId}`)
@@ -39,6 +41,7 @@ export function NotificationBell() {
             await markAllRead()
         } catch (e) {
             console.error("Failed to mark all as read:", e)
+            toast.error("Failed to mark all as read")
         }
     }
 
@@ -47,6 +50,7 @@ export function NotificationBell() {
             await clearAll()
         } catch (e) {
             console.error("Failed to clear notifications:", e)
+            toast.error("Failed to clear notifications")
         }
     }
 
