@@ -576,12 +576,13 @@ Issues: 65, 66, 67, 68 → **4/4 DONE** (all newly discovered)
 > 4. **#68 Dual design tokens** — Landing/app token inconsistency
 
 ### Phase 6: New MEDIUM — Code Quality & Ops
-Issues: 69, 70, 71, 72, 73 → **2/5 DONE** (#72 settings.ts split, #34 LLM retry)
+Issues: 69, 70, 71, 72, 73 → **3/5 DONE** (#72 settings.ts split, #34 LLM retry, #36 data TTL)
 
 | # | Issue | Status |
 |---|---|---|
 | 72 | Mixed concerns in `convex/settings.ts` | ✅ Fixed — split into `departments.ts`, `cannedResponses.ts`, `labels.ts`, `operatingHours.ts` |
 | 34 | No retry logic for LLM calls | ✅ Fixed — exponential backoff + jitter, skips 4xx errors, configurable via env |
+| 36 | No schema-level TTL or data expiration | ✅ Fixed — 7 cleanup cron jobs for append-only tables, staggered schedules, .take(1000) batching |
 
 ### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)
