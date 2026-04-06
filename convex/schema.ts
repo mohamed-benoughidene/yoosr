@@ -286,6 +286,7 @@ export default defineSchema({
         phone: v.optional(v.string()),
         address: v.optional(v.string()),
         note: v.optional(v.string()),
+        // Free-text tags — managed by user input. Max 20 tags, max 50 chars each (enforced in contacts.ts)
         tags: v.optional(v.array(v.string())),
         conversationId: v.optional(v.id("conversations")),
     })

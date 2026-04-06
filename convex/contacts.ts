@@ -58,6 +58,16 @@ export const create = mutation({
 
         await assertProjectOwnership(ctx, args.projectId, identity as unknown as { org_id: string });
 
+        // Validate tags: max 20 tags, max 50 chars each
+        if (args.tags) {
+            if (args.tags.length > 20) {
+                throw userError("Contacts can have at most 20 tags");
+            }
+            if (args.tags.some(t => t.length > 50)) {
+                throw userError("Each tag must be 50 characters or less");
+            }
+        }
+
         // Dedup check: email
         if (args.email) {
             const existingEmail = await ctx.db
@@ -116,6 +126,16 @@ export const update = mutation({
         if (!contact) throw notFoundError("Contact");
 
         await assertProjectOwnership(ctx, contact.projectId, identity as unknown as { org_id: string });
+
+        // Validate tags: max 20 tags, max 50 chars each
+        if (args.tags) {
+            if (args.tags.length > 20) {
+                throw userError("Contacts can have at most 20 tags");
+            }
+            if (args.tags.some(t => t.length > 50)) {
+                throw userError("Each tag must be 50 characters or less");
+            }
+        }
 
         // Dedup check: email (exclude current contact)
         if (args.email !== undefined && args.email !== contact.email) {
