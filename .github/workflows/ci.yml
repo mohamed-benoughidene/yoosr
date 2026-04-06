@@ -65,7 +65,7 @@ jobs:
 
       - name: Deploy Frontend to Vercel (Staging)
         run: |
-          bunx vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+          bunx vercel deploy --target development --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
