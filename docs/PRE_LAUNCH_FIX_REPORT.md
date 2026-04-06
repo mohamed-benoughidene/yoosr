@@ -588,6 +588,8 @@ Issues: 69, 70, 71, 72, 73 → **8/5 DONE** (#72, #34, #36, #35, #33, #38, #39, 
 | 38 | Conversation status magic numbers | ✅ Fixed — `CONVERSATION_STATUS` constants in `convex/types.ts` + `src/lib/constants.ts`, all 55+ occurrences replaced |
 | 39 | Embedding model undocumented | ✅ Fixed — `EMBEDDING_CONFIG` in `convex/lib/embeddings.ts`, configurable via env, schema documented |
 | 37 | Contact tags unstructured | ✅ Fixed — max 20 tags, max 50 chars each enforced in create/update mutations, schema documented |
+| 40 | No staging environment | ✅ Fixed — deploy-staging job in CI for develop branch, environment: staging protection |
+| ~~41~~ | ~~No deployment notifications~~ | ~~SKIPPED — team does not use Slack or webhook notifications~~ |
 
 ### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)
