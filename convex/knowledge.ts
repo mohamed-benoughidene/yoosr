@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { extractText } from "unpdf";
+import { EMBEDDING_CONFIG } from "./lib/embeddings";
 
 export const getChunkInternal = internalQuery({
     args: { id: v.id("knowledge_base_chunks") },
@@ -93,7 +94,7 @@ async function processAndStoreChunks(
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    model: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+                    model: EMBEDDING_CONFIG.model,
                     input: batch,
                 }),
             });
@@ -239,7 +240,7 @@ export const searchSimilarChunks = internalAction({
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    model: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+                    model: EMBEDDING_CONFIG.model,
                     input: args.query,
                 }),
             });

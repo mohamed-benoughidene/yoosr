@@ -300,6 +300,10 @@ export default defineSchema({
         projectId: v.id("projects"),
         text: v.string(),
         embedding: v.array(v.number()),
+        // Vector index for semantic search.
+        // Model: nvidia/llama-nemotron-embed-vl-1b-v2 (2048 dimensions)
+        // See EMBEDDING_CONFIG in convex/lib/embeddings.ts
+        // WARNING: If changing model, update dimensions and re-index all knowledge_base_chunks
     }).vectorIndex("by_embedding", {
         vectorField: "embedding",
         dimensions: 2048, // Dimensions for nvidia/llama-nemotron-embed-vl-1b-v2
