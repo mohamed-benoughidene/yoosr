@@ -43,7 +43,7 @@ jobs:
     needs: quality-gates
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
+    environment: "Preview – yoosr"
     timeout-minutes: 15
 
     steps:
