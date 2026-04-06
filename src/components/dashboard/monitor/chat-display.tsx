@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Conversation } from "./conversation-list"
 import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown, ChevronLeft, Info } from "lucide-react"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -373,25 +374,25 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
                                 onClick={() => joinConversation({ id: conversation.id as Id<"conversations"> })}
-                                disabled={isJoined || conversation.status === 1000}
+                                disabled={isJoined || conversation.status === CONVERSATION_STATUS.CLOSED}
                             >
                                 {t("menu_assign_me")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsTransferDialogOpen(true)}
-                                disabled={conversation.status === 1000}
+                                disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
                             >
                                 {t("menu_transfer_agent")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => setIsDepartmentTransferDialogOpen(true)}
-                                disabled={conversation.status === 1000}
+                                disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
                             >
                                 {t("menu_transfer_dept")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={handleClose}
-                                disabled={conversation.status === 1000}
+                                disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
                             >
                                 {t("menu_resolve")}
                             </DropdownMenuItem>
@@ -602,17 +603,17 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                         value={inputValue}
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
-                        disabled={conversation.status === 1000}
-                        placeholder={conversation.status === 1000 ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}
-                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", conversation.status === 1000 && "cursor-not-allowed opacity-50")}
+                        disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
+                        placeholder={conversation.status === CONVERSATION_STATUS.CLOSED ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}
+                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", conversation.status === CONVERSATION_STATUS.CLOSED && "cursor-not-allowed opacity-50")}
                     />
 
                     <div className="flex items-center justify-between p-2">
                         <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === 1000}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === CONVERSATION_STATUS.CLOSED}>
                                 <Paperclip className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === 1000}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === CONVERSATION_STATUS.CLOSED}>
                                 <Smile className="h-4 w-4" />
                             </Button>
                         </div>
@@ -621,7 +622,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                 <Button
                                     size="sm"
                                     onClick={handleSend}
-                                    disabled={!inputValue.trim() || conversation.status === 1000}
+                                    disabled={!inputValue.trim() || conversation.status === CONVERSATION_STATUS.CLOSED}
                                     className="gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
                                 >
                                     Save Note
@@ -632,7 +633,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     <Button
                                         size="sm"
                                         onClick={handleSendAsOpen}
-                                        disabled={!inputValue.trim() || conversation.status === 1000}
+                                        disabled={!inputValue.trim() || conversation.status === CONVERSATION_STATUS.CLOSED}
                                         className="gap-2 rounded-r-none border-r border-primary-foreground/20"
                                     >
                                         Send as Open
@@ -642,7 +643,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 size="sm"
-                                                disabled={!inputValue.trim() || conversation.status === 1000}
+                                                disabled={!inputValue.trim() || conversation.status === CONVERSATION_STATUS.CLOSED}
                                                 className="rounded-l-none px-2"
                                             >
                                                 <ChevronDown className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { CONVERSATION_STATUS } from "./types";
 
 export default defineSchema({
     // User profiles (synced from Clerk via webhook)
@@ -54,7 +55,7 @@ export default defineSchema({
         visitorId: v.optional(v.string()), // Clerk user ID (external reference, not a Convex doc)
         visitorName: v.optional(v.string()),
         assignedTo: v.optional(v.string()), // Clerk user ID of assigned agent (external reference)
-        status: v.optional(v.union(v.literal(100), v.literal(200), v.literal(1000))), // 100: unassigned, 200: assigned, 1000: closed
+        status: v.optional(v.union(v.literal(CONVERSATION_STATUS.UNASSIGNED), v.literal(CONVERSATION_STATUS.ASSIGNED), v.literal(CONVERSATION_STATUS.CLOSED))), // 100: unassigned, 200: assigned, 1000: closed
         lastMessage: v.optional(v.string()),
         resolvedBy: v.optional(v.string()), // Clerk user ID of who resolved it (external reference)
         visitorEmail: v.optional(v.string()),

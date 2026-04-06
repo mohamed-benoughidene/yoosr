@@ -2,6 +2,7 @@ import { internalMutation, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import { CONVERSATION_STATUS } from "./types";
 
 // The Smart Assignment Engine for Yoosr architecture
 export const routeConversation = internalMutation({
@@ -17,7 +18,7 @@ export const routeConversation = internalMutation({
         if (!conversation) throw new Error("Conversation not found in routing");
 
         // Do not route if conversation is already resolved (1000)
-        if (conversation.status === 1000) return;
+        if (conversation.status === CONVERSATION_STATUS.CLOSED) return;
 
         // 1. Check for AI Bot (Highest Priority)
         if (!args.skipBot) {

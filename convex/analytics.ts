@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { checkProjectOwnership } from "./utils";
+import { CONVERSATION_STATUS } from "./types";
 import { authError, notFoundError, forbiddenError } from "./errors";
 
 // Generic pagination wrapper to avoid implicit 'any'
@@ -58,9 +59,9 @@ export const getConversationStats = action({
                 if (args.to && c._creationTime > args.to) continue;
 
                 total++;
-                if (c.status === 100 || c.status === 200) {
+                if (c.status === CONVERSATION_STATUS.UNASSIGNED || c.status === CONVERSATION_STATUS.ASSIGNED) {
                     open++;
-                } else if (c.status === 1000) {
+                } else if (c.status === CONVERSATION_STATUS.CLOSED) {
                     closed++;
                 }
             }

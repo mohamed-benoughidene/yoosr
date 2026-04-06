@@ -25,3 +25,27 @@ export type ClerkIdentity = {
   org_role?: string;
   [key: string]: unknown;
 };
+
+// ============================================================
+// Conversation status codes
+// These match the values in the Convex schema (conversations.status)
+// ============================================================
+
+/**
+ * Conversation status codes used throughout the application.
+ * - UNASSIGNED (100): New conversation, no agent assigned
+ * - ASSIGNED (200): Conversation assigned to an agent
+ * - CLOSED (1000): Conversation resolved/closed
+ */
+export const CONVERSATION_STATUS = {
+    UNASSIGNED: 100,
+    ASSIGNED: 200,
+    CLOSED: 1000,
+} as const;
+
+export type ConversationStatus = typeof CONVERSATION_STATUS[keyof typeof CONVERSATION_STATUS];
+
+/** Type guard for status validation */
+export function isConversationStatus(value: unknown): value is ConversationStatus {
+    return Object.values(CONVERSATION_STATUS).includes(value as ConversationStatus);
+}

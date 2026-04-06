@@ -3,6 +3,7 @@ import { query, mutation, internalMutation, internalQuery, internalAction } from
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { CONVERSATION_STATUS } from "./types";
 import { decryptSecret } from "./lib/crypto";
 import { requireEnv } from "./lib/env";
 import { authError, notFoundError, userError } from "./errors";
@@ -207,7 +208,7 @@ export const update = mutation({
             }
 
             // Check for resolution
-            if (Number(args.status) === 1000 && conversation.status !== 1000) {
+            if (Number(args.status) === CONVERSATION_STATUS.CLOSED && conversation.status !== CONVERSATION_STATUS.CLOSED) {
                 // Wire conversation.closed webhook
                 await ctx.scheduler.runAfter(0, internal.webhooks.fireWebhookEvent, {
                     projectId: conversation.projectId,
@@ -435,7 +436,7 @@ export const findByVisitor = internalQuery({
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
             .take(500); // TODO: replace with paginated aggregation
 
-        return conversations.find((c) => c.visitorId === args.visitorId && (c.status === 100 || c.status === 200)) ?? null;
+        return conversations.find((c) => c.visitorId === args.visitorId && (c.status === CONVERSATION_STATUS.UNASSIGNED || c.status === CONVERSATION_STATUS.ASSIGNED)) ?? null;
     },
 });
 
@@ -647,8 +648,8 @@ export const updateMetadataInternal = internalMutation({
             unreadCount: args.unreadCount,
         };
 
-        if (args.setStatusUnassigned && conversation.status === 100) {
-            patch.status = 100;
+        if (args.setStatusUnassigned && conversation.status === CONVERSATION_STATUS.UNASSIGNED) {
+            patch.status = CONVERSATION_STATUS.UNASSIGNED;
         }
 
         await ctx.db.patch(args.id, patch);
@@ -751,7 +752,7 @@ export const autoCloseInactive = internalMutation({
         const now = Date.now();
 
         for (const conv of openConversations) {
-            if (conv.status === 1000) continue;
+            if (conv.status === CONVERSATION_STATUS.CLOSED) continue;
 
             // Get project config for auto-close timeout
             const project = await ctx.db.get(conv.projectId);

@@ -9,6 +9,7 @@ import { useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Paperclip, Loader2 } from "lucide-react"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
 
@@ -258,7 +259,7 @@ export default function WidgetChat() {
                 if (existing && existing._id) {
                     dispatch({ type: "SET_CONVERSATION_ID", payload: existing._id })
                     dispatch({ type: "SET_CONVERSATION_STATUS", payload: existing.status || 100 })
-                    if (existing.status === 1000 && !existing.rating) {
+                    if (existing.status === CONVERSATION_STATUS.CLOSED && !existing.rating) {
                         dispatch({ type: "SET_SHOW_RATING", payload: true })
                     }
                 } else {
@@ -320,7 +321,7 @@ export default function WidgetChat() {
                 const convo = await apiGet("/widget/conversations/get", { id: conversationId })
                 if (convo) {
                     dispatch({ type: "SET_CONVERSATION_STATUS", payload: convo.status })
-                    if (convo.status === 1000 && !convo.rating) {
+                    if (convo.status === CONVERSATION_STATUS.CLOSED && !convo.rating) {
                         dispatch({ type: "SET_SHOW_RATING", payload: true })
                     }
                 }
@@ -621,7 +622,7 @@ export default function WidgetChat() {
                                                     key={`btn-${btn.label}-${i}`}
                                                     onClick={() => handleSendText(btn.label)}
                                                     className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors text-center shadow-sm"
-                                                    disabled={loading || conversationStatus === 1000}
+                                                    disabled={loading || conversationStatus === CONVERSATION_STATUS.CLOSED}
                                                 >
                                                     {btn.label}
                                                 </button>
@@ -668,15 +669,15 @@ export default function WidgetChat() {
                 <input
                     type="text"
                     className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
-                    placeholder={conversationStatus === 1000 ? t("conversationResolved") : t("inputPlaceholder")}
+                    placeholder={conversationStatus === CONVERSATION_STATUS.CLOSED ? t("conversationResolved") : t("inputPlaceholder")}
                     value={input}
                     onChange={(e) => dispatch({ type: "SET_INPUT", payload: e.target.value })}
                     onKeyDown={handleKeyDown}
-                    disabled={loading || conversationStatus === 1000}
+                    disabled={loading || conversationStatus === CONVERSATION_STATUS.CLOSED}
                 />
                 <button
                     onClick={handleSend}
-                    disabled={loading || !input.trim() || conversationStatus === 1000 || isUploading}
+                    disabled={loading || !input.trim() || conversationStatus === CONVERSATION_STATUS.CLOSED || isUploading}
                     style={{ backgroundColor: widgetColor }}
                     className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >

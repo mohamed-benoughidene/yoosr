@@ -1,5 +1,6 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { CONVERSATION_STATUS } from "./types";
 
 export const seedDemoData = internalMutation({
   args: { projectId: v.id("projects") },
@@ -195,7 +196,7 @@ export const seedDemoData = internalMutation({
         lastMessage: def.lastMessage,
         departmentId: def.departmentId,
         updatedAt: now - Math.floor(Math.random() * 3600000),
-        unreadCount: def.status === 100 ? Math.floor(Math.random() * 5) + 1 : 0,
+        unreadCount: def.status === CONVERSATION_STATUS.UNASSIGNED ? Math.floor(Math.random() * 5) + 1 : 0,
       });
 
       await ctx.db.insert("contacts", {

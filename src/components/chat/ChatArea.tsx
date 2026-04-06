@@ -29,6 +29,7 @@ import { Id } from "../../../convex/_generated/dataModel"
 import { useUser, useOrganization } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { CannedResponsePicker } from "../dashboard/monitor/canned-response-picker"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 
 import { Suspense } from "react"
 import { useTranslations } from "next-intl"
@@ -335,7 +336,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
         )
     }
 
-    const isResolved = conversation?.status === 1000
+    const isResolved = conversation?.status === CONVERSATION_STATUS.CLOSED
 
     return (
         <div className="flex flex-col h-full bg-background overflow-hidden">

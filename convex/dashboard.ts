@@ -1,5 +1,6 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { CONVERSATION_STATUS } from "./types";
 
 export const getHomeStats = query({
     args: { projectId: v.id("projects") },
@@ -35,8 +36,8 @@ export const getHomeStats = query({
         const allConversations = [...unassignedConversations, ...assignedConversations];
 
         // Live Stats Row
-        const openConversations = allConversations.filter(c => c.status === 100 || c.status === 200);
-        const waitingConversations = allConversations.filter(c => c.status === 100);
+        const openConversations = allConversations.filter(c => c.status === CONVERSATION_STATUS.UNASSIGNED || c.status === CONVERSATION_STATUS.ASSIGNED);
+        const waitingConversations = allConversations.filter(c => c.status === CONVERSATION_STATUS.UNASSIGNED);
         const myAssigned = openConversations.filter(c => c.assignedTo === identity.subject);
 
         // Fetch online teammates — bounded query with "99+" sentinel
@@ -53,7 +54,7 @@ export const getHomeStats = query({
         // 3. Live Queue (60% width)
         // 5 most recent open or unassigned (100 or 200)
         const activeQueue = allConversations
-            .filter(c => c.status === 100 || c.status === 200)
+            .filter(c => c.status === CONVERSATION_STATUS.UNASSIGNED || c.status === CONVERSATION_STATUS.ASSIGNED)
             .sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0))
             .slice(0, 5);
 

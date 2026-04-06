@@ -1,8 +1,8 @@
 import { useReducer } from "react"
 import { useOrganization } from "@clerk/nextjs"
 
-
 import { cn } from "@/lib/utils"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -435,8 +435,8 @@ export function ConversationList({
                                 className="h-8 text-xs shrink-0"
                             >
                                 <SlidersHorizontal className="mr-2 h-3 w-3" />
-                                {activeStatus === 100 ? `${t("filter_status_header")}: ${t("filter_status_unassigned")}` :
-                                    activeStatus === 200 ? `${t("filter_status_header")}: ${t("filter_status_assigned")}` : t("filter_status_header")}
+                                {activeStatus === CONVERSATION_STATUS.UNASSIGNED ? `${t("filter_status_header")}: ${t("filter_status_unassigned")}` :
+                                    activeStatus === CONVERSATION_STATUS.ASSIGNED ? `${t("filter_status_header")}: ${t("filter_status_assigned")}` : t("filter_status_header")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[160px]" align="start">
@@ -445,16 +445,16 @@ export function ConversationList({
                             <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: null })} className="text-xs">
                                 {t("filter_status_all")}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 100 })} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: CONVERSATION_STATUS.UNASSIGNED })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
                                     <span>{t("filter_status_unassigned")}</span>
-                                    {activeStatus === 100 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                                    {activeStatus === CONVERSATION_STATUS.UNASSIGNED && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: 200 })} className="text-xs">
+                            <DropdownMenuItem onClick={() => dispatch({ type: "SET_STATUS", payload: CONVERSATION_STATUS.ASSIGNED })} className="text-xs">
                                 <div className="flex items-center justify-between w-full">
                                     <span>{t("filter_status_assigned")}</span>
-                                    {activeStatus === 200 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                                    {activeStatus === CONVERSATION_STATUS.ASSIGNED && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                                 </div>
                             </DropdownMenuItem>
                         </DropdownMenuContent>

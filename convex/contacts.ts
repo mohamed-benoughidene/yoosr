@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { v } from "convex/values";
 import { authError, notFoundError, userError } from "./errors";
+import { CONVERSATION_STATUS } from "./types";
 
 // List contacts for a project
 export const list = query({
@@ -165,7 +166,7 @@ export const remove = mutation({
         // Block deletion if the contact is linked to an active (non-resolved) conversation
         if (contact.conversationId) {
             const conversation = await ctx.db.get(contact.conversationId);
-            if (conversation && conversation.status !== 1000) {
+            if (conversation && conversation.status !== CONVERSATION_STATUS.CLOSED) {
                 throw userError("Cannot delete a contact with active conversations");
             }
         }

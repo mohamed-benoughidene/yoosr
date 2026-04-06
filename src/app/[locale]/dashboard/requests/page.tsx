@@ -18,6 +18,7 @@ import { Bot, Search, User, UserCheck, Loader2, CheckCircle } from "lucide-react
 import { useState } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { formatDistanceToNow } from "date-fns"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
@@ -58,7 +59,7 @@ export default function RequestsPage() {
     // Filter based on selection
     const requests = allConversations.filter((req) => {
         // Exclude resolved/closed conversations
-        if (req.status === 1000) return false
+        if (req.status === CONVERSATION_STATUS.CLOSED) return false
 
         if (filter === "bot_escalated") return (req as { handoffSource?: string }).handoffSource === "bot"
         if (filter === "unassigned") return !req.assignedTo
@@ -81,9 +82,9 @@ export default function RequestsPage() {
                 req.lastMessage?.toLowerCase().includes(search.toLowerCase())
         )
 
-    const unassignedCount = allConversations.filter((c) => !c.assignedTo && c.status !== 1000).length
-    const myCount = allConversations.filter((c) => c.assignedTo === user?.id && c.status !== 1000).length
-    const botEscalatedCount = allConversations.filter((c) => (c as { handoffSource?: string }).handoffSource === "bot" && c.status !== 1000).length
+    const unassignedCount = allConversations.filter((c) => !c.assignedTo && c.status !== CONVERSATION_STATUS.CLOSED).length
+    const myCount = allConversations.filter((c) => c.assignedTo === user?.id && c.status !== CONVERSATION_STATUS.CLOSED).length
+    const botEscalatedCount = allConversations.filter((c) => (c as { handoffSource?: string }).handoffSource === "bot" && c.status !== CONVERSATION_STATUS.CLOSED).length
 
     const handleAssignToMe = async (id: Id<"conversations">) => {
         if (!user) return
@@ -260,7 +261,7 @@ export default function RequestsPage() {
                                                 <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
                                                     {t("bot_escalated")}
                                                 </Badge>
-                                            ) : req.status === 200 || req.assignedTo ? (
+                                            ) : req.status === CONVERSATION_STATUS.ASSIGNED || req.assignedTo ? (
                                                 <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
                                                     Ongoing
                                                 </Badge>
@@ -294,7 +295,7 @@ export default function RequestsPage() {
                                                     {t("assign_to_me")}
                                                 </Button>
                                             )}
-                                            {req.assignedTo === user?.id && req.status !== 1000 && (
+                                            {req.assignedTo === user?.id && req.status !== CONVERSATION_STATUS.CLOSED && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

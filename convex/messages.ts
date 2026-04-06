@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { assertProjectOwnership } from "./utils";
+import { CONVERSATION_STATUS } from "./types";
 import { authError, notFoundError } from "./errors";
 
 // List messages for a conversation (real-time by default!)
@@ -129,12 +130,12 @@ export const sendFromWidget = internalMutation({
         if (!conversation) throw notFoundError("Conversation");
 
         // If conversation is resolved, create a new one
-        if (conversation.status === 1000) {
+        if (conversation.status === CONVERSATION_STATUS.CLOSED) {
             conversationId = await ctx.db.insert("conversations", {
                 projectId: conversation.projectId,
                 visitorName: conversation.visitorName,
                 visitorId: conversation.visitorId,
-                status: 100, // unassigned
+                status: CONVERSATION_STATUS.UNASSIGNED, // unassigned
                 lastMessage: "Started a new conversation",
                 unreadCount: 0,
                 updatedAt: Date.now(),
@@ -160,8 +161,8 @@ export const sendFromWidget = internalMutation({
         });
 
         // Only force status to 100 if it hasn't been assigned yet, to prevent booting agents/bots
-        const currentUnread = conversation.status === 1000 ? 1 : (conversation.unreadCount ?? 0) + 1;
-        const setStatusUnassigned = conversation.status !== 200;
+        const currentUnread = conversation.status === CONVERSATION_STATUS.CLOSED ? 1 : (conversation.unreadCount ?? 0) + 1;
+        const setStatusUnassigned = conversation.status !== CONVERSATION_STATUS.ASSIGNED;
 
         // Defer the conversation metadata update to avoid OCC conflicts with routing/bot engine
         await ctx.scheduler.runAfter(0, internal.conversations.updateMetadataInternal, {
@@ -183,13 +184,13 @@ export const sendFromWidget = internalMutation({
         }
 
         // Smart routing and bot execution hook
-        if (conversation.status === 100 || setStatusUnassigned) {
+        if (conversation.status === CONVERSATION_STATUS.UNASSIGNED || setStatusUnassigned) {
             // Trigger routing if currently in unassigned queue
             await ctx.scheduler.runAfter(0, internal.routing.routeConversation, {
                 conversationId,
                 projectId: conversation.projectId,
             });
-        } else if (conversation.status === 200 && conversation.participants && conversation.participants.length > 0 && !conversation.assignedTo) {
+        } else if (conversation.status === CONVERSATION_STATUS.ASSIGNED && conversation.participants && conversation.participants.length > 0 && !conversation.assignedTo) {
             // It is assigned, but `assignedTo` (which tracks human Clerk ID) is null.
             // This means one of the participants is a bot! Let's trigger the execution engine.
 
@@ -285,9 +286,9 @@ export const sendMessage = mutation({
             updateData.firstResponseAt = Date.now();
         }
 
-        // Status becomes Assigned (200) since an agent replied
-        if (conversation.status !== 200) {
-            updateData.status = 200;
+        // Status becomes Assigned since an agent replied
+        if (conversation.status !== CONVERSATION_STATUS.ASSIGNED) {
+            updateData.status = CONVERSATION_STATUS.ASSIGNED;
         }
 
         // If an agent replies, we might want to pause the bot to prevent it intercepting

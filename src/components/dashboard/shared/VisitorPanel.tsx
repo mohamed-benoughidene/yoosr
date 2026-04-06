@@ -57,6 +57,7 @@ import { useState, useCallback, KeyboardEvent } from "react"
 import { useProject } from "@/context/ProjectContext"
 import { toast } from "sonner"
 import { useTranslations, useLocale } from "next-intl"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 
 type EditableField = "visitorName" | "visitorEmail" | "visitorPhone" | "visitorAddress" | "visitorNote"
 
@@ -423,11 +424,11 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                 <CircleDot className="h-4 w-4 text-muted-foreground shrink-0" />
                                 <span className="text-muted-foreground">{t("status_label")}: </span>
                                 <span className="flex items-center gap-1.5 w-full">
-                                    {conversation.status === 1000 ? (
+                                    {conversation.status === CONVERSATION_STATUS.CLOSED ? (
                                         <><div className="h-2 w-2 rounded-full bg-green-500" /> {t("status_resolved")}</>
-                                    ) : conversation.status === 200 && conversation.assignedTo ? (
+                                    ) : conversation.status === CONVERSATION_STATUS.ASSIGNED && conversation.assignedTo ? (
                                         <><div className="h-2 w-2 rounded-full bg-blue-500" /> {t("status_assigned")}</>
-                                    ) : conversation.status === 200 && !conversation.assignedTo && conversation.botId ? (
+                                    ) : conversation.status === CONVERSATION_STATUS.ASSIGNED && !conversation.assignedTo && conversation.botId ? (
                                         <><div className="h-2 w-2 rounded-full bg-purple-500" /> {t("status_bot")}</>
                                     ) : (
                                         <><div className="h-2 w-2 rounded-full bg-yellow-500" /> {t("status_open")}</>

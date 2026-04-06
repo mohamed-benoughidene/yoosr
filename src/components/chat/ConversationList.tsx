@@ -18,6 +18,7 @@ import { api } from "../../../convex/_generated/api"
 import { useUser } from "@clerk/nextjs"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 
 type ChatTab = "all" | "unread"
 
@@ -179,7 +180,7 @@ function ConversationListContent({ onSelectConversation }: { onSelectConversatio
                                     <div className="text-xs text-muted-foreground line-clamp-2 flex-1">
                                         {conv.lastMessage || tMonitor("no_conversations_yet")}
                                     </div>
-                                    {conv.status === 1000 && (
+                                    {conv.status === CONVERSATION_STATUS.CLOSED && (
                                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-green-500/10 text-green-600 border-green-500/20">
                                             {t("status_resolved")}
                                         </Badge>

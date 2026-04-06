@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { CONVERSATION_STATUS } from "@/lib/constants"
 import {
     Bot,
     Users,
@@ -208,7 +209,7 @@ export default function DashboardPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {conv.status === 100 ? (
+                                                    {conv.status === CONVERSATION_STATUS.UNASSIGNED ? (
                                                         <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900 dark:text-amber-300">Unassigned</Badge>
                                                     ) : (
                                                         <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300">Open</Badge>

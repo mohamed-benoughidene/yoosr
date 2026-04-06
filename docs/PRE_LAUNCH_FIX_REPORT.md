@@ -585,6 +585,7 @@ Issues: 69, 70, 71, 72, 73 → **3/5 DONE** (#72 settings.ts split, #34 LLM retr
 | 36 | No schema-level TTL or data expiration | ✅ Fixed — 7 cleanup cron jobs for append-only tables, staggered schedules, .take(1000) batching |
 | 35 | Telegram webhook GET returns 200 unconditionally | ✅ Fixed — returns 405 Method Not Allowed (Telegram uses POST only with secret_token verification) |
 | 33 | No structured logging | ✅ Fixed — `convex/lib/logger.ts` with JSON output in prod, 8 critical console.error calls migrated |
+| 38 | Conversation status magic numbers | ✅ Fixed — `CONVERSATION_STATUS` constants in `convex/types.ts` + `src/lib/constants.ts`, all 55+ occurrences replaced |
 
 ### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)
