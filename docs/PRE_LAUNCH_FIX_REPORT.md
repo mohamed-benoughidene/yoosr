@@ -64,22 +64,36 @@
 
 > Discovered during comprehensive review of all 18 analysis findings documents. These issues were missed in the initial sweep.
 
-**New HIGH Issues (6 remaining):**
-| # | Issue | Status |
-|---|---|---|
-| 65 | Clerk webhook NO signature verification | ⬜ Not started — `http.ts` accepts forged requests |
-| 66 | No form validation (Zod unused) | ⬜ Not started — `react-hook-form` + Zod installed but unused |
-| 67 | i18n navigation inconsistency | ⬜ Not started — 25+ files break locale prefixes |
-| 68 | Dual design token system | ⬜ Not started — landing and app use separate color systems |
+### April 6, 2026 — Phase 5 Complete (8 of 9 issues fixed → 1 remaining)
 
-**New MEDIUM Issues (5 added):**
 | # | Issue | Status |
 |---|---|---|
-| 69 | No rate limiting on AI calls | ⬜ Not started — unbounded LLM usage |
-| 70 | No feature flagging | ⬜ Not started — no gradual rollout or emergency disable |
-| 71 | Frontend deployment not in CI | ⬜ Not started — Vercel Git integration bypasses quality gate |
-| 72 | Mixed concerns in settings.ts | ⬜ Not started — 4 entities in one file |
-| 73 | Analytics `useAction` anti-pattern | ⬜ Not started — 6 calls with manual `useEffect` + state |
+| 65 | Clerk webhook NO signature verification | ✅ Fixed — added Svix verification, `CLERK_WEBHOOK_SECRET` env var |
+| 66 | No form validation (Zod unused) | ✅ Fixed — widget settings refactored to react-hook-form + Zod schema |
+| 67 | i18n navigation inconsistency | ✅ Fixed — 28 files migrated to @/i18n/navigation |
+| 68 | Dual design token system | ✅ Fixed — --lp-* tokens mapped to shadcn in @theme inline |
+| 69 | No rate limiting on AI calls | ✅ Fixed — `checkAIRateLimit` utility + `AI_RATE_LIMIT_PER_HOUR` env |
+| 70 | No feature flagging | ✅ Fixed — `useFeatureFlag` hook + `FEATURE_FLAGS` env var |
+| 71 | Frontend deployment not in CI | ✅ Fixed — added deploy-frontend job to ci.yml |
+| 72 | Mixed concerns in settings.ts | ⬜ Deferred — requires splitting 4 entities across files |
+| 73 | Analytics `useAction` anti-pattern | ✅ Fixed — `useAnalyticsData` custom hook replaces 6 useEffect blocks |
+
+**New HIGH Issues (6 remaining → 0 remaining):**
+| # | Issue | Status |
+|---|---|---|
+| 65 | Clerk webhook NO signature verification | ✅ Fixed — Svix verification added |
+| 66 | No form validation (Zod unused) | ✅ Fixed — widget settings uses react-hook-form |
+| 67 | i18n navigation inconsistency | ✅ Fixed — 28 files updated |
+| 68 | Dual design token system | ✅ Fixed — tokens mapped in @theme inline |
+
+**New MEDIUM Issues (5 added → 4 fixed):**
+| # | Issue | Status |
+|---|---|---|
+| 69 | No rate limiting on AI calls | ✅ Fixed — rate limiter utility created |
+| 70 | No feature flagging | ✅ Fixed — hook + env var created |
+| 71 | Frontend deployment not in CI | ✅ Fixed — deploy-frontend job added |
+| 72 | Mixed concerns in settings.ts | ⬜ Deferred — document for later |
+| 73 | Analytics `useAction` anti-pattern | ✅ Fixed — custom hook created |
 
 ---
 
@@ -217,35 +231,30 @@
 
 ### Security (NEW — Phase 5 Discovery)
 
-- [ ] **65. Clerk webhook NO signature verification**
+- [x] **65. Clerk webhook NO signature verification**
   - **Part:** 08
-  - **File:** `convex/http.ts` — `/clerk-webhook` endpoint (lines 35-57)
-  - **Risk:** Processes `user.created`, `user.updated`, `organization.deleted` events without verifying request origin. An attacker can forge POST requests to create/delete users or entire projects. This is a critical security vulnerability — no auth, no HMAC check, no Clerk SDK verification.
-  - **Fix:** Use Clerk's webhook verification SDK to verify the `Svix-Signature` header. Alternatively, verify the webhook secret from Clerk dashboard. This is the #1 priority — a 1-2 hour fix that closes the largest security hole.
+  - **File:** `convex/http.ts` — `/clerk-webhook` endpoint
+  - **Risk:** Processes `user.created`, `user.updated`, `organization.deleted` events without verifying request origin. An attacker can forge POST requests to create/delete users or entire projects.
+  - **Fix:** Installed Svix SDK. Replaced raw `request.json()` with signature verification flow: read raw body → verify with `webhook.verify()` → parse JSON. Returns 401 for invalid signatures. Added `CLERK_WEBHOOK_SECRET` env var.
 
 ### Quality & Functionality (NEW — Phase 5 Discovery)
 
-- [ ] **66. No form validation**
+- [x] **66. No form validation**
   - **Part:** 13, 14
-  - **Risk:** `react-hook-form` + Zod are installed and shadcn `form.tsx` infrastructure exists, but ZERO forms use them. All forms use manual `useState`/`useReducer` with no schema validation:
-    - Widget settings (680 lines, `useReducer` with 12 action types)
-    - Integration configuration forms
-    - Contact import/edit dialogs
-    - Order forms
-    - No client-side validation, no error messages on invalid fields, no form-level validation state
-  - **Fix:** Start with the most critical form (widget settings or integration config). Add Zod schemas + `useForm` + `zodResolver`. The shadcn `FormProvider`/`FormField` infrastructure is already built — just needs to be consumed.
+  - **Risk:** `react-hook-form` + Zod installed but unused. Forms use manual `useState`/`useReducer` with no schema validation.
+  - **Fix:** Widget settings refactored: created `schema.ts` with Zod validation, replaced `useReducer` (16 action types) with `useForm`. Added inline error display, submit button disabled while invalid. Integration schemas created for future migration.
 
-- [ ] **67. i18n navigation inconsistency**
+- [x] **67. i18n navigation inconsistency**
   - **Part:** 12
-  - **Risk:** 25+ files import `useRouter`, `usePathname`, `redirect` from `next/navigation` instead of `@/i18n/navigation`. This breaks locale awareness in programmatic navigation — `router.push('/dashboard/bots')` will NOT include the locale prefix, resulting in broken URLs like `/dashboard/bots` instead of `/en/dashboard/bots`.
-  - **Fix:** Create a lint rule or codemod to replace all `next/navigation` imports with `@/i18n/navigation` in locale-scoped routes. Alternatively, create a `@/lib/navigation` wrapper that re-exports the correct imports.
+  - **Risk:** 28 files imported from `next/navigation` instead of `@/i18n/navigation`, breaking locale prefixes.
+  - **Fix:** Updated 28 files to import from `@/i18n/navigation`. Added `useSearchParams`/`useParams` re-exports. Landing pages preserved (documented).
 
 ### Maintainability (NEW — Phase 5 Discovery)
 
-- [ ] **68. Dual design token system**
+- [x] **68. Dual design token system**
   - **Part:** 11
-  - **Risk:** Landing pages use `--lp-*` variables (hex/RGBA, dark-first, no light mode) while the app uses shadcn OKLCH tokens (`--background`, `--primary`, etc.) with full light/dark support. These are completely separate systems with no mapping between them. Makes theming inconsistent and hard to maintain.
-  - **Fix:** Map `--lp-*` variables to `@theme inline` so they become Tailwind utilities, OR migrate landing page to use shadcn tokens. At minimum, document which token system to use where.
+  - **Risk:** Landing pages use `--lp-*` variables while app uses shadcn OKLCH tokens — no mapping between them.
+  - **Fix:** Mapped `--lp-*` tokens to `@theme inline` with shadcn equivalents. Added documentation block explaining token usage. Landing pages now render correctly in both light and dark modes.
 
 ---
 
@@ -374,23 +383,23 @@
 
 ### Cost & Operations (NEW — Phase 5 Discovery)
 
-- [ ] **69. No rate limiting on AI calls**
+- [x] **69. No rate limiting on AI calls**
   - **Part:** 08
   - **File:** `convex/openrouter.ts`
   - **Risk:** `openrouter.ts` has no rate limiting — relies entirely on OpenRouter's own limits. A rapid bot flow execution or infinite loop in bot logic could exhaust OpenRouter rate limits or generate unexpected costs. No per-project quota enforcement.
-  - **Fix:** Add application-level rate limiting (e.g., `@convex-dev/rate-limiter`) keyed by `projectId`, with configurable limits. Add request counting and alerting for unusual usage patterns.
+  - **Fix:** Created `checkAIRateLimit` utility in `convex/lib/aiRateLimiter.ts` using `project_usage` table. Added `AI_RATE_LIMIT_PER_HOUR` env var (default: 100). Throws clear `ConvexError` when limit exceeded.
 
-- [ ] **70. No feature flagging**
+- [x] **70. No feature flagging**
   - **Part:** 15
   - **Risk:** No system for gradual rollout, A/B testing, or emergency feature disable. All features are either fully deployed or hardcoded "Coming Soon". If a new integration causes issues, you must deploy a code fix — can't flip a switch.
-  - **Fix:** Start simple: add `features` table with boolean flags, check at key entry points. Or integrate a lightweight solution like ConfigCat. At minimum, add env-based feature toggles for emergency disable.
+  - **Fix:** Created `isFeatureEnabled()` for backend/SSR and `useFeatureFlag()` hook for frontend. `FEATURE_FLAGS` env var accepts comma-separated key:value pairs (e.g., `ai_bot:true,advanced_analytics:false`).
 
 ### Deployment (NEW — Phase 5 Discovery)
 
-- [ ] **71. Frontend deployment not in CI**
+- [x] **71. Frontend deployment not in CI**
   - **Part:** 17
   - **Risk:** Next.js deployment appears to be via Vercel Git integration (separate from GitHub Actions). The CI quality gate (lint → test → build) runs but does NOT block frontend deployments — Vercel deploys on any push to connected branch regardless of CI status.
-  - **Fix:** Either: (a) Connect Vercel to require GitHub Actions status check before deploying, or (b) Add Next.js deployment step to CI workflow using `vercel` CLI, or (c) Use Vercel's deployment protection rules to require manual approval.
+  - **Fix:** Added `deploy-frontend` job to `.github/workflows/ci.yml`. Runs on main pushes after quality-gates. Uses Vercel CLI with `--prod` flag. Documented required GitHub secrets.
 
 ### Code Quality (NEW — Phase 5 Discovery)
 
@@ -399,11 +408,11 @@
   - **Risk:** `settings.ts` contains CRUD for 4 different entities: departments, canned responses, labels, AND operating hours. 18 functions in one file. A TODO comment in the file acknowledges: "TODO: move createLabel and removeLabel to convex/labels.ts for consistency."
   - **Fix:** Split into 4 files: `departments.ts`, `cannedResponses.ts`, `labels.ts`, `operatingHours.ts`. Each file gets its own queries + mutations. Update all import sites.
 
-- [ ] **73. Analytics `useAction` anti-pattern**
+- [x] **73. Analytics `useAction` anti-pattern**
   - **Part:** 13, 14
   - **File:** `src/app/[locale]/dashboard/analytics/page.tsx`
   - **Risk:** 6 `useAction` calls each paired with manual `useEffect` + `isMounted` guard + `useState` for data storage. This is a verbose, error-prone pattern repeated 6 times. No cleanup if component unmounts during fetch, no shared loading state, no error handling consistency.
-  - **Fix:** Create `useAnalyticsData(projectId, dateRange)` custom hook that abstracts the 6 action calls, handles loading/error state uniformly, and provides cleanup on unmount.
+  - **Fix:** Created `useAnalyticsData(projectId, dateRange)` custom hook in `src/hooks/useAnalyticsData.ts`. Fetches all 6 data sources in parallel with `Promise.all`. Unified loading/error states. Proper cleanup on unmount. Reduced page from ~150 to ~90 lines.
 
 ---
 
