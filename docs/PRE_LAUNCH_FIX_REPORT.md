@@ -583,6 +583,7 @@ Issues: 69, 70, 71, 72, 73 → **3/5 DONE** (#72 settings.ts split, #34 LLM retr
 | 72 | Mixed concerns in `convex/settings.ts` | ✅ Fixed — split into `departments.ts`, `cannedResponses.ts`, `labels.ts`, `operatingHours.ts` |
 | 34 | No retry logic for LLM calls | ✅ Fixed — exponential backoff + jitter, skips 4xx errors, configurable via env |
 | 36 | No schema-level TTL or data expiration | ✅ Fixed — 7 cleanup cron jobs for append-only tables, staggered schedules, .take(1000) batching |
+| 35 | Telegram webhook GET returns 200 unconditionally | ✅ Fixed — returns 405 Method Not Allowed (Telegram uses POST only with secret_token verification) |
 
 ### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)

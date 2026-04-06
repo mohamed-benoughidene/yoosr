@@ -589,12 +589,14 @@ http.route({
     }),
 });
 
-// GET /webhooks/telegram (Telegram verification)
+// GET /webhooks/telegram — Not supported.
+// Telegram uses setWebhook with POST only (verified via X-Telegram-Bot-Api-Secret-Token).
+// If you need verification, configure a secret_token when calling setWebhook.
 http.route({
     path: "/webhooks/telegram",
     method: "GET",
     handler: httpAction(async () => {
-        return new Response("OK", { status: 200 });
+        return new Response("Method Not Allowed. Telegram webhooks use POST only.", { status: 405 });
     }),
 });
 
