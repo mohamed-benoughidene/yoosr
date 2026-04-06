@@ -57,7 +57,7 @@ export default function LabelsPage() {
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const createLabel = useMutation(api.settings.createLabel).withOptimisticUpdate(
+    const createLabel = useMutation(api.labels.createLabel).withOptimisticUpdate(
         (localStore, args) => {
             const existing = localStore.getQuery(api.labels.listLabels, { projectId: args.projectId });
             if (existing) {
@@ -76,7 +76,7 @@ export default function LabelsPage() {
             }
         }
     );
-    const removeLabel = useMutation(api.settings.removeLabel).withOptimisticUpdate(
+    const removeLabel = useMutation(api.labels.removeLabel).withOptimisticUpdate(
         (localStore, args) => {
             const allQueries = localStore.getAllQueries(api.labels.listLabels);
             for (const q of allQueries) {

@@ -42,7 +42,7 @@ export default function RequestsPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _myDepartments = useQuery(
-        api.settings.getMyDepartments,
+        api.departments.getMyDepartments,
         activeProject ? { projectId: activeProject._id } : "skip"
     )
 

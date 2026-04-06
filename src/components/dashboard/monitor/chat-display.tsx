@@ -61,7 +61,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
     }))
 
     const departments = useQuery(
-        api.settings.listDepartments,
+        api.departments.listDepartments,
         projectId ? { projectId: projectId as Id<"projects"> } : "skip"
     );
 
@@ -72,7 +72,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
     );
 
     const cannedResponses = useQuery(
-        api.settings.listCannedResponses,
+        api.cannedResponses.listCannedResponses,
         projectId ? { projectId: projectId as Id<"projects"> } : "skip"
     );
 

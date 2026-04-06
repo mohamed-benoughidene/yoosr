@@ -1,6 +1,5 @@
 /**
- * Label management — CRUD mutations for conversation labels/tags.
- * The listLabels query already exists in this file.
+ * Canned responses — pre-written message templates for agents.
  */
 import { query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -9,35 +8,34 @@ import { requireAdmin } from "./utils";
 import { authError, notFoundError } from "./errors";
 
 /**
- * List all labels for a project.
+ * List all canned responses for a project.
  */
-export const listLabels = query({
+export const listCannedResponses = query({
     args: { projectId: v.id("projects") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
-
+        if (!identity) return [];
         return await ctx.db
-            .query("labels")
+            .query("canned_responses")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .take(200); // TODO: replace with paginated aggregation
+            .take(200);
     },
 });
 
 /**
- * Create a new label (admin only).
+ * Create a new canned response (admin only).
  */
-export const createLabel = mutation({
+export const createCannedResponse = mutation({
     args: {
         projectId: v.id("projects"),
-        name: v.string(),
-        color: v.string(),
+        trigger: v.string(),
+        message: v.string(),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw authError();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
-        const id = await ctx.db.insert("labels", {
+        const id = await ctx.db.insert("canned_responses", {
             ...args,
             createdBy: identity.subject,
         });
@@ -46,10 +44,10 @@ export const createLabel = mutation({
             projectId: args.projectId,
             actorId: identity.subject,
             actorName: identity.name ?? identity.email ?? "Unknown",
-            action: "label_created",
-            targetType: "label",
+            action: "canned_response_created",
+            targetType: "canned_response",
             targetId: id,
-            metadata: { name: args.name, color: args.color },
+            metadata: { trigger: args.trigger },
         });
 
         return id;
@@ -57,13 +55,13 @@ export const createLabel = mutation({
 });
 
 /**
- * Update an existing label (admin only).
+ * Update an existing canned response (admin only).
  */
-export const updateLabel = mutation({
+export const updateCannedResponse = mutation({
     args: {
-        id: v.id("labels"),
-        name: v.optional(v.string()),
-        color: v.optional(v.string()),
+        id: v.id("canned_responses"),
+        trigger: v.optional(v.string()),
+        message: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -74,58 +72,42 @@ export const updateLabel = mutation({
         for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
         await ctx.db.patch(id, clean);
 
-        const label = await ctx.db.get(id);
-        if (label) {
+        const cannedResponse = await ctx.db.get(id);
+        if (cannedResponse) {
             await ctx.runMutation(internal.activityLogs.logActivityInternal, {
-                projectId: label.projectId,
+                projectId: cannedResponse.projectId,
                 actorId: identity.subject,
                 actorName: identity.name ?? identity.email ?? "Unknown",
-                action: "label_updated",
-                targetType: "label",
+                action: "canned_response_updated",
+                targetType: "canned_response",
                 targetId: id,
-                metadata: { ...(args.name && { name: args.name }) },
             });
         }
     },
 });
 
 /**
- * Delete a label (admin only). Cascades to remove label name from conversation tags.
+ * Delete a canned response (admin only).
  */
-export const removeLabel = mutation({
-    args: { id: v.id("labels") },
+export const removeCannedResponse = mutation({
+    args: { id: v.id("canned_responses") },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw authError();
         requireAdmin(identity as unknown as { org_role?: string; org_id: string });
 
-        const label = await ctx.db.get(args.id);
-        if (!label) throw notFoundError("Label");
+        const cannedResponse = await ctx.db.get(args.id);
+        if (!cannedResponse) throw notFoundError("Canned response");
 
         await ctx.db.delete(args.id);
 
-        // Cascade: remove the deleted label name from all conversation tags in this project
-        const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_projectId", (q) => q.eq("projectId", label.projectId))
-            .take(500);
-
-        for (const conv of conversations) {
-            if (conv.tags && conv.tags.includes(label.name)) {
-                await ctx.db.patch(conv._id, {
-                    tags: conv.tags.filter((t) => t !== label.name),
-                });
-            }
-        }
-
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
-            projectId: label.projectId,
+            projectId: cannedResponse.projectId,
             actorId: identity.subject,
             actorName: identity.name ?? identity.email ?? "Unknown",
-            action: "label_deleted",
-            targetType: "label",
+            action: "canned_response_deleted",
+            targetType: "canned_response",
             targetId: args.id,
-            metadata: { name: label.name },
         });
     },
 });

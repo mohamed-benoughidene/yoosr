@@ -148,7 +148,7 @@ export function ConversationList({
     )
 
     const departments = useQuery(
-        api.settings.listDepartments,
+        api.departments.listDepartments,
         projectId ? { projectId } : "skip"
     )
 

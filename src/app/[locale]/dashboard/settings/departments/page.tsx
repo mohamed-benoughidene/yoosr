@@ -177,7 +177,7 @@ export default function DepartmentsPage() {
     const { createOpen, editingDeptId, deptPendingDelete } = uiState
 
     const departments = useQuery(
-        api.settings.listDepartments,
+        api.departments.listDepartments,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
@@ -194,11 +194,11 @@ export default function DepartmentsPage() {
         role: m.role,
     }))
 
-    const createDepartment = useMutation(api.settings.createDepartment)
-    const addMemberToDepartment = useMutation(api.settings.addMemberToDepartment)
-    const removeMemberFromDepartment = useMutation(api.settings.removeMemberFromDepartment)
-    const updateDepartment = useMutation(api.settings.updateDepartment)
-    const removeDepartment = useMutation(api.settings.removeDepartment)
+    const createDepartment = useMutation(api.departments.createDepartment)
+    const addMemberToDepartment = useMutation(api.departments.addMemberToDepartment)
+    const removeMemberFromDepartment = useMutation(api.departments.removeMemberFromDepartment)
+    const updateDepartment = useMutation(api.departments.updateDepartment)
+    const removeDepartment = useMutation(api.departments.removeDepartment)
 
     const handleSave = async () => {
         if (!activeProject || !newDeptName) return

@@ -97,11 +97,11 @@ export default function OperatingHoursPage() {
     const [schedule, setSchedule] = useState<DaySchedule[]>(defaultSchedule)
 
     const existingHours = useQuery(
-        api.settings.getOperatingHours,
+        api.operatingHours.getOperatingHours,
         activeProject ? { projectId: activeProject._id } : "skip"
     )
 
-    const upsertHours = useMutation(api.settings.upsertOperatingHours)
+    const upsertHours = useMutation(api.operatingHours.upsertOperatingHours)
 
     // Sync from Convex query to local state
     /* eslint-disable react-hooks/set-state-in-effect -- Initialize local state from server data */

@@ -567,7 +567,7 @@ Issues: 9 ✅, 10 ✅, 18 ✅, 22 ✅, 23 ✅, 24 ✅, 25 ✅, 26 ✅ → **8/8 
 Issues: 27 ✅, 28 ✅, 29 ✅, 30 ✅, 31 ✅, 32 ✅, 53 ✅ → **7/7 DONE**
 
 ### Phase 5: New HIGH Priority — Security & Quality Blockers
-Issues: 65, 66, 67, 68 → **0/4 DONE** (all newly discovered)
+Issues: 65, 66, 67, 68 → **4/4 DONE** (all newly discovered)
 
 > **Priority order:**
 > 1. **#65 Clerk webhook signature** — Critical security hole, 1-2 hour fix
@@ -576,7 +576,11 @@ Issues: 65, 66, 67, 68 → **0/4 DONE** (all newly discovered)
 > 4. **#68 Dual design tokens** — Landing/app token inconsistency
 
 ### Phase 6: New MEDIUM — Code Quality & Ops
-Issues: 69, 70, 71, 72, 73 → **0/5 DONE** (can be done post-launch if needed)
+Issues: 69, 70, 71, 72, 73 → **1/5 DONE** (#72 settings.ts split)
+
+| # | Issue | Status |
+|---|---|---|
+| 72 | Mixed concerns in `convex/settings.ts` | ✅ Fixed — split into `departments.ts`, `cannedResponses.ts`, `labels.ts`, `operatingHours.ts` |
 
 ### Phase 7: Post-Launch LOW Priority
 Issues: 44-64 (as time permits)

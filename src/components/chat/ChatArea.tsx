@@ -106,7 +106,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     }))
 
     const departments = useQuery(
-        api.settings.listDepartments,
+        api.departments.listDepartments,
         conversation?.projectId ? { projectId: conversation.projectId } : "skip"
     );
 
@@ -118,7 +118,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     )
 
     const cannedResponses = useQuery(
-        api.settings.listCannedResponses,
+        api.cannedResponses.listCannedResponses,
         conversation?.projectId ? { projectId: conversation.projectId } : "skip"
     );
 

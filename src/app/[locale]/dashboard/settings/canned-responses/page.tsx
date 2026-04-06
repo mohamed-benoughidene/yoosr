@@ -87,16 +87,16 @@ export default function CannedResponsesPage() {
     const [responsePendingDelete, setResponsePendingDelete] = useState<typeof responses[number]["_id"] | null>(null)
 
     const responses = useQuery(
-        api.settings.listCannedResponses,
+        api.cannedResponses.listCannedResponses,
         activeProject ? { projectId: activeProject._id } : "skip"
     ) ?? []
 
-    const createCannedResponse = useMutation(api.settings.createCannedResponse).withOptimisticUpdate(
+    const createCannedResponse = useMutation(api.cannedResponses.createCannedResponse).withOptimisticUpdate(
         (localStore, args) => {
-            const existing = localStore.getQuery(api.settings.listCannedResponses, { projectId: args.projectId });
+            const existing = localStore.getQuery(api.cannedResponses.listCannedResponses, { projectId: args.projectId });
             if (existing) {
                 const id = `temp_${(nextTempId++).toString(36)}`;
-                localStore.setQuery(api.settings.listCannedResponses, { projectId: args.projectId }, [
+                localStore.setQuery(api.cannedResponses.listCannedResponses, { projectId: args.projectId }, [
                     ...existing,
                     {
                         _id: id as Id<"canned_responses">,
@@ -110,13 +110,13 @@ export default function CannedResponsesPage() {
             }
         }
     );
-    const updateCannedResponse = useMutation(api.settings.updateCannedResponse).withOptimisticUpdate(
+    const updateCannedResponse = useMutation(api.cannedResponses.updateCannedResponse).withOptimisticUpdate(
         (localStore, args) => {
-            const allQueries = localStore.getAllQueries(api.settings.listCannedResponses);
+            const allQueries = localStore.getAllQueries(api.cannedResponses.listCannedResponses);
             for (const q of allQueries) {
                 if (q.value) {
                     localStore.setQuery(
-                        api.settings.listCannedResponses,
+                        api.cannedResponses.listCannedResponses,
                         q.args,
                         (q.value as Doc<"canned_responses">[]).map((r) =>
                             r._id === args.id
@@ -128,13 +128,13 @@ export default function CannedResponsesPage() {
             }
         }
     );
-    const removeCannedResponse = useMutation(api.settings.removeCannedResponse).withOptimisticUpdate(
+    const removeCannedResponse = useMutation(api.cannedResponses.removeCannedResponse).withOptimisticUpdate(
         (localStore, args) => {
-            const allQueries = localStore.getAllQueries(api.settings.listCannedResponses);
+            const allQueries = localStore.getAllQueries(api.cannedResponses.listCannedResponses);
             for (const q of allQueries) {
                 if (q.value) {
                     localStore.setQuery(
-                        api.settings.listCannedResponses,
+                        api.cannedResponses.listCannedResponses,
                         q.args,
                         (q.value as Doc<"canned_responses">[]).filter((r) => r._id !== args.id)
                     );

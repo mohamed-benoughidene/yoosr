@@ -42,7 +42,7 @@ function NodePropertiesPanelContent({
     const t = useTranslations("designStudio");
     const searchParams = useSearchParams();
     const projectId = searchParams.get("project") as Id<"projects"> | null;
-    const departments = useQuery(api.settings.listDepartments, projectId ? { projectId } : "skip") || [];
+    const departments = useQuery(api.departments.listDepartments, projectId ? { projectId } : "skip") || [];
     const labels = useQuery(api.labels.listLabels, projectId ? { projectId } : "skip") || [];
     const { activeProject } = useProject();
     const data = useMemo(() => (node?.data || {}) as Record<string, string>, [node?.data]);
