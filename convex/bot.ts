@@ -5,6 +5,7 @@ import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
 import { decryptSecret } from "./lib/crypto";
 import { requireEnv } from "./lib/env";
+import { logger } from "./lib/logger";
 
 type ActionResult = {
     newAttributes?: Record<string, unknown>;
@@ -108,7 +109,7 @@ async function executeAction(
                             operation: "ai_task",
                         });
                     } catch (e: unknown) {
-                        console.warn("[BOT ENGINE] Failed to log token usage:", e instanceof Error ? e.message : String(e));
+                        logger.warn("Failed to log token usage", { error: e instanceof Error ? e.message : String(e) });
                     }
                 }
                 const parsed = tryParseJSON(llmResult.text);
@@ -119,7 +120,7 @@ async function executeAction(
                     nextNodeId: (action.successPath as string | null) ?? null,
                 };
             } catch (e: unknown) {
-                console.error("[BOT ENGINE] AI Task failed:", e instanceof Error ? e.message : String(e));
+                logger.error("[BOT ENGINE] AI Task failed", { error: e instanceof Error ? e.message : String(e) });
                 const errorMsg = e instanceof Error ? e.message : String(e);
                 if (action.failurePath) {
                     return { newAttributes: { ai_error: errorMsg }, nextNodeId: action.failurePath as string };
@@ -157,8 +158,11 @@ async function executeAction(
                     query: incomingMessage,
                 });
                 kbResults = rawResults as Array<{ text: string; [key: string]: unknown }>;
-            } catch {
-                console.error("[BOT ENGINE] KB search failed");
+            } catch (e: unknown) {
+                logger.error("[BOT ENGINE] KB search failed", {
+                    error: e instanceof Error ? e.message : String(e),
+                    projectId: kbConversation.projectId,
+                });
             }
 
             // 3. If no result above threshold: return { nextNodeId: action.elsePath }. No reply.
@@ -881,7 +885,7 @@ function isOpenNow(schedule: ScheduleDay[], timezone: string): boolean {
             return currentTimeStr >= slot.start && currentTimeStr < slot.end;
         });
     } catch (e) {
-        console.error("[BOT ENGINE] Error evaluating operating hours:", e);
+        logger.error("[BOT ENGINE] Error evaluating operating hours", { error: e instanceof Error ? e.message : String(e) });
         return true;
     }
 }

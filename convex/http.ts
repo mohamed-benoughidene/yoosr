@@ -5,6 +5,7 @@ import { Id } from "./_generated/dataModel";
 import { RateLimiter } from "@convex-dev/rate-limiter";
 import { decryptSecret } from "./lib/crypto";
 import { Webhook } from "svix";
+import { logger } from "./lib/logger";
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   createConversation: { kind: "fixed window", rate: 5, period: 60000 },
@@ -43,7 +44,7 @@ http.route({
             // Verify signature - reject if webhook secret not configured
             const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
             if (!webhookSecret) {
-                console.error("CLERK_WEBHOOK_SECRET not configured - rejecting webhook");
+                logger.error("CLERK_WEBHOOK_SECRET not configured - rejecting webhook");
                 return new Response("Webhook secret not configured", { status: 500 });
             }
 
@@ -51,7 +52,7 @@ http.route({
             try {
                 webhook.verify(rawBody, headers);
             } catch (err) {
-                console.error("Invalid Clerk webhook signature:", err);
+                logger.error("Invalid Clerk webhook signature", { error: err instanceof Error ? err.message : String(err) });
                 return new Response("Invalid signature", { status: 401 });
             }
 
@@ -77,7 +78,7 @@ http.route({
 
             return new Response("OK", { status: 200 });
         } catch (error) {
-            console.error("Error processing Clerk webhook:", error);
+            logger.error("Error processing Clerk webhook", { error: error instanceof Error ? error.message : String(error) });
             return new Response("Internal Server Error", { status: 500 });
         }
     }),
@@ -582,7 +583,7 @@ http.route({
 
             return new Response("OK", { status: 200 });
         } catch (error) {
-            console.error("Error processing Meta webhook:", error);
+            logger.error("Error processing Meta webhook", { error: error instanceof Error ? error.message : String(error) });
             // Always return 200 per Meta webhook requirements
             return new Response("OK", { status: 200 });
         }
@@ -643,7 +644,7 @@ http.route({
 
             return new Response("OK", { status: 200 });
         } catch (error) {
-            console.error("Error processing Telegram webhook:", error);
+            logger.error("Error processing Telegram webhook", { error: error instanceof Error ? error.message : String(error) });
             // Telegram expects 200 so it doesn't keep retrying relentlessly on simple app errors
             return new Response("OK", { status: 200 });
         }
