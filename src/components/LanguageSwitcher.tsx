@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl"
 import { useUser } from "@clerk/nextjs"
-import { useRouter } from "@/i18n/navigation"
+import { useRouter, usePathname } from "@/i18n/navigation"
 import { Languages } from "lucide-react"
 import {
   DropdownMenuSub,
@@ -16,6 +16,7 @@ export function LanguageSwitcher() {
   const { user } = useUser()
   const locale = useLocale()
   const router = useRouter()
+  const pathname = usePathname()
 
   const languages = [
     { code: "en", label: "English (en)" },
@@ -29,11 +30,13 @@ export function LanguageSwitcher() {
       await user.update({
         unsafeMetadata: { ...user.unsafeMetadata, locale: newLocale },
       })
-      // Use locale-aware navigation: navigate to /dashboard in the new locale
-      router.push("/dashboard", { locale: newLocale })
     } catch (error) {
       console.error("Failed to update language preference", error)
     }
+
+    // Use window.location for a hard navigation to avoid Clerk session interference
+    const targetPath = pathname || "/dashboard"
+    window.location.href = `/${newLocale}${targetPath}`
   }
 
   const currentLang = languages.find((l) => l.code === locale)
