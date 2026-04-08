@@ -10,6 +10,8 @@
         "customers": "Clients",
         "pricing": "Tarifs"
       },
+      "login": "Connexion",
+      "getEarlyAccess": "Accès Anticipé",
       "dropdowns": {
         "products": "Produits",
         "resources": "Ressources"

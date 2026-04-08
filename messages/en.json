@@ -10,6 +10,8 @@
         "customers": "Customers",
         "pricing": "Pricing"
       },
+      "login": "Login",
+      "getEarlyAccess": "Get Early Access",
       "dropdowns": {
         "products": "Products",
         "resources": "Resources"

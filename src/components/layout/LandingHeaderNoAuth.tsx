@@ -1,9 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 
 export function LandingHeaderNoAuth() {
+  const t = useTranslations('landing.header');
   const router = useRouter();
 
   return (
@@ -50,7 +52,7 @@ export function LandingHeaderNoAuth() {
               e.currentTarget.style.color = 'var(--lp-text-secondary)';
             }}
           >
-            Login
+            {t('login')}
           </button>
           <button
             onClick={() => router.push('/waitlist')}
@@ -76,7 +78,7 @@ export function LandingHeaderNoAuth() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            Get Early Access
+            {t('getEarlyAccess')}
           </button>
         </div>
       </div>

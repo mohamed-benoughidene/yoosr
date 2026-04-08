@@ -10,6 +10,8 @@
         "customers": "العملاء",
         "pricing": "الأسعار"
       },
+      "login": "تسجيل الدخول",
+      "getEarlyAccess": "الوصول المبكر",
       "dropdowns": {
         "products": "المنتجات",
         "resources": "المصادر"
