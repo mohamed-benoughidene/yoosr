@@ -689,7 +689,7 @@ export default function WidgetSetupPage() {
                             <iframe
                                 ref={iframeRef}
                                 key={iframeKey}
-                                src={`/widget?projectId=${activeProject?._id}`}
+                                src={`/widget?projectId=${activeProject?._id}&lang=${editLocale}`}
                                 className="w-full h-full border-none"
                                 title="Widget Live Preview"
                             />

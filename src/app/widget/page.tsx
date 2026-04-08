@@ -33,7 +33,12 @@ export default async function WidgetPage(props: {
         }
     }
 
-    const locale = (projectLocale || (["en", "ar", "fr"].includes(lang || "") ? lang : "en")) as "en" | "ar" | "fr";
+    // Lang URL param takes priority (used by preview iframe to match edit locale),
+    // otherwise fall back to project widgetLocale, then default to "en"
+    const locale = (
+        (["en", "ar", "fr"].includes(lang || "") ? lang : null) ||
+        (["en", "ar", "fr"].includes(projectLocale || "") ? projectLocale : "en")
+    ) as "en" | "ar" | "fr";
 
     // Dynamically import only the required messages
     const messages = (await import(`../../../messages/${locale}.json`)).default;
