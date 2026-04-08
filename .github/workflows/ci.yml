@@ -43,7 +43,7 @@ jobs:
     needs: quality-gates
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
+    environment: "Preview – yoosr"
     timeout-minutes: 15
 
     steps:
@@ -65,7 +65,7 @@ jobs:
 
       - name: Deploy Frontend to Vercel (Staging)
         run: |
-          bunx vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+          bunx vercel deploy --target preview --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
