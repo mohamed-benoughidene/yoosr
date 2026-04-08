@@ -215,10 +215,23 @@ export default function WidgetChat() {
     useEffect(() => {
         if (!projectConfig || welcomeShownRef.current) return
 
-        const config = projectConfig?.widgetConfig as { enableWelcomeNotification?: boolean; welcomeDelay?: number; translations?: { welcomeMessage?: string } } | undefined
+        const config = projectConfig?.widgetConfig as { enableWelcomeNotification?: boolean; welcomeDelay?: number } | undefined
+        const widgetCfg = projectConfig?.widgetConfig as { translations?: Record<string, Record<string, string> | undefined> } | undefined
+        const translations = widgetCfg?.translations
+        const activeLocale = (projectConfig as unknown as Record<string, unknown>)?.widgetLocale as string | undefined || "en"
         const enableWelcome = config?.enableWelcomeNotification ?? true
         const delay = (config?.welcomeDelay ?? 3) * 1000
-        const welcomeMsg = t("system.welcome") || config?.translations?.welcomeMessage
+
+        // Resolve welcome message with fallback chain
+        const welcomeMsg = (() => {
+            const activeValue = translations?.welcomeMessage?.[activeLocale]
+            if (activeValue) return activeValue
+            const enValue = translations?.welcomeMessage?.en
+            if (enValue) return enValue
+            const i18nValue = t("system.welcome")
+            if (i18nValue) return i18nValue
+            return "Welcome!"
+        })()
 
         if (!enableWelcome) return
 
@@ -511,11 +524,30 @@ export default function WidgetChat() {
     }
 
     // Read widget config
-    const widgetConfig = projectConfig?.widgetConfig as { primaryColor?: string; translations?: { headerTitle?: string; onlineStatus?: string; preChatTitle?: string; preChatSubtitle?: string }; logoUrl?: string; contactMethod?: "email" | "phone" } | undefined
-    const widgetColor = widgetConfig?.primaryColor || "#6366f1"
-    const widgetTitle = t("headerTitle") || widgetConfig?.translations?.headerTitle || (projectConfig?.name as string | undefined) || "Chat"
-    const onlineStatus = t("onlineStatus") || widgetConfig?.translations?.onlineStatus || "Online"
-    const logoUrl = widgetConfig?.logoUrl || ""
+    const widgetCfg = projectConfig?.widgetConfig as { primaryColor?: string; translations?: Record<string, Record<string, string> | undefined>; logoUrl?: string; contactMethod?: "email" | "phone" } | undefined
+    const translations = widgetCfg?.translations
+    const activeLocale = (projectConfig as unknown as Record<string, unknown>)?.widgetLocale as string | undefined || "en"
+    const widgetColor = widgetCfg?.primaryColor || "#6366f1"
+
+    // Text resolution with fallback chain:
+    // 1. Custom translation for active language
+    // 2. English fallback
+    // 3. i18n translation default
+    // 4. Hardcoded default
+    const resolveText = (field: string, hardcodedDefault: string): string => {
+        const fieldTranslations = translations?.[field]
+        const activeValue = fieldTranslations?.[activeLocale]
+        if (activeValue) return activeValue
+        const enValue = fieldTranslations?.en
+        if (enValue) return enValue
+        const i18nValue = t(field)
+        if (i18nValue) return i18nValue
+        return hardcodedDefault
+    }
+
+    const widgetTitle = resolveText("headerTitle", (projectConfig?.name as string | undefined) || "Chat")
+    const onlineStatus = resolveText("onlineStatus", "Online")
+    const logoUrl = widgetCfg?.logoUrl || ""
 
     if (error && !conversationId) {
         return (
@@ -533,9 +565,9 @@ export default function WidgetChat() {
                     dispatch({ type: "SET_SHOW_PRE_CHAT", payload: false })
                 }}
                 primaryColor={widgetColor}
-                title={t("preChatForm.welcome") || widgetConfig?.translations?.preChatTitle}
-                subtitle={t("preChatForm.subtitle") || widgetConfig?.translations?.preChatSubtitle}
-                contactMethod={widgetConfig?.contactMethod || "email"}
+                title={resolveText("preChatTitle", "Welcome!")}
+                subtitle={resolveText("preChatSubtitle", "Please fill in your details to start the chat.")}
+                contactMethod={widgetCfg?.contactMethod || "email"}
             />
         )
     }

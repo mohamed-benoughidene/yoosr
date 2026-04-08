@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useState, useEffect, useRef } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { widgetConfigSchema, type WidgetConfigForm } from "./schema"
+import { widgetConfigSchema, type WidgetConfigForm, defaultTranslations } from "./schema"
 import { toast } from "sonner"
 import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, UserMinus } from "lucide-react"
 import { useMutation } from "convex/react"
@@ -62,6 +62,9 @@ export default function WidgetSetupPage() {
 
     const updateProject = useMutation(api.projects.update)
 
+    // Locale currently being edited in the Text tab
+    const [editLocale, setEditLocale] = useState<string>("en")
+
     const form = useForm<WidgetConfigForm>({
         resolver: zodResolver(widgetConfigSchema),
         defaultValues: {
@@ -73,14 +76,7 @@ export default function WidgetSetupPage() {
             autoCloseMinutes: 30,
             preChatFormEnabled: true,
             contactMethod: "email",
-            translations: {
-                headerTitle: t("default_title"),
-                onlineStatus: t("status_online"),
-                startChat: t("start_conversation"),
-                welcomeMessage: t("default_welcome_message"),
-                preChatTitle: t("default_greeting"),
-                preChatSubtitle: t("default_form_description")
-            }
+            translations: defaultTranslations(),
         }
     })
 
@@ -95,8 +91,41 @@ export default function WidgetSetupPage() {
                 autoCloseMinutes?: number;
                 preChatFormEnabled?: boolean;
                 contactMethod?: "email" | "phone";
-                translations?: Record<string, string>;
+                translations?: Record<string, Record<string, string> | string>;
             }
+
+            // Determine locale from project widgetLocale
+            const projectLocale = (activeProject as unknown as Record<string, unknown>)?.widgetLocale as string | undefined
+            const locale = projectLocale || "en"
+            setEditLocale(locale)
+
+            // Build translations for the form — nested structure
+            const translationFields = ["headerTitle", "welcomeMessage", "onlineStatus", "preChatTitle", "preChatSubtitle", "startChat"] as const
+            const defaults = defaultTranslations()
+            const resolvedTranslations: Record<string, { en: string; ar: string; fr: string }> = {}
+
+            for (const field of translationFields) {
+                const existing = config.translations?.[field]
+                if (typeof existing === "object" && existing !== null) {
+                    // Already nested
+                    resolvedTranslations[field] = {
+                        en: existing.en || defaults[field].en,
+                        ar: existing.ar || "",
+                        fr: existing.fr || defaults[field].fr,
+                    }
+                } else if (typeof existing === "string") {
+                    // Legacy flat format — migrate on the fly
+                    resolvedTranslations[field] = {
+                        en: existing || defaults[field].en,
+                        ar: "",
+                        fr: defaults[field].fr,
+                    }
+                } else {
+                    // Missing — use defaults
+                    resolvedTranslations[field] = defaults[field]
+                }
+            }
+
             form.reset({
                 primaryColor: config.primaryColor || "#6366f1",
                 align: config.align || "right",
@@ -106,14 +135,7 @@ export default function WidgetSetupPage() {
                 autoCloseMinutes: config.autoCloseMinutes ?? 30,
                 preChatFormEnabled: config.preChatFormEnabled ?? true,
                 contactMethod: config.contactMethod || "email",
-                translations: {
-                    headerTitle: config.translations?.headerTitle || t("default_title"),
-                    onlineStatus: config.translations?.onlineStatus || t("status_online"),
-                    startChat: config.translations?.startChat || t("start_conversation"),
-                    welcomeMessage: config.translations?.welcomeMessage || t("default_welcome_message"),
-                    preChatTitle: config.translations?.preChatTitle || t("default_greeting"),
-                    preChatSubtitle: config.translations?.preChatSubtitle || t("default_form_description")
-                }
+                translations: resolvedTranslations as WidgetConfigForm["translations"],
             })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -490,15 +512,30 @@ export default function WidgetSetupPage() {
                     {/* TRANSLATIONS TAB */}
                     <TabsContent value="translations" className="space-y-4 mt-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>{t("text_labels_title")}</CardTitle>
-                                <CardDescription>{t("text_labels_desc")}</CardDescription>
+                            <CardHeader className="space-y-3">
+                                <div>
+                                    <CardTitle>{t("text_labels_title")}</CardTitle>
+                                    <CardDescription>{t("text_labels_desc")}</CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Languages className="h-4 w-4 text-muted-foreground" />
+                                    <Select value={editLocale} onValueChange={setEditLocale}>
+                                        <SelectTrigger className="w-[160px]">
+                                            <SelectValue placeholder="Select language" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="en">English</SelectItem>
+                                            <SelectItem value="ar">العربية</SelectItem>
+                                            <SelectItem value="fr">Français</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-2">
                                     <FormField
                                         control={form.control}
-                                        name="translations.headerTitle"
+                                        name={`translations.headerTitle.${editLocale as "en" | "ar" | "fr"}`}
                                         render={({ field, fieldState }) => (
                                             <FormItem>
                                                 <FormLabel htmlFor="t-header">{t("header_title")}</FormLabel>
@@ -515,7 +552,7 @@ export default function WidgetSetupPage() {
                                 <div className="grid gap-2">
                                     <FormField
                                         control={form.control}
-                                        name="translations.welcomeMessage"
+                                        name={`translations.welcomeMessage.${editLocale as "en" | "ar" | "fr"}`}
                                         render={({ field, fieldState }) => (
                                             <FormItem>
                                                 <FormLabel htmlFor="t-welcome">{t("welcome_message")}</FormLabel>
@@ -532,7 +569,7 @@ export default function WidgetSetupPage() {
                                 <div className="grid gap-2">
                                     <FormField
                                         control={form.control}
-                                        name="translations.preChatTitle"
+                                        name={`translations.preChatTitle.${editLocale as "en" | "ar" | "fr"}`}
                                         render={({ field, fieldState }) => (
                                             <FormItem>
                                                 <FormLabel htmlFor="t-pretitle">{t("pre_chat_title")}</FormLabel>
@@ -549,7 +586,7 @@ export default function WidgetSetupPage() {
                                 <div className="grid gap-2">
                                     <FormField
                                         control={form.control}
-                                        name="translations.preChatSubtitle"
+                                        name={`translations.preChatSubtitle.${editLocale as "en" | "ar" | "fr"}`}
                                         render={({ field, fieldState }) => (
                                             <FormItem>
                                                 <FormLabel htmlFor="t-presub">{t("pre_chat_subtitle")}</FormLabel>

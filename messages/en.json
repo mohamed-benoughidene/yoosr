@@ -1735,8 +1735,13 @@
       "namePlaceholder": "John Doe",
       "emailLabel": "Email",
       "emailPlaceholder": "your@email.com",
+      "phoneLabel": "Phone Number",
+      "phonePlaceholder": "+1 (555) 000-0000",
       "nameRequired": "Name is required",
       "emailRequired": "Email is required",
+      "phoneRequired": "Phone number is required",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidPhone": "Please enter a valid phone number",
       "startChat": "Start Chat"
     },
     "rating": {

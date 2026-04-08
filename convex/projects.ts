@@ -323,7 +323,54 @@ export const updateWidgetLocale = mutation({
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw authError();
+
+        const project = await ctx.db.get(args.projectId);
+        if (!project || project.orgId !== identity.org_id) {
+            throw notFoundError("Project");
+        }
+
+        // If widgetConfig.translations exists, ensure the new locale has entries initialized
+        const widgetConfig = project.widgetConfig;
+        if (widgetConfig?.translations) {
+            const translations = widgetConfig.translations as Record<string, Record<string, string>>;
+            const translationFields = ["headerTitle", "welcomeMessage", "onlineStatus", "preChatTitle", "preChatSubtitle", "startChat"];
+
+            let needsUpdate = false;
+            for (const field of translationFields) {
+                const fieldEntry = translations[field];
+                // If field entry exists but doesn't have the new locale key, initialize it
+                if (fieldEntry && typeof fieldEntry === "object" && fieldEntry[args.locale] === undefined) {
+                    fieldEntry[args.locale] = "";
+                    needsUpdate = true;
+                }
+                // If field entry is a string (legacy flat format), convert to nested
+                if (fieldEntry && typeof fieldEntry === "string") {
+                    translations[field] = {
+                        en: fieldEntry,
+                        ar: "",
+                        fr: "",
+                    };
+                    needsUpdate = true;
+                }
+                // If field entry is missing entirely, create it
+                if (!fieldEntry) {
+                    translations[field] = { en: "", ar: "", fr: "" };
+                    translations[field][args.locale] = "";
+                    needsUpdate = true;
+                }
+            }
+
+            if (needsUpdate) {
+                await ctx.db.patch(args.projectId, {
+                    widgetLocale: args.locale,
+                    widgetConfig: { ...widgetConfig, translations },
+                });
+                return { projectId: args.projectId, locale: args.locale, initializedTranslations: true };
+            }
+        }
+
         await ctx.db.patch(args.projectId, { widgetLocale: args.locale });
+        return { projectId: args.projectId, locale: args.locale, initializedTranslations: false };
     },
 });
 

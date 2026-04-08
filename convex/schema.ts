@@ -34,12 +34,36 @@ export default defineSchema({
             preChatFormEnabled: v.optional(v.boolean()),
             contactMethod: v.optional(v.union(v.literal("email"), v.literal("phone"), v.literal("both"))),
             translations: v.optional(v.object({
-                welcomeMessage: v.optional(v.string()),
-                headerTitle: v.optional(v.string()),
-                onlineStatus: v.optional(v.string()),
-                preChatTitle: v.optional(v.string()),
-                preChatSubtitle: v.optional(v.string()),
-                startChat: v.optional(v.string()),
+                headerTitle: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
+                welcomeMessage: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
+                onlineStatus: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
+                preChatTitle: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
+                preChatSubtitle: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
+                startChat: v.optional(v.object({
+                    en: v.optional(v.string()),
+                    ar: v.optional(v.string()),
+                    fr: v.optional(v.string()),
+                })),
             })),
         })), // JSON config for widget appearance
         widgetLocale: v.optional(v.union(v.literal("en"), v.literal("ar"), v.literal("fr"))),

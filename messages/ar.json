@@ -1719,8 +1719,13 @@
       "namePlaceholder": "محمد علي",
       "emailLabel": "البريد الإلكتروني",
       "emailPlaceholder": "your@email.com",
+      "phoneLabel": "رقم الهاتف",
+      "phonePlaceholder": "+966 5XX XXX XXX",
       "nameRequired": "الاسم مطلوب",
       "emailRequired": "البريد الإلكتروني مطلوب",
+      "phoneRequired": "رقم الهاتف مطلوب",
+      "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
+      "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
       "startChat": "بدء المحادثة"
     },
     "rating": {

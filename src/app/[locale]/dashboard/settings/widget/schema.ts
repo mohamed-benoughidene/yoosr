@@ -21,6 +21,13 @@
 
 import { z } from "zod";
 
+// Per-language translation entry
+const translationEntry = z.object({
+  en: z.string().max(500),
+  ar: z.string().max(500),
+  fr: z.string().max(500),
+});
+
 export const widgetConfigSchema = z.object({
   // Appearance
   primaryColor: z
@@ -36,15 +43,44 @@ export const widgetConfigSchema = z.object({
   preChatFormEnabled: z.boolean(),
   contactMethod: z.enum(["email", "phone"]),
 
-  // Translations
+  // Translations — nested per-language
   translations: z.object({
-    headerTitle: z.string().min(1, "Header title is required").max(100),
-    onlineStatus: z.string().max(100),
-    startChat: z.string().min(1, "Start chat text is required").max(100),
-    welcomeMessage: z.string().min(1, "Welcome message is required").max(500),
-    preChatTitle: z.string().min(1, "Pre-chat title is required").max(100),
-    preChatSubtitle: z.string().max(500),
+    headerTitle: translationEntry.refine(
+      (entry) => entry.en.length > 0,
+      { message: "Header title (English) is required", path: ["en"] }
+    ),
+    welcomeMessage: translationEntry.refine(
+      (entry) => entry.en.length > 0,
+      { message: "Welcome message (English) is required", path: ["en"] }
+    ),
+    onlineStatus: translationEntry,
+    startChat: translationEntry.refine(
+      (entry) => entry.en.length > 0,
+      { message: "Start chat text (English) is required", path: ["en"] }
+    ),
+    preChatTitle: translationEntry.refine(
+      (entry) => entry.en.length > 0,
+      { message: "Pre-chat title (English) is required", path: ["en"] }
+    ),
+    preChatSubtitle: translationEntry,
   }),
 });
 
 export type WidgetConfigForm = z.infer<typeof widgetConfigSchema>;
+
+// Helper: create empty translation entry with all locales as empty strings
+export const emptyTranslationEntry = (): { en: string; ar: string; fr: string } => ({
+  en: "",
+  ar: "",
+  fr: "",
+});
+
+// Helper: create default translations with English values
+export const defaultTranslations = (): WidgetConfigForm["translations"] => ({
+  headerTitle: { en: "Chat with us", ar: "", fr: "Discutez avec nous" },
+  welcomeMessage: { en: "Hi! How can we help you today?", ar: "", fr: "Bonjour! Comment pouvons-nous vous aider?" },
+  onlineStatus: { en: "Online", ar: "", fr: "En ligne" },
+  startChat: { en: "Start Chat", ar: "", fr: "Démarrer le chat" },
+  preChatTitle: { en: "Welcome", ar: "", fr: "Bienvenue" },
+  preChatSubtitle: { en: "Please fill in your details to start a conversation.", ar: "", fr: "Veuillez remplir vos coordonnées pour démarrer une conversation." },
+});

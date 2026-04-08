@@ -1719,8 +1719,13 @@
       "namePlaceholder": "Jean Dupont",
       "emailLabel": "E-mail",
       "emailPlaceholder": "votre@email.com",
+      "phoneLabel": "Numéro de téléphone",
+      "phonePlaceholder": "+33 6 XX XX XX XX",
       "nameRequired": "Le nom est requis",
       "emailRequired": "L'e-mail est requis",
+      "phoneRequired": "Le numéro de téléphone est requis",
+      "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+      "invalidPhone": "Veuillez entrer un numéro de téléphone valide",
       "startChat": "Démarrer le chat"
     },
     "rating": {
