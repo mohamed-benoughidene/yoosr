@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl"
 import { useUser } from "@clerk/nextjs"
-import { useRouter, usePathname } from "@/i18n/navigation"
+import { usePathname } from "@/i18n/navigation"
 import { Languages } from "lucide-react"
 import {
   DropdownMenuSub,
@@ -15,7 +15,6 @@ import {
 export function LanguageSwitcher() {
   const { user } = useUser()
   const locale = useLocale()
-  const router = useRouter()
   const pathname = usePathname()
 
   const languages = [
@@ -36,6 +35,7 @@ export function LanguageSwitcher() {
 
     // Use window.location for a hard navigation to avoid Clerk session interference
     const targetPath = pathname || "/dashboard"
+    // eslint-disable-next-line react-hooks/immutability -- Valid browser navigation pattern
     window.location.href = `/${newLocale}${targetPath}`
   }
 
