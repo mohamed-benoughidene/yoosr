@@ -24,9 +24,8 @@ export function FooterLanguageSwitcher() {
   ]
 
   const handleLanguageChange = (newLocale: string) => {
-    const segments = pathname.split("/")
-    segments[1] = newLocale
-    router.push(segments.join("/"))
+    // Use locale-aware navigation: stay on current path but switch locale
+    router.push(pathname, { locale: newLocale })
   }
 
   const currentLang = languages.find((lang) => lang.code === locale)

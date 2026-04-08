@@ -29,7 +29,8 @@ export function LanguageSwitcher() {
       await user.update({
         unsafeMetadata: { ...user.unsafeMetadata, locale: newLocale },
       })
-      router.push(`/${newLocale}/dashboard`)
+      // Use locale-aware navigation: navigate to /dashboard in the new locale
+      router.push("/dashboard", { locale: newLocale })
     } catch (error) {
       console.error("Failed to update language preference", error)
     }
