@@ -110,6 +110,15 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    "/((?!api|widget|_next|static|favicon\\.ico|.*\\.(?:png|jpg|svg|ico|css|js|mp4)).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - widget (widget endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt, llms.txt (root SEO files)
+     * - files with extensions (images, css, js, etc.)
+     */
+    "/((?!api|widget|_next|static|favicon\\.ico|sitemap\\.xml|robots\\.txt|llms\\.txt|.*\\.(?:png|jpg|svg|ico|css|js|mp4)).*)",
   ],
 };
