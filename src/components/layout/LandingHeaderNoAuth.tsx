@@ -28,7 +28,6 @@ export function LandingHeaderNoAuth() {
             height={32}
             width={100}
             className="h-8 w-auto"
-            priority
           />
         </button>
 
