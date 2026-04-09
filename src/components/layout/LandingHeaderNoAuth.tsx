@@ -1,11 +1,12 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 
 export function LandingHeaderNoAuth() {
   const t = useTranslations('landing.header');
+  const locale = useLocale();
   const router = useRouter();
 
   return (
@@ -18,7 +19,7 @@ export function LandingHeaderNoAuth() {
       <div className="mx-auto h-full flex flex-row items-center justify-between w-full" style={{ maxWidth: '1200px', padding: '0 24px' }}>
         <button
           type="button"
-          onClick={() => router.push('/')}
+          onClick={() => router.push(`/${locale}`)}
           className="flex items-center bg-transparent border-none p-0"
           style={{ cursor: 'pointer' }}
         >
