@@ -58,7 +58,10 @@ export default clerkMiddleware(async (auth, req) => {
     pathname.startsWith("/api") ||
     pathname.startsWith("/widget") ||
     pathname.startsWith("/_next") ||
-    pathname.includes(".")
+    pathname.includes(".") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/llms.txt"
   ) {
     return intlMiddleware(req);
   }
