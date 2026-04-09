@@ -7,9 +7,8 @@ import {
 } from "lucide-react"
 import * as React from "react"
 import { useState } from "react"
-import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { usePathname, useRouter } from "@/i18n/navigation"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { OrganizationSwitcher, useUser, useClerk } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -95,6 +94,7 @@ function OrgSwitcher() {
 function NavUser() {
   const t = useTranslations("nav")
   const tFeedback = useTranslations("dashboard.feedback")
+  const locale = useLocale()
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
   const { activeProject } = useProject()
@@ -152,7 +152,7 @@ function NavUser() {
                 <MessageSquare className="me-2 size-4" />{tFeedback("menuItem")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: "/" })}>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: `/${locale}` })}>
                 <LogOut className="me-2 size-4" />Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

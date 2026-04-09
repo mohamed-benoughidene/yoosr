@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
+const LOCALE_COOKIE = "NEXT_LOCALE"
+
 export function FooterLanguageSwitcher() {
   const locale = useLocale()
   const router = useRouter()
@@ -24,8 +26,11 @@ export function FooterLanguageSwitcher() {
   ]
 
   const handleLanguageChange = (newLocale: string) => {
+    // Persist locale in cookie so middleware can redirect bare / to saved locale
+    document.cookie = `${LOCALE_COOKIE}=${newLocale};path=/;max-age=31536000;samesite=lax`;
+
     // Use locale-aware navigation: stay on current path but switch locale
-    router.push(pathname, { locale: newLocale })
+    router.push(pathname, { locale: newLocale });
   }
 
   const currentLang = languages.find((lang) => lang.code === locale)
