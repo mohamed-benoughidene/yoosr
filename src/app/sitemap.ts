@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yoosr.co';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yoosr.io';
   const locales = ['en', 'ar', 'fr'];
 
   // Public marketing pages

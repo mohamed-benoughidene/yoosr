@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io"),
   title: {
     default: "Yoosr - AI-Powered Customer Support Platform",
     template: "%s | Yoosr",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://yoosr.co",
+    url: "https://yoosr.io",
     siteName: "Yoosr",
     title: "Yoosr - AI-Powered Customer Support Platform",
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
@@ -76,14 +76,13 @@ export const metadata: Metadata = {
     title: "Yoosr - AI-Powered Customer Support Platform",
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
     images: ["/og/image"],
-    creator: "@yoosr",
   },
   alternates: {
     canonical: "/",
     languages: {
-      "en": "/en",
-      "ar": "/ar",
-      "fr": "/fr",
+      "en": "https://yoosr.io/en",
+      "ar": "https://yoosr.io/ar",
+      "fr": "https://yoosr.io/fr",
     },
   },
   icons: {

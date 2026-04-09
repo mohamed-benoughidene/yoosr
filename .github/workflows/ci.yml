@@ -61,7 +61,7 @@ jobs:
       - name: Deploy Convex to Staging
         run: npx convex deploy --cmd 'bun run build'
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_STAGING }}
 
       - name: Deploy Frontend to Vercel (Staging)
         run: |
@@ -92,7 +92,7 @@ jobs:
       - name: Deploy to Convex
         run: npx convex deploy --cmd 'bun run build'
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
 
   deploy-frontend:
     name: Deploy Frontend to Vercel (main only)

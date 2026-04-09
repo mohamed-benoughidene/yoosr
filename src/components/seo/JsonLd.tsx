@@ -3,7 +3,7 @@
 import Script from "next/script";
 
 export function JsonLd() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io";
 
   // Organization structured data
   const organizationData = {
@@ -15,15 +15,16 @@ export function JsonLd() {
     "description": "AI-Powered Customer Support Platform with visual bot builder, knowledge base RAG, and omnichannel support",
     "foundingDate": "2024",
     "areaServed": "Worldwide",
-    "sameAs": [
-      "https://twitter.com/yoosr",
-      "https://linkedin.com/company/yoosr",
-      "https://github.com/yoosr",
-    ],
+    // TODO: Add social media links here when accounts are created
+    // "sameAs": [
+    //   "https://twitter.com/yoosr",
+    //   "https://linkedin.com/company/yoosr",
+    //   "https://github.com/yoosr",
+    // ],
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer service",
-      "email": "support@yoosr.com",
+      "email": "support@yoosr.app",
       "availableLanguage": ["English", "Arabic", "French"],
     },
   };
@@ -65,13 +66,6 @@ export function JsonLd() {
       "HITL Handoff",
       "Multi-language Support (EN/AR/FR)",
     ],
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "5",
-      "ratingCount": "1",
-      "bestRating": "5",
-      "worstRating": "1",
-    },
   };
 
   // FAQ structured data (for landing page)
