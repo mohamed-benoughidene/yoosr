@@ -1,304 +1,490 @@
-# Part 04: Database Schema Design — Analysis Findings
+# Part 04: Database Schema Design
 
 ## 📊 Visual Map
 
 ```
-convex/schema.ts (single master schema — 27 tables)
+convex/schema.ts (477 lines, 21KB)
 │
-├── User & Identity
-│   ├── profiles              → User profiles (synced from Clerk via webhook)
-│   │   └── Indexes: by_userId, by_orgId, by_orgId_isAvailable
-│   └── feedback              → Early access feedback & feature requests
-│       └── Indexes: by_org, by_created
+├── User & Auth
+│   └── profiles              → User profiles synced from Clerk webhooks
+│       Indexes: by_userId, by_orgId, by_orgId_isAvailable
 │
-├── Organization & Projects
-│   ├── projects              → Project entities (org-scoped)
-│   │   └── Indexes: by_orgId
-│   └── project_usage         → Monthly usage quotas (AI tokens, messages)
-│       └── Indexes: by_projectId
+├── Multi-Tenant Core
+│   ├── projects              → Organizations / workspaces (tenant root)
+│   │   Indexes: by_orgId
+│   │   └── widgetConfig      → Deeply nested object (translations × 3 locales × 6 fields)
+│   │
+│   ├── departments           → Team routing groups within a project
+│   │   Indexes: by_projectId
+│   │
+│   └── operating_hours       → Business schedule per project
+│       Indexes: by_projectId
 │
 ├── Conversations & Messaging
-│   ├── conversations         → Chat threads from visitors
-│   │   │   (status: 100=unassigned, 200=assigned, 1000=closed)
-│   │   └── Indexes: by_projectId, by_projectId_status, by_projectId_visitorId,
-│   │                   by_projectId_channelSenderId
-│   ├── conversation_bot_state → Bot execution state (separated to avoid OCC conflicts)
-│   │   └── Indexes: by_conversationId
-│   ├── messages              → Chat messages within conversations
-│   │   └── Indexes: by_conversationId, by_projectId, by_projectId_senderType
-│   ├── conversation_events   → Bot vs agent handling tracking
-│   │   └── Indexes: by_projectId, by_projectId_createdAt, by_conversationId
-│   └── notifications         → Push/email notifications for agents
-│       └── Indexes: by_recipient, by_project_recipient, by_createdAt
+│   ├── conversations         → Chat threads (largest table, 30+ fields)
+│   │   Indexes: by_projectId, by_projectId_status, by_projectId_visitorId, by_projectId_channelSenderId
+│   │   ├── Legacy fields     → leadId, firstText, typing (deprecated)
+│   │   ├── Bot execution     → currentNodeId, botStepCount, executionLog (backward compat)
+│   │   ├── HITL handoff      → botPaused, handoffSource
+│   │   ├── Channel routing   → channel (widget|messenger|instagram|telegram|whatsapp), channelSenderId
+│   │   └── SLA tracking      → priority, firstResponseAt, slaDeadline
+│   │
+│   ├── conversation_bot_state → Separated bot execution state (OCC optimization)
+│   │   Indexes: by_conversationId
+│   │
+│   ├── messages              → Individual messages within conversations
+│   │   Indexes: by_conversationId, by_projectId, by_projectId_senderType
+│   │
+│   └── conversation_events   → Bot vs agent handling tracking
+│       Indexes: by_projectId, by_conversationId, by_projectId_createdAt
 │
 ├── Bot System
-│   ├── bots                  → Chatbot/automation configs
-│   │   └── Indexes: by_projectId
+│   ├── bots                  → Bot configurations (chatbot | automation)
+│   │   Indexes: by_projectId
+│   │   └── configuration     → AI model settings, KB reference, fallback bot
+│   │
 │   └── bot_flows             → Design Studio graph data (ReactFlow nodes/edges)
-│       └── Indexes: by_botId, by_slug
+│       Indexes: by_botId, by_slug
+│       └── executionNodes    → Compiled engine schema for runtime
 │
-├── Contacts & CRM
-│   ├── contacts              → Saved contacts from conversations
-│   │   └── Indexes: by_projectId, by_conversationId, by_projectId_email,
-│   │                   by_projectId_phone
+├── Knowledge Base (AI)
+│   ├── knowledge_bases       → KB containers per project
+│   │   Indexes: by_projectId
+│   │
+│   ├── knowledge_base_sources → Articles, URLs, files feeding a KB
+│   │   Indexes: by_kbId
+│   │
+│   └── knowledge_base_chunks → Embedding vectors for semantic search
+│       VectorIndex: by_embedding (2048 dimensions, nvidia/llama-nemotron)
+│       FilterFields: sourceId, projectId
+│
+├── Contacts & Orders
+│   ├── contacts              → Saved visitor information
+│   │   Indexes: by_projectId, by_conversationId, by_projectId_email, by_projectId_phone
+│   │
 │   └── orders                → Orders placed through chat
-│       └── Indexes: by_projectId, by_conversationId, by_projectId_status
+│       Indexes: by_projectId, by_conversationId, by_projectId_status
 │
-├── Knowledge Base & AI
-│   ├── knowledge_bases       → Knowledge base containers
-│   │   └── Indexes: by_projectId
-│   ├── knowledge_base_sources → Articles, URLs, files
-│   │   └── Indexes: by_kbId
-│   └── knowledge_base_chunks  → Document chunks + embeddings (VECTOR INDEX)
-│       └── Vector Index: by_embedding (2048 dims, nvidia/llama-nemotron model)
-│
-├── Routing & Departments
-│   ├── departments           → Agent departments with routing modes
-│   │   └── Indexes: by_projectId
-│   ├── canned_responses      → Quick reply templates
-│   │   └── Indexes: by_projectId
-│   └── operating_hours       → Business hours schedules
-│       └── Indexes: by_projectId
-│
-├── Labels & Tags
-│   ├── labels                → Tag definitions for conversations
-│   │   └── Indexes: by_projectId
-│   └── tags                  → (stored as string array on conversations)
-│
-├── Analytics & Reporting
-│   ├── activity_logs         → Audit/activity logging
-│   │   └── Indexes: by_projectId, by_actionType, by_projectId_createdAt
-│   ├── csat_ratings          → Customer satisfaction ratings
-│   │   └── Indexes: by_projectId, by_projectId_createdAt
-│   ├── token_usage           → AI token usage logging
-│   │   └── Indexes: by_projectId, by_projectId_createdAt
-│   └── unanswered_queries    → Unmatched KB queries
-│       └── Indexes: by_projectId, by_projectId_count
+├── Analytics & Tracking
+│   ├── activity_logs         → Audit trail for project actions
+│   │   Indexes: by_projectId, by_actionType, by_projectId_createdAt
+│   │
+│   ├── csat_ratings          → Customer satisfaction scores (1-5)
+│   │   Indexes: by_projectId, by_projectId_createdAt
+│   │
+│   ├── token_usage           → AI token consumption logging
+│   │   Indexes: by_projectId, by_projectId_createdAt
+│   │
+│   ├── unanswered_queries    → Knowledge base gaps tracking
+│   │   Indexes: by_projectId, by_projectId_count
+│   │
+│   └── project_usage         → Monthly quotas (tokens + conversations)
+│       Indexes: by_projectId
 │
 ├── Integrations & Webhooks
-│   ├── integrations          → External channel configs (Telegram, WhatsApp, etc.)
-│   │   └── Indexes: by_projectId, by_provider_enabled, by_provider_phoneNumberId,
-│   │                   by_provider_pageId, by_provider_webhookSecret
-│   ├── webhook_subscriptions  → RestHook webhook subscriptions
-│   │   └── Indexes: by_projectId, by_projectId_isActive
-│   └── webhook_deliveries     → Webhook delivery tracking
-│       └── Indexes: by_subscriptionId, by_projectId, by_projectId_event
+│   ├── integrations          → External channel configs (telegram, whatsapp, messenger, instagram)
+│   │   Indexes: by_projectId, by_provider_enabled, by_provider_phoneNumberId, by_provider_pageId, by_provider_webhookSecret
+│   │
+│   ├── webhook_subscriptions → RestHooks subscriptions
+│   │   Indexes: by_projectId, by_projectId_isActive
+│   │
+│   └── webhook_deliveries    → Delivery attempt logs
+│       Indexes: by_subscriptionId, by_projectId, by_projectId_event
 │
-└── Push Notifications
-    └── push_subscriptions     → Web push subscriptions
-        └── Indexes: by_userId, by_orgId
+├── Communication
+│   ├── notifications         → Agent notifications (5 types)
+│   │   Indexes: by_recipient, by_project_recipient, by_createdAt
+│   │
+│   ├── push_subscriptions    → Web push VAPID subscriptions
+│   │   Indexes: by_userId, by_orgId
+│   │
+│   └── canned_responses      → Quick reply templates
+│       Indexes: by_projectId
+│
+├── Misc
+│   ├── labels                → Conversation tagging/categorization
+│   │   Indexes: by_projectId
+│   │
+│   └── feedback              → Early Access feedback & feature requests
+│       Indexes: by_org, by_created
+│
+└── Support Files
+    ├── convex/types.ts       → ClerkIdentity type, CONVERSATION_STATUS constants
+    └── convex/migrations.ts  → 2 migrations (status codes, widget translations)
 ```
 
 ## 📁 File Inventory
 
-| File | Purpose |
-|------|---------|
-| `convex/schema.ts` | Master schema: 27 tables with 47+ indexes, 1 vector index |
-| `convex/migrations.ts` | One disabled migration (`migrateStatuses` — completed March 2026) |
+| File | Purpose | Actual Status |
+|------|---------|---------------|
+| `convex/schema.ts` | Master schema defining all database tables (477 lines, 21KB) | ✅ Present — 25 tables defined |
+| `convex/types.ts` | Shared type definitions (ClerkIdentity, CONVERSATION_STATUS) | ✅ Present — 52 lines |
+| `convex/migrations.ts` | Data migration functions (2 migrations) | ✅ Present — 126 lines |
+| `convex/crons.ts` | Scheduled cleanup jobs for append-only tables | ✅ Present — 11 cron jobs |
+| `convex/lib/embeddings.ts` | Embedding model configuration (EMBEDDING_CONFIG) | ✅ Present — referenced by schema |
 
 ## ✅ Analysis Checklist
 
 - [x] **What tables/collections are defined?**
-  **27 tables total:**
-  1. `profiles` — User profiles synced from Clerk
-  2. `projects` — Project/workspace entities
-  3. `conversations` — Chat threads
-  4. `conversation_bot_state` — Separated bot state to avoid OCC conflicts
-  5. `messages` — Chat messages
-  6. `bots` — Bot configurations
-  7. `bot_flows` — Design Studio ReactFlow graph data
-  8. `activity_logs` — Audit trail
-  9. `integrations` — External channel configs
-  10. `departments` — Agent departments
-  11. `canned_responses` — Quick reply templates
-  12. `labels` — Tag definitions
-  13. `operating_hours` — Business hours
-  14. `knowledge_bases` — KB containers
-  15. `knowledge_base_sources` — KB content sources
-  16. `knowledge_base_chunks` — Vector embeddings
-  17. `contacts` — CRM contacts from conversations
-  18. `conversation_events` — Bot/agent handling events
-  19. `csat_ratings` — Customer satisfaction
-  20. `token_usage` — AI token tracking
-  21. `unanswered_queries` — Unmatched queries
-  22. `project_usage` — Monthly usage quotas
-  23. `webhook_subscriptions` — RestHook subscriptions
-  24. `webhook_deliveries` — Delivery tracking
-  25. `notifications` — Agent notifications
-  26. `orders` — Chat-based orders
-  27. `feedback` — Feature feedback
-  28. `push_subscriptions` — Web push tokens
+
+  **25 tables total:**
+
+  | # | Table | Domain | Fields Count |
+  |---|-------|--------|-------------|
+  | 1 | `profiles` | Auth | 8 fields |
+  | 2 | `projects` | Multi-tenant | 9 fields + nested widgetConfig |
+  | 3 | `conversations` | Messaging | 30+ fields (largest table) |
+  | 4 | `conversation_bot_state` | Bot Engine | 5 fields |
+  | 5 | `messages` | Messaging | 11 fields |
+  | 6 | `bots` | Bot System | 6 fields + nested configuration |
+  | 7 | `bot_flows` | Bot System | 6 fields + deeply nested nodes/edges |
+  | 8 | `activity_logs` | Analytics | 11 fields |
+  | 9 | `integrations` | Channels | 7 fields |
+  | 10 | `departments` | Routing | 7 fields |
+  | 11 | `canned_responses` | Messaging | 4 fields |
+  | 12 | `labels` | Organization | 4 fields |
+  | 13 | `operating_hours` | Schedule | 4 fields + nested schedule array |
+  | 14 | `knowledge_bases` | AI | 4 fields |
+  | 15 | `knowledge_base_sources` | AI | 4 fields |
+  | 16 | `knowledge_base_chunks` | AI/Vector | 4 fields + vector index |
+  | 17 | `contacts` | CRM | 8 fields |
+  | 18 | `conversation_events` | Analytics | 5 fields |
+  | 19 | `csat_ratings` | Analytics | 5 fields |
+  | 20 | `token_usage` | Analytics | 5 fields |
+  | 21 | `unanswered_queries` | Analytics | 4 fields |
+  | 22 | `project_usage` | Billing | 4 fields |
+  | 23 | `webhook_subscriptions` | Integrations | 5 fields |
+  | 24 | `webhook_deliveries` | Integrations | 8 fields |
+  | 25 | `notifications` | Communication | 8 fields |
+  | — | `orders` | CRM | 9 fields |
+  | — | `feedback` | Feedback | 7 fields |
+  | — | `push_subscriptions` | Communication | 4 fields |
+
+  **Note:** Actually **28 tables** — the visual map in the template listed only ~16. The actual schema has significantly more domain-specific analytics and integration tables.
 
 - [x] **What are the fields for each table?**
-  Detailed in the schema.ts file. Key patterns:
-  - All tables have `projectId` or `orgId` for multi-tenant scoping
-  - Many tables use `v.optional()` for flexible fields
-  - Nested objects defined with `v.object()` (e.g., `widgetConfig`, `configuration`)
-  - Arrays with `v.array()` (e.g., `tags`, `participants`, `memberIds`)
-  - `v.any()` used for flexible/deferred validation structures
-  - External references use `v.string()` for Clerk user IDs (not Convex document IDs)
 
-- [x] **What data types are used?**
-  - `v.string()` — Text fields, Clerk user IDs, status strings
-  - `v.number()` — Timestamps (Date.now()), counts, ratings
-  - `v.boolean()` — Flags (enabled, read, isDefault, etc.)
-  - `v.array(...)` — Lists (tags, participants, memberIds, schedule slots)
-  - `v.object({...})` — Nested documents (widgetConfig, configuration, schedule)
-  - `v.any()` — Flexible/deferred structures (attributes, credentials, attachments, metadata)
-  - `v.id("table")` — Convex document references (projectId, conversationId, botId, etc.)
-  - `v.union(...)` — Enum-like constraints (status codes, channel types, priority levels)
+  Detailed field breakdown for key tables:
+
+  **`conversations` (largest — 30+ fields):**
+  ```
+  projectId (id→projects), visitorId (string), visitorName, assignedTo (string),
+  status (union: 100|200|1000), lastMessage, resolvedBy, visitorEmail, visitorPhone,
+  visitorAddress, visitorNote, unreadCount, rating (1-5), feedback, updatedAt,
+  currentNodeId (deprecated→conversation_bot_state), botStepCount (deprecated),
+  executionLog (deprecated), botId (id→bots), participants (array<string>), tags (array<string>),
+  attributes (any), leadId (legacy), firstText (legacy), typing (legacy),
+  botPaused, handoffSource, departmentId (id→departments), priority (union: low|normal|high|urgent),
+  firstResponseAt, slaDeadline, channel (union: widget|messenger|instagram|telegram|whatsapp),
+  channelSenderId
+  ```
+
+  **`projects` (tenant root with nested widget config):**
+  ```
+  name, description, orgId, status, widgetConfig (object with 8+ nested fields including
+  translations with 6 fields × 3 locales = 18 translation slots), widgetLocale,
+  defaultModel, openRouterApiKey, slaHours
+  ```
+
+  **`bot_flows` (complex nested structure):**
+  ```
+  botId (id→bots), slug, version, nodes (array<any> — ReactFlow nodes),
+  edges (array<object> with id/source/target/sourceHandle/targetHandle/type/label/markerEnd/style),
+  executionNodes (array<object> — compiled engine schema), variables (object)
+  ```
+
+- [x] **What data types are used? (string, number, boolean, arrays, objects)**
+
+  **Full type inventory:**
+  - `v.string()` — Most common: names, IDs, descriptions, content
+  - `v.number()` — Timestamps, ratings, counts, token usage
+  - `v.boolean()` — Flags: enabled, isDefault, isActive, botPaused, read, closed
+  - `v.optional()` — Used extensively (~80% of fields are optional)
+  - `v.array(v.string())` — Tags, participants, memberIds, events
+  - `v.array(v.object({...}))` — Schedule slots, execution logs, edges, nodes
   - `v.array(v.number())` — Embedding vectors (2048 dimensions)
+  - `v.object({...})` — Nested configs: widgetConfig, configuration, translations
+  - `v.id("tableName")` — Foreign key references to other Convex tables
+  - `v.union(v.literal(...))` — Enum-like unions for status, channel, priority, type
+  - `v.any()` — Used 7 times for flexible data: attachments, metadata, attributes, nodes, markerEnd, style, actions
+  - `v.null()` — Only in `v.union(v.string(), v.null())` for currentNodeId
 
 - [x] **Which fields are indexed for query performance?**
-  **47+ indexes across 27 tables**, including:
-  - **Single-field indexes**: Most tables have `by_projectId` for org-scoped queries
-  - **Compound indexes**: `by_projectId_status`, `by_orgId_isAvailable`, `by_projectId_createdAt`
-  - **Unique lookup indexes**: `by_userId`, `by_kbId`, `by_conversationId`
-  - **Integration-specific indexes**: `by_provider_enabled`, `by_provider_phoneNumberId`, `by_provider_pageId`, `by_provider_webhookSecret`
-  - **Notification indexes**: `by_recipient`, `by_project_recipient`, `by_createdAt`
-  - **Webhook indexes**: `by_projectId_isActive`, `by_projectId_event`
-  - **Contact dedup indexes**: `by_projectId_email`, `by_projectId_phone`
-  - **1 VECTOR INDEX**: `knowledge_base_chunks.by_embedding` (2048 dimensions)
+
+  **Total: 43 indexes + 1 vector index across 28 tables.**
+
+  | Table | Index Count | Index Fields |
+  |-------|------------|--------------|
+  | `profiles` | 3 | userId, orgId, orgId+isAvailable |
+  | `projects` | 1 | orgId |
+  | `conversations` | 4 | projectId, projectId+status, projectId+visitorId, projectId+channelSenderId |
+  | `conversation_bot_state` | 1 | conversationId |
+  | `messages` | 3 | conversationId, projectId, projectId+senderType |
+  | `bots` | 1 | projectId |
+  | `bot_flows` | 2 | botId, slug |
+  | `activity_logs` | 3 | projectId, actionType, projectId+createdAt |
+  | `integrations` | 5 | projectId, provider+enabled, provider+phoneNumberId, provider+pageId, provider+webhookSecret |
+  | `departments` | 1 | projectId |
+  | `canned_responses` | 1 | projectId |
+  | `labels` | 1 | projectId |
+  | `operating_hours` | 1 | projectId |
+  | `knowledge_bases` | 1 | projectId |
+  | `knowledge_base_sources` | 1 | kbId |
+  | `knowledge_base_chunks` | 1 vector | embedding (2048d), filters: sourceId, projectId |
+  | `contacts` | 4 | projectId, conversationId, projectId+email, projectId+phone |
+  | `conversation_events` | 3 | projectId, conversationId, projectId+createdAt |
+  | `csat_ratings` | 2 | projectId, projectId+createdAt |
+  | `token_usage` | 2 | projectId, projectId+createdAt |
+  | `unanswered_queries` | 2 | projectId, projectId+count |
+  | `project_usage` | 1 | projectId |
+  | `webhook_subscriptions` | 2 | projectId, projectId+isActive |
+  | `webhook_deliveries` | 3 | subscriptionId, projectId, projectId+event |
+  | `notifications` | 3 | recipientId+createdAt, projectId+recipientId, createdAt |
+  | `orders` | 3 | projectId, conversationId, projectId+status |
+  | `feedback` | 2 | orgId, createdAt |
+  | `push_subscriptions` | 2 | userId, orgId |
 
 - [x] **What relationships exist between tables?**
-  **Document references (Convex `v.id()`):**
-  - `conversations.projectId` → `projects`
-  - `conversations.botId` → `bots`
-  - `conversations.departmentId` → `departments`
-  - `conversation_bot_state.conversationId` → `conversations`
-  - `messages.conversationId` → `conversations`
-  - `messages.projectId` → `projects`
-  - `bots.projectId` → `projects`
-  - `bot_flows.botId` → `bots`
-  - `contacts.projectId` → `projects`
-  - `contacts.conversationId` → `conversations`
-  - `knowledge_bases.projectId` → `projects`
-  - `knowledge_base_sources.kbId` → `knowledge_bases`
-  - `knowledge_base_chunks.sourceId` → `knowledge_base_sources`
-  - `knowledge_base_chunks.projectId` → `projects`
-  - `departments.projectId` → `projects`
-  - `departments.botId` → `bots`
-  - `canned_responses.projectId` → `projects`
-  - `labels.projectId` → `projects`
-  - `operating_hours.projectId` → `projects`
-  - `integrations.projectId` → `projects`
-  - `activity_logs.projectId` → `projects`
-  - `conversation_events.projectId` → `projects`
-  - `conversation_events.conversationId` → `conversations`
-  - `csat_ratings.projectId` → `projects`
-  - `csat_ratings.conversationId` → `conversations`
-  - `token_usage.projectId` → `projects`
-  - `unanswered_queries.projectId` → `projects`
-  - `project_usage.projectId` → `projects`
-  - `webhook_subscriptions.projectId` → `projects`
-  - `webhook_deliveries.subscriptionId` → `webhook_subscriptions`
-  - `webhook_deliveries.projectId` → `projects`
-  - `notifications.projectId` → `projects`
-  - `notifications.conversationId` → `conversations`
-  - `orders.projectId` → `projects`
-  - `orders.conversationId` → `conversations`
-  - `feedback.orgId` → (Clerk org, not a Convex table)
-  - `push_subscriptions.userId` → (Clerk user, not a Convex table)
+
+  **22 explicit foreign key relationships using `v.id("table")`:**
+
+  ```
+  conversations.projectId       → projects
+  conversations.botId           → bots
+  conversations.departmentId    → departments
+  conversation_bot_state.conversationId → conversations
+  messages.conversationId       → conversations
+  messages.projectId            → projects
+  bots.projectId                → projects
+  bot_flows.botId               → bots
+  activity_logs.projectId       → projects
+  integrations.projectId        → projects
+  departments.projectId         → projects
+  departments.botId             → bots
+  canned_responses.projectId    → projects
+  labels.projectId              → projects
+  operating_hours.projectId     → projects
+  knowledge_bases.projectId     → projects
+  knowledge_base_sources.kbId   → knowledge_bases
+  contacts.projectId            → projects
+  contacts.conversationId       → conversations
+  conversation_events.projectId → projects
+  conversation_events.conversationId → conversations
+  csat_ratings.projectId        → projects
+  csat_ratings.conversationId   → conversations
+  token_usage.projectId         → projects
+  unanswered_queries.projectId  → projects
+  project_usage.projectId       → projects
+  webhook_subscriptions.projectId → projects
+  webhook_deliveries.subscriptionId → webhook_subscriptions
+  webhook_deliveries.projectId  → projects
+  notifications.projectId       → projects
+  notifications.conversationId  → conversations
+  orders.projectId              → projects
+  orders.conversationId         → conversations
+  bots.configuration.knowledgeBaseId → knowledge_bases
+  bots.configuration.fallbackBot    → bots (self-reference)
+  ```
+
+  **Implicit string-based references (Clerk IDs, not Convex IDs):**
+  - `profiles.userId` → Clerk user ID
+  - `conversations.visitorId` → Clerk user ID
+  - `conversations.assignedTo` → Clerk user ID
+  - `conversations.resolvedBy` → Clerk user ID
+  - `activity_logs.userId` → Clerk user ID
+  - `notifications.recipientId` → Clerk user ID
+  - `departments.memberIds` → Array of Clerk user IDs
+  - `projects.orgId` → Clerk organization ID
+  - `feedback.orgId` → Clerk organization ID
 
 - [x] **Are there foreign key patterns or document references?**
-  **Yes — Convex document references via `v.id("table")`.** Convex doesn't enforce referential integrity (no SQL-like FK constraints), but the schema consistently uses typed IDs. Additionally, **external references** to Clerk use `v.string()` for Clerk user IDs (`userId`, `assignedTo`, `resolvedBy`, `recipientId`) — these are NOT Convex document IDs, just string references.
+
+  **Yes, two patterns coexist:**
+
+  1. **Convex `v.id("table")` references** — Used for all internal table-to-table relationships (22 explicit references). These provide type-safe references validated at write time.
+
+  2. **String-based external references** — Used for Clerk-managed entities (user IDs, org IDs). These are `v.string()` rather than `v.id()` because Clerk IDs are external to Convex. The `profiles` table acts as the bridge — synced via webhook with `profiles.userId` matching Clerk's user ID.
+
+  **No cascade deletes** — Convex doesn't support cascade deletes natively. Data cleanup relies on manual deletion logic or cron-based TTL cleanup (see `crons.ts`).
 
 - [x] **What validation rules are in place?**
-  - **Schema-level validation**: Convex validates types on write (string, number, boolean, id, object, array)
-  - **Union types for enums**: `status: v.union(v.literal(100), v.literal(200), v.literal(1000))`
-  - **Nested object validation**: `v.object({...})` validates structure of nested docs
-  - **`v.optional()`**: Fields marked optional can be undefined
-  - **`v.any()`**: No validation (used for flexible structures like `attributes`, `metadata`, `credentials`)
-  - **Application-level validation**: Dedup checks in mutations (e.g., contact email/phone uniqueness)
-  - **No custom validators**: No `v.custom()` or validation functions defined in schema
+
+  **Schema-level validation:**
+  - `v.union(v.literal(...))` for enums: conversation status (100|200|1000), channel type, priority, notification type, order status, feedback type, contact method
+  - `v.id("table")` for type-safe foreign keys
+  - Required vs optional enforced at schema level
+  - Nested object shapes validated: widgetConfig, operating_hours schedule, bot configuration
+
+  **Not validated at schema level (deferred to runtime):**
+  - `v.any()` used 7 times — no schema validation for: `attachments`, `metadata`, `attributes`, `nodes`, `markerEnd`, `style`, `actions`
+  - String format validation (email, URL, phone) — not enforced in schema
+  - Range validation (rating 1-5) — not enforced in schema, only documented in comments
+  - Array length limits — not enforced in schema (e.g., tags max 20 is enforced in `contacts.ts`)
 
 - [x] **Are there any embedded/nested documents vs normalized references?**
-  **Mixed approach:**
-  - **Embedded/nested objects**: `widgetConfig`, `configuration`, `schedule`, `executionLog`, `credentials` — stored as `v.object()` or `v.any()` within parent documents
-  - **Normalized references**: Most cross-entity relationships use `v.id()` references (conversations → projects, messages → conversations, etc.)
-  - **Denormalized fields**: `integrations` table denormalizes `phoneNumberId`, `pageId`, `webhookSecret` from within `credentials` for indexed queries (explicitly commented as "Denormalized lookup fields for O(log n) queries")
-  - **Arrays of strings**: `tags`, `participants`, `memberIds` stored directly on documents rather than as separate tables
+
+  **Both patterns used intentionally:**
+
+  **Embedded (denormalized):**
+  - `projects.widgetConfig` — Deeply nested object (8 top-level fields + translations with 6 fields × 3 locales). Embedded because it's always read with the project, never queried independently.
+  - `bots.configuration` — AI model settings embedded in the bot document.
+  - `conversations.executionLog` — Array of execution log entries (deprecated, now in `conversation_bot_state`).
+  - `bot_flows.nodes/edges/executionNodes` — Full ReactFlow graph stored as embedded arrays.
+  - `operating_hours.schedule` — 7-day schedule with time slots.
+  - `departments.memberIds` — Array of Clerk user IDs (vs. a join table).
+
+  **Normalized (referenced):**
+  - `knowledge_base_sources` → separate from `knowledge_bases`
+  - `knowledge_base_chunks` → separate from `knowledge_base_sources`
+  - `conversation_bot_state` → separated from `conversations` (explicit OCC optimization)
+  - `webhook_deliveries` → separate from `webhook_subscriptions`
+  - `messages` → separate from `conversations`
+
+  **Design rationale:** Embedding for config that's read as a unit; normalizing for high-write/high-read-independently data to avoid OCC conflicts.
 
 - [x] **What's the naming convention for tables and fields?**
-  - **Table names**: `snake_case` plural (`activity_logs`, `knowledge_bases`, `push_subscriptions`) — with some inconsistency (`conversation_bot_state` uses underscores but `conversations` is simple plural)
-  - **Field names**: `camelCase` (`projectId`, `visitorName`, `assignedTo`, `unreadCount`)
-  - **Index names**: `by_fieldName` or `by_field1_field2` pattern
-  - **Status codes**: Numeric (`100`, `200`, `1000`) instead of strings for conversations
-  - **Clerk claims**: `org_id`, `org_role` in `ClerkIdentity` type (snake_case from JWT)
+
+  **Tables:** `snake_case` — e.g., `activity_logs`, `bot_flows`, `knowledge_bases`, `canned_responses`, `conversation_bot_state`, `push_subscriptions`
+
+  **Fields:** `camelCase` — e.g., `projectId`, `visitorName`, `assignedTo`, `lastMessage`, `createdAt`, `channelSenderId`, `webhookSecret`
+
+  **Consistent throughout** — no exceptions found.
+
+  **Convention matches Convex best practices** — table names are descriptive plural nouns in snake_case, field names are camelCase matching JavaScript conventions.
 
 - [x] **Are timestamps consistently tracked? (creation, updates)**
-  **Inconsistent:**
-  - `profiles.updatedAt` — tracked (optional number)
-  - `conversations.updatedAt` — tracked (optional number)
-  - `activity_logs.createdAt` — tracked (optional number)
-  - `notifications.createdAt` — tracked (required number)
-  - `orders.createdAt` — tracked (required number)
-  - `feedback.createdAt` — tracked (required number)
-  - `push_subscriptions.createdAt` — tracked (required number)
-  - `conversation_events.createdAt` — tracked (required number)
-  - `token_usage.createdAt` — tracked (required number)
-  - `unanswered_queries.lastAskedAt` — tracked (required number)
-  - **Missing updatedAt**: Many tables don't track `updatedAt` (bots, bot_flows, labels, departments, knowledge_bases, etc.)
-  - **Convex auto-tracks `_creationTime`**: All documents get `_creationTime` automatically from Convex, so creation time is always available
+
+  **Inconsistent timestamp tracking — this is a notable gap:**
+
+  | Table | `_creationTime` (auto) | `createdAt` (manual) | `updatedAt` (manual) | Notes |
+  |-------|----------------------|---------------------|---------------------|-------|
+  | `profiles` | ✅ (Convex auto) | ❌ | ✅ optional | Has updatedAt but no createdAt |
+  | `projects` | ✅ (Convex auto) | ❌ | ❌ | No manual timestamps at all |
+  | `conversations` | ✅ (Convex auto) | ❌ | ✅ optional | Has updatedAt but no createdAt |
+  | `messages` | ✅ (Convex auto) | ❌ | ❌ | Relies solely on Convex auto |
+  | `activity_logs` | ✅ (Convex auto) | ✅ optional | ❌ | Has createdAt but it's optional |
+  | `conversation_events` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `csat_ratings` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `token_usage` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `orders` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `feedback` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `notifications` | ✅ (Convex auto) | ✅ required | ❌ | |
+  | `webhook_deliveries` | ✅ (Convex auto) | ✅ (as `timestamp`) | ❌ | Uses `timestamp` not `createdAt` |
+  | `push_subscriptions` | ✅ (Convex auto) | ✅ required | ❌ | |
+
+  **Key observation:** All Convex documents get a built-in `_creationTime` automatically. The manual `createdAt` fields are added where time-range queries need indexed sorting (via `by_*_createdAt` indexes). There's no `updatedAt` on most tables — only `profiles` and `conversations` track it.
 
 - [x] **What's the expected data volume for each table?**
-  Based on schema design and query patterns:
-  - **High volume**: `messages` (many per conversation), `conversations` (core entity), `activity_logs` (every action logged), `notifications` (per-user, per-event), `knowledge_base_chunks` (vector embeddings, 2048 dims)
-  - **Medium volume**: `contacts`, `orders`, `csat_ratings`, `token_usage`, `conversation_events`
-  - **Low volume**: `projects` (1 per org), `bots` (few per project), `knowledge_bases` (few per project), `departments`, `operating_hours`, `webhook_subscriptions`, `integrations`, `labels`, `canned_responses`
-  - **Unbounded**: `feedback` (global, not project-scoped), `push_subscriptions` (per-user)
 
-- [x] **Are there any migration files?**
-  **One migration file**: `convex/migrations.ts` contains `migrateStatuses` which converted conversation statuses from strings to numeric codes (100/200/1000). **It is permanently disabled** (throws an error if called). Comment states: "Migration complete as of March 2026. This function has been permanently disabled." No other migrations exist.
+  **Not explicitly documented, but can be inferred from cron cleanup TTLs:**
+
+  | Table | Retention | Growth Pattern |
+  |-------|-----------|----------------|
+  | `activity_logs` | 90 days | Linear per project activity |
+  | `webhook_deliveries` | 30 days | Burst (3 attempts per event × subscriptions) |
+  | `token_usage` | 90 days | Linear per AI call |
+  | `csat_ratings` | 180 days | Linear per resolved conversation |
+  | `conversation_events` | 30 days | Linear per conversation state change |
+  | `unanswered_queries` | 90 days | Aggregated (count field increments) |
+  | `project_usage` | 90 days | 1 row per project per billing cycle |
+  | `conversations` | No TTL | Grows indefinitely — potential concern |
+  | `messages` | No TTL | Grows indefinitely — highest volume table |
+  | `knowledge_base_chunks` | No TTL | Grows with KB content |
+
+- [x] **Are there any migration files? (see `migrations.ts`)**
+
+  **Yes, `convex/migrations.ts` (126 lines) contains 2 migrations + 1 helper:**
+
+  1. **`migrateStatuses`** — **DISABLED.** Converted conversation status from string ("assigned") to numeric (100/200/1000). Completed March 2026. Throws error if called to prevent re-execution.
+
+  2. **`migrateWidgetTranslations`** — **ACTIVE.** Converts flat widget translation strings to nested per-language objects (en/ar/fr). Idempotent, batch-processes 50 projects at a time.
+
+  3. **`checkWidgetTranslationMigrationStatus`** — Helper query to verify migration progress (counts flat vs nested vs no-translations projects).
+
+  **Migration approach:** Convex migrations are regular `internalMutation` functions run manually via CLI (`npx convex run migrations:functionName`). No migration versioning system or migration history table.
 
 - [x] **Is the schema normalized or denormalized? Why?**
-  **Mostly normalized with selective denormalization:**
-  - **Normalized**: Separate tables for distinct entities (bots ↔ bot_flows, knowledge_bases ↔ knowledge_base_sources ↔ knowledge_base_chunks, conversations ↔ messages)
-  - **Denormalized for performance**: 
-    - `integrations` denormalizes `phoneNumberId`, `pageId`, `webhookSecret` from `credentials` for indexed O(log n) lookups (explicitly documented in schema comments)
-    - `conversations` embeds `participants` array, `tags` array, `attributes` bag — avoids join tables
-    - `conversations` embeds `executionLog` array (bot execution history) — though this was later moved to `conversation_bot_state` to avoid OCC conflicts
-  - **Rationale**: Performance-critical paths (routing, webhook delivery, integration lookup) benefit from denormalized indexes, while complex nested data (bot flows, KB chunks) stays normalized
+
+  **Intentionally mixed — mostly normalized with strategic denormalization:**
+
+  **Normalized (majority):**
+  - All entity tables are separate (conversations, messages, bots, bot_flows, contacts, etc.)
+  - Knowledge base → sources → chunks is fully normalized (3 levels)
+  - Webhooks: subscriptions → deliveries separated
+
+  **Denormalized for read performance:**
+  - `conversations.lastMessage` — Denormalized from messages table to avoid N+1 on conversation lists
+  - `conversations.visitorName/visitorEmail/visitorPhone` — Copied from contacts to avoid joins
+  - `integrations.phoneNumberId/pageId/webhookSecret` — Denormalized from credentials JSON for indexed lookups (explicitly documented: "Denormalized lookup fields for O(log n) queries")
+
+  **Denormalized for write performance (OCC):**
+  - `conversation_bot_state` — Separated from `conversations` to avoid OCC write conflicts (explicitly documented: "separated from conversations to avoid OCC write conflicts")
+
+  **Pragmatic design** — follows Convex best practices where denormalization reduces query fan-out and OCC is mitigated by splitting hot write paths.
 
 ## 📝 Agent Findings
 
-### Schema Architecture Highlights
-1. **OCC Conflict Resolution**: The `conversation_bot_state` table was created specifically to separate bot execution state from conversations, preventing Optimistic Concurrency Control write conflicts. This shows mature Convex experience.
+### Strong Points
 
-2. **Multi-tenant Design**: Every table is scoped to either `projectId` or `orgId`, ensuring proper data isolation between organizations.
+1. **Thoughtful OCC mitigation** — The `conversation_bot_state` table was intentionally extracted from `conversations` to avoid write conflicts between bot execution and conversation updates. This shows advanced Convex knowledge. The comment is explicit: "separated from conversations to avoid OCC write conflicts."
 
-3. **Numeric Status Codes**: Conversations use numeric status codes (100=unassigned, 200=assigned, 1000=closed) instead of strings. A migration was run to convert from strings, showing evolving schema maturity.
+2. **Comprehensive indexing strategy** — 43 indexes cover all major query patterns. Compound indexes like `by_projectId_status`, `by_projectId_createdAt`, and `by_provider_phoneNumberId` show careful attention to query performance. Every table with analytics queries has a time-based compound index.
 
-4. **Vector Search**: The `knowledge_base_chunks` table uses Convex's vector index with 2048-dimensional embeddings from `nvidia/llama-nemotron-embed-vl-1b-v2` for semantic search.
+3. **Vector search integration** — `knowledge_base_chunks` uses a 2048-dimension vector index with the nvidia/llama-nemotron embedding model. Filter fields are properly configured for project-scoped searches. A WARNING comment documents the coupling between model and dimensions.
 
-5. **External References**: Clerk user IDs are stored as `v.string()` (not Convex IDs), creating a cross-system reference pattern. This is intentional since Clerk users aren't Convex documents.
+4. **Data retention cron jobs** — 7 staggered cron jobs clean up append-only tables (activity_logs: 90d, webhook_deliveries: 30d, token_usage: 90d, csat_ratings: 180d, conversation_events: 30d, unanswered_queries: 90d, project_usage: 90d). Jobs are intentionally staggered across weekdays to avoid simultaneous execution.
 
-6. **Flexible Data Bags**: Several tables use `v.any()` for flexible structures (`attributes` on conversations, `metadata` on activity_logs, `credentials` on integrations), trading type safety for flexibility.
+5. **Well-documented deprecations** — Legacy fields in `conversations` (leadId, firstText, typing) and the old bot execution fields (currentNodeId, botStepCount, executionLog) are clearly commented as deprecated with migration history.
 
-### Notable Schema Decisions
-- **No soft deletes**: Tables use hard deletes (`ctx.db.delete()`). The `projects` table uses a `status: "deleting"` flag during cascading deletion.
-- **No audit timestamps on most tables**: Only a subset of tables track `updatedAt`; Convex's `_creationTime` is relied upon for creation time.
-- **Webhook delivery tracking**: Separate `webhook_deliveries` table for audit trail with retry attempt tracking.
+6. **Smart denormalization** — The integrations table explicitly documents its denormalization pattern: "Denormalized lookup fields for O(log n) queries (stored inside credentials but also indexed here)" for `phoneNumberId`, `pageId`, and `webhookSecret`.
+
+### Areas for Improvement
+
+1. **Excessive use of `v.any()`** — 7 instances bypass schema validation entirely: `attachments`, `metadata`, `attributes` (×2), `nodes`, `markerEnd`, `style`, `actions`. While some justify flexibility (ReactFlow nodes), others like `attachments` could benefit from at least a union of known shapes.
+
+2. **`conversations` table is bloated** — 30+ fields including deprecated ones, bot execution state (kept for backward compat), CRM fields, SLA tracking, channel routing, and tags. This is the largest table and the most likely to cause OCC issues despite the `conversation_bot_state` extraction.
+
+3. **No updatedAt on most tables** — Only `profiles` and `conversations` track `updatedAt`. Tables like `projects`, `bots`, `departments`, `integrations`, and `labels` don't track when they were last modified, making audit trails incomplete.
+
+4. **Inconsistent createdAt usage** — Some tables have manual `createdAt` (required), some have it as optional, and others rely solely on Convex's auto `_creationTime`. The `webhook_deliveries` table uses `timestamp` instead of `createdAt`.
+
+5. **No soft-delete pattern** — No `deletedAt` or `isDeleted` field on any table. All deletes are hard deletes, which makes data recovery impossible and breaks referential integrity if a parent is deleted while children exist.
+
+6. **conversations and messages have no TTL cleanup** — These are the highest-volume tables but have no data retention cron jobs, meaning they grow indefinitely.
+
+### Schema Statistics Summary
+
+| Metric | Count |
+|--------|-------|
+| Total tables | 28 |
+| Total indexes | 43 + 1 vector |
+| Total `v.id()` references | 22+ |
+| Total `v.any()` usages | 7 |
+| Total `v.union(v.literal())` enums | 8 |
+| Cron cleanup jobs | 7 |
+| Migrations | 2 (1 disabled) |
+| Tables with `createdAt` | 10 |
+| Tables with `updatedAt` | 2 |
 
 ## 🔍 Key Patterns to Identify
 
-- **Project-scoped multi-tenancy**: Nearly all tables indexed by `projectId` with org-level auth checks
-- **Clerk external references**: String-based Clerk user IDs instead of Convex document IDs
-- **Selective denormalization**: Performance-critical fields denormalized with dedicated indexes
-- **Numeric enum patterns**: Status codes (100/200/1000) instead of strings for performance
-- **Vector embeddings**: RAG pipeline with 2048-dim embeddings for KB semantic search
-- **OCC-safe separation**: `conversation_bot_state` separated from `conversations` to avoid write conflicts
-- **Webhook event fan-out**: `webhook_subscriptions` + `webhook_deliveries` for reliable delivery tracking
+| Pattern | Actual Finding |
+|---------|----------------|
+| Schema design philosophy | **Pragmatic mixed normalization** — normalized by default, denormalized where read performance or OCC demands it. Documented rationale for each denormalization. |
+| Indexing strategy | **Comprehensive compound indexes** — 43 indexes covering projectId-scoped queries, time-range queries, and provider lookups. Every analytics table has `by_projectId_createdAt`. |
+| Relationship patterns | **Dual approach**: `v.id()` for Convex-internal references (22+), `v.string()` for Clerk external IDs (users, orgs). No join tables — arrays used for M:N (memberIds, tags, participants). |
+| Data modeling conventions | **Multi-tenant by default** — `projectId` is the primary partition key on 20+ tables. `orgId` used only on `projects`, `profiles`, and `feedback`. |
+| Timestamp tracking patterns | **Inconsistent** — auto `_creationTime` always present, manual `createdAt` on ~10 tables, `updatedAt` on only 2. No consistent pattern enforced. |
 
 ## ⚠️ Potential Concerns
 
 | Concern | Severity | Details |
 |---------|----------|---------|
-| **`v.any()` used extensively** | MEDIUM | `attributes: v.any()`, `metadata: v.any()`, `credentials: v.any()`, `attachments: v.any()` — no schema validation on these fields. A malformed write could corrupt data. |
-| **No `updatedAt` on many tables** | LOW | Bots, bot_flows, labels, departments, knowledge_bases, integrations, etc. don't track update timestamps. Makes debugging and auditing harder. |
-| **Conversation `executionLog` still embedded** | LOW | Despite creating `conversation_bot_state`, the `conversations` table still has `executionLog`, `currentNodeId`, `botStepCount` fields marked "kept for backward compat." Should be cleaned up. |
-| **Legacy deprecated fields in conversations** | LOW | `leadId`, `firstText`, `typing` are marked deprecated but still in schema. Adds confusion and storage overhead. |
-| **No soft-delete pattern** | LOW | Hard deletes are used everywhere. For a business app, soft deletes (`deletedAt` timestamp) would allow data recovery and audit compliance. |
-| **`feedback` table not project-scoped** | LOW | Uses `orgId` directly (not `projectId`), which is correct for org-level feedback but inconsistent with the project-scoped pattern used elsewhere. |
-| **Single migrations file, permanently disabled** | INFO | Only one migration exists and it's disabled. Future schema changes that require data migration will need a new pattern. Consider a migration registry pattern. |
-| **Vector index hardcoded to 2048 dimensions** | INFO | Tied to specific embedding model (`nvidia/llama-nemotron-embed-vl-1b-v2`). Changing models would require re-embedding all chunks. |
+| `v.any()` used 7 times | **MEDIUM** | Bypasses schema validation. `attachments`, `metadata`, `attributes` (×2), `nodes`, `markerEnd`, `style`, `actions` are all unvalidated. Could lead to data integrity issues. |
+| No soft-delete pattern | **HIGH** | Hard deletes on all tables. If a bot is deleted, `bot_flows` referencing it become orphaned. No way to recover accidentally deleted data. |
+| `conversations` table bloat | **MEDIUM** | 30+ fields including deprecated ones. This is the most queried and most written-to table. The OCC risk is partially mitigated by `conversation_bot_state` extraction but the table itself is still a hot spot. |
+| No TTL on conversations/messages | **HIGH** | Highest-volume tables have no cleanup. Over time, these will dominate storage costs and query performance. |
+| Inconsistent timestamps | **MEDIUM** | No enforced pattern for createdAt/updatedAt. Makes auditing and debugging harder. `webhook_deliveries.timestamp` breaks the naming convention. |
+| `openRouterApiKey` stored in projects | **HIGH** | API keys stored as plain strings in the `projects` table (line 71). Should use `convex/lib/crypto.ts` encryption or Convex environment variables. |
+| String-based Clerk IDs not indexed everywhere | **LOW** | `conversations.assignedTo` (Clerk user ID) is not indexed — querying "all conversations assigned to agent X" requires a full table scan within the project. |
+| Duplicate bot execution state | **MEDIUM** | Bot execution fields exist in both `conversations` (deprecated) and `conversation_bot_state` (current). Migration to remove deprecated fields hasn't been completed. |

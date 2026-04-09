@@ -1,391 +1,231 @@
-# Part 07: Authentication & Authorization - Findings
+# Part 07: Authentication & Authorization
 
 ## 📊 Visual Map
 
 ```
-Authentication Architecture
-├── External Auth Provider
-│   └── Clerk (@clerk/nextjs ^6.37.5, @clerk/localizations ^4.2.2, @clerk/themes ^2.4.57)
-│       └── JWT issued → Convex validates via auth.config.ts
+convex/
+├── auth.config.ts              → Convex ↔ Clerk JWT verification config
+├── types.ts                    → ClerkIdentity type (subject, org_id, org_role)
+├── utils.ts                    → requireAdmin(), assertProjectOwnership(), checkProjectOwnership()
+├── errors.ts                   → authError(), forbiddenError(), userError(), notFoundError()
+├── profiles.ts                 → User profile CRUD, presence/heartbeat, Clerk webhook sync
+├── http.ts                     → Clerk webhook handler (/clerk-webhook) with Svix signature verification
 │
-├── Next.js Middleware (src/middleware.ts)
-│   ├── Bare root "/" → redirect to "/en"
-│   ├── Early skip: /api, /widget, /_next, static assets
-│   ├── Dashboard locale redirect: reads unsafeMetadata.locale → /{locale}/dashboard
-│   └── Protected routes: /dashboard(.*) and /design-studio(.*) → auth.protect()
+├── [43 backend files]          → 73+ ctx.auth.getUserIdentity() calls across queries/mutations
+│   ├── projects.ts             → Org-scoped project CRUD, requireAdmin on update
+│   ├── conversations.ts        → Auth checks on all mutations, identity.subject for actions
+│   ├── webhooks.ts             → requireAdmin on CRUD, HMAC-signed outbound deliveries
+│   ├── departments.ts          → requireAdmin on all write operations
+│   ├── integrations.ts         → requireAdmin on upsert/delete
+│   ├── cannedResponses.ts      → requireAdmin on create/update/delete
+│   ├── labels.ts               → requireAdmin on create/update/delete
+│   ├── bots.ts                 → requireAdmin on create/update/delete
+│   ├── orders.ts               → requireAdmin on delete/import
+│   └── operatingHours.ts       → requireAdmin on upsert
 │
-├── Client-Side Auth
-│   └── src/components/ConvexClientProvider.tsx
-│       └── ClerkProvider → ConvexProviderWithClerk → auto-passes Clerk tokens to Convex
-│
-├── Convex Auth Configuration
-│   └── convex/auth.config.ts
-│       └── CLERK_JWT_ISSUER_DOMAIN → configures JWT issuer for Convex
-│
-├── Token Flow
-│   Clerk issues JWT → ConvexProviderWithClerk passes token → Convex validates against issuer
-│   └── ctx.auth.getUserIdentity() returns decoded ClerkIdentity
-│
-├── Authorization in Convex (convex/utils.ts)
-│   ├── requireAdmin(identity) → checks org_role === "org:admin"
-│   ├── assertProjectOwnership(ctx, projectId, identity) → throws on org mismatch
-│   └── checkProjectOwnership(ctx, projectId, identity) → returns null on org mismatch
-│
-├── Multi-Tenancy (all tables scoped to orgId)
-│   ├── projects: orgId required, by_orgId index
-│   ├── profiles: orgId required, by_orgId index
-│   ├── feedback: orgId required
-│   └── push_subscriptions: orgId required
-│
-├── Client-Side Guards
-│   ├── DashboardAuthGuard (src/components/auth/DashboardAuthGuard.tsx)
-│   │   ├── Checks isSignedIn + orgId
-│   │   ├── Redirects to /login if not signed in
-│   │   └── Shows loading if orgId missing
-│   └── ProjectProvider (src/context/ProjectContext.tsx)
-│       └── Uses useOrganization() from Clerk → calls api.projects.list (org-scoped)
-│
-└── Error Handling (convex/errors.ts)
-    ├── authError() → ConvexError("Unauthorized")
-    ├── forbiddenError() → ConvexError("Forbidden")
-    └── notFoundError(resource) → ConvexError("{resource} not found")
+└── convex.config.ts            → Rate limiter component (used in http.ts for widget endpoints)
+
+External Auth Provider
+└── @clerk/*
+    ├── @clerk/nextjs            → ClerkProvider, clerkMiddleware, useAuth, useUser, useOrganization
+    ├── @clerk/localizations     → arSA, enUS, frFR localization packs
+    └── @clerk/themes            → (dependency present, not actively used in code)
+
+src/
+├── middleware.ts                → clerkMiddleware with protected route matcher
+├── components/
+│   └── ConvexClientProvider.tsx → ClerkProvider + ConvexProviderWithClerk wiring
+└── app/[locale]/dashboard/
+    └── DashboardShell.tsx       → ensureProfile + heartbeat on mount
 ```
 
 ## 📁 File Inventory
 
 | File | Purpose |
 |------|---------|
-| `convex/auth.config.ts` | Convex auth configuration — Clerk JWT issuer domain |
-| `src/middleware.ts` | Next.js middleware — Clerk auth guards, locale redirects, protected routes |
-| `src/components/ConvexClientProvider.tsx` | Convex + Clerk provider composition — auto-passes Clerk tokens |
-| `src/components/providers.tsx` | App-wide client providers — DirectionProvider → ConvexClientProvider → ProjectProvider |
-| `src/components/MarketingProviders.tsx` | Lightweight providers for public pages — DirectionProvider only |
-| `src/components/auth/DashboardAuthGuard.tsx` | Client-side auth gate for dashboard |
-| `src/context/ProjectContext.tsx` | Org-scoped project context — uses useOrganization() from Clerk |
-| `convex/utils.ts` | Auth utility functions — requireAdmin, assertProjectOwnership, checkProjectOwnership |
-| `convex/errors.ts` | Error factory functions — authError, forbiddenError, notFoundError, userError |
-| `convex/types.ts` | ClerkIdentity type definition — subject, org_id, org_role |
-| `convex/convex.config.ts` | Convex app config — registers @convex-dev/rate-limiter plugin |
-| `package.json` | Clerk dependencies: @clerk/nextjs ^6.37.5, @clerk/localizations ^4.2.2, @clerk/themes ^2.4.57 |
+| `convex/auth.config.ts` | Convex authentication configuration — single Clerk JWT provider with `CLERK_JWT_ISSUER_DOMAIN` env var |
+| `convex/types.ts` | `ClerkIdentity` type definition with `subject`, `org_id`, `org_role` fields |
+| `convex/utils.ts` | `requireAdmin()` role check, `assertProjectOwnership()` and `checkProjectOwnership()` org isolation helpers |
+| `convex/errors.ts` | Standardized error factories: `authError()`, `forbiddenError()`, `userError()`, `notFoundError()` |
+| `convex/profiles.ts` | User profile management: `getMe`, `ensureCurrent`, `upsertFromClerk`, `setAvailability`, `updateHeartbeat`, `cleanupStalePresence` |
+| `convex/http.ts` | HTTP routes including Clerk webhook (`/clerk-webhook`) with Svix verification, Meta webhook with HMAC-SHA256, Telegram webhook with secret token, widget endpoints with rate limiting |
+| `convex/projects.ts` | Project CRUD with org-scoped authorization; `requireAdmin` on `update` |
+| `convex/conversations.ts` | Conversation operations with auth guards on all public mutations |
+| `convex/webhooks.ts` | Outbound webhook subscriptions with `requireAdmin` on all CRUD mutations |
+| `convex/departments.ts` | Department management with `requireAdmin` on all write operations |
+| `convex/integrations.ts` | Channel integrations with `requireAdmin` on upsert/delete |
+| `convex/cannedResponses.ts` | Quick replies with `requireAdmin` on create/update/delete |
+| `convex/labels.ts` | Label management with `requireAdmin` on create/update/delete |
+| `convex/bots.ts` | Bot management with `requireAdmin` on create/update/delete |
+| `convex/orders.ts` | Order management with `requireAdmin` on delete/import |
+| `convex/operatingHours.ts` | Business hours with `requireAdmin` on upsert |
+| `src/middleware.ts` | Next.js middleware — Clerk auth guard for `/dashboard(.*)` and `/design-studio(.*)` routes |
+| `src/components/ConvexClientProvider.tsx` | Wires `ClerkProvider` → `ConvexProviderWithClerk` with locale-aware redirect URLs |
+| `src/app/[locale]/dashboard/DashboardShell.tsx` | Calls `profiles.ensureCurrent` and 30s heartbeat on mount |
+| `package.json` | Clerk deps: `@clerk/nextjs`, `@clerk/localizations`, `@clerk/themes` |
 
 ## ✅ Analysis Checklist
 
-### [x] What authentication provider is used?
-**Clerk** via `@clerk/nextjs` version `^6.37.5`. Additionally `@clerk/localizations ^4.2.2` (for Arabic localization) and `@clerk/themes ^2.4.57` (for theme customization).
+- [x] **What authentication provider is used? (Clerk)**
+  Clerk is the sole authentication provider. The `@clerk/nextjs` package handles frontend auth, while `convex/auth.config.ts` configures Convex to verify Clerk-issued JWTs. Clerk Organizations provide multi-tenancy.
 
-### [x] How is Clerk configured?
-**Client-side** (`src/components/ConvexClientProvider.tsx`):
-```tsx
-<ClerkProvider localization={clerkLocalization} {...urls}>
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        {children}
-    </ConvexProviderWithClerk>
-</ClerkProvider>
-```
-- Locale-aware URLs configured for sign-in/sign-up/after-sign-in supporting `en`, `ar`, `fr`.
-- `ConvexProviderWithClerk` automatically passes Clerk access tokens to Convex via the `useAuth` hook.
+- [x] **How is Clerk configured? (providers, settings)**
+  `convex/auth.config.ts` defines a single provider with `domain: process.env.CLERK_JWT_ISSUER_DOMAIN` and `applicationID: "convex"`. The env var is validated at import time with an explicit error message if missing. On the frontend, `ConvexClientProvider.tsx` wraps the app in `ClerkProvider` with locale-aware URLs for sign-in, sign-up, waitlist, and post-auth redirects.
 
-**Server-side** (`convex/auth.config.ts`):
-- `CLERK_JWT_ISSUER_DOMAIN` environment variable configures the JWT issuer domain.
-- Application ID set to `"convex"`.
-- Convex validates Clerk-issued JWTs on every `ctx.auth.getUserIdentity()` call.
-- Throws at module load time if env var is missing.
+- [x] **What auth strategies are supported? (email, OAuth, SSO, etc.)**
+  Auth strategies are configured in the Clerk Dashboard (not in code). The codebase references `email_addresses` in webhook handling (`http.ts:68`) and `unsafeMetadata.locale` in session claims (`middleware.ts:34`). No code-level OAuth/SSO configuration is present — all strategy selection is delegated to Clerk's hosted UI.
 
-### [x] What auth strategies are supported?
-Clerk supports multiple strategies, but the codebase specifically uses:
-1. **Organization-based multi-tenancy**: Clerk Organizations (`org_id`, `org_role`) for project scoping.
-2. **Email/password and OAuth**: Via Clerk's default sign-in flow (no custom sign-in pages observed).
-3. **No SSO observed**: No SAML/OIDC enterprise SSO configuration found.
+- [x] **How is auth state passed from Next.js to Convex?**
+  `ConvexProviderWithClerk` from `convex/react-clerk` bridges auth. It accepts `useAuth` from `@clerk/nextjs` and the `ConvexReactClient` instance. This automatically attaches Clerk's JWT to all Convex requests. On the Convex side, `ctx.auth.getUserIdentity()` extracts the verified identity including custom claims (`org_id`, `org_role`) from the JWT. See `src/components/ConvexClientProvider.tsx:59`.
 
-### [x] How is auth state passed from Next.js to Convex?
-**`ConvexProviderWithClerk`** from `convex/react-clerk` handles this automatically:
-1. Clerk's `useAuth` hook provides the current access token.
-2. The provider passes this token as the `getToken` function to the Convex client.
-3. Convex sends the token with every server function call.
-4. Convex validates the JWT against the issuer domain configured in `auth.config.ts`.
-5. `ctx.auth.getUserIdentity()` returns the decoded `ClerkIdentity` type.
+- [x] **What middleware guards exist in Next.js?**
+  `src/middleware.ts` uses `clerkMiddleware` with the following logic:
+  1. Root `/` redirects to locale-prefixed path (checks Clerk metadata → cookie → default "en")
+  2. Static assets, API routes, widget routes, and `_next` are passed through
+  3. `/dashboard` bare path redirects to locale-prefixed dashboard
+  4. **Protected routes** (`/dashboard(.*)`, `/design-studio(.*)`) call `auth.protect()` with redirect to `/login`
+  5. URL locale synced to `NEXT_LOCALE` cookie for unauthenticated users
 
-No manual token passing or custom headers are used — this is the standard Convex+Clerk integration pattern.
+- [x] **How are protected routes defined?**
+  Protected routes are defined via `createRouteMatcher(["/dashboard(.*)", "/design-studio(.*)"])` in `src/middleware.ts:11-13`. Any request matching these patterns triggers `auth.protect({ unauthenticatedUrl: "/login" })`. Marketing pages, widget, API routes, and static assets are unprotected.
 
-### [x] What middleware guards exist in Next.js?
-**`src/middleware.ts`** — Four guard layers:
+- [x] **What authorization patterns exist in queries?**
+  Queries follow a **soft return** pattern — returning `null` or `[]` for unauthenticated users instead of throwing:
+  - `profiles.getMe`: returns `null` if no identity
+  - `conversations.list`: returns `[]` if no identity
+  - `conversations.get`: returns `null` if no identity
+  - `projects.list`: returns `[]` if no `identity.org_id`
+  - `projects.get`: returns `null` if `project.orgId !== identity.org_id` (org isolation)
+  - `webhooks.list`: returns `[]` if no identity
+  
+  This is a deliberate pattern — queries don't throw to avoid breaking reactive UI subscriptions.
 
-1. **Bare root redirect** (lines 16-19): `/` → redirects to `/en`.
+- [x] **What authorization patterns exist in mutations?**
+  Mutations follow a **hard throw** pattern using standardized error helpers:
+  - **Auth check**: `if (!identity) throw authError()` — nearly all mutations
+  - **Admin check**: `requireAdmin(identity)` — checks `identity.org_role === "org:admin"` for sensitive operations (project update, bot/department/label/webhook CRUD, etc.)
+  - **Ownership check**: `assertProjectOwnership(ctx, projectId, identity)` — verifies `project.orgId === identity.org_id`
+  - **Soft auth**: Some mutations like `profiles.updateMe` and `profiles.setAvailability` silently return if unauthenticated (non-critical user-facing actions)
 
-2. **Early skip** (lines 22-29): Routes matching `/api`, `/widget`, `/_next`, and static assets (`*.png`, `*.svg`, etc.) skip auth checks entirely. These are public endpoints.
+- [x] **Is role-based access control (RBAC) implemented?**
+  Yes, using Clerk Organizations' built-in roles. The `ClerkIdentity` type (`convex/types.ts:22-27`) includes `org_role` (e.g., `"org:admin"`). The `requireAdmin()` helper (`convex/utils.ts:5-9`) enforces admin-only access. It's used in **14 files** across the backend for write operations on: projects, bots, bot flows, departments, labels, canned responses, webhooks, integrations, orders, and operating hours. Non-admin users ("members") can read data but cannot modify configuration. The `projects.list` query passes `userRole` to the frontend so the UI can conditionally show admin-only features.
 
-3. **Dashboard locale redirect** (lines 33-46): If user visits `/dashboard` without locale prefix, reads `unsafeMetadata.locale` from Clerk session claims and redirects to `/{locale}/dashboard`. This is a clever optimization to avoid extra auth redirect hops.
+- [x] **How are user sessions managed?**
+  Sessions are managed by Clerk's JWT-based system. Convex verifies JWTs on every request — no server-side session store. The `DashboardShell.tsx` component calls `profiles.ensureCurrent` on mount (syncs Clerk data to Convex) and runs a **30-second heartbeat** (`profiles.updateHeartbeat`) to track agent presence. A cron job (`crons.ts:20-24`) runs every 60 seconds to mark agents as offline if their `lastSeenAt` exceeds 90 seconds. The `sendBeacon`-based `profiles.setOffline` internal mutation is available for tab close detection.
 
-4. **Protected route enforcement** (lines 49-53): Routes matching `/dashboard(.*)` and `/design-studio(.*)` are protected via `await auth.protect()` with `unauthenticatedUrl: "/login"`. Unauthenticated users are redirected to `/login`.
+- [x] **What's the token flow? (JWT, session tokens)**
+  1. User authenticates via Clerk (email/OAuth configured in Clerk Dashboard)
+  2. Clerk issues a JWT with standard claims + custom claims (`org_id`, `org_role`, `unsafeMetadata`)
+  3. `ConvexProviderWithClerk` attaches the JWT to every Convex HTTP request via `useAuth` hook
+  4. Convex verifies the JWT against `CLERK_JWT_ISSUER_DOMAIN` (configured in `auth.config.ts`)
+  5. `ctx.auth.getUserIdentity()` returns the decoded identity with `subject` (user ID), `org_id`, `org_role`
+  6. No manual token refresh — Clerk and Convex handle JWT refresh automatically
 
-**Matcher** (lines 56-59): Excludes `api`, `widget`, `_next`, `static`, `favicon.ico`, and all static file extensions from middleware execution.
+- [x] **Are there admin vs regular user distinctions?**
+  Yes. Two roles exist:
+  - **`org:admin`**: Full access to all CRUD operations. Required for: project settings, bot management, department management, label/canned response management, webhook configuration, integration setup, order deletion, operating hours.
+  - **`member`** (default): Can read all data, send messages, join/leave conversations, update own profile, manage conversation status. Cannot modify organization-level configuration.
+  
+  The `projects.list` query exposes `userRole` to the frontend (`projects.ts:36`), enabling UI-level conditional rendering.
 
-### [x] How are protected routes defined?
-Two layers of protection:
+- [x] **How is multi-tenancy handled? (if applicable)**
+  Multi-tenancy is implemented via **Clerk Organizations**:
+  - Every `project` has an `orgId` field (Clerk org ID)
+  - The `profiles` table has an `orgId` field synced from `identity.org_id`
+  - **Query isolation**: `projects.list` filters by `identity.org_id` using the `by_orgId` index; `profiles.list` similarly scoped
+  - **Mutation isolation**: `assertProjectOwnership()` and `checkProjectOwnership()` verify `project.orgId === identity.org_id` before writes
+  - **Project-level scoping**: Most tables (conversations, messages, bots, etc.) are scoped to `projectId`, which is in turn scoped to `orgId`
+  - **Organization deletion**: Clerk `organization.deleted` webhook (`http.ts:71-77`) triggers project cleanup
 
-1. **Server-side** (`src/middleware.ts`): `auth.protect({ unauthenticatedUrl: "/login" })` for `/dashboard(.*)` and `/design-studio(.*)`.
+- [x] **What happens on auth failure? (redirects, errors)**
+  - **Middleware level**: `auth.protect()` redirects unauthenticated users to `/login` for protected routes
+  - **Query level**: Returns `null` or `[]` silently (no error thrown)
+  - **Mutation level**: Throws `ConvexError("Unauthorized")` via `authError()` or `ConvexError("Forbidden")` via `forbiddenError()`
+  - **Admin check failure**: Throws `ConvexError("Unauthorized: admin access required")` via `requireAdmin()`
+  - **Frontend**: `AppErrorBoundary` catches thrown errors and displays a retry UI
 
-2. **Client-side** (`src/components/auth/DashboardAuthGuard.tsx`): Wraps dashboard content, checks `isSignedIn` and `orgId` from Clerk's `useAuth()` hook. Redirects to `/login` if not signed in. Shows loading spinner while `isLoaded` is false. Also shows loading if signed in but `orgId` is missing — enforcing multi-tenant org requirement at the UI layer.
+- [x] **Are there refresh token patterns?**
+  No manual refresh token handling exists in the codebase. Clerk's SDK automatically manages JWT refresh via the `useAuth` hook and Clerk's session management. `ConvexProviderWithClerk` handles token refresh seamlessly.
 
-This is a **defense-in-depth** pattern — middleware protects at the routing layer, DashboardAuthGuard protects at the component layer.
-
-### [x] What authorization patterns exist in queries?
-**Three patterns across ~55+ query functions:**
-
-1. **Auth-required, early return** (most common for queries):
-   ```ts
-   const identity = await ctx.auth.getUserIdentity();
-   if (!identity) return [];  // or null
-   ```
-   Used in: `contacts.ts:list`, `profiles.ts:getMe`, `projects.ts:list`, etc.
-
-2. **Auth-required with project ownership check**:
-   ```ts
-   const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
-   if (!identity || !identity.org_id) return null;
-   const project = await checkProjectOwnership(ctx, args.projectId, identity);
-   if (!project) return null;
-   ```
-   Used in: `bots.ts:get`, `knowledgeBases.ts:get`.
-
-3. **Auth-required with org-scoped filtering**:
-   ```ts
-   const identity = await ctx.auth.getUserIdentity();
-   if (!identity || !identity.org_id) return [];
-   return await ctx.db.query("profiles").withIndex("by_orgId", q => q.eq("orgId", identity.org_id)).collect();
-   ```
-   Used in: `profiles.ts:list`, `projects.ts:list`.
-
-**All queries return `userRole: identity.org_role ?? "member"`** where applicable (e.g., `projects.ts` lines 36, 55, 81, 140), so the frontend knows the user's permission level.
-
-### [x] What authorization patterns exist in mutations?
-**Four patterns across ~55+ mutation functions:**
-
-1. **Auth-required, throw on failure** (most mutations):
-   ```ts
-   const identity = await ctx.auth.getUserIdentity();
-   if (!identity) throw authError();
-   ```
-
-2. **Admin-only** (sensitive CRUD):
-   ```ts
-   const identity = await ctx.auth.getUserIdentity();
-   if (!identity) throw authError();
-   requireAdmin(identity);  // throws if org_role !== "org:admin"
-   ```
-   Used in: `bots.ts:create/update/remove`, `settings.ts` department/label/canned CRUD, `integrations.ts:upsert/remove`, `webhooks.ts:create/update/remove`, `orders.ts` CRUD.
-
-3. **Project ownership required**:
-   ```ts
-   const identity = await ctx.auth.getUserIdentity();
-   if (!identity) throw authError();
-   const project = await assertProjectOwnership(ctx, args.projectId, identity);
-   ```
-   Used in: `contacts.ts:create/update`, `messages.ts:send`, `knowledgeBases.ts:create/addSource/removeSource`.
-
-4. **Org-scoped forbidden** (explicit org mismatch):
-   ```ts
-   if (project.orgId !== identity.org_id) throw forbiddenError();
-   ```
-   Used in: `orders.ts:listOrders/updateOrderStatus/deleteOrder`, `analytics.ts:getProjectUsageSummary`.
-
-### [x] Is role-based access control (RBAC) implemented?
-**Yes, two-tier RBAC:**
-
-1. **`org:admin`** — Full administrative access. Checked via `requireAdmin()` in ~25+ mutation handlers. Admin capabilities include:
-   - Bot CRUD (create/update/delete)
-   - Department management (CRUD + member management)
-   - Canned responses CRUD
-   - Labels CRUD
-   - Operating hours management
-   - Integration management
-   - Webhook management
-   - Order CRUD
-
-2. **`member`** (default, when `org_role` is undefined or any other value) — Standard read/write access to project-scoped resources. Can:
-   - View/list resources
-   - Send messages
-   - Manage contacts
-   - Create conversations
-   - Update own profile
-   - Toggle availability
-
-**No finer-grained role levels** (e.g., editor, viewer, supervisor) are implemented at the Convex layer. The frontend hides some UI elements for non-admins (e.g., Analytics nav item, Settings menu item), but the Convex layer only enforces admin vs. member.
-
-**Role check utility** (`convex/utils.ts`):
-```ts
-export function requireAdmin(identity: { org_role?: string } | null) {
-    if (!identity || identity.org_role !== "org:admin") {
-        throw new ConvexError("Unauthorized: admin access required");
-    }
-}
-```
-
-### [x] How are user sessions managed?
-**Fully managed by Clerk** — no custom session storage:
-
-1. **Clerk JWTs**: Short-lived access tokens with automatic rotation via `ConvexProviderWithClerk`.
-
-2. **Session claims**: Middleware accesses `authData.sessionClaims?.unsafeMetadata` to read user's preferred locale. This indicates Clerk JWT templates or user metadata are used to pass locale preferences into the token.
-
-3. **No explicit session refresh logic**: Clerk handles token rotation automatically. `ConvexProviderWithClerk` automatically refreshes tokens when Clerk rotates them.
-
-4. **Profile sync**: `profiles.ts:ensureCurrent` syncs email/name/avatar/org from Clerk on each dashboard load. `profiles.ts:updateMe` uses an upsert pattern to patch profile data.
-
-5. **Presence system**: `profiles.ts:updateHeartbeat` (every 30s from `DashboardShell`) and `profiles.ts:cleanupStalePresence` (cron job every 60s, 90-second threshold) manage online/offline agent status.
-
-### [x] What's the token flow?
-```
-1. User signs in via Clerk → Clerk issues JWT access token
-2. ClerkProvider + ConvexProviderWithClerk → useAuth() returns token
-3. Convex client includes token in every server function call
-4. Convex server validates JWT against CLERK_JWT_ISSUER_DOMAIN (auth.config.ts)
-5. ctx.auth.getUserIdentity() returns ClerkIdentity { subject, org_id, org_role }
-6. Mutations/queries use identity.subject as userId, identity.org_id for multi-tenancy
-7. Clerk rotates tokens automatically → ConvexProviderWithClerk auto-refreshes
-```
-
-**No custom JWT handling, no session tokens, no refresh token patterns** — all managed by Clerk.
-
-### [x] Are there admin vs regular user distinctions?
-**Yes, two-tier** as described in the RBAC section above. Key distinction points:
-
-| Operation | Admin | Member |
-|-----------|-------|--------|
-| Bot management | ✅ | ❌ |
-| Department CRUD | ✅ | ❌ |
-| Canned responses | ✅ | ❌ |
-| Labels | ✅ | ❌ |
-| Operating hours | ✅ | ❌ |
-| Integrations | ✅ | ❌ |
-| Webhooks | ✅ | ❌ |
-| Orders | ✅ | ❌ |
-| View resources | ✅ | ✅ |
-| Send messages | ✅ | ✅ |
-| Manage contacts | ✅ | ✅ |
-| Update profile | ✅ | ✅ |
-| Toggle availability | ✅ | ✅ |
-
-**Frontend enforcement**: `AppSidebar.tsx` hides Analytics nav for non-admins (`isHidden` + `hidden` class). `SettingsSidebar` is only rendered for admins. `DesignStudioShell` redirects non-admins to `/dashboard`.
-
-### [x] How is multi-tenancy handled?
-**Clerk Organization-based multi-tenancy:**
-
-1. **Schema-level**: Every multi-tenant table has `orgId: v.string()` with `by_orgId` index:
-   - `projects.orgId` — required
-   - `profiles.orgId` — required
-   - `feedback.orgId` — required
-   - `push_subscriptions.orgId` — required
-
-2. **Authorization layer**: `assertProjectOwnership()` and `checkProjectOwnership()` in `convex/utils.ts` verify `project.orgId === identity.org_id` on every project-scoped operation.
-
-3. **Dashboard guard**: `DashboardAuthGuard` blocks access if `orgId` is missing from Clerk session — users must be in an organization context.
-
-4. **Project context**: `ProjectProvider` uses `useOrganization()` from Clerk to wait for org state, then calls `api.projects.list` which is org-scoped on the backend.
-
-5. **Clerk webhook** (`http.ts:/clerk-webhook`): `user.created`/`user.updated` events sync profiles via `internal.profiles.upsertFromClerk`. `organization.deleted` removes the associated project.
-
-6. **Note**: `bots.orgId` is optional in the schema but used for filtering. Some tables may not have orgId (e.g., `conversations`, `messages`) — they're scoped indirectly through `projectId` → `project.orgId`.
-
-### [x] What happens on auth failure?
-**Three-tier response:**
-
-1. **Middleware level** (`src/middleware.ts`): `auth.protect({ unauthenticatedUrl: "/login" })` redirects to `/login`. No custom error page.
-
-2. **Client-side guard** (`DashboardAuthGuard.tsx`): Shows loading spinner while `isLoaded` is false. Redirects to `/login` if `!isSignedIn`. Shows loading spinner if signed in but no `orgId`.
-
-3. **Convex level** (`convex/errors.ts`):
-   - `authError()` → `ConvexError("Unauthorized")` — thrown from mutations when identity is null
-   - `forbiddenError()` → `ConvexError("Forbidden")` — thrown when org mismatch detected
-   - Queries return `[]` or `null` instead of throwing (graceful degradation)
-
-**No session timeout handling** — relies on Clerk's token expiration.
-
-### [x] Are there refresh token patterns?
-**No custom refresh token logic**. Clerk handles token rotation automatically. `ConvexProviderWithClerk` subscribes to Clerk's auth state changes and automatically refreshes the token passed to Convex.
-
-### [x] How is user data isolated by auth?
-**Three layers of isolation:**
-
-1. **Clerk Organization**: Each user belongs to a Clerk Organization. `identity.org_id` is the tenant boundary.
-
-2. **Project scoping**: All data access goes through `projectId` → `project.orgId` verification. `assertProjectOwnership` ensures users can only access data in their org.
-
-3. **Query filtering**: List queries filter by `orgId`:
-   ```ts
-   ctx.db.query("profiles").withIndex("by_orgId", q => q.eq("orgId", identity.org_id))
-   ```
-
-4. **Cascading isolation**: Even internal mutations respect org boundaries — `profiles.ts:upsertFromClerk` upserts by Clerk user ID, not org ID (user can exist across orgs).
+- [x] **How is user data isolated by auth?**
+  Data isolation is enforced at multiple levels:
+  1. **Org-level**: Queries filter by `identity.org_id` (projects, profiles)
+  2. **Project-level**: All domain tables (conversations, messages, bots, contacts, etc.) use `projectId` FK, which is org-scoped
+  3. **User-level**: `profiles.getMe` and `profiles.updateMe` filter by `identity.subject` (Clerk user ID)
+  4. **Ownership checks**: `assertProjectOwnership()` and `checkProjectOwnership()` validate org membership before data access
+  5. **Internal functions**: `internalMutation` and `internalQuery` bypass auth checks but are only callable by scheduled functions, crons, and other server-side code — never directly from the client
 
 ## 📝 Agent Findings
 
-### Auth Architecture Quality
-The auth architecture is well-designed with defense-in-depth (middleware + client-side guard + Convex-level checks). The Clerk + Convex integration follows best practices using `ConvexProviderWithClerk`.
+### Authentication Architecture
 
-### Provider Composition
-Two provider trees:
-- **Authenticated**: `DirectionProvider` → `ConvexClientProvider` (Clerk + Convex) → `ProjectProvider` → `{children}` + `AppToaster`
-- **Marketing**: `DirectionProvider` → `{children}` + `MarketingToaster` (no Convex, no Clerk beyond base)
+The application uses a **three-layer auth architecture**:
 
-This separation is clean but means shared providers must be duplicated.
+1. **Frontend Layer** (`ClerkProvider` + `ConvexProviderWithClerk`): Handles user authentication UI, session management, and JWT token attachment to all Convex requests.
 
-### Identity Type Design
-`ClerkIdentity` type in `convex/types.ts`:
-```ts
-export type ClerkIdentity = {
-  subject: string;      // Clerk user ID (e.g., "user_2abc...")
-  org_id?: string;      // Active organization/project ID
-  org_role?: string;    // Role within active org (e.g., "org:admin")
-  [key: string]: unknown;
-};
-```
-The `[key: string]: unknown` index signature allows flexible claim access but sacrifices type safety.
+2. **Middleware Layer** (`clerkMiddleware` in `src/middleware.ts`): Route-level protection for dashboard and design studio routes. Also handles locale-aware redirects based on Clerk session metadata.
 
-### Locale Integration
-Locale is passed through Clerk session claims (`unsafeMetadata.locale`), read in middleware for redirects, and used in layout components for RTL support. Arabic (`ar`) gets full RTL treatment (sidebar flips, text direction changes).
+3. **Backend Layer** (`ctx.auth.getUserIdentity()` in Convex functions): Per-function authorization checks with standardized error handling.
+
+### Authorization Pattern Summary
+
+| Pattern | Usage | Example Files |
+|---------|-------|---------------|
+| Soft return (null/[]) | Queries | `profiles.getMe`, `conversations.list`, `projects.list` |
+| Hard throw (authError) | Mutations requiring auth | `conversations.update`, `conversations.resolve` |
+| Admin guard (requireAdmin) | Admin-only mutations | `projects.update`, `bots.create`, `departments.*` |
+| Ownership check | Org-scoped reads/writes | `projects.get`, `webhooks.remove` |
+| Internal-only (no auth) | System/scheduled functions | `conversations.createFromWidget`, `profiles.upsertFromClerk` |
+| No auth (public widget) | HTTP endpoints | Widget conversations, messages, ratings |
+
+### Webhook Security
+
+Three distinct webhook security patterns exist:
+1. **Clerk webhooks** (`/clerk-webhook`): Svix signature verification (`http.ts:50-57`)
+2. **Meta webhooks** (`/webhooks/meta`): HMAC-SHA256 with per-integration `app_secret`, constant-time comparison (`http.ts:21-31, 498-502`)
+3. **Telegram webhooks** (`/webhooks/telegram`): `X-Telegram-Bot-Api-Secret-Token` header with per-integration `webhookSecret` index lookup
+4. **Outbound webhooks**: HMAC-SHA256 signed payloads with per-subscription 32-byte random secret (`webhooks.ts:99-123`)
+
+### Presence System
+
+Agent presence is tracked through a heartbeat mechanism:
+- `DashboardShell.tsx` calls `profiles.updateHeartbeat` every 30s
+- `crons.ts` runs `profiles.cleanupStalePresence` every 60s (marks agents offline if `lastSeenAt` > 90s)
+- `profiles.setOffline` internal mutation available for `sendBeacon` on tab close
 
 ## 🔍 Key Patterns to Identify
 
-### Auth Provider Choice and Rationale
-Clerk chosen for: built-in organizations (multi-tenancy), localization support (Arabic), Next.js App Router integration, JWT issuer compatibility with Convex.
+- **Auth provider choice and rationale**: Clerk chosen for managed auth with built-in multi-tenant Organizations support. Custom JWT claims (`org_id`, `org_role`) enable org-scoped authorization in Convex.
+- **Session management patterns**: JWT-based, no server-side sessions. Heartbeat-based agent presence tracking with 30s intervals.
+- **Authorization guard patterns**: Two-tier — soft returns for queries, hard throws for mutations. `requireAdmin()` utility for admin-only gates.
+- **Role and permission systems**: Binary RBAC — `org:admin` vs `member`. No granular permissions or custom roles.
+- **Multi-tenant data isolation**: Clerk Organization → `orgId` on projects/profiles → `projectId` FK on all domain tables. Query-time filtering with indexed lookups.
+- **Token handling approaches**: Fully delegated to Clerk SDK + `ConvexProviderWithClerk`. No manual token storage or refresh.
 
-### Session Management Patterns
-- Fully managed by Clerk — no custom session storage
-- Token auto-rotation via ConvexProviderWithClerk
-- Profile sync on dashboard load
-- Presence heartbeat system (30s interval, 90s stale threshold)
+## ⚠️ Potential Concerns to Watch For
 
-### Authorization Guard Patterns
-- Six-tier: public → optional auth → required auth → admin → project ownership → org-scoped forbidden
-- Queries: early return `[]`/`null` for unauthenticated
-- Mutations: throw `authError()` for unauthenticated
-- Consistent use of utility functions from `convex/utils.ts`
+### HIGH Severity
 
-### Role and Permission Systems
-- Two-tier: `org:admin` vs `member` (default)
-- `requireAdmin()` used in ~25+ mutation handlers
-- Frontend hides admin UI for non-admins (defense-in-depth)
+- **Missing org-scoping on `conversations.get` query** (`conversations.ts:39-47`): Returns conversation by ID without verifying the caller's org owns the parent project. Any authenticated user can read any conversation if they have the ID. Should verify `project.orgId === identity.org_id`.
 
-### Multi-Tenant Data Isolation
-- `orgId` on all multi-tenant tables with `by_orgId` indexes
-- `assertProjectOwnership` / `checkProjectOwnership` for verification
-- Clerk webhook syncs org lifecycle events
+- **Missing org-scoping on several conversation mutations**: `conversations.update` (`conversations.ts:133`), `conversations.resolve`, `conversations.join`, `conversations.leave`, `conversations.updateVisitorInfo`, `conversations.markAsRead`, `conversations.transferToDepartment` — all check for auth but do NOT verify the conversation belongs to the caller's organization.
 
-### Token Handling Approach
-- Clerk JWT → Convex validates via `auth.config.ts` issuer domain
-- `ConvexProviderWithClerk` auto-passes tokens
-- No manual token management anywhere
+- **`conversations.create` has no auth check** (`conversations.ts:89-130`): The public `create` mutation inserts a conversation without calling `getUserIdentity()`. Any client can invoke it with any `projectId`.
 
-## ⚠️ Potential Concerns
+### MEDIUM Severity
 
-| # | Concern | Severity | Details |
-|---|---------|----------|---------|
-| 1 | **Clerk webhook has no signature verification** | HIGH | `http.ts:/clerk-webhook` (lines 35-57) processes `user.created`, `user.updated`, `organization.deleted` events without verifying the request originated from Clerk. An attacker could forge POST requests to create/delete users or projects. Clerk webhooks should be verified via webhook signing or Clerk's SDK webhook verification. |
-| 2 | **No role granularity** | MEDIUM | Only `org:admin` vs `member`. No editor/viewer/supervisor distinction at the Convex layer. If business needs finer permissions, the entire RBAC system would need refactoring. |
-| 3 | **Widget endpoints fully public** | MEDIUM | `http.ts` widget endpoints have no auth, only rate limiting. Anyone with a projectId can create conversations and send messages. This is by design for embedded widgets but means public write access to the system. |
-| 4 | **Inconsistent auth patterns across files** | LOW | Most mutations consistently use `getUserIdentity()` + `throw authError()`, but some (e.g., `profiles.ts:setAvailability`, `profiles.ts:updateHeartbeat`) return early instead of throwing. This inconsistency could lead to silent failures. |
-| 5 | **No session timeout or refresh handling** | LOW | Relies entirely on Clerk's default token lifetime. No custom session timeout or forced re-authentication for sensitive operations. |
-| 6 | **`[key: string]: unknown` in ClerkIdentity** | LOW | Index signature sacrifices type safety for flexibility. Could lead to runtime errors if claims change. |
-| 7 | **Dead code in webhook handlers** | LOW | `requireAdmin()` called before null checks on identity in some files — null checks are unreachable dead code. |
-| 8 | **No rate limiting on auth endpoints** | LOW | No rate limiting on profile sync, availability toggle, or heartbeat mutations. Could theoretically be abused by authenticated users. |
+- **Inconsistent auth patterns with `as unknown as` type casts**: Many files use `identity as unknown as { org_role?: string; org_id: string }` to access custom Clerk claims (e.g., `cannedResponses.ts:37`, `webhooks.ts:215`). This is fragile — the `ClerkIdentity` type exists in `convex/types.ts` but isn't consistently used across all files.
+
+- **No rate limiting on authenticated Convex functions**: Rate limiting (`@convex-dev/rate-limiter`) is only applied to widget HTTP endpoints (`http.ts:10-13`). Authenticated users face no rate limits on queries/mutations, which could allow abuse.
+
+- **`requireAdmin` called BEFORE null check on identity**: In several mutations (e.g., `webhooks.ts:215-216`), `requireAdmin(identity ...)` is called before `if (!identity) throw authError()`. If identity is null, `requireAdmin` will throw a generic "admin access required" error instead of "Unauthorized", which is a minor information leak and could mask the root cause.
+
+### LOW Severity
+
+- **No audit logs for auth-sensitive operations**: While `activityLogs` exist for some operations (conversation assignment, resolution), there are no audit logs for: failed auth attempts, admin role changes, profile modifications, or webhook secret rotations.
+
+- **No session timeout or maximum session duration**: Clerk handles session management, but no application-level session timeout is configured. Agents could remain "authenticated" indefinitely.
+
+- **Widget endpoints use `Access-Control-Allow-Origin: *`**: All widget HTTP endpoints (`http.ts:167-171`) allow requests from any origin. While this is necessary for embeddable widgets, it means the widget API surface is fully public.
+
+- **Secrets in environment variables without rotation mechanism**: `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`, `ENCRYPTION_KEY` are all env vars with no documented rotation procedure.

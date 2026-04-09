@@ -1,168 +1,266 @@
-# Part 02: Build Tooling Configuration — Analysis Findings
+# Part 02: Build Tooling Configuration
 
 ## 📊 Visual Map
 
 ```
-Configuration Files (6 files)
-├── next.config.ts              → Next.js 16 configuration
-│   ├── next-intl plugin        → Internationalization (./src/i18n/request.ts)
-│   ├── turbopack config        → root: __dirname (for monorepo compat)
-│   └── images.remotePatterns   → convex.cloud, img.clerk.com allowed
+Configuration Files
+├── next.config.ts           → Next.js framework configuration (TypeScript)
+│   ├── next-intl plugin      → wraps config via createNextIntlPlugin("./src/i18n/request.ts")
+│   ├── turbopack.root        → __dirname (Turbopack bundler enabled)
+│   └── images.remotePatterns → **.convex.cloud, img.clerk.com
 │
-├── tsconfig.json               → TypeScript 5 compiler options
-│   ├── target: ES2017          → Modern JS output
-│   ├── strict: true            → Full type checking
-│   ├── paths: @/* → ./src/*   → Path alias for cleaner imports
-│   └── jsx: react-jsx          → Automatic JSX runtime
+├── tsconfig.json            → TypeScript compiler options
+│   ├── target: ES2017, module: esnext, strict: true
+│   ├── moduleResolution: bundler
+│   ├── paths: @/* → ./src/*
+│   ├── incremental: true (with tsconfig.tsbuildinfo)
+│   └── plugins: [{ name: "next" }]
 │
-├── eslint.config.mjs           → ESLint 9 flat config format
-│   ├── eslint-config-next/core-web-vitals  → Next.js best practices
-│   ├── eslint-config-next/typescript       → TS-specific rules
-│   └── globalIgnores           → .next, out, build, convex/_generated
+├── eslint.config.mjs        → ESLint flat config (v9+)
+│   ├── extends: eslint-config-next/core-web-vitals
+│   ├── extends: eslint-config-next/typescript
+│   └── globalIgnores: .next/**, out/**, build/**, convex/_generated/**
 │
-├── postcss.config.mjs          → PostCSS processing
-│   └── @tailwindcss/postcss    → Tailwind v4 plugin
+├── postcss.config.mjs       → PostCSS pipeline
+│   └── plugins: { "@tailwindcss/postcss": {} }  (Tailwind v4 native)
 │
-├── components.json             → shadcn/ui generator config
-│   ├── style: default          → shadcn default style
-│   ├── rsc: true               → React Server Components enabled
-│   ├── tsx: true               → TypeScript components
-│   ├── tailwind.cssVariables: true → CSS variables for theming
-│   ├── iconLibrary: lucide     → Lucide React icons
-│   └── aliases: @/components, @/lib, @/hooks, @/ui
+├── components.json          → shadcn/ui configuration
+│   ├── style: default, rsc: true, tsx: true
+│   ├── tailwind.css: src/app/globals.css, baseColor: slate
+│   ├── iconLibrary: lucide
+│   ├── aliases: @/components, @/lib/utils, @/components/ui, @/lib, @/hooks
+│   └── registries: @shadcnblocks → https://shadcnblocks.com/r/{name}.json
 │
-└── vercel.json                 → Vercel deployment settings
-    ├── Security headers         → CSP, X-Frame, HSTS, etc.
-    ├── Font caching             → 1 year immutable for /fonts/*
-    └── No custom redirects/rewrites → uses Next.js defaults
+├── vercel.json              → Vercel deployment settings
+│   ├── Security headers: X-Frame-Options, CSP, COOP, etc.
+│   └── Font caching: Cache-Control immutable for /fonts/*
+│
+├── vitest.config.ts         → Vitest test runner configuration
+│   ├── environment: jsdom, globals: true
+│   ├── setupFiles: ./vitest.setup.ts
+│   ├── coverage: v8 provider, text/json/html reporters
+│   └── alias: @ → ./src
+│
+└── vitest.setup.ts          → Test setup: imports @testing-library/jest-dom/vitest
 ```
 
 ## 📁 File Inventory
 
-| File | Purpose | Size/Complexity |
-|------|---------|----------------|
-| `next.config.ts` | Next.js config with next-intl plugin, TurboPack root, image patterns | 17 lines, minimal |
-| `tsconfig.json` | TypeScript strict mode, ES2017 target, `@/*` path alias | 35 lines, standard |
-| `eslint.config.mjs` | ESLint 9 flat config with Next.js rules | 17 lines, simple |
-| `postcss.config.mjs` | PostCSS with @tailwindcss/postcss v4 plugin | 5 lines, minimal |
-| `components.json` | shadcn/ui generator config with RSC support | 22 lines, complete |
-| `vercel.json` | Security headers + font cache policy | 45 lines, comprehensive |
+| File | Purpose | Exists? | Size |
+|------|---------|---------|------|
+| `next.config.ts` | Next.js framework configuration, i18n plugin, image domains | ✅ Yes | 517 bytes (27 lines) |
+| `tsconfig.json` | TypeScript compiler options, path aliases, strictness | ✅ Yes | 779 bytes (44 lines) |
+| `eslint.config.mjs` | ESLint flat config for code linting and quality | ✅ Yes | 523 bytes (21 lines) |
+| `postcss.config.mjs` | PostCSS configuration for Tailwind CSS v4 processing | ✅ Yes | 94 bytes (8 lines) |
+| `components.json` | shadcn/ui component generator configuration | ✅ Yes | 513 bytes (25 lines) |
+| `vercel.json` | Vercel deployment configuration, security headers | ✅ Yes | 1,693 bytes (50 lines) |
+| `vitest.config.ts` | Vitest test runner configuration (not in template) | ✅ Yes | 622 bytes (29 lines) |
+| `vitest.setup.ts` | Vitest setup file (not in template) | ✅ Yes | 43 bytes (1 line) |
+| `next-env.d.ts` | Next.js generated type declarations | ✅ Yes | 247 bytes (auto-generated) |
+| `tsconfig.tsbuildinfo` | TypeScript incremental build cache | ✅ Yes | 554,203 bytes (should be .gitignored) |
 
 ## ✅ Analysis Checklist
 
-- [x] **What Next.js features are enabled?**
-  - **App Router**: Yes — project uses `src/app/` directory structure with React Server Components
-  - **SSR**: Yes — Next.js 16 with `next start` for production SSR
-  - **ISR**: Not explicitly configured; would use `revalidate` in page-level config
-  - **Turbopack**: Configured (`turbopack.root` set to `__dirname`) for development speed
-  - **Image Optimization**: Configured with `remotePatterns` for `*.convex.cloud` and `img.clerk.com`
-  - **Internationalization**: Enabled via `next-intl` plugin pointing to `./src/i18n/request.ts`
+- [x] **What Next.js features are enabled? (App Router, SSR, ISR, etc.)**
+  - **App Router**: Yes, the project uses the `app/` directory pattern (confirmed by `src/app/` structure and RSC support in `components.json`).
+  - **Turbopack**: Enabled via `turbopack: { root: __dirname }` in `next.config.ts`. This is the default bundler in Next.js 16.
+  - **next-intl Plugin**: Internationalization is integrated at the framework level via `createNextIntlPlugin("./src/i18n/request.ts")`, supporting `en`, `ar`, `fr` locales.
+  - **React Server Components**: Enabled (`"rsc": true` in `components.json`).
+  - **No ISR/SSG explicitly configured**: No `revalidate` or `generateStaticParams` patterns visible in config. SSR is the default mode.
+  - **No custom webpack config**: The project relies on Turbopack exclusively. No `webpack()` function in `next.config.ts`.
+  - **No `experimental` features**: No experimental Next.js features are enabled.
 
 - [x] **Are there custom webpack configurations or plugins?**
-  Only the `next-intl` plugin is used. No custom webpack overrides, no additional plugins. The config is intentionally minimal.
+  - **No**. The only plugin is `next-intl` which wraps the config via `withNextIntl()`. There is no custom `webpack()` configuration. The project uses **Turbopack** as the bundler, which doesn't support custom webpack configs anyway.
 
-- [x] **What TypeScript compiler options are set?**
-  - `target`: ES2017 — modern JS (async/await, optional chaining, etc.)
-  - `lib`: dom, dom.iterable, esnext — browser + latest JS
-  - `strict`: true — full strict mode (noImplicitAny, strictNullChecks, etc.)
-  - `allowJs`: true — JavaScript files allowed alongside TypeScript
-  - `skipLibCheck`: true — skip type checking of .d.ts files in node_modules
-  - `noEmit`: true — TypeScript only for type checking, not compilation (Next.js handles this)
-  - `module`: esnext — ES module output
-  - `moduleResolution`: bundler — optimized for bundlers (Turbopack/Vercel)
-  - `resolveJsonModule`: true — import JSON files
-  - `isolatedModules`: true — each file is a separate module (required by Next.js)
-  - `jsx`: react-jsx — automatic JSX transform
-  - `incremental`: true — faster subsequent builds via `.next/tsconfig.tsbuildinfo`
-  - `plugins`: [{ name: "next" }] — Next.js TS plugin for better type inference
+- [x] **What TypeScript compiler options are set? (strict mode, path aliases)**
+  - **Target**: `ES2017` — appropriate for the `browserslist` config.
+  - **Strict mode**: `true` ✅ — full TypeScript strictness enabled.
+  - **Module**: `esnext` with `moduleResolution: "bundler"` — correct for Next.js 16+ with Turbopack.
+  - **JSX**: `react-jsx` — uses the automatic JSX runtime (no need for `import React`).
+  - **Incremental**: `true` — enables faster rebuilds via `tsconfig.tsbuildinfo`.
+  - **No emit**: `true` — TypeScript is used for type-checking only; Turbopack handles compilation.
+  - **Other flags**: `allowJs`, `skipLibCheck`, `esModuleInterop`, `resolveJsonModule`, `isolatedModules` — all standard for Next.js.
+  - **Next.js plugin**: `{ "name": "next" }` — provides Next.js-specific type enhancements.
 
 - [x] **Are path aliases configured for cleaner imports?**
-  Yes: `"@/*": ["./src/*"]` — maps `@/` to `src/`. Used throughout the codebase (e.g., `@/components`, `@/lib`, `@/hooks`). This is also reflected in `components.json` aliases.
+  - **Yes**: `@/*` maps to `./src/*` in `tsconfig.json` (line 25–29).
+  - This alias is also registered in:
+    - `components.json`: `aliases.components = "@/components"`, `aliases.ui = "@/components/ui"`, `aliases.lib = "@/lib"`, `aliases.hooks = "@/hooks"`, `aliases.utils = "@/lib/utils"`
+    - `vitest.config.ts`: `resolve.alias: { "@": path.resolve(__dirname, "./src") }` — ensures tests can use the same `@/` imports.
+  - **Consistency**: ✅ All three configurations agree on the `@/` → `./src/` mapping.
 
 - [x] **What ESLint rules and plugins are active?**
-  ESLint 9 using **flat config** format (`eslint.config.mjs`):
-  - `eslint-config-next/core-web-vitals` — Next.js performance and best practice rules
-  - `eslint-config-next/typescript` — TypeScript-specific linting
-  - Custom ignores: `.next/**`, `out/**`, `build/**`, `next-env.d.ts`, `convex/_generated/**`
-  - No custom rules defined beyond the Next.js presets — relies on defaults
+  - **Core configs extended**:
+    - `eslint-config-next/core-web-vitals` — Next.js recommended rules + Core Web Vitals rules
+    - `eslint-config-next/typescript` — TypeScript-specific linting rules
+  - **Custom rules**: None. The config is minimal and relies entirely on the Next.js presets.
+  - **Global ignores**:
+    - `.next/**`, `out/**`, `build/**`, `next-env.d.ts` — standard Next.js ignores
+    - `convex/_generated/**` — Convex auto-generated files (correct to ignore)
+  - **No additional plugins**: No `eslint-plugin-import`, `eslint-plugin-react-hooks` (already included via next config), `eslint-plugin-jsx-a11y`, or custom rules.
 
 - [x] **Is ESLint config using the new flat config format?**
-  **Yes.** The file uses `eslint.config.mjs` (`.mjs` extension + flat config API with `defineConfig()` and array-based config). This is the new ESLint 9 flat config format, not the legacy `.eslintrc` format.
+  - **Yes**: Uses `defineConfig()` from `"eslint/config"` and `globalIgnores()` helper. This is the ESLint v9+ flat config format. File uses `.mjs` extension (ES modules).
 
-- [x] **How is PostCSS configured?**
-  Minimal: Only the `@tailwindcss/postcss` plugin is registered. This is the Tailwind v4 approach — Tailwind now handles its own PostCSS processing via the dedicated plugin rather than requiring `tailwindcss` + `autoprefixer` manually.
+- [x] **How is PostCSS configured? (Tailwind integration)**
+  - **Minimal config**: Only `@tailwindcss/postcss` plugin is configured (Tailwind CSS v4's native PostCSS integration).
+  - **No autoprefixer**: Tailwind CSS v4 includes vendor prefixing built-in, so `autoprefixer` is not needed.
+  - **No additional PostCSS plugins**: No `postcss-import`, `postcss-nesting`, etc. Tailwind v4 handles these natively.
 
 - [x] **What does components.json configure for shadcn/ui?**
-  - Style: default (not New York)
-  - RSC: true (React Server Components compatible)
-  - TSX: true (TypeScript components)
-  - Tailwind: CSS variables enabled, base color `slate`, no prefix
-  - Icon library: Lucide React
-  - Aliases: `@/components`, `@/lib/utils`, `@/components/ui`, `@/lib`, `@/hooks`
-  - Registry: shadcnblocks.com for additional components
+  - **Style**: `"default"` (not "new-york")
+  - **RSC**: `true` — components are generated with React Server Component compatibility
+  - **TSX**: `true` — TypeScript JSX
+  - **Tailwind**:
+    - `css`: `"src/app/globals.css"` — the main CSS entry point
+    - `baseColor`: `"slate"` — slate color palette as the base
+    - `cssVariables`: `true` — uses CSS custom properties for theming
+    - `config`: `""` (empty) — Tailwind v4 doesn't need a separate config file
+    - `prefix`: `""` — no class prefix
+  - **Icon Library**: `"lucide"` — lucide-react icons
+  - **Import Aliases**: Standard `@/components`, `@/components/ui`, `@/lib`, `@/hooks`, `@/lib/utils`
+  - **Custom Registry**: `@shadcnblocks` → `https://shadcnblocks.com/r/{name}.json` — third-party component source
 
 - [x] **Are there any build optimizations or custom configurations?**
-  - **TurboPack root** configured for development speed
-  - **Incremental TypeScript** compilation enabled
-  - **Image remotePatterns** limited to specific domains (security)
-  - No explicit bundle splitting, no custom chunking strategy
-  - No `experimental` features enabled in Next.js config
+  - **Turbopack**: Enabled by default in Next.js 16 — significantly faster builds compared to webpack.
+  - **TypeScript incremental builds**: `incremental: true` with `tsconfig.tsbuildinfo` (554 KB).
+  - **No bundle analyzer**: No `@next/bundle-analyzer` installed or configured.
+  - **No custom `next build` wrapper**: The `build` script is plain `next build`.
+  - **No `output: "standalone"`**: Not configured for Docker/containerized deployments (standard Vercel deployment assumed).
 
 - [x] **What Vercel-specific settings are defined?**
-  `vercel.json` defines **security headers** (not deployment config):
-  - `X-Frame-Options: SAMEORIGIN` — clickjacking protection
-  - `X-Content-Type-Options: nosniff` — MIME sniffing protection
-  - `X-XSS-Protection: 1; mode=block` — XSS filter
-  - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Cross-Origin-Opener-Policy: same-origin`
-  - `Cross-Origin-Embedder-Policy: require-corp`
-  - `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()`
-  - `Content-Security-Policy`: Comprehensive CSP allowing self, Clerk, Convex, OpenRouter, Google Fonts
-  - Font caching: 1 year immutable for `/fonts/*`
+  - **Security Headers** (applied to all routes `/(.*)`):
+    - `X-Frame-Options: SAMEORIGIN` — clickjacking protection
+    - `X-Content-Type-Options: nosniff` — MIME type sniffing prevention
+    - `X-XSS-Protection: 1; mode=block` — legacy XSS filter (deprecated but harmless)
+    - `Referrer-Policy: strict-origin-when-cross-origin` — controls referrer information
+    - `Cross-Origin-Opener-Policy: same-origin` — process isolation
+    - `Cross-Origin-Embedder-Policy: require-corp` — cross-origin resource loading restriction
+    - `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()` — disables sensitive APIs + FLoC
+    - `Content-Security-Policy` — comprehensive CSP (detailed below)
+  - **Font Caching** (`/fonts/:path*`):
+    - `Cache-Control: public, max-age=31536000, immutable` — 1-year cache for font files
+  - **No redirects or rewrites**: None defined in `vercel.json`.
+
+  **CSP Breakdown**:
+  - `default-src 'self'`
+  - `script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:` + Clerk + Convex domains
+  - `worker-src 'self' blob:`
+  - `style-src 'self' 'unsafe-inline'` + Google Fonts
+  - `img-src 'self' data: blob: https:`
+  - `font-src 'self'` + Google Fonts
+  - `connect-src 'self'` + Clerk, Convex (HTTPS + WSS), OpenRouter, Clerk telemetry
+  - `frame-ancestors 'self'`
+  - `base-uri 'self'`
+  - `form-action 'self'`
 
 - [x] **Are environment variables configured at build time?**
-  Not in these config files. Environment variables are handled at:
-  - Convex level: `npx convex env set` (validated via `convex/lib/env.ts` `requireEnv()`)
-  - Vercel level: Project settings in Vercel dashboard
-  - No `.env` validation at Next.js build time (no `@vercel/otel` or similar)
+  - **`.env.example`** provides a comprehensive template (84 lines) with:
+    - Clerk authentication keys (public + secret)
+    - Convex backend URLs
+    - OpenRouter AI API keys
+    - AI rate limiting config
+    - Embedding model configuration
+    - Feature flags
+    - VAPID push notification keys
+    - Encryption key for webhook secrets
+    - Site URLs
+  - **Build-time env vars**: `NEXT_PUBLIC_*` prefixed variables are inlined at build time:
+    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+    - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL`
+    - `NEXT_PUBLIC_CONVEX_URL` / `NEXT_PUBLIC_CONVEX_SITE_URL`
+    - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+    - `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_APP_URL`
+  - **No runtime env validation**: No `@t3-oss/env-nextjs` or similar framework for build-time env validation.
 
 - [x] **Any image optimization settings in Next.js?**
-  Yes — `remotePatterns` in `next.config.ts`:
-  - `*.convex.cloud` — Convex file storage (wildcard subdomain)
-  - `img.clerk.com` — Clerk user avatars
-  - No custom `deviceSizes`, `imageSizes`, or `formats` — uses Next.js defaults
+  - **Remote patterns** configured for:
+    - `https://*.convex.cloud` — Convex file storage (wildcard subdomain)
+    - `https://img.clerk.com` — Clerk user avatars
+  - **No custom loader**: Uses Next.js default image optimization.
+  - **No `unoptimized` flag**: Images are optimized by default.
+  - **No `deviceSizes` or `imageSizes` customization**: Uses Next.js defaults.
+
+## 🔗 Dependencies
+
+- **Depends on:** Part 01 (package dependencies — defines what tools are available)
+- **Connected to:** Part 03 (project structure), Part 11 (styling — globals.css), Part 17 (deployment — vercel.json)
 
 ## 📝 Agent Findings
 
-### Configuration Philosophy
-The project follows a **minimal-by-default** approach. All 6 config files are intentionally simple — no complex overrides, no experimental features, no custom webpack. This suggests a preference for framework defaults and maintainability over customization.
+### Configuration Quality Summary
 
-### Next.js 16 Adoption
-Using Next.js 16.1.6 (pinned), which is the latest major version. The config is compatible with the new App Router paradigm and React Server Components.
+The build tooling configuration is **clean, minimal, and well-organized**. All config files are small and purposeful, with no unnecessary complexity.
 
-### ESLint Flat Config Migration
-Already migrated to ESLint 9's flat config format (`eslint.config.mjs`), showing proactive maintenance of tooling.
+### Tailwind CSS v4 Configuration
 
-### Security-First Vercel Config
-The `vercel.json` is the most complex config file, with 8 security headers including a comprehensive CSP. This shows production-readiness thinking.
+The project uses **Tailwind CSS v4**, which is a significant architectural choice:
+- No `tailwind.config.js` — Tailwind v4 uses CSS-first configuration
+- PostCSS uses `@tailwindcss/postcss` (v4 native plugin)
+- All design tokens defined directly in `globals.css` using `@theme inline`
+- Using `oklch()` color space for modern, perceptually uniform colors
+- Custom `@property --angle` declaration for CSS Houdini animations
 
-### Tailwind v4
-Using Tailwind v4 with the new `@tailwindcss/postcss` plugin approach (no longer needs `tailwind.config.js`).
+### Turbopack Adoption
+
+The project runs Turbopack (Next.js 16 default), confirmed by `turbopack: { root: __dirname }` in config. This means:
+- Significantly faster dev server startup and HMR
+- No webpack config support (not needed in this project)
+- The `root: __dirname` was likely added to resolve path issues with the monorepo-like structure
+
+### Testing Infrastructure (Not in Template)
+
+Two extra configuration files exist that the template didn't mention:
+- `vitest.config.ts` — Full test runner configuration with jsdom environment, v8 coverage, and `@/` alias support
+- `vitest.setup.ts` — Sets up `@testing-library/jest-dom` matchers for Vitest
+
+This indicates a **vitest-based testing setup** with jsdom (not Playwright/Cypress for e2e).
+
+### Security Header Analysis
+
+The `vercel.json` security headers are comprehensive but have two noteworthy items:
+1. **`'unsafe-inline' 'unsafe-eval'` in script-src**: These weaken the CSP significantly. `unsafe-eval` is likely required by Clerk/Convex client-side SDKs. `unsafe-inline` could potentially be replaced with nonce-based CSP in Next.js.
+2. **`Cross-Origin-Embedder-Policy: require-corp`**: This is a strict policy that may cause issues with third-party resources (e.g., Google Fonts, external images) unless they include appropriate CORS headers.
+
+### TypeScript Excludes
+
+The `tsconfig.json` excludes two directories not present in the codebase:
+- `tiledesk-reference` — suggests the project was inspired by or migrating from Tiledesk (a chatbot platform)
+- `tiledesk-dashboard-reference` — same context
+
+These are likely development reference folders that existed at some point but are now removed.
+
+### Build Artifacts in Version Control
+
+- `tsconfig.tsbuildinfo` (554 KB) is present in the project root and .gitignored ✅
+- `next-env.d.ts` is .gitignored ✅ (but present in `tsconfig.json` includes, which is correct)
 
 ## 🔍 Key Patterns to Identify
 
-- **Framework defaults over customization**: All configs are minimal, preferring defaults
-- **ESLint 9 flat config**: Already on the new format
-- **Tailwind v4**: Using latest Tailwind with dedicated PostCSS plugin
-- **shadcn/ui standard setup**: Default style, RSC enabled, CSS variables for theming
-- **Security headers in vercel.json**: CSP, CORS, and permission policies enforced at edge
+- **TypeScript strictness**: ✅ Full strict mode enabled — excellent for type safety
+- **ESLint rule philosophy**: Minimal/lenient — relies on Next.js presets only, no custom rules. No accessibility plugin explicitly added (though `core-web-vitals` includes some a11y rules).
+- **Next.js configuration complexity**: Very low — only i18n plugin, turbopack root, and image patterns. Deliberately minimal.
+- **Build optimization approach**: Relies on Turbopack (default) + TypeScript incremental builds. No custom optimizations needed.
+- **No formatter**: Consistent with Part 01 findings — no Prettier/Biome configured. ESLint alone handles code quality.
 
 ## ⚠️ Potential Concerns
 
-| Concern | Severity | Details |
-|---------|----------|---------|
-| **No TypeScript build-time env validation** | LOW | `vercel.json` doesn't validate env vars at build time. Convex has `requireEnv()` but Next.js actions/SSR code accessing `process.env` could fail silently. |
-| **No experimental features enabled** | INFO | Could benefit from `serverActions`, `typedRoutes`, or other Next.js experimentals, but not a concern for stability. |
-| **No custom bundle optimization** | LOW | No `experimental.instrumentationHook`, no manual chunk splitting. For a moderate-sized app this is fine, but could be optimized for larger apps. |
-| **CSP includes `'unsafe-inline'` for styles** | LOW | `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com` — allows inline styles, which weakens CSP. Acceptable for Tailwind's runtime but technically a minor security reduction. |
-| **CSP allows `script-src 'unsafe-inline'` for Clerk** | MEDIUM | `script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev` — inline scripts allowed from Clerk domain. This is required for Clerk's widget but reduces CSP effectiveness. |
+### HIGH
+- **No environment variable validation at build time**: The project has 15+ environment variables with no type-safe validation. A missing or misconfigured env var would only surface at runtime. Consider adding `@t3-oss/env-nextjs` or a Zod-based env validation schema.
+- **`'unsafe-eval'` in Content Security Policy**: Required by Clerk/Convex but significantly weakens script execution security. Monitor for opportunities to remove this as SDKs evolve.
+
+### MEDIUM
+- **No bundle analysis tooling**: No `@next/bundle-analyzer` is configured. With heavy dependencies like `recharts` (470KB), `xlsx` (300KB), and `@xyflow/react` (200KB), bundle size monitoring is important.
+- **`Cross-Origin-Embedder-Policy: require-corp`**: This strict COEP may block third-party resources. Verify that Google Fonts, Clerk images, and other external resources load correctly in production.
+- **Legacy `X-XSS-Protection` header**: This header is deprecated and ignored by modern browsers. While harmless, it adds no security value.
+- **Tiledesk references in tsconfig**: `tiledesk-reference` and `tiledesk-dashboard-reference` in the `exclude` array are stale references to directories that no longer exist. Should be cleaned up for clarity.
+
+### LOW
+- **No custom ESLint rules**: The project relies entirely on Next.js presets. Consider adding:
+  - `eslint-plugin-jsx-a11y` for accessibility (partially covered by core-web-vitals)
+  - `eslint-plugin-import` for import ordering
+  - Custom rules for project conventions (e.g., no relative imports in certain directories)
+- **No `.nvmrc` or `.node-version`**: No Node.js version is pinned for contributors. Bun version is pinned in `package.json`, but Node.js version (needed for some tooling) is not.
+- **`components.json` has empty tailwind config path**: `"config": ""` — correct for Tailwind v4 but may confuse contributors unfamiliar with the v4 migration.
+- **Missing `NEXT_PUBLIC_` prefix documentation**: The `.env.example` doesn't clearly explain which variables are build-time (client) vs runtime (server-only), beyond the `NEXT_PUBLIC_` naming convention.

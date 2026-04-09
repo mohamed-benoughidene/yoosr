@@ -2,265 +2,201 @@
 
 ## Project Overview
 
-**Yoosr** is a modern, AI-powered **customer support and live chat platform** (similar to Intercom, Crisp, or Tawk.to). It provides businesses with a multi-channel conversational support system featuring:
+**Yoosr** is a multi-tenant AI-powered customer support/chatbot SaaS platform built with **Next.js 16**, **React 19**, **Convex** (backend/database), and **Clerk** (authentication). It provides businesses with live chat widgets, AI chatbot automation, bot flow design tools, multi-channel support (Widget, Telegram, WhatsApp, Messenger, Instagram), and agent dashboards for managing conversations.
 
-- **Live chat widget** embeddable on any website
-- **AI-powered chatbots** with flow-based visual builder (Design Studio)
-- **Multi-channel support**: Widget, Telegram, WhatsApp, Messenger, Instagram
-- **Knowledge base** with vector embeddings for semantic search (RAG)
-- **Team collaboration**: Agent assignment, departments, canned responses
-- **Analytics & reporting**: Conversation metrics, CSAT ratings, token usage
-- **Multi-tenant SaaS**: Organization-based access control via Clerk
-- **Internationalization**: English, Arabic, French
+### Core Features
+- **Live Chat Widget** — Embeddable customer-facing chat widget with multi-channel support
+- **AI Chatbots** — LLM-powered bots via OpenRouter (various models), with knowledge base RAG (vector embeddings)
+- **Bot Flow Designer** — Visual graph-based automation builder using React Flow (`@xyflow/react`)
+- **Agent Dashboard** — Conversation management, assignment, departments, labels, canned responses
+- **Multi-tenant Architecture** — Organization-scoped data via Clerk org IDs
+- **Internationalization (i18n)** — English, Arabic, French (next-intl)
+- **Analytics & Reporting** — CSAT ratings, token usage tracking, activity logs, conversation metrics
+- **Web Push Notifications** — VAPID-based push for agent alerts
+- **Webhook System** — RestHooks-style subscriptions for external integrations
 
-### Tech Stack
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | Next.js 16 (App Router), React 19, TypeScript |
-| **Styling** | Tailwind CSS v4, shadcn/ui, Radix UI, Framer Motion |
-| **Authentication** | Clerk (multi-org, JWT) |
-| **Backend / Database** | Convex (reactive database, serverless functions) |
-| **AI / LLM** | OpenRouter API (multi-model), HuggingFace Inference |
-| **i18n** | next-intl (en, ar, fr) |
-| **Testing** | Vitest, React Testing Library, jsdom |
-| **Package Manager** | Bun |
-| **Deployment** | Vercel (frontend) + Convex Cloud (backend) |
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript 5 |
+| **Styling** | Tailwind CSS v4, shadcn/ui, Radix UI primitives, Lucide icons, Framer Motion |
+| **Backend/DB** | Convex (serverless backend + database + vector search) |
+| **Auth** | Clerk (Next.js SDK), JWT-based |
+| **AI/LLM** | OpenRouter API, HuggingFace Inference |
+| **i18n** | next-intl |
+| **Forms** | React Hook Form + Zod v4 validation |
+| **Charts** | Recharts |
+| **Data Tables** | TanStack Table |
+| **Testing** | Vitest + Testing Library (jsdom) |
+| **Package Manager** | Bun (v1.3.6) |
+| **Deployment** | Vercel (frontend), Convex Cloud (backend) |
 | **CI/CD** | GitHub Actions |
 
 ---
 
-## Building and Running
-
-### Prerequisites
-
-- **Bun** (package manager)
-- **Node.js 20+**
-- **Clerk account** (authentication)
-- **Convex account** (backend/database)
-- **OpenRouter API key** (AI features)
-
-### Setup
-
-```bash
-# 1. Install dependencies
-bun install
-
-# 2. Set up environment variables
-cp .env.example .env.local
-# Fill in Clerk, Convex, OpenRouter keys in .env.local
-
-# 3. Start Convex dev server (backend)
-npx convex dev
-
-# 4. Start Next.js dev server (frontend)
-bun run dev
-```
-
-### Key Commands
-
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start Next.js dev server |
-| `bun run build` | Production build |
-| `bun start` | Start production server |
-| `bun run lint` | Run ESLint |
-| `bun run test` | Run Vitest tests (once) |
-| `bun run test:watch` | Run tests in watch mode |
-| `bun run test:coverage` | Run tests with coverage report |
-| `npx convex dev` | Start Convex backend (separate terminal) |
-| `npx convex deploy` | Deploy Convex functions |
-
----
-
-## Architecture
-
-### High-Level Structure
+## Project Structure
 
 ```
 yoosr/
-├── convex/            # Backend layer (Convex serverless functions)
-│   ├── schema.ts      # Database schema (25+ tables)
-│   ├── *.ts           # Queries, mutations, actions
-│   └── lib/           # Backend utilities
+├── convex/                  # Convex backend (schema, queries, mutations, HTTP endpoints)
+│   ├── schema.ts            # Full database schema (18+ tables)
+│   ├── lib/                 # Backend utilities
+│   ├── http.ts              # HTTP API endpoints (webhooks, widget API)
+│   ├── bot.ts, botFlows.ts  # Bot execution engine
+│   ├── conversations.ts     # Conversation CRUD
+│   ├── projects.ts          # Project management
+│   ├── knowledge*.ts        # Knowledge base + embeddings
+│   ├── integrations.ts      # Channel integrations (Telegram, WhatsApp, etc.)
+│   └── _generated/          # Auto-generated Convex types
 ├── src/
-│   ├── app/           # Next.js App Router
-│   │   ├── [locale]/  # Internationalized routes
-│   │   │   ├── dashboard/      # Agent dashboard
-│   │   │   ├── design-studio/  # Bot flow builder
-│   │   │   ├── (marketing)/    # Landing pages
-│   │   │   └── login/signup/   # Auth pages
-│   │   ├── api/       # API routes (Clerk webhooks, etc.)
-│   │   └── widget/    # Embeddable chat widget
-│   ├── components/    # React components
-│   │   ├── ui/        # shadcn/ui primitives
-│   │   ├── dashboard/ # Dashboard-specific UI
-│   │   ├── design-studio/ # Bot flow builder UI
-│   │   ├── chat/      # Chat components
-│   │   └── layout/    # Layout wrappers
-│   ├── hooks/         # Custom React hooks
-│   ├── i18n/          # Internationalization config
-│   ├── lib/           # Shared utilities
-│   ├── context/       # React context providers
-│   └── types/         # TypeScript type definitions
-├── messages/          # i18n translation files (en, ar, fr)
-├── public/            # Static assets
-└── docs/              # Project documentation & analysis
+│   ├── app/
+│   │   ├── [locale]/        # i18n route group (en, ar, fr)
+│   │   │   ├── (marketing)/ # Landing pages, solutions, pricing
+│   │   │   ├── dashboard/   # Agent/admin dashboard
+│   │   │   ├── design-studio/ # Bot flow visual editor
+│   │   │   ├── login|signup/
+│   │   │   └── onboarding/
+│   │   ├── api/             # API routes
+│   │   ├── widget/          # Embedded widget endpoints
+│   │   └── og/              # Open Graph image generation
+│   ├── components/
+│   │   ├── ui/              # shadcn/ui primitives
+│   │   ├── dashboard/       # Dashboard-specific components
+│   │   ├── design-studio/   # Bot flow editor components
+│   │   ├── chat/            # Chat widget components
+│   │   └── layout/          # Layout wrappers, nav, headers
+│   ├── hooks/               # Custom React hooks
+│   ├── i18n/                # i18n configuration
+│   ├── lib/                 # Shared utilities
+│   ├── types/               # TypeScript type definitions
+│   ├── context/             # React context providers
+│   ├── config/              # App configuration
+│   └── middleware.ts        # Clerk auth + i18n middleware
+├── messages/                # i18n translation files (en.json, ar.json, fr.json)
+├── docs/                    # Documentation, analysis maps, specs
+├── public/                  # Static assets
+└── .github/workflows/ci.yml # CI/CD pipeline
 ```
-
-### Backend (Convex)
-
-The Convex backend defines a comprehensive schema with **25+ tables** including:
-
-- **Core**: `profiles`, `projects`, `conversations`, `messages`
-- **AI/Bots**: `bots`, `bot_flows`, `knowledge_bases`, `knowledge_base_chunks` (vector embeddings)
-- **Team**: `departments`, `canned_responses`, `labels`
-- **Analytics**: `activity_logs`, `conversation_events`, `csat_ratings`, `token_usage`
-- **Integrations**: `integrations` (Telegram, WhatsApp, etc.)
-- **Features**: `orders`, `notifications`, `push_subscriptions`, `feedback`, `webhook_subscriptions`
-
-Key backend patterns:
-- **Clerk auth integration** via JWT verification
-- **Rate limiting** via `@convex-dev/rate-limiter`
-- **Vector search** for knowledge base (2048-dim embeddings)
-- **Webhook handlers** for Clerk user sync and external channels
-- **HTTP endpoints** for widget API and webhook callbacks
-
-### Frontend (Next.js)
-
-- **App Router** with locale-prefixed routes (`/[locale]/dashboard`, etc.)
-- **Middleware** handles auth (Clerk), i18n routing, and protected routes
-- **shadcn/ui** component library with Radix UI primitives
-- **Convex React client** for real-time data subscriptions
-- **Framer Motion** for animations
-- **React Hook Form + Zod** for form validation
-- **Recharts** for data visualization
-- **ReactFlow (@xyflow/react)** for the Design Studio bot builder
 
 ---
 
-## Development Conventions
+## Building, Running & Testing
 
-### TypeScript
+### Development
+```bash
+bun dev          # Start Next.js dev server (Turbopack)
+bun build        # Production build
+bun start        # Start production server
+```
 
-- **Strict mode** enabled (`strict: true`)
-- **Path alias**: `@/*` maps to `./src/*`
-- **No implicit any**, full type safety expected
-
-### Styling
-
-- **Tailwind CSS v4** with PostCSS
-- **shadcn/ui** components (via `components.json` config)
-- **CSS variables** for theming (`cssVariables: true`)
-- **Lucide React** for icons
+### Linting & Type Checking
+```bash
+bun run lint     # ESLint (Next.js core-web-vitals + TypeScript)
+```
 
 ### Testing
-
-- **Vitest** with jsdom environment
-- **React Testing Library** for component tests
-- **Test files**: `**/*.test.{ts,tsx}` (excludes `convex/`, `.next/`)
-- **Coverage**: V8 provider with HTML/JSON/text reporters
-- Tests are located alongside source files
-
-### Internationalization
-
-- **Locales**: `en` (default), `ar`, `fr`
-- **next-intl** with locale prefix always present (`localePrefix: 'always'`)
-- **Translation files**: `messages/{en,ar,fr}.json`
-- **i18n request config**: `src/i18n/request.ts`
-
-### Authentication & Authorization
-
-- **Clerk** for user authentication and org management
-- **Protected routes**: `/dashboard/*`, `/design-studio/*`
-- **Webhook sync**: Clerk → Convex profiles via webhook handler
-- **JWT claims** used for locale and org context
-
-### CI/CD Pipeline
-
-```
-PR → Lint + Test + Build (quality gates)
-
-develop branch → Staging deploy (Convex + Vercel preview)
-main branch    → Production deploy (Convex + Vercel prod)
+```bash
+bun run test           # Run all tests (Vitest)
+bun run test:watch     # Watch mode
+bun run test:coverage  # Coverage report (v8 provider)
 ```
 
-GitHub Actions workflow (`.github/workflows/ci.yml`):
-1. **Quality gates**: lint, test, build
-2. **Staging**: deploys to preview environment on `develop`
-3. **Production**: deploys Convex + Vercel on `main`
+Tests live alongside source files as `*.test.{ts,tsx}`. The Convex backend is excluded from frontend test runs.
+
+### Convex Backend
+```bash
+npx convex dev    # Start Convex dev server
+npx convex deploy # Deploy to production
+```
 
 ---
 
-## Key Features
+## Architecture & Data Flow
 
-### Design Studio (Bot Flow Builder)
-- Visual graph editor using ReactFlow
-- Node-based flow definition (messages, conditions, AI tasks, etc.)
-- Compiled execution nodes for the bot engine
-- Variable support and slug-based targeting
+### Authentication Flow
+1. **Clerk** handles sign-in/sign-up, JWT issuance, and org membership
+2. **Middleware** (`src/middleware.ts`) enforces protected routes (`/dashboard/*`, `/design-studio/*`)
+3. **Clerk webhooks** sync user profiles to Convex `profiles` table
+4. **Convex auth config** validates Clerk JWT tokens
 
-### Knowledge Base (RAG)
-- Document ingestion from URLs, text, or files
-- Vector embeddings via OpenRouter (nvidia/llama-nemotron model, 2048 dims)
-- Semantic search using Convex vector indexes
-- Chunk-level storage with source tracking
+### Database Schema (Convex)
+The schema (`convex/schema.ts`) defines 18+ tables with multi-tenant isolation via `orgId` and `projectId` foreign keys:
 
-### Multi-Channel Messaging
-- Widget (embeddable JS snippet via `public/widget.js`)
-- Telegram, WhatsApp, Messenger, Instagram integrations
-- Unified conversation model with channel abstraction
-- Webhook-based integration patterns
+- **Core**: `profiles`, `projects`, `conversations`, `messages`
+- **Bot Engine**: `bots`, `bot_flows`, `conversation_bot_state` (separated to avoid OCC conflicts)
+- **Knowledge Base**: `knowledge_bases`, `knowledge_base_sources`, `knowledge_base_chunks` (vector index, 2048-dim embeddings)
+- **Channels**: `integrations` (Telegram, WhatsApp, Messenger, Instagram)
+- **Agent Tools**: `departments`, `canned_responses`, `labels`, `contacts`, `orders`
+- **Analytics**: `activity_logs`, `csat_ratings`, `token_usage`, `conversation_events`
+- **Notifications**: `notifications`, `push_subscriptions`, `webhook_subscriptions`, `webhook_deliveries`
+- **Feedback**: `feedback` (early access bugs/features)
 
-### Analytics
-- Conversation metrics (bot vs agent handled, response times)
-- CSAT ratings from chat widget
-- AI token usage tracking per project
-- Activity logs for audit trails
+### Bot Execution
+Bots use a graph-based flow engine (React Flow nodes/edges). The `conversation_bot_state` table is separated from `conversations` to prevent Optimistic Concurrency Control (OCC) write conflicts during bot execution.
+
+### Vector Search
+Knowledge base embeddings use Convex vector indexes with the `nvidia/llama-nemotron-embed-vl-1b-v2` model (2048 dimensions). Configured via `EMBEDDING_MODEL` and `EMBEDDING_DIMENSIONS` env vars.
+
+---
+
+## Key Conventions
+
+### Path Aliases
+- `@/*` → `./src/*` (configured in `tsconfig.json` and Vitest)
+
+### Component Patterns
+- Uses **shadcn/ui** for UI primitives (customizable, copy-paste components)
+- Components organized by feature domain (`dashboard/`, `chat/`, `design-studio/`, etc.)
+- Server components by default; client components marked with `"use client"`
+
+### i18n
+- Locale route group: `/[locale]/` with `en`, `ar`, `fr`
+- Middleware handles locale detection, cookie persistence, and Clerk metadata sync
+- RTL support for Arabic (locale-aware layout)
+
+### Multi-tenancy
+- All data scoped to `orgId` (Clerk organization) and `projectId`
+- Profiles indexed by both `userId` and `orgId`
+- Feature flags configured via environment variable (`FEATURE_FLAGS`)
+
+### Security
+- CSP headers configured in `vercel.json` (self-only, explicit trusted domains)
+- Security headers: X-Frame-Options, X-Content-Type-Options, HSTS, Permissions-Policy
+- Webhook secrets verified via `CLERK_WEBHOOK_SECRET`
+- Integration credentials encrypted with `ENCRYPTION_KEY`
+- AI rate limiting via `AI_RATE_LIMIT_PER_HOUR`
+
+### CI/CD Pipeline
+- **PRs**: Lint → Test → Build (quality gates only)
+- **develop branch**: Staging deployment (Vercel preview + Convex staging)
+- **main branch**: Production deployment (Convex prod + Vercel prod)
+- Uses Bun for all steps, Vercel CLI for frontend deployment
 
 ---
 
 ## Environment Variables
 
-See `.env.example` for full list. Key groups:
-
-| Group | Variables |
-|-------|-----------|
-| **Clerk** | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET` |
-| **Convex** | `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL` |
-| **AI** | `OPENROUTER_API_KEY`, `AI_RATE_LIMIT_PER_HOUR`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS` |
-| **Push** | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
-| **Security** | `ENCRYPTION_KEY` (for webhook secrets) |
-| **Feature Flags** | `FEATURE_FLAGS` (comma-separated key:value) |
+Key environment variables (see `.env.example`):
+- **Clerk**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`
+- **Convex**: `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`
+- **AI**: `OPENROUTER_API_KEY`, `AI_RATE_LIMIT_PER_HOUR`, `LLM_RETRY_MAX_ATTEMPTS`
+- **Push**: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
+- **Encryption**: `ENCRYPTION_KEY` (for webhook/integration secrets)
 
 ---
 
-## Important Patterns
+## Agent Guidelines
 
-1. **Real-time subscriptions**: Convex queries are reactive—components auto-update on data changes
-2. **Optimistic concurrency**: Separated `conversation_bot_state` from `conversations` to avoid OCC write conflicts
-3. **External references**: Clerk user IDs stored as strings (not Convex doc IDs)
-4. **Denormalized fields**: Some fields duplicated for index performance (e.g., `integrations.webhookSecret`)
-5. **Backward compatibility**: Deprecated fields kept with comments rather than removed
-6. **Rate limiting**: Applied to AI calls via `@convex-dev/rate-limiter`
-
----
-
-## Project Documentation
-
-The `docs/` directory contains a **chunked analysis map** for systematic codebase understanding:
-- `docs/README.md` — Analysis overview and progress tracker
-- `docs/analysis-map/` — 18 focused analysis templates
-- `docs/analysis-findings/` — Completed analysis results
-
----
-
-## Notes for Development
-
-- **Run Convex separately**: `npx convex dev` must run in a separate terminal
-- **Widget development**: Test at `/[locale]/test-widget`
-- **Database migrations**: See `convex/migrations.ts`
-- **Seeding**: `convex/seed.ts` for development data
-- **Static widget**: `public/widget.js` is the embeddable script for customers
-- **Service worker**: `public/sw.js` for push notifications
-- **Security headers**: Configured in `vercel.json` (CSP, X-Frame-Options, etc.)
+When working on this codebase:
+1. **Always** maintain multi-tenant isolation (`orgId`, `projectId`) in Convex queries/mutations
+2. **Use** Convex's type-safe API — never bypass schema validation
+3. **Follow** shadcn/ui patterns for UI components (radix primitives, cva variants, tailwind-merge)
+4. **Respect** the bot state separation — use `conversation_bot_state` not `conversations` fields for execution
+5. **Write tests** for new features using Vitest + Testing Library
+6. **Run** `bun run lint` and `bun run test` before committing
+7. **Use** `@/*` path aliases for imports from `src/`
+8. **Handle** i18n properly — add translations to all locale files (en, ar, fr)
+9. **Security**: Never commit `.env.local`; use environment variables for secrets

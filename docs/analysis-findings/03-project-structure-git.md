@@ -1,231 +1,355 @@
-# Part 03: Project Structure & Git Setup — Analysis Findings
+# Part 03: Project Structure & Git Setup
 
 ## 📊 Visual Map
 
 ```
-Root Directory (/home/mohamed/lab/yoosr/)
-├── Source Code (src/)
-│   ├── app/                    → Next.js App Router pages & layouts
-│   ├── components/             → React components (UI + features)
-│   ├── config/                 → Configuration modules
-│   ├── context/                → React context providers
-│   ├── hooks/                  → Custom React hooks
-│   ├── i18n/                   → Internationalization (next-intl)
-│   ├── lib/                    → Utility libraries
-│   ├── types/                  → TypeScript type definitions
-│   └── middleware.ts           → Next.js middleware (auth routing)
+Root Directory (29 top-level entries)
+├── Source Code
+│   ├── src/                      → 242 files across 8 subdirectories
+│   │   ├── app/                  → Next.js App Router (locale-based routing)
+│   │   │   ├── [locale]/         → Localized routes (en, ar, fr)
+│   │   │   │   ├── dashboard/    → Protected: monitor, orders, activities, analytics, history, test-widget
+│   │   │   │   ├── design-studio/[botId]/ → Protected: visual bot builder
+│   │   │   │   ├── login/        → Auth: Clerk sign-in
+│   │   │   │   ├── signup/       → Auth: Clerk sign-up
+│   │   │   │   ├── onboarding/   → Post-signup onboarding
+│   │   │   │   ├── waitlist/     → Early access waitlist
+│   │   │   │   ├── pricing/      → Pricing page
+│   │   │   │   ├── solutions/[slug]/ → Dynamic solution pages
+│   │   │   │   ├── products/[slug]/  → Dynamic product pages
+│   │   │   │   ├── (marketing)/legal/ → Terms & Privacy
+│   │   │   │   └── test-widget/  → Widget sandbox
+│   │   │   ├── api/widget/project/ → API route for widget config
+│   │   │   ├── og/image/         → OG image generation
+│   │   │   ├── widget/           → Embeddable chat widget (standalone)
+│   │   │   ├── globals.css       → Global styles (19KB)
+│   │   │   ├── layout.tsx        → Root layout
+│   │   │   ├── not-found.tsx     → 404 page
+│   │   │   ├── robots.ts         → Dynamic robots.txt
+│   │   │   └── sitemap.ts        → Dynamic sitemap
+│   │   ├── components/           → 23 items (13 feature dirs + 10 standalone files)
+│   │   │   ├── ui/               → 32 Shadcn UI components
+│   │   │   ├── dashboard/        → monitor/, shared/, bots/, kb/, contacts/, settings/
+│   │   │   ├── design-studio/    → nodes/ + editor components
+│   │   │   ├── chat/             → Chat interface components
+│   │   │   ├── landing/          → Marketing page components
+│   │   │   ├── analytics/        → Analytics views
+│   │   │   ├── layout/           → Sidebar, header, etc.
+│   │   │   ├── settings/         → Settings panels
+│   │   │   ├── auth/             → Auth-related UI
+│   │   │   ├── pricing/          → Pricing UI
+│   │   │   ├── seo/              → SEO components
+│   │   │   ├── feedback/         → Feedback forms
+│   │   │   ├── activities/       → Activity log views
+│   │   │   ├── AuthProviders.tsx  → Clerk + Convex provider wrapper
+│   │   │   ├── ConvexClientProvider.tsx → Convex client setup
+│   │   │   ├── LanguageSwitcher.tsx    → Locale switching
+│   │   │   ├── error-boundary.tsx     → Error boundary
+│   │   │   └── providers.tsx          → Combined providers
+│   │   ├── config/               → 1 file: apps.ts (app store config)
+│   │   ├── context/              → 1 file: ProjectContext.tsx
+│   │   ├── hooks/                → 4 custom hooks
+│   │   │   ├── use-mobile.tsx    → Responsive breakpoint
+│   │   │   ├── useAnalyticsData.ts → Analytics data fetching
+│   │   │   ├── useFeatureFlag.ts → Feature flag hook
+│   │   │   └── useProjectId.ts   → Project context hook
+│   │   ├── i18n/                 → 3 files: navigation.ts, request.ts, routing.ts
+│   │   ├── lib/                  → 6 utilities: constants, env, featureFlags, plans, utils
+│   │   ├── types/                → 1 file: flow.ts (bot flow types)
+│   │   └── middleware.ts         → Clerk auth + next-intl locale middleware
+│   └── public/                   → 10 static assets
+│       ├── *.mp4                 → Demo videos (design-studio, walkthrough)
+│       ├── *.svg, *.png          → Logo assets
+│       ├── notification.mp3      → Notification sound
+│       ├── widget.js             → Embeddable widget script
+│       ├── sw.js                 → Service worker (push notifications)
+│       └── llms.txt              → AI crawler metadata
 │
-├── Backend (convex/)
-│   ├── schema.ts               → Master database schema (27 tables)
-│   ├── *.ts (40 files)         → Queries, mutations, actions
-│   ├── lib/                    → Backend utilities (crypto, env)
-│   ├── _generated/             → Auto-generated Convex types
-│   └── Special files:
-│       ├── auth.config.ts      → Convex auth configuration
-│       ├── convex.config.ts    → Convex instance config
-│       ├── http.ts             → HTTP API endpoints (webhooks)
-│       ├── crons.ts            → Scheduled jobs
-│       ├── migrations.ts       → Data migrations (disabled)
-│       ├── seed.ts             → Seed data
-│       └── wipe.ts             → Data wipe utilities
-│
-├── Static Assets
-│   └── public/                 → Images, fonts, favicon
-│
-├── Design System
-│   └── design-system/          → Design system documentation
-│
-├── Git & Tooling
-│   ├── .gitignore              → Comprehensive ignore patterns
-│   ├── .github/workflows/ci.yml → CI/CD pipeline (lint, test, build, deploy)
-│   ├── .qwen/                  → Qwen Code AI assistant configs
-│   ├── .agent/                 → Agent settings (gitignored)
-│   └── .agents/                → Additional agent configs (gitignored)
-│
-├── Documentation
-│   ├── docs/                   → Project documentation (analysis-map, findings)
-│   ├── documentation/          → Additional documentation
-│   └── SPECS/                  → Feature specifications
+├── Backend
+│   └── convex/                   → 48 files (excl. _generated/)
+│       ├── schema.ts             → Master database schema (25 tables)
+│       ├── 35+ function files    → Queries, mutations, actions
+│       ├── lib/                  → 5 utilities (crypto, embeddings, env, logger, rateLimiter)
+│       ├── http.ts               → HTTP endpoints (webhooks)
+│       ├── crons.ts              → 11 scheduled cron jobs
+│       ├── migrations.ts         → 2 one-time data migrations
+│       ├── types.ts              → Shared type definitions
+│       └── _generated/           → Auto-generated Convex types
 │
 ├── Internationalization
-│   └── messages/               → i18n message files (JSON)
+│   └── messages/                 → 4 files
+│       ├── en.json               → English (82KB, 1933 lines, 25 top-level sections)
+│       ├── ar.json               → Arabic  (105KB, 1917 lines)
+│       ├── fr.json               → French  (92KB, 1917 lines)
+│       └── _i18n-audit.json      → Translation coverage audit
 │
-└── Build Output (gitignored)
-    ├── .next/                  → Next.js build output
-    ├── coverage/               → Test coverage reports
-    └── node_modules/           → Dependencies
+├── Git & Tooling
+│   ├── .gitignore                → 49 lines, comprehensive
+│   ├── .github/workflows/ci.yml  → Single CI/CD pipeline (4 jobs)
+│   ├── .qwen/                    → Qwen Code AI config (4 files + skills/)
+│   ├── .agent/                   → Agent config (5 files + rules/)
+│   │   ├── AGENT.md              → Agent behavior instructions
+│   │   ├── DESIGN.md             → Design system documentation
+│   │   ├── push.md               → Git push instructions
+│   │   ├── draft.md              → Draft notes
+│   │   ├── yoosr-landing-page-content.md → Landing page content
+│   │   └── rules/tech-stack-rules.md → Technology stack rules
+│   └── .agents/skills/           → 30+ installable AI skills
+│
+├── Configuration
+│   ├── package.json              → Dependencies & scripts
+│   ├── next.config.ts            → Next.js configuration
+│   ├── tsconfig.json             → TypeScript config
+│   ├── eslint.config.mjs         → ESLint configuration
+│   ├── postcss.config.mjs        → PostCSS (Tailwind)
+│   ├── vitest.config.ts          → Vitest test runner config
+│   ├── vitest.setup.ts           → Test setup
+│   ├── components.json           → Shadcn UI configuration
+│   ├── vercel.json               → Vercel deployment config
+│   ├── bun.lock                  → Bun lockfile
+│   ├── skills-lock.json          → AI skills lock
+│   ├── .env.example              → 106-line documented env template
+│   └── .env.local                → Local environment (gitignored)
+│
+└── Documentation
+    └── docs/                     → 3 subdirectories + 3 files
+        ├── README.md             → Main project documentation
+        ├── CHUNKED_ANALYSIS_WORKFLOW.md → Analysis methodology
+        ├── Prompt.md             → Analysis prompt template
+        ├── analysis-map/         → 18 analysis templates
+        ├── analysis-findings/    → Completed analysis results
+        └── specs/                → Feature specifications
+            └── plans/            → Implementation plans
 ```
 
 ## 📁 File Inventory
 
-| File/Directory | Purpose | Found? |
-|----------------|---------|--------|
-| `.gitignore` | Git ignore patterns | ✅ Present |
-| `.github/workflows/ci.yml` | CI/CD pipeline | ✅ Present (1 workflow) |
-| `.qwen/` | Qwen Code assistant configuration | ✅ Present |
-| `.agent/` | Agent-specific settings | ✅ Present (gitignored) |
-| `.agents/` | Additional agent configurations | ✅ Present (gitignored) |
-| `src/` | Main application source code | ✅ Present |
-| `src/app/` | Next.js App Router | ✅ Present |
-| `src/components/` | React components | ✅ Present |
-| `src/config/` | Configuration modules | ✅ Present |
-| `src/context/` | React context providers | ✅ Present |
-| `src/hooks/` | Custom React hooks | ✅ Present |
-| `src/i18n/` | Internationalization | ✅ Present |
-| `src/lib/` | Utility libraries | ✅ Present |
-| `src/types/` | TypeScript type definitions | ✅ Present |
-| `src/middleware.ts` | Next.js middleware | ✅ Present |
-| `public/` | Static assets | ✅ Present |
-| `messages/` | i18n message files | ✅ Present |
-| `convex/` | Convex backend (40 .ts files) | ✅ Present |
-| `docs/` | Project documentation | ✅ Present |
-| `documentation/` | Additional documentation | ✅ Present |
-| `SPECS/` | Feature specifications | ✅ Present |
-| `design-system/` | Design system docs | ✅ Present |
-| `.next/` | Next.js build | ✅ Present (gitignored) |
-| `coverage/` | Test coverage | ✅ Present (gitignored) |
+| File/Directory | Purpose | Actual Status |
+|----------------|---------|---------------|
+| `.gitignore` | Git ignore patterns (49 lines) | ✅ Comprehensive — covers deps, build, env, AI tools, TS cache |
+| `.github/workflows/ci.yml` | Single CI/CD pipeline with 4 jobs | ✅ Active — lint, test, build, deploy (staging + prod) |
+| `.qwen/` | Qwen Code AI assistant (QWEN.md, Prompt.md, settings.json, skills/) | ✅ Present |
+| `.agent/` | Primary agent config (AGENT.md, DESIGN.md, push.md, rules/) | ✅ Present — contains design system and tech stack rules |
+| `.agents/skills/` | 30+ installable AI agent skills | ✅ Present — extensive skill library |
+| `src/` | Main application source (242 files, 8 subdirs) | ✅ Well-structured |
+| `public/` | Static assets (10 files: videos, logos, widget, SW) | ✅ Present |
+| `messages/` | i18n JSON files (en, ar, fr + audit) | ✅ 3 locales with audit tracking |
+| `docs/` | Project documentation, analysis maps, specs | ✅ Organized |
+| `convex/` | Backend functions, schema, crons, migrations (48 files) | ✅ Active |
+| `.env.example` | 106-line documented environment template | ✅ Thorough documentation |
+| `vercel.json` | Vercel deployment configuration | ✅ Present |
+
+**Not found from template:**
+| Expected | Status |
+|----------|--------|
+| `documentation/` | ❌ Does not exist — no separate documentation directory |
+| `SPECS/` | ❌ Does not exist at root — specs live inside `docs/specs/` |
+| `design-system/` | ❌ Does not exist as directory — design system is documented in `.agent/DESIGN.md` |
 
 ## ✅ Analysis Checklist
 
 - [x] **What is the overall directory structure philosophy?**
-  **Layer-based organization within `src/`**, combined with **feature-based** for the backend (`convex/`). The frontend uses a type-based layer structure (components, hooks, context, lib, types) while the backend organizes by domain entity (contacts.ts, conversations.ts, bots.ts, etc.).
+
+  The project follows a **hybrid organization** combining Next.js App Router conventions with feature-based component grouping. The root level cleanly separates concerns:
+  - `src/` — all frontend code (App Router, components, hooks, lib, types)
+  - `convex/` — all backend code (schema, functions, utilities)
+  - `messages/` — all i18n content
+  - `public/` — static assets
+  - `docs/` — documentation
+
+  This is a monorepo-like structure without a monorepo tool — frontend and backend live side-by-side with clear boundaries.
 
 - [x] **How is code organized? (by feature, by type, layered?)**
-  - **Frontend (src/)**: Layered by type — `components/`, `hooks/`, `context/`, `lib/`, `types/`, `config/`, `i18n/`
-  - **Backend (convex/)**: Feature/domain-based — one file per entity (e.g., `contacts.ts`, `bots.ts`, `conversations.ts`)
-  - **Pages (src/app/)**: Next.js App Router file-based routing
-  - **Shared utilities**: `convex/lib/` for backend-only utils, `src/lib/` for frontend utils
+
+  **Mixed approach — primarily by type at the top level, then by feature within components:**
+  
+  - **Top level:** By type (`components/`, `hooks/`, `lib/`, `types/`, `context/`, `config/`)
+  - **Components:** By feature domain (`dashboard/`, `chat/`, `design-studio/`, `landing/`, `analytics/`, `settings/`)
+  - **Dashboard components:** Further nested by sub-feature (`monitor/`, `bots/`, `kb/`, `contacts/`, `settings/`)
+  - **App routes:** By feature with locale prefix (`[locale]/dashboard/`, `[locale]/design-studio/`)
+  - **Backend (convex/):** Flat file structure — one file per domain entity (`conversations.ts`, `messages.ts`, `bots.ts`, etc.)
 
 - [x] **What does `.gitignore` cover? Is it comprehensive?**
-  Comprehensive coverage:
-  - **Package managers**: `/node_modules`, `.pnp.*`, `.yarn/*` (with exceptions for patches/plugins)
-  - **Testing**: `/coverage`
-  - **Next.js**: `/.next/`, `/out/`, `next-env.d.ts`
-  - **Production**: `/build`
-  - **OS/Debug**: `.DS_Store`, `*.pem`, `*debug.log*`
-  - **Environment**: `.env*` (with `!.env.example` exception)
-  - **Vercel**: `.vercel`
-  - **AI agents**: `.agent/`, `.agents/`, `.qwen/`
-  - **TypeScript**: `*.tsbuildinfo`, `next-env.d.ts`
-  - **Well-structured** with section comments
+
+  **Yes, comprehensive (49 lines).** Covers:
+  - ✅ `node_modules/` — dependencies
+  - ✅ `.next/`, `/out/`, `/build` — build artifacts
+  - ✅ `/coverage` — test coverage
+  - ✅ `.env*` with `!.env.example` — env files (allows example)
+  - ✅ `.DS_Store`, `*.pem` — OS/security files
+  - ✅ `npm-debug.log*`, `yarn-*`, `.pnpm-debug.log*` — debug logs
+  - ✅ `.vercel` — Vercel local config
+  - ✅ `.agent/`, `.agents/`, `.qwen/` — AI tool configs
+  - ✅ `*.tsbuildinfo`, `next-env.d.ts` — TypeScript artifacts
+
+  **Minor gap:** `.agent/` and `.agents/` are gitignored, but the skills-lock.json is at root and tracked. The `.agents/skills/` directory with 30+ skill files is gitignored — only the lock file references them.
 
 - [x] **What GitHub Actions workflows exist?**
-  Single workflow: `.github/workflows/ci.yml` with 2 jobs:
-  1. **quality-gates** (runs on push + PR to main):
-     - Checkout → Setup Bun → Install → Lint → Test → Build
-     - Timeout: 10 minutes
-  2. **deploy-convex** (main branch only, after quality-gates passes):
-     - Checkout → Setup Bun → Install → `npx convex deploy --cmd 'bun run build'`
-     - Requires `CONVEX_DEPLOY_KEY` secret
-     - Timeout: 10 minutes
+
+  **One workflow: `.github/workflows/ci.yml`** ("CI/CD Pipeline") with **4 jobs:**
+
+  1. **`quality-gates`** — Runs on all pushes to `main`/`develop` and PRs to `main`. Steps: checkout → setup Bun → install → lint → test → build. Timeout: 10 min.
+  
+  2. **`deploy-staging`** — Triggered on push to `develop` only. Deploys Convex to staging + Vercel preview. Uses `CONVEX_DEPLOY_KEY_STAGING` and `VERCEL_PROJECT_ID_STAGING`. Environment: "Preview – yoosr". Timeout: 15 min.
+  
+  3. **`deploy-convex`** — Triggered on push to `main`. Deploys Convex backend to production using `CONVEX_DEPLOY_KEY_PROD`. Timeout: 10 min.
+  
+  4. **`deploy-frontend`** — Triggered on push to `main`. Deploys to Vercel production with `--prod` flag. Timeout: 15 min.
+
+  All deploy jobs depend on `quality-gates` passing first.
 
 - [x] **Are there automated CI/CD pipelines?**
-  **Yes.** Standard CI/CD:
-  - **CI**: Lint + Test + Build on every push/PR to main
-  - **CD**: Auto-deploy to Convex + Vercel on main branch merge
-  - Uses Bun throughout (consistent with local dev)
-  - **Missing**: No staging environment, no preview deployments, no E2E tests in CI
+
+  **Yes, fully automated with a branch-based strategy:**
+  - **PRs to `main`** → quality gates only (lint + test + build)
+  - **Push to `develop`** → quality gates + staging deploy (Convex + Vercel preview)
+  - **Push to `main`** → quality gates + production deploy (Convex + Vercel production)
+
+  Uses **Bun** as the package manager/runner throughout. Convex deploy uses `npx convex deploy --cmd 'bun run build'`.
 
 - [x] **What agent/AI tool configurations exist?**
-  - `.qwen/` — Qwen Code assistant configs (not gitignored, committed to repo)
-  - `.agent/` — Agent settings (gitignored, local-only)
-  - `.agents/` — Additional agent configs (gitignored, local-only)
-  - `skills-lock.json` — Agent skills configuration at root level
-  - The project is set up for AI-assisted development with multiple agent frameworks
+
+  **Three AI tool configurations present:**
+
+  1. **`.agent/`** — Primary agent config:
+     - `AGENT.md` (9KB) — Agent behavior instructions
+     - `DESIGN.md` (26KB) — Comprehensive design system documentation
+     - `push.md` — Git commit/push workflow rules
+     - `draft.md` — Working draft notes
+     - `yoosr-landing-page-content.md` — Landing page copy
+     - `rules/tech-stack-rules.md` — Enforced technology stack (Next.js, Shadcn, Convex, Clerk)
+
+  2. **`.qwen/`** — Qwen Code assistant:
+     - `QWEN.md` (9.8KB) — Qwen-specific instructions
+     - `Prompt.md` (10.9KB) — Prompt templates
+     - `settings.json` — Configuration
+     - `skills/` — Qwen-specific skills
+
+  3. **`.agents/skills/`** — 30+ installable AI skills library including: convex, shadcn, tailwind, react-best-practices, debugging, SEO, code-review, security-audit, etc.
+
+  All three directories are gitignored (`.agent/`, `.agents/`, `.qwen/`).
 
 - [x] **How is documentation organized?**
-  **Three separate documentation locations:**
-  1. `docs/` — Active working docs (analysis-map, analysis-findings)
-  2. `documentation/` — Additional documentation (contents not fully explored)
-  3. `SPECS/` — Feature specifications (contents not fully explored)
-  4. `design-system/` — Design system documentation
 
-- [x] **Are there multiple documentation sources?**
-  **Yes — 4 locations** (`docs/`, `documentation/`, `SPECS/`, `design-system/`). This could lead to fragmentation and confusion about where to put/find information.
+  **Single documentation root at `docs/`:**
+  - `docs/README.md` (9.6KB) — Main project documentation
+  - `docs/CHUNKED_ANALYSIS_WORKFLOW.md` — Analysis methodology
+  - `docs/Prompt.md` — Analysis prompt template
+  - `docs/analysis-map/` — 18 analysis template files (numbered 01-18)
+  - `docs/analysis-findings/` — Completed analysis results
+  - `docs/specs/` — Feature specifications + implementation plans
 
-- [x] **What's in the `messages/` directory?**
-  Internationalization message files for `next-intl`. These contain the translation strings for supported locales. Based on the schema (locales: `en`, `ar`, `fr`), there are likely JSON files per locale.
+  Additional documentation in `.agent/`:
+  - `.agent/DESIGN.md` (26KB) — Detailed design system guide
+  - `.agent/AGENT.md` (9KB) — Agent instructions
+
+- [x] **Are there multiple documentation sources? (docs/, documentation/, SPECS/)**
+
+  **Partially.** The template suggested `documentation/` and `SPECS/` directories at root level — **neither exists.** All documentation is consolidated under `docs/`. Specs live at `docs/specs/` (not root `SPECS/`). The design system documentation is in `.agent/DESIGN.md` rather than a separate `design-system/` directory.
+
+  This is actually **cleaner** than the template assumed — there's one canonical documentation location.
+
+- [x] **What's in the `messages/` directory? (i18n approach)**
+
+  **Three locale files + an audit file using next-intl:**
+  - `en.json` (82KB, 1933 lines) — English (source of truth)
+  - `ar.json` (105KB, 1917 lines) — Arabic (RTL support)
+  - `fr.json` (92KB, 1917 lines) — French
+  - `_i18n-audit.json` — Translation coverage tracker (ar: 0 missing, fr: 1 missing key)
+
+  **25 top-level sections:** landing, designStudio, common, nav, header, dashboard, monitor, chat, requests, bots, analytics, activities, activity_log, history, contacts, orders, knowledge_base, apps, settings, test_widget, visitor, widget, testWidget, auth, landingPage
+
+  **i18n infrastructure:** Uses `next-intl` with:
+  - `src/i18n/routing.ts` — Locale routing config
+  - `src/i18n/navigation.ts` — Localized navigation
+  - `src/i18n/request.ts` — Request-level locale detection
+  - `src/middleware.ts` — Clerk auth + locale middleware with cookie-based persistence
+
+  RTL support is handled via `HtmlDirSetter.tsx` component.
 
 - [x] **Is the structure consistent and predictable?**
-  **Mostly yes.** The `src/` layers are standard for a Next.js App Router project. The `convex/` domain-based file organization is consistent (one file per entity). However:
-  - Some Convex files contain mixed concerns (e.g., `settings.ts` contains departments, canned responses, operating hours, AND label mutations — should be split)
-  - `convex/types.ts` only defines `ClerkIdentity` type — very minimal
-  - `convex/utils.ts` has auth helpers (`requireAdmin`, `assertProjectOwnership`, `checkProjectOwnership`) — well-separated
+
+  **Mostly yes, with minor inconsistencies:**
+  
+  ✅ Consistent: App Router conventions followed correctly, components organized by feature, backend files flat by domain entity.
+  
+  ⚠️ Minor inconsistencies:
+  - `src/components/settings/` AND `src/components/dashboard/settings/` — two settings component directories
+  - `src/app/[locale]/test-widget/` AND `src/app/[locale]/dashboard/test-widget/` — duplicate test-widget routes
+  - i18n keys mix `camelCase` (`designStudio`) and `snake_case` (`knowledge_base`, `activity_log`, `test_widget`)
+  - Some duplicate i18n sections: `testWidget` AND `test_widget`, `landingPage` AND `landing`
 
 - [x] **Any conventions for file naming?**
-  - **Convex files**: Lowercase entity names (`contacts.ts`, `conversations.ts`, `botFlows.ts`)
-  - **Frontend components**: Likely PascalCase (standard React convention — not verified in detail)
-  - **Config files**: `*.config.*` pattern (next.config.ts, vitest.config.ts, etc.)
-  - **Middleware**: `middleware.ts` at src root (Next.js convention)
-  - **Internal functions**: Suffix `_Internal` in Convex (e.g., `logActivityInternal`, `updateInternal`)
 
-- [x] **How are environment variables managed?**
-  - **`.env*` files gitignored** (except `.env.example` whitelisted)
-  - **Convex**: Uses `convex/lib/env.ts` `requireEnv()` function that throws in production if vars are missing
-  - **Vercel**: Env vars set in Vercel dashboard (not in config files)
-  - **No `.env.example` file found** in the repo root (may exist but wasn't in the file list)
+  - **Components:** PascalCase filenames (`AuthProviders.tsx`, `ProjectContext.tsx`, `LanguageSwitcher.tsx`)
+  - **Hooks:** camelCase with `use` prefix (`useProjectId.ts`, `useFeatureFlag.ts`, `useAnalyticsData.ts`) — exception: `use-mobile.tsx` uses kebab-case
+  - **Convex functions:** camelCase (`activityLogs.ts`, `botFlows.ts`, `cannedResponses.ts`)
+  - **UI components (Shadcn):** kebab-case (`alert-dialog.tsx`, `dropdown-menu.tsx`, `scroll-area.tsx`)
+  - **Config files:** kebab/dot case (`next.config.ts`, `eslint.config.mjs`, `vitest.config.ts`)
+  - **Routes:** kebab-case directory names (`design-studio/`, `test-widget/`)
+
+  Overall: **Shadcn conventions for UI, PascalCase for custom components, camelCase for backend** — reasonable and mostly consistent.
+
+- [x] **How are environment variables managed? (.env files?)**
+
+  **Well-documented with a layered approach:**
+  
+  - `.env.example` (106 lines) — Comprehensive template with:
+    - Clerk authentication (publishable key, secret, webhook secret, JWT issuer)
+    - Convex backend URLs
+    - OpenRouter AI keys + rate limiting + embedding config
+    - Feature flags (comma-separated key:value)
+    - VAPID keys for push notifications
+    - Encryption key for webhook secrets
+    - Site URLs
+
+  - `.env.local` — Actual secrets (gitignored, 1KB)
+  
+  - **CI/CD secrets** documented in `.env.example` comments: `CONVEX_DEPLOY_KEY`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `VERCEL_PROJECT_ID_STAGING`, `SLACK_WEBHOOK_URL`
+  
+  - **Runtime validation** exists via `src/lib/env.ts` (1.6KB) and `convex/lib/env.ts` (907B) — both frontend and backend have env validation modules.
 
 ## 📝 Agent Findings
 
-### Frontend Structure (src/)
-The `src/` directory follows a **layered architecture**:
-- `app/` — Next.js App Router (file-based routing, server components)
-- `components/` — Reusable React components
-- `hooks/` — Custom React hooks
-- `context/` — React context providers for global state
-- `lib/` — Utility functions and shared logic
-- `types/` — TypeScript type definitions
-- `config/` — Configuration modules
-- `i18n/` — Internationalization setup
-- `middleware.ts` — Next.js middleware for auth routing
+### Strong Points
 
-### Backend Structure (convex/)
-40 TypeScript files organized by **domain entity**:
-- **Core entities**: contacts, conversations, messages, projects, profiles
-- **Bot system**: bots, botFlows, bot, aiFlowBuilder
-- **AI/Knowledge**: knowledge, knowledgeBases, openrouter, openrouter_api
-- **Analytics & Reporting**: analytics, dashboard, activityLogs
-- **Communication**: notifications, webhooks, pushActions, pushMutations
-- **Business features**: orders, feedback, integrations, routing
-- **Infrastructure**: schema, types, utils, errors, http, crons, migrations, seed, wipe
-- **Utilities**: lib/crypto.ts, lib/env.ts
+1. **Clean separation of concerns** — Frontend (`src/`), backend (`convex/`), i18n (`messages/`), and docs (`docs/`) are clearly separated at root level with no cross-contamination.
 
-### CI/CD Pipeline
-Single comprehensive pipeline using Bun:
-- **Quality gate**: lint → test → build
-- **Deployment**: Convex deploy with build command on main branch
-- **No staging environment** — direct to production
-- **No E2E tests** — only unit tests via Vitest
+2. **Mature CI/CD pipeline** — Single workflow file implements a proper branch strategy (develop → staging, main → production) with quality gates gating all deploys. Uses Bun consistently.
 
-### Agent Tooling
-Three agent config directories showing investment in AI-assisted development:
-- `.qwen/` — committed to repo (Qwen Code settings)
-- `.agent/` and `.agents/` — gitignored (local agent settings)
+3. **Exceptional .env.example** — At 106 lines with section headers, inline docs, and generation instructions for each secret, this is one of the best-documented env templates. It even documents CI/CD secrets that aren't in .env files.
 
-### Documentation Fragmentation
-**4 documentation locations** is a concern:
-1. `docs/` — analysis work
-2. `documentation/` — unknown contents
-3. `SPECS/` — feature specs
-4. `design-system/` — design docs
+4. **Comprehensive i18n** — Full 3-locale support (en, ar, fr) with RTL handling, cookie-based locale persistence, Clerk metadata locale sync, and an automated audit file tracking translation coverage.
+
+5. **AI tooling investment** — Three AI assistant configurations (`.agent/`, `.qwen/`, `.agents/skills/`) show significant investment in AI-assisted development workflows, including 30+ specialized skills.
+
+### Areas for Improvement
+
+1. **Duplicate route paths** — `test-widget` exists at both `[locale]/test-widget/` and `[locale]/dashboard/test-widget/`, and settings components exist in two locations.
+
+2. **Single CI/CD file** — At 122 lines, the workflow is manageable but could benefit from reusable workflows if it grows.
+
+3. **No CODEOWNERS file** — `.github/CODEOWNERS` doesn't exist for PR review assignment.
+
+4. **No PR/Issue templates** — `.github/` only contains `workflows/` — no issue templates or PR templates.
 
 ## 🔍 Key Patterns to Identify
 
-- **Layered frontend + domain-based backend**: Clean separation of concerns
-- **Internal function naming**: `_Internal` suffix for functions called from other Convex functions
-- **Convex file-per-entity**: Each domain entity gets its own file with queries + mutations + actions
-- **CI/CD with Bun**: Consistent package manager across local dev and CI
-- **Multi-documentation strategy**: Could benefit from consolidation
-- **AI-assisted development**: Multiple agent frameworks configured
+| Pattern | Actual Finding |
+|---------|----------------|
+| Convention over configuration | **Leans toward convention** — follows Next.js App Router, Shadcn CLI, and Convex conventions closely. Minimal custom configuration. |
+| Feature-based vs layer-based | **Hybrid** — layer-based at top level (components, hooks, lib), feature-based within components (dashboard, chat, design-studio). |
+| Documentation strategy | **Consolidated** under `docs/` with analysis maps + specs. Design system lives in `.agent/DESIGN.md`. No scattered docs. |
+| Git workflow patterns | **Branch-based**: `develop` → staging, `main` → production. PRs gate on quality checks. |
+| Agent/AI tooling integration | **Deep integration** — 3 AI tool configs, 30+ skills, design system documentation aimed at AI consumption, tech stack rules enforced via agent rules. |
 
 ## ⚠️ Potential Concerns
 
 | Concern | Severity | Details |
 |---------|----------|---------|
-| **Multiple documentation locations** | MEDIUM | 4 separate doc directories (`docs/`, `documentation/`, `SPECS/`, `design-system/`) could cause confusion and outdated information |
-| **Mixed concerns in convex/settings.ts** | MEDIUM | Contains departments, canned responses, labels, AND operating hours — should be split into separate files for maintainability |
-| **No staging environment in CI** | MEDIUM | Direct deployment to production on merge — no preview or staging environment for validation |
-| **No E2E tests in CI** | LOW | Only unit tests (Vitest) run in CI — no Playwright or integration tests |
-| **`.env.example` not found** | LOW | If this file doesn't exist, new developers won't know which env vars to set |
-| **Agent configs partially gitignored** | LOW | `.qwen/` is committed while `.agent/` and `.agents/` are gitignored — could cause inconsistency between team members |
-| **No lint-staged or pre-commit hooks** | LOW | No Husky or lint-staged configured — code quality relies on CI checks only |
+| Duplicate test-widget routes | **LOW** | `[locale]/test-widget/` and `[locale]/dashboard/test-widget/` — could confuse routing. Likely one is deprecated. |
+| Inconsistent i18n key naming | **LOW** | Mix of camelCase and snake_case in top-level message keys. Also duplicate sections (`testWidget` + `test_widget`, `landing` + `landingPage`). |
+| Duplicate settings component dirs | **LOW** | `components/settings/` and `components/dashboard/settings/` — unclear which is canonical. |
+| Missing GitHub templates | **LOW** | No `.github/ISSUE_TEMPLATE/` or `.github/PULL_REQUEST_TEMPLATE.md` for standardized contributions. |
+| AI configs gitignored | **MEDIUM** | `.agent/`, `.agents/`, `.qwen/` are all gitignored. The design system (`.agent/DESIGN.md`) and tech stack rules (`.agent/rules/tech-stack-rules.md`) are not version-controlled, meaning team members won't get them from git clone. |
+| Hook naming inconsistency | **LOW** | `use-mobile.tsx` uses kebab-case while all other hooks use camelCase (`useProjectId.ts`, etc.). Minor but breaks convention. |

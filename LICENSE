@@ -1,0 +1,51 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor:             Mohammed Benoughiddene
+Licensed Work:        Yoosr 0.1.0
+                      The Licensed Work is (c) 2026 Mohammed Benoughiddene
+Additional Use Grant: You may make use of the Licensed Work for non-commercial
+                      purposes such as personal projects, evaluation, and learning.
+                      You may not make use of the Licensed Work, in whole or in
+                      part, for any commercial purpose, including but not limited
+                      to offering a hosted or managed service based on the Licensed
+                      Work, without obtaining a separate commercial license from
+                      the Licensor.
+Change Date:          2030-04-09
+Change License:       GNU General Public License v3.0
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited
+production use.
+
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work, whichever
+comes first, the Licensor hereby grants you rights under the Change License.
+The Licensor also grants you the right to use the Licensed Work in production
+on the Change Date.
+
+If any of the above rights are not explicitly granted to you, they are
+reserved to the Licensor.
+
+Notice
+
+Business Source License 1.1 is a non-open-source license. It is not approved
+by the Open Source Initiative (OSI).
+
+The text of this license is based on the Business Source License 1.1 created
+by Cockroach Labs, Inc., available at https://github.com/cockroachdb/cockroach/blob/master/licenses/BSL.txt.
+
+For information about alternative licensing arrangements, contact the Licensor.
+
+=======================================================================
+
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+The Change License referenced above is the GNU General Public License
+Version 3, 29 June 2007. The full text of the GPL-3.0 is available at
+https://www.gnu.org/licenses/gpl-3.0.html.
