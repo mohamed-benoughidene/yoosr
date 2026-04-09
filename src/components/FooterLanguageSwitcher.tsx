@@ -14,6 +14,10 @@ import { cn } from "@/lib/utils"
 
 const LOCALE_COOKIE = "NEXT_LOCALE"
 
+function setLocaleCookie(newLocale: string) {
+  document.cookie = `${LOCALE_COOKIE}=${newLocale};path=/;max-age=31536000;samesite=lax`;
+}
+
 export function FooterLanguageSwitcher() {
   const locale = useLocale()
   const router = useRouter()
@@ -27,7 +31,7 @@ export function FooterLanguageSwitcher() {
 
   const handleLanguageChange = (newLocale: string) => {
     // Persist locale in cookie so middleware can redirect bare / to saved locale
-    document.cookie = `${LOCALE_COOKIE}=${newLocale};path=/;max-age=31536000;samesite=lax`;
+    setLocaleCookie(newLocale);
 
     // Use locale-aware navigation: stay on current path but switch locale
     router.push(pathname, { locale: newLocale });

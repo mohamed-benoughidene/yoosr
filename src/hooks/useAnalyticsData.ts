@@ -106,6 +106,7 @@ export function useAnalyticsData(
     return () => {
       isMounted.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dateRange.from/to tracked; whole object would cause infinite re-renders
   }, [projectId, dateRange.from, dateRange.to, getConversationStats, getConversationVolume, getTokenUsage, getTagsSummary, getCSATSummary, getSLABreachRate]);
 
   return { ...data, loading, error };
