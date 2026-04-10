@@ -26,6 +26,7 @@
 | **Backend/DB** | Convex (serverless backend + database + vector search) |
 | **Auth** | Clerk (Next.js SDK), JWT-based |
 | **AI/LLM** | OpenRouter API, HuggingFace Inference |
+| **Documentation** | Context7 MCP (real-time library docs lookup) |
 | **i18n** | next-intl |
 | **Forms** | React Hook Form + Zod v4 validation |
 | **Charts** | Recharts |
@@ -200,3 +201,32 @@ When working on this codebase:
 7. **Use** `@/*` path aliases for imports from `src/`
 8. **Handle** i18n properly — add translations to all locale files (en, ar, fr)
 9. **Security**: Never commit `.env.local`; use environment variables for secrets
+
+---
+
+## Context7 MCP Integration
+
+**Context7** is configured for real-time library documentation lookup.
+
+### Configuration
+- MCP server configured in `.qwen/settings.json`
+- Uses hosted endpoint: `https://mcp.context7.com/mcp`
+- API key stored in `CONTEXT7_API_KEY` environment variable
+
+### Setup
+1. Get free API key from https://context7.com/dashboard
+2. Add to `.env.local`: `CONTEXT7_API_KEY=your_key_here`
+3. Restart Qwen Code
+
+### Usage
+When you say "use Context7", I will:
+- Fetch real-time documentation for any library/framework
+- Get version-specific guides and best practices
+- Look up API references and configuration guides
+
+### Available Tools
+- `resolve-library-id` - Find correct library ID for documentation
+- `query-docs` - Get up-to-date documentation with specific queries
+
+### Documentation
+See `docs/CONTEXT7_SETUP.md` for detailed setup instructions.
