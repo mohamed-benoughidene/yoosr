@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 }
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2 } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 const solutionContent: Record<string, { title: string; subtitle: string; benefits: string[] }> = {
@@ -89,10 +90,14 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
 
     return (
         <div className="container py-12 md:py-20 lg:py-24">
-            <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-            </Link>
+            <Breadcrumb
+                items={[
+                    { label: "Home", href: "/" },
+                    { label: "Solutions", href: "/" },
+                    { label: content.title },
+                ]}
+                className="mb-8"
+            />
 
             <div className="grid lg:grid-cols-2 gap-12 items-center">
                 <div>

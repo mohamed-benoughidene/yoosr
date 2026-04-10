@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
@@ -18,7 +19,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 }
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 const productContent: Record<string, { title: string; description: string; features: string[] }> = {
@@ -90,10 +90,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
     return (
         <div className="container py-12 md:py-20 lg:py-24">
-            <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-            </Link>
+            <Breadcrumb
+                items={[
+                    { label: "Home", href: "/" },
+                    { label: "Products", href: "/" },
+                    { label: content.title },
+                ]}
+                className="mb-8"
+            />
 
             <div className="max-w-3xl">
                 <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl mb-6">{content.title}</h1>
