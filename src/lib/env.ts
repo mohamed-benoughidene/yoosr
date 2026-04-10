@@ -63,14 +63,18 @@ export const serverEnvSchema = z.object({
 export const envSchema = clientEnvSchema.merge(serverEnvSchema);
 
 /**
- * Skip validation during CI builds — env vars aren't available at build time.
+ * Skip validation during CI/builds — env vars aren't available at build time.
  * In production, validate at startup via instrumentation.ts.
  * During tests, always validate so test cases can verify schema behavior.
+ *
+ * Build-time detection: Vercel sets VERCEL=1, GitHub Actions sets CI=true,
+ * and Next.js builds set NODE_ENV=production without NEXT_RUNTIME.
  */
 const isTestTime = process.env.NODE_ENV === "test";
 const isBuildTime =
   !isTestTime &&
   (process.env.CI === "true" ||
+    process.env.VERCEL === "1" ||
     (process.env.NODE_ENV === "production" && !process.env.NEXT_RUNTIME));
 
 export const env = isBuildTime
