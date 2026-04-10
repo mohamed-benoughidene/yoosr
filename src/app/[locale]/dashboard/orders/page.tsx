@@ -197,11 +197,20 @@ export default function OrdersPage() {
         } else if (formatType === "json") {
             downloadBlob(new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" }), filename)
         } else if (formatType === "xlsx") {
-            const xlsx = await import("xlsx")
-            const worksheet = xlsx.utils.json_to_sheet(exportData)
-            const workbook = xlsx.utils.book_new()
-            xlsx.utils.book_append_sheet(workbook, worksheet, "Orders")
-            xlsx.writeFile(workbook, filename)
+            const ExcelJS = (await import("exceljs")).default
+            const workbook = new ExcelJS.Workbook()
+            const worksheet = workbook.addWorksheet("Orders")
+            worksheet.columns = [
+                { header: "Contact Name", key: "Contact Name", width: 25 },
+                { header: "Phone", key: "Phone", width: 20 },
+                { header: "Product", key: "Product", width: 25 },
+                { header: "Notes", key: "Notes", width: 35 },
+                { header: "Status", key: "Status", width: 15 },
+                { header: "Created At", key: "Created At", width: 20 },
+            ]
+            worksheet.addRows(exportData)
+            const buffer = await workbook.xlsx.writeBuffer()
+            downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename)
         }
     }
 
@@ -256,22 +265,32 @@ export default function OrdersPage() {
                 }
             })
         } else if (fileExt === 'xlsx') {
-            const xlsx = await import("xlsx")
-            const reader = new FileReader()
-            reader.onload = (evt) => {
-                try {
-                    const bstr = evt.target?.result
-                    const wb = xlsx.read(bstr, { type: 'binary' })
-                    const wsname = wb.SheetNames[0]
-                    const ws = wb.Sheets[wsname]
-                    const data = xlsx.utils.sheet_to_json(ws)
-                    processData(data as Record<string, unknown>[])
-                } catch (error: unknown) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    importDispatch({ type: "SET_ERROR", payload: `${t("error_excel")}: ${errorMessage}` })
+            try {
+                const ExcelJS = (await import("exceljs")).default
+                const workbook = new ExcelJS.Workbook()
+                await workbook.xlsx.load(await file.arrayBuffer())
+                const worksheet = workbook.getWorksheet(1)
+                if (!worksheet) {
+                    importDispatch({ type: "SET_ERROR", payload: t("error_empty_file") })
+                    return
                 }
+
+                const data: Record<string, unknown>[] = []
+                worksheet.eachRow({ includeEmpty: false }, (row) => {
+                    const rowObj: Record<string, unknown> = {}
+                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                        const colKey = worksheet.getColumn(colNumber)?.key
+                        if (colKey) {
+                            rowObj[colKey as string] = cell.value ?? ""
+                        }
+                    })
+                    data.push(rowObj)
+                })
+                processData(data)
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                importDispatch({ type: "SET_ERROR", payload: `${t("error_excel")}: ${errorMessage}` })
             }
-            reader.readAsBinaryString(file)
         } else if (fileExt === 'json') {
             const reader = new FileReader()
             reader.onload = (evt) => {

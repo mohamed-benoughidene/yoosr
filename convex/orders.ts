@@ -4,6 +4,7 @@ import { requireAdmin } from "./utils";
 import { paginationOptsValidator } from "convex/server";
 import { ClerkIdentity } from "./types";
 import { authError, notFoundError, forbiddenError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 export const createOrder = mutation({
     args: {
@@ -142,7 +143,7 @@ export const deleteOrder = mutation({
             throw forbiddenError();
         }
 
-        await ctx.db.delete(args.orderId);
+        await softDelete(ctx, "orders", args.orderId);
     },
 });
 

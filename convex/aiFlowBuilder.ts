@@ -8,6 +8,7 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { callAITask } from "./openrouter";
+import { extractJsonObject } from "./lib/jsonExtract";
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
@@ -174,19 +175,10 @@ export const generateFlow = action({
 
     let parsed: { nodes: unknown[]; edges: unknown[] };
     try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      // Try to extract the first {...} block in case there's preamble text
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch {
-          throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 200)}`);
-        }
-      } else {
-        throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 200)}`);
-      }
+      parsed = extractJsonObject(cleaned) as { nodes: unknown[]; edges: unknown[] };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 200)}\n\n${message}`);
     }
 
     if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {

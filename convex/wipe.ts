@@ -1,5 +1,6 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { softDelete, SoftDeletableTable } from "./lib/softDelete";
 
 export const wipeAll = internalMutation({
   args: { projectId: v.id("projects") },
@@ -33,7 +34,7 @@ export const wipeAll = internalMutation({
         .withIndex("by_projectId", (q) => q.eq("projectId", projectId))
         .collect();
       for (const row of rows) {
-        await ctx.db.delete(row._id);
+        await softDelete(ctx, table as SoftDeletableTable, row._id);
         total++;
       }
     }

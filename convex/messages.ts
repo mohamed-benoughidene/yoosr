@@ -5,6 +5,7 @@ import { paginationOptsValidator } from "convex/server";
 import { assertProjectOwnership } from "./utils";
 import { CONVERSATION_STATUS } from "./types";
 import { authError, notFoundError } from "./errors";
+import { DEFAULT_TTL_DAYS, MS_PER_DAY } from "./conversations";
 
 // List messages for a conversation (real-time by default!)
 export const list = query({
@@ -139,6 +140,7 @@ export const sendFromWidget = internalMutation({
                 lastMessage: "Started a new conversation",
                 unreadCount: 0,
                 updatedAt: Date.now(),
+                expiresAt: Date.now() + DEFAULT_TTL_DAYS * MS_PER_DAY,
             });
 
             // Trigger routing for newly created conversation

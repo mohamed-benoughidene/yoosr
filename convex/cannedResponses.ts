@@ -6,6 +6,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin } from "./utils";
 import { authError, notFoundError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 /**
  * List all canned responses for a project.
@@ -99,7 +100,7 @@ export const removeCannedResponse = mutation({
         const cannedResponse = await ctx.db.get(args.id);
         if (!cannedResponse) throw notFoundError("Canned response");
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "canned_responses", args.id);
 
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: cannedResponse.projectId,

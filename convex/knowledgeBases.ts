@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { paginationOptsValidator } from "convex/server";
 import { authError, notFoundError, forbiddenError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 // List knowledge bases for a project
 export const list = query({
@@ -159,7 +160,7 @@ export const removeSource = mutation({
 
         await assertProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "knowledge_base_sources", args.id);
     },
 });
 
@@ -206,7 +207,7 @@ export const deleteSourcesBatch = internalMutation({
             .take(100);
 
         for (const source of sources) {
-            await ctx.db.delete(source._id);
+            await softDelete(ctx, "knowledge_base_sources", source._id);
         }
 
         if (sources.length === 100) {
@@ -215,8 +216,8 @@ export const deleteSourcesBatch = internalMutation({
                 kbId: args.kbId,
             });
         } else {
-            // All sources deleted, remove the knowledge base record itself
-            await ctx.db.delete(args.kbId);
+            // All sources deleted, soft-delete the knowledge base record itself
+            await softDelete(ctx, "knowledge_bases", args.kbId);
         }
     },
 });

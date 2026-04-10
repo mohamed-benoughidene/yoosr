@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { requireAdmin } from "./utils";
 import { authError, notFoundError, forbiddenError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 /**
  * Action triggered to fetch outbound URLs and fire POST requests
@@ -262,7 +263,7 @@ export const remove = mutation({
             throw forbiddenError();
         }
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "webhook_subscriptions", args.id);
     }
 });
 

@@ -5,6 +5,7 @@ import { encryptSecret, decryptSecret } from "./lib/crypto";
 import { requireAdmin } from "./utils";
 import { requireEnv } from "./lib/env";
 import { authError, notFoundError, forbiddenError, userError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 // List integrations for a project
 export const list = query({
@@ -25,7 +26,7 @@ export const upsert = mutation({
     args: {
         projectId: v.id("projects"),
         provider: v.string(),
-        credentials: v.optional(v.any()),
+        credentials: v.optional(v.record(v.string(), v.string())),
         enabled: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
@@ -42,9 +43,9 @@ export const upsert = mutation({
 
         // Extract denormalized fields from credentials for indexing
         const creds = args.credentials || {};
-        const phoneNumberId = creds.phone_number_id as string | undefined;
-        const pageId = creds.page_id as string | undefined;
-        const webhookSecret = creds.webhook_secret as string | undefined;
+        const phoneNumberId = creds["phone_number_id"];
+        const pageId = creds["page_id"];
+        const webhookSecret = creds["webhook_secret"];
 
         if (existing) {
             const updates: Record<string, unknown> = {};
@@ -73,7 +74,7 @@ export const upsertInternal = internalMutation({
     args: {
         projectId: v.id("projects"),
         provider: v.string(),
-        credentials: v.optional(v.any()),
+        credentials: v.optional(v.record(v.string(), v.string())),
         enabled: v.optional(v.boolean()),
         phoneNumberId: v.optional(v.string()),
         pageId: v.optional(v.string()),
@@ -124,7 +125,7 @@ export const remove = mutation({
             throw forbiddenError();
         }
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "integrations", args.id);
     },
 });
 // Internal: list integrations for a project (no auth required — for use in internal actions)
@@ -142,7 +143,7 @@ export const saveChannelIntegration = action({
     args: {
         projectId: v.id("projects"),
         provider: v.string(),
-        credentials: v.any(),
+        credentials: v.record(v.string(), v.string()),
         enabled: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
@@ -153,9 +154,9 @@ export const saveChannelIntegration = action({
         if (!key) throw new Error("Encryption key not configured");
 
         // Extract denormalized fields before encrypting
-        const phoneNumberId = args.credentials.phone_number_id as string | undefined;
-        const pageId = args.credentials.page_id as string | undefined;
-        const webhookSecret = args.credentials.webhook_secret as string | undefined;
+        const phoneNumberId = args.credentials["phone_number_id"];
+        const pageId = args.credentials["page_id"];
+        const webhookSecret = args.credentials["webhook_secret"];
 
         // Save raw first so the record exists
         await ctx.runMutation(internal.integrations.upsertInternal, {
@@ -169,26 +170,26 @@ export const saveChannelIntegration = action({
         });
 
         // Encrypt the sensitive token per provider
-        const encryptedCredentials: Record<string, unknown> = { ...args.credentials };
+        const encryptedCredentials: Record<string, string> = { ...args.credentials };
 
-        if (args.provider === "telegram" && args.credentials.bot_token) {
-            encryptedCredentials.bot_token = await encryptSecret(args.credentials.bot_token, key);
+        if (args.provider === "telegram" && args.credentials["bot_token"]) {
+            encryptedCredentials["bot_token"] = await encryptSecret(args.credentials["bot_token"], key);
         }
 
-        if ((args.provider === "messenger" || args.provider === "instagram") && args.credentials.access_token) {
-            encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
+        if ((args.provider === "messenger" || args.provider === "instagram") && args.credentials["access_token"]) {
+            encryptedCredentials["access_token"] = await encryptSecret(args.credentials["access_token"], key);
         }
 
-        if ((args.provider === "messenger" || args.provider === "instagram") && args.credentials.app_secret) {
-            encryptedCredentials.app_secret = await encryptSecret(args.credentials.app_secret, key);
+        if ((args.provider === "messenger" || args.provider === "instagram") && args.credentials["app_secret"]) {
+            encryptedCredentials["app_secret"] = await encryptSecret(args.credentials["app_secret"], key);
         }
 
-        if (args.provider === "whatsapp" && args.credentials.access_token) {
-            encryptedCredentials.access_token = await encryptSecret(args.credentials.access_token, key);
+        if (args.provider === "whatsapp" && args.credentials["access_token"]) {
+            encryptedCredentials["access_token"] = await encryptSecret(args.credentials["access_token"], key);
         }
 
-        if (args.provider === "whatsapp" && args.credentials.app_secret) {
-            encryptedCredentials.app_secret = await encryptSecret(args.credentials.app_secret, key);
+        if (args.provider === "whatsapp" && args.credentials["app_secret"]) {
+            encryptedCredentials["app_secret"] = await encryptSecret(args.credentials["app_secret"], key);
         }
 
         await ctx.runMutation(internal.integrations.patchCredentials, {
@@ -207,7 +208,7 @@ export const patchCredentials = internalMutation({
     args: {
         projectId: v.id("projects"),
         provider: v.string(),
-        credentials: v.any(),
+        credentials: v.record(v.string(), v.string()),
         phoneNumberId: v.optional(v.string()),
         pageId: v.optional(v.string()),
     },
@@ -303,13 +304,13 @@ export const getDecryptedWhatsAppCredentials = internalQuery({
         const key = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
         if (!key) throw new Error("Encryption key not configured");
 
-        const credentials = row.credentials as { access_token: string; phone_number_id?: string; verify_token?: string };
-        const decryptedToken = await decryptSecret(credentials.access_token, key);
+        const credentials = row.credentials as Record<string, string> | undefined;
+        const decryptedToken = credentials ? await decryptSecret(credentials["access_token"], key) : "";
 
         return {
-            phoneNumberId: credentials.phone_number_id,
+            phoneNumberId: credentials?.["phone_number_id"],
             accessToken: decryptedToken,
-            verifyToken: credentials.verify_token,
+            verifyToken: credentials?.["verify_token"],
             enabled: row.enabled ?? false,
         };
     },

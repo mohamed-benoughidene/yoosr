@@ -106,4 +106,24 @@ crons.cron(
     internal.cron.cleanupProjectUsage,
 );
 
+/**
+ * Soft-delete expired conversations and their messages (TTL cleanup).
+ * Runs daily at 3:00 AM.
+ */
+crons.cron(
+    "cleanup expired conversations",
+    "0 3 * * *", // Daily 3 AM
+    internal.cron.cleanupExpiredConversations,
+);
+
+/**
+ * Permanently delete soft-deleted records older than 30 days.
+ * Runs Sunday at 6:00 AM (after other cleanup jobs).
+ */
+crons.cron(
+    "cleanup old soft deletes",
+    "0 6 * * 0", // Sunday 6 AM
+    internal.cron.cleanupOldSoftDeletes,
+);
+
 export default crons;

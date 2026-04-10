@@ -7,8 +7,12 @@ import { CONVERSATION_STATUS } from "./types";
 import { decryptSecret } from "./lib/crypto";
 import { requireEnv } from "./lib/env";
 import { authError, notFoundError, userError } from "./errors";
+import { assertConversationOwnership } from "./lib/auth";
+import { filterActive } from "./lib/softDelete";
 
 const GRAPH_API_VERSION = "v24.0";
+export const DEFAULT_TTL_DAYS = 90;
+export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // List conversations for a project
 export const list = query({
@@ -23,7 +27,10 @@ export const list = query({
         const conversations = await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .filter((q) => q.neq(q.field("status"), 1000))
+            .filter((q) => q.and(
+                q.neq(q.field("status"), 1000),
+                filterActive(q)
+            ))
             .order("desc")
             .take(100);
 
@@ -39,10 +46,8 @@ export const list = query({
 export const get = query({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
-
-        return await ctx.db.get(args.id);
+        const result = await assertConversationOwnership(ctx, args.id);
+        return result.conversation;
     },
 });
 
@@ -75,8 +80,7 @@ export const listStaleUnassignedInternal = internalQuery({
 export const getBotState = query({
     args: { conversationId: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
+        await assertConversationOwnership(ctx, args.conversationId);
 
         return await ctx.db
             .query("conversation_bot_state")
@@ -101,6 +105,7 @@ export const create = mutation({
             lastMessage: "Started a new conversation",
             unreadCount: 0,
             updatedAt: Date.now(),
+            expiresAt: Date.now() + DEFAULT_TTL_DAYS * MS_PER_DAY,
         });
 
 
@@ -139,8 +144,7 @@ export const update = mutation({
         priority: v.optional(v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
+        const { conversation, identity } = await assertConversationOwnership(ctx, args.id);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _id, ...updates } = args;
@@ -153,7 +157,6 @@ export const update = mutation({
         if (args.assignedTo) {
             cleanUpdates.status = 200;
             cleanUpdates.botPaused = true; // Human has taken over — pause the bot to prevent it from interfering.
-            const conversation = await ctx.db.get(args.id);
             if (conversation) {
                 const participants = conversation.participants || [];
                 if (!participants.includes(args.assignedTo)) {
@@ -162,8 +165,6 @@ export const update = mutation({
                 cleanUpdates.participants = participants;
             }
         }
-
-        const conversation = await ctx.db.get(args.id);
 
         await ctx.db.patch(args.id, cleanUpdates);
 
@@ -268,8 +269,7 @@ export const updateConversationStatus = mutation({
         botPaused: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
+        await assertConversationOwnership(ctx, args.id);
 
         const updates: { status: 100 | 200 | 1000; updatedAt: number; botPaused?: boolean } = {
             status: args.status as 100 | 200 | 1000,
@@ -305,6 +305,7 @@ export const createFromWidget = internalMutation({
             lastMessage: "Started a new conversation",
             unreadCount: 0,
             updatedAt: Date.now(),
+            expiresAt: Date.now() + DEFAULT_TTL_DAYS * MS_PER_DAY,
         });
 
         const project = await ctx.db.get(args.projectId);
@@ -444,11 +445,7 @@ export const findByVisitor = internalQuery({
 export const resolve = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
-
-        const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw notFoundError("Conversation");
+        const { conversation, identity } = await assertConversationOwnership(ctx, args.id);
 
         await ctx.db.patch(args.id, {
             status: 1000, // 1000: resolved
@@ -519,11 +516,7 @@ export const resolve = mutation({
 export const join = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
-
-        const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw notFoundError("Conversation");
+        const { conversation, identity } = await assertConversationOwnership(ctx, args.id);
 
         const participants = conversation.participants || [];
         if (!participants.includes(identity.subject)) {
@@ -576,11 +569,7 @@ export const join = mutation({
 export const leave = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
-
-        const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw notFoundError("Conversation");
+        const { conversation, identity } = await assertConversationOwnership(ctx, args.id);
 
         const participants = (conversation.participants || []).filter(
             (id) => id !== identity.subject
@@ -617,12 +606,11 @@ export const updateVisitorInfo = mutation({
         visitorNote: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
+        await assertConversationOwnership(ctx, args.id);
 
-        const { id, ...updates } = args;
+        const { id, visitorName, visitorEmail, visitorPhone, visitorAddress, visitorNote } = args;
         const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
-        for (const [key, value] of Object.entries(updates)) {
+        for (const [key, value] of Object.entries({ visitorName, visitorEmail, visitorPhone, visitorAddress, visitorNote })) {
             if (value !== undefined) cleanUpdates[key] = value;
         }
 
@@ -660,8 +648,7 @@ export const updateMetadataInternal = internalMutation({
 export const markAsRead = mutation({
     args: { id: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
+        await assertConversationOwnership(ctx, args.id);
 
         await ctx.db.patch(args.id, {
             unreadCount: 0,
@@ -701,11 +688,7 @@ export const transferToDepartment = mutation({
         departmentId: v.id("departments"),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
-
-        const conversation = await ctx.db.get(args.id);
-        if (!conversation) throw notFoundError("Conversation");
+        const { conversation, identity } = await assertConversationOwnership(ctx, args.id);
 
         const department = await ctx.db.get(args.departmentId);
         if (!department) throw notFoundError("Department");
@@ -1018,6 +1001,7 @@ export const createOrUpdateFromMeta = internalMutation({
                 status: 100,
                 unreadCount: 0,
                 updatedAt: Date.now(),
+                expiresAt: Date.now() + DEFAULT_TTL_DAYS * MS_PER_DAY,
             });
         }
 
@@ -1183,8 +1167,7 @@ export const relayToMeta = mutation({
         content: v.string(),
     },
     handler: async (ctx, args): Promise<void> => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return;
+        await assertConversationOwnership(ctx, args.conversationId);
 
         await ctx.scheduler.runAfter(0, internal.conversations.sendMetaMessage, {
             conversationId: args.conversationId,
@@ -1240,6 +1223,7 @@ export const createOrUpdateFromTelegram = internalMutation({
                 status: 100,
                 unreadCount: 0,
                 updatedAt: Date.now(),
+                expiresAt: Date.now() + DEFAULT_TTL_DAYS * MS_PER_DAY,
             });
         }
 
@@ -1353,8 +1337,7 @@ export const relayToTelegram = mutation({
         content: v.string(),
     },
     handler: async (ctx, args): Promise<void> => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw authError();
+        await assertConversationOwnership(ctx, args.conversationId);
 
         await ctx.scheduler.runAfter(0, internal.conversations.sendTelegramMessage, {
             conversationId: args.conversationId,
@@ -1384,8 +1367,7 @@ export const logConversationEvent = internalMutation({
 export const getConversationEvents = query({
     args: { conversationId: v.id("conversations") },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
+        await assertConversationOwnership(ctx, args.conversationId);
 
         const events = await ctx.db
             .query("conversation_events")

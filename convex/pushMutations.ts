@@ -1,6 +1,7 @@
 import { internalQuery, internalMutation, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { authError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 // Internal queries required by actions to fetch subscriptions
 
@@ -67,7 +68,7 @@ export const removePushSubscription = internalMutation({
       .first();
 
     if (existing) {
-      await ctx.db.delete(existing._id);
+      await softDelete(ctx, "push_subscriptions", existing._id);
     }
   },
 });

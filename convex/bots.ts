@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, checkProjectOwnership } from "./utils";
 import { authError, notFoundError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 // List bots for a project
 export const list = query({
@@ -123,7 +124,7 @@ export const _deleteBotFlowsBatch = internalMutation({
             .take(100);
 
         for (const flow of flows) {
-            await ctx.db.delete(flow._id);
+            await softDelete(ctx, "bot_flows", flow._id);
         }
 
         if (flows.length === 100) {
@@ -131,8 +132,8 @@ export const _deleteBotFlowsBatch = internalMutation({
             return;
         }
 
-        // Final batch - delete the bot record and log activity
-        await ctx.db.delete(args.botId);
+        // Final batch - soft-delete the bot record and log activity
+        await softDelete(ctx, "bots", args.botId);
 
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: args.projectId,
