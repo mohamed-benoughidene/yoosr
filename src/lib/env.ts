@@ -65,10 +65,13 @@ export const envSchema = clientEnvSchema.merge(serverEnvSchema);
 /**
  * Skip validation during CI builds — env vars aren't available at build time.
  * In production, validate at startup via instrumentation.ts.
+ * During tests, always validate so test cases can verify schema behavior.
  */
+const isTestTime = process.env.NODE_ENV === "test";
 const isBuildTime =
-  process.env.CI === "true" ||
-  (process.env.NODE_ENV === "production" && !process.env.NEXT_RUNTIME);
+  !isTestTime &&
+  (process.env.CI === "true" ||
+    (process.env.NODE_ENV === "production" && !process.env.NEXT_RUNTIME));
 
 export const env = isBuildTime
   ? process.env as unknown as z.infer<typeof envSchema>
