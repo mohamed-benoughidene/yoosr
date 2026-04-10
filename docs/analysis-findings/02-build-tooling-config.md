@@ -251,7 +251,7 @@ These are likely development reference folders that existed at some point but ar
 - **`'unsafe-eval'` in Content Security Policy**: Required by Clerk/Convex but significantly weakens script execution security. Monitor for opportunities to remove this as SDKs evolve.
 
 ### MEDIUM
-- **No bundle analysis tooling**: No `@next/bundle-analyzer` is configured. With heavy dependencies like `recharts` (470KB), `xlsx` (300KB), and `@xyflow/react` (200KB), bundle size monitoring is important.
+- **No bundle analysis tooling**: No `@next/bundle-analyzer` is configured. With heavy dependencies like `recharts` (470KB), `exceljs` (~200KB), and `@xyflow/react` (200KB), bundle size monitoring is important.
 - **`Cross-Origin-Embedder-Policy: require-corp`**: This strict COEP may block third-party resources. Verify that Google Fonts, Clerk images, and other external resources load correctly in production.
 - **Legacy `X-XSS-Protection` header**: This header is deprecated and ignored by modern browsers. While harmless, it adds no security value.
 - **Tiledesk references in tsconfig**: `tiledesk-reference` and `tiledesk-dashboard-reference` in the `exclude` array are stale references to directories that no longer exist. Should be cleaned up for clarity.

@@ -114,7 +114,7 @@ graph TD
 
 *   Structural configuration failures persist positioning type abstractions like `@types/papaparse` poorly into standard production dependencies.
 *   Stale component dependencies including `tailwindcss-animate` and `@huggingface/inference` reside globally inactive taking up lockfile bandwidth pointlessly.
-*   Enormous data visualizer packages like `recharts` alongside heavy computational modules (`@xyflow/react` and `xlsx`) substantially damage chunk footprints urgently requiring code splitting through delayed React loading optimization.
+*   Enormous data visualizer packages like `recharts` alongside heavy computational modules (`@xyflow/react` and `exceljs`) substantially damage chunk footprints urgently requiring code splitting through delayed React loading optimization.
 
 ## 10. Next Steps
 

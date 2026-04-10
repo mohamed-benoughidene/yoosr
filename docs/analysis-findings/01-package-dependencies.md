@@ -30,7 +30,7 @@ package.json (name: "yoosr", v0.1.0, private: true, packageManager: bun@1.3.6)
 │   ├── svix                                                → Webhook verification (Clerk)
 │   ├── web-push                                            → Push notification (VAPID)
 │   ├── papaparse, @types/papaparse                         → CSV parsing (⚠️ @types in runtime)
-│   ├── xlsx                                                → Spreadsheet parsing
+│   ├── exceljs                                             → Spreadsheet read/write
 │   ├── unpdf                                               → PDF parsing
 │   ├── date-fns                                            → Date utilities
 │   ├── expr-eval                                           → Expression evaluation (bot engine)
@@ -87,7 +87,7 @@ package.json (name: "yoosr", v0.1.0, private: true, packageManager: bun@1.3.6)
   - **AI/ML**: openai ^6.22.0, @huggingface/inference ^4.13.12
   - **Data viz**: recharts ^2.15.4, @tanstack/react-table ^8.21.3
   - **Flow editor**: @xyflow/react ^12.10.0 (heavily used in design-studio — 26+ files)
-  - **File parsing**: papaparse ^5.5.3 (CSV), xlsx ^0.18.5 (spreadsheets), unpdf ^1.4.0 (PDF, used in convex/knowledge.ts)
+  - **File parsing**: papaparse ^5.5.3 (CSV), exceljs ^4.4.0 (spreadsheets), unpdf ^1.4.0 (PDF, used in convex/knowledge.ts)
   - **Notifications**: sonner ^2.0.7 (toasts), web-push ^3.6.7 (VAPID push)
   - **Misc**: date-fns ^4.1.0, uuid ^13.0.0, svix ^1.90.0 (webhook verification), expr-eval ^2.0.2 (used in convex/bot.ts), framer-motion ^12.38.0, react-resizable-panels ^2.0.19, react-day-picker ^9.13.2, media-chrome ^4.18.3 (video player), react-error-boundary ^6.1.1, next-themes ^0.4.6
 
@@ -107,7 +107,7 @@ package.json (name: "yoosr", v0.1.0, private: true, packageManager: bun@1.3.6)
 
 - [x] **Are there any security vulnerabilities in dependencies?**
   - Cannot run `bun audit` or `npm audit` in this analysis, but noteworthy observations:
-    - `xlsx ^0.18.5` is the SheetJS community edition, which has had past CVEs. Consider monitoring.
+    - `exceljs ^4.4.0` is the maintained spreadsheet library (replaced `xlsx`/SheetJS which had CVEs and is abandoned).
     - `svix ^1.90.0` handles webhook verification — critical for Clerk webhook security.
     - The CSP in `vercel.json` includes `'unsafe-inline' 'unsafe-eval'` for scripts, which weakens security.
   - Recommend running `bun audit` or using a tool like Snyk for a full vulnerability scan.
@@ -117,11 +117,11 @@ package.json (name: "yoosr", v0.1.0, private: true, packageManager: bun@1.3.6)
     - `recharts`: ~470 KB (includes D3 internals)
     - `@xyflow/react`: ~200 KB
     - `framer-motion`: ~150 KB
-    - `xlsx`: ~300 KB (large, tree-shakes poorly)
+    - `exceljs`: ~200 KB (spreadsheet read/write, ESM-friendly)
     - `openai`: ~100 KB
     - `@radix-ui/*` (23 packages): ~50–100 KB total (tree-shakeable primitives)
     - `zod` v4: ~12 KB (significant reduction from v3)
-  - Bundle risk: `recharts`, `xlsx`, and `@xyflow/react` are the biggest contributors. All should be code-split / lazy-loaded where possible.
+  - Bundle risk: `recharts`, `exceljs`, and `@xyflow/react` are the biggest contributors. All should be code-split / lazy-loaded where possible.
 
 - [x] **Are dev dependencies properly separated from runtime deps?**
   - **Issue**: `@types/papaparse` (^5.5.2) is in `dependencies` instead of `devDependencies`. Type packages should **always** be in devDependencies.
@@ -209,6 +209,6 @@ This is wasteful. The single `Cross2Icon` usage should be replaced with `lucide-
 
 ### LOW
 - **Missing DX scripts**: No `lint:fix`, `typecheck`, `format`, or `clean` scripts reduce developer productivity.
-- **`xlsx` bundle size**: SheetJS is ~300KB minified and tree-shakes poorly. Ensure it's code-split/lazy-loaded.
+- **`xlsx` → `exceljs` migration complete**: The abandoned SheetJS (`xlsx ^0.18.5`) was replaced with `exceljs ^4.4.0` to resolve Dependabot prototype pollution and ReDoS alerts.
 - **No automated dependency updates**: No Renovate or Dependabot configuration found. Dependencies could silently become outdated.
 - **`browserslist` set to `"defaults and supports es6-module"`**: This excludes IE11 (intentional and correct for Next.js 16), but should be verified against target audience requirements.
