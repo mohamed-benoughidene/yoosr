@@ -68,8 +68,16 @@ export default defineSchema({
         })), // JSON config for widget appearance
         widgetLocale: v.optional(v.union(v.literal("en"), v.literal("ar"), v.literal("fr"))),
         defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
+        /**
+         * Encrypted OpenRouter API key.
+         * Written via `encryptSecret()` (convex/openrouter_api.ts) using AES-256-GCM.
+         * Decrypted via `decryptSecret()` (convex/lib/crypto.ts) before LLM calls in bot.ts.
+         * ⚠️ Convex has no `v.custom()` — runtime encryption validation happens in mutation handlers.
+         */
         openRouterApiKey: v.optional(v.string()),
         slaHours: v.optional(v.number()),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_orgId", ["orgId"]),
 
 
@@ -103,11 +111,10 @@ export default defineSchema({
         // Actively used fields: participants, tags, attributes (see routing.ts, conversations.ts, tags.ts, bot.ts)
         participants: v.optional(v.array(v.string())),
         tags: v.optional(v.array(v.string())),
-        attributes: v.optional(v.any()), // Bot attribute storage — flexible key-value bag
+        attributes: v.optional(v.record(v.string(), v.string())), // Bot attribute storage — flexible key-value bag
         // Deprecated legacy fields — kept for backward compatibility with existing data
         leadId: v.optional(v.string()),
         firstText: v.optional(v.string()),
-        typing: v.optional(v.any()),
         // HITL Handoff
         botPaused: v.optional(v.boolean()), // true = bot will not respond to new messages
         handoffSource: v.optional(v.string()), // 'bot' = escalated by the bot flow
@@ -118,6 +125,10 @@ export default defineSchema({
         // External channels
         channel: v.optional(v.union(v.literal("widget"), v.literal("messenger"), v.literal("instagram"), v.literal("telegram"), v.literal("whatsapp"))),
         channelSenderId: v.optional(v.string()),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
+        // TTL — records older than expiresAt are eligible for cron cleanup (default 90 days)
+        expiresAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_status", ["projectId", "status"])
@@ -135,7 +146,7 @@ export default defineSchema({
             action: v.string(),
             timestamp: v.number(),
         }))),
-        attributes: v.optional(v.any()), // Bot attribute storage — flexible key-value bag
+        attributes: v.optional(v.record(v.string(), v.string())), // Bot attribute storage — flexible key-value bag
     }).index("by_conversationId", ["conversationId"]),
 
     // Messages within conversations
@@ -145,7 +156,10 @@ export default defineSchema({
         senderType: v.string(), // "visitor" | "agent" | "bot"
         senderId: v.optional(v.string()),
         content: v.string(),
-        attachments: v.optional(v.any()), // JSON array of attachments (various channel formats)
+        attachments: v.optional(v.array(v.object({
+            url: v.string(),
+            type: v.string(), // MIME type or "image" | "video" | "file" | "audio"
+        }))), // Array of attachment objects
         fileId: v.optional(v.string()), // Convex storage ID
         fileName: v.optional(v.string()), // Original filename for display
         // Legacy fields
@@ -154,6 +168,10 @@ export default defineSchema({
         status: v.optional(v.number()),
         type: v.optional(v.string()),
         channelMessageId: v.optional(v.string()),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
+        // TTL — messages expire with their parent conversation (default 90 days)
+        expiresAt: v.optional(v.number()),
     })
         .index("by_conversationId", ["conversationId"])
         .index("by_projectId", ["projectId"])
@@ -175,6 +193,8 @@ export default defineSchema({
             fallbackBot: v.optional(v.id("bots")),
             additionalSettings: v.optional(v.object({})),
         })), // JSON flow definition
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"]),
 
     // Bot flows (Design Studio graph data)
@@ -191,17 +211,23 @@ export default defineSchema({
             targetHandle: v.optional(v.string()),
             type: v.optional(v.string()),
             label: v.optional(v.string()),
-            markerEnd: v.optional(v.any()), // ReactFlow arrow marker config
-            style: v.optional(v.any()), // CSS style object
+            markerEnd: v.optional(v.object({
+                type: v.string(),
+                width: v.number(),
+                height: v.number(),
+            })), // ReactFlow arrow marker config
+            style: v.optional(v.record(v.string(), v.union(v.string(), v.number()))), // CSS style object
         }))), // ReactFlow Edge[]
         executionNodes: v.optional(v.array(v.object({
             _id: v.optional(v.string()), // Node identifier (from node.id)
-            name: v.optional(v.any()), // Display name (from data.label or node.type)
+            name: v.optional(v.string()), // Display name (from data.label or node.type)
             type: v.optional(v.string()),
-            actions: v.optional(v.any()), // Action documents
+            actions: v.optional(v.any()), // Action descriptor objects (compiled from React Flow nodes)
             nextBlock: v.optional(v.string()), // Next node ID
         }))), // Compiled engine schema
         variables: v.optional(v.object({})), // Flow-level variables
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_botId", ["botId"])
         .index("by_slug", ["slug"]),
@@ -221,6 +247,8 @@ export default defineSchema({
         targetType: v.optional(v.string()), // e.g. "teammate", "department", "bot"
         targetId: v.optional(v.string()),
         createdAt: v.optional(v.number()),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_actionType", ["actionType"])
@@ -230,12 +258,14 @@ export default defineSchema({
     integrations: defineTable({
         projectId: v.id("projects"),
         provider: v.string(), // "telegram", "openai", "whatsapp", "messenger", "instagram"
-        credentials: v.optional(v.any()), // JSON (encrypted tokens) — flexible per-provider structure
+        credentials: v.optional(v.record(v.string(), v.string())), // Per-provider encrypted token store (AES-256-GCM via encryptSecret)
         enabled: v.optional(v.boolean()),
         // Denormalized lookup fields for O(log n) queries (stored inside credentials but also indexed here)
         phoneNumberId: v.optional(v.string()), // WhatsApp: external_phone_number_id
         pageId: v.optional(v.string()), // Messenger/Instagram: page_id
         webhookSecret: v.optional(v.string()), // Telegram: unique webhook secret per bot
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"])
         .index("by_provider_enabled", ["provider", "enabled"])
         .index("by_provider_phoneNumberId", ["provider", "phoneNumberId"])
@@ -252,6 +282,8 @@ export default defineSchema({
         botId: v.optional(v.id("bots")), // Reference to bots table
         tags: v.optional(v.array(v.string())),
         memberIds: v.optional(v.array(v.string())),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"]),
 
     // Canned responses (quick replies)
@@ -260,6 +292,8 @@ export default defineSchema({
         trigger: v.string(),
         message: v.string(),
         createdBy: v.optional(v.string()), // Clerk user ID (external reference)
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"]),
 
     // Labels (for tagging conversations)
@@ -268,6 +302,8 @@ export default defineSchema({
         name: v.string(),
         color: v.string(), // "red" | "orange" | "yellow" | "green" | "blue" | "violet"
         createdBy: v.optional(v.string()), // Clerk user ID (external reference)
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"]),
 
     // Operating hours
@@ -292,6 +328,8 @@ export default defineSchema({
         name: v.string(),
         description: v.optional(v.string()),
         isDefault: v.optional(v.boolean()),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_projectId", ["projectId"]),
 
     // Knowledge base sources (articles, URLs, files)
@@ -300,6 +338,8 @@ export default defineSchema({
         type: v.string(), // "url" | "text" | "file"
         value: v.string(),
         status: v.optional(v.string()), // "indexing" | "indexed" | "failed"
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).index("by_kbId", ["kbId"]),
 
     // Contacts (saved from conversations)
@@ -313,6 +353,8 @@ export default defineSchema({
         // Free-text tags — managed by user input. Max 20 tags, max 50 chars each (enforced in contacts.ts)
         tags: v.optional(v.array(v.string())),
         conversationId: v.optional(v.id("conversations")),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_conversationId", ["conversationId"])
@@ -329,6 +371,8 @@ export default defineSchema({
         // Model: nvidia/llama-nemotron-embed-vl-1b-v2 (2048 dimensions)
         // See EMBEDDING_CONFIG in convex/lib/embeddings.ts
         // WARNING: If changing model, update dimensions and re-index all knowledge_base_chunks
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     }).vectorIndex("by_embedding", {
         vectorField: "embedding",
         dimensions: 2048, // Dimensions for nvidia/llama-nemotron-embed-vl-1b-v2
@@ -342,6 +386,8 @@ export default defineSchema({
         handledBy: v.union(v.literal("bot"), v.literal("agent")),
         closed: v.boolean(),
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_createdAt", ["projectId", "createdAt"])
@@ -354,6 +400,8 @@ export default defineSchema({
         rating: v.number(), // 1–5
         comment: v.optional(v.string()),
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_createdAt", ["projectId", "createdAt"]),
@@ -365,6 +413,8 @@ export default defineSchema({
         tokensUsed: v.number(),
         operation: v.string(), // "ai_task" | "ai_assistant" | "ask_kb"
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_createdAt", ["projectId", "createdAt"]),
@@ -375,6 +425,8 @@ export default defineSchema({
         query: v.string(),
         count: v.number(),
         lastAskedAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_count", ["projectId", "count"]),
@@ -385,6 +437,8 @@ export default defineSchema({
         tokensConsumed: v.number(),
         conversationsCount: v.number(),
         billingCycleStart: v.number(), // timestamp for start of month
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"]),
 
@@ -395,6 +449,8 @@ export default defineSchema({
         events: v.array(v.string()), // e.g. ["message.create", "request.close"]
         secret: v.string(), // Cryptographically random secret for payload signing
         isActive: v.boolean(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_projectId_isActive", ["projectId", "isActive"]),
@@ -409,6 +465,8 @@ export default defineSchema({
         statusCode: v.optional(v.number()),
         error: v.optional(v.string()),
         timestamp: v.number(),       // Date.now()
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_subscriptionId", ["subscriptionId"])
         .index("by_projectId", ["projectId"])
@@ -430,6 +488,8 @@ export default defineSchema({
         body: v.optional(v.string()),
         read: v.boolean(),
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_recipient", ["recipientId", "createdAt"])
         .index("by_project_recipient", ["projectId", "recipientId"])
@@ -446,6 +506,8 @@ export default defineSchema({
         status: v.union(v.literal("new"), v.literal("confirmed"), v.literal("cancelled")),
         agentId: v.optional(v.string()),
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_projectId", ["projectId"])
         .index("by_conversationId", ["conversationId"])
@@ -469,6 +531,8 @@ export default defineSchema({
         orgId: v.string(),
         subscription: v.string(),
         createdAt: v.number(),
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
     })
         .index("by_userId", ["userId"])
         .index("by_orgId", ["orgId"]),

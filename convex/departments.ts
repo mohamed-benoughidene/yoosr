@@ -7,6 +7,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin } from "./utils";
 import { authError, notFoundError, forbiddenError, userError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 /**
  * List all departments for a project.
@@ -131,7 +132,7 @@ export const removeDepartment = mutation({
         if (!department) throw notFoundError("Department");
         if (department.isDefault) throw userError("Cannot delete the default department");
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "departments", args.id);
 
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {
             projectId: department.projectId,

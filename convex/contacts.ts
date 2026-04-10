@@ -4,6 +4,7 @@ import { assertProjectOwnership, checkProjectOwnership } from "./utils";
 import { v } from "convex/values";
 import { authError, notFoundError, userError } from "./errors";
 import { CONVERSATION_STATUS } from "./types";
+import { softDelete } from "./lib/softDelete";
 
 // List contacts for a project
 export const list = query({
@@ -191,7 +192,7 @@ export const remove = mutation({
             }
         }
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "contacts", args.id);
     },
 });
 

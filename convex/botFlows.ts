@@ -246,7 +246,7 @@ function compileToExecutionNodes(nodes: FlowNode[], edges: FlowEdge[]) {
 
         return {
             _id: node.id,
-            name: data.label || node.type || "Node",
+            name: String(data.label ?? node.type ?? "Node"),
             actions,
             nextBlock
         };

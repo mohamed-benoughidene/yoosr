@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { checkProjectOwnership } from "./utils";
 import { CONVERSATION_STATUS } from "./types";
 import { authError, notFoundError, forbiddenError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 // Generic pagination wrapper to avoid implicit 'any'
 type PageResult<T> = { page: T[]; continueCursor: string | null; isDone: boolean };
@@ -840,6 +841,6 @@ export const dismissUnansweredQuery = mutation({
             throw forbiddenError();
         }
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "unanswered_queries", args.id);
     },
 });

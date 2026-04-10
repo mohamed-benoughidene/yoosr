@@ -7,6 +7,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin } from "./utils";
 import { authError, notFoundError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 /**
  * List all labels for a project.
@@ -102,7 +103,7 @@ export const removeLabel = mutation({
         const label = await ctx.db.get(args.id);
         if (!label) throw notFoundError("Label");
 
-        await ctx.db.delete(args.id);
+        await softDelete(ctx, "labels", args.id);
 
         // Cascade: remove the deleted label name from all conversation tags in this project
         const conversations = await ctx.db

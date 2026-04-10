@@ -2,7 +2,9 @@
 
 ## 1. Executive Summary
 
-The Yoosr project is a modern, modular SaaS application built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and Shadcn UI on the frontend, with Convex as the reactive real-time backend and Clerk for authentication. The architecture heavily embraces Server/Client Component isolation and utilizes AI integrations (OpenRouter) for dynamic workflow generation. While the project exhibits strong foundational choices like proper schema structuring, multi-tenant partitioning, and robust UI/UX frameworks, there are critical gaps in human-readable documentation, schema validations (overuse of `v.any()`), and certain authorization boundaries. It is well-optimized for AI agent interactions, but human developer onboarding requires substantial improvement.
+The Yoosr project is a modern, modular SaaS application built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and Shadcn UI on the frontend, with Convex as the reactive real-time backend and Clerk for authentication. The architecture heavily embraces Server/Client Component isolation and utilizes AI integrations (OpenRouter) for dynamic workflow generation.
+
+**All critical findings from the original analysis have been resolved.** The project now features ownership-enforced authorization, soft-delete patterns, TTL-based data retention, build-time env validation, robust AI JSON parsing, and comprehensive human-facing documentation.
 
 ## 2. Architecture Diagram
 
@@ -15,16 +17,16 @@ graph TD
         UI[Shadcn UI & Tailwind v4]
         State[Convex React Client]
     end
-    
+
     subgraph Backend [Convex Backend]
         AuthGuard[Auth Guards & Role Checks]
         Queries[Queries: Read & Subscriptions]
         Mutations[Mutations & Actions]
         DB[(Convex DB - 28 Tables)]
         Webhooks[Webhook Handlers: Meta, Clerk, Telegram]
-        Cron[Cron Jobs: Data Retention]
+        Cron[Cron Jobs: 13 Total]
     end
-    
+
     subgraph Third_Party [External Integrations]
         Clerk[Clerk Auth & JWT]
         OpenRouter[OpenRouter AI / LLMs]
@@ -45,81 +47,111 @@ graph TD
     Queries --> DB
     Mutations --> DB
     Webhooks --> Mutations
+    Cron --> DB
 ```
 
-## 3. Key Findings
+## 3. Key Findings — Updated Status
 
-*   **01-Package Dependencies**: Relies cleanly on Bun, Next.js 16, React 19, and Convex. Contains minor devDependency misplacements (e.g., `@types/papaparse` in runtime) and unused plugins requiring cleanup to reduce bundle overhead.
-*   **02-Build Tooling & Config**: Configured optimally with Turbopack and Tailwind v4 CSS-first theming. Lacks build-time environment variable validation and uses weakened Content Security Policy settings (`unsafe-eval`).
-*   **03-Project Structure & Git**: Utilizes a clean, hybrid monorepo-style structure dividing `src/`, `convex/`, and `messages/`. Employs strong CI/CD branching logic, though documentation relies heavily on hidden `.agent` folders.
-*   **04-Database Schema**: Boasts 28 tables featuring scalable multi-tenant index optimization and vector search integration. Marred by over-reliance on `v.any()`, lack of TTL on core messaging tables, and inconsistent metadata timestamps.
-*   **05-Queries (Read Operations)**: Consistently implements index scanning and resilient "soft-returns" (null/[]) for unauthorized views. Advanced dashboard aggregations may face scalability risks due to heavy in-memory table parsing bounds.
-*   **06-Mutations (Write Operations)**: Executed alongside exhaustive event-driven logging and cascading wipe structures. Public endpoints safely abstract OCC collisions, but state mappings across certain endpoints overlap densely.
-*   **07-Auth & Authorization**: Centralized authorization via Clerk JWTs and localized `admin` vs `member` access wrappers. Major oversight where several conversation actions circumvent project/organization ownership checks.
-*   **08-Backend Utilities**: Houses abstract integrations handling encryption, LLM rate-limiting, and signature verification seamlessly. Highly resilient orchestration handling external retries effectively without leaking tokens.
-*   **10-Layout & Structural Components**: Operates deeply nested routing balancing Right-To-Left translation context inherently against auth states. Contains reliable React Suspense bounds via customizable layout components natively.
-*   **11-Design Tokens & Styling**: Fully adopts Tailwind CSS v4's standard dynamic setup via `@theme` inline attributes directly. Lacking standalone design system repositories documenting specific localized styling variables (`--lp-*`).
-*   **13-Page Components & Views**: Divides interface logic sharply allocating SEO-heavy views to Server Components. Employs strong, segmented error isolation (`error.tsx`/`loading.tsx`) natively across app folders dynamically.
-*   **14-State Management & Fetching**: Uniquely dependent almost strictly on Convex's automatic reactivity rather than typical store management systems (e.g. Zustand/Redux). Encounters severe form redundancies heavily using vanilla `useState` repetitively.
-*   **15-Feature Modules**: Connects internal feature sets tightly through activity logging integrations systematically. Showcases a high-level approach mapping conversational rules directly out of generalized AI prompts into JSON structures contextually.
-*   **18-Documentation & DX**: Developer experience is intensely tailored for AI consumption instead of human iteration. Omits baseline project instructions, root documentation mapping, and fundamental contribution guides.
+*   **01-Package Dependencies**: ✅ **RESOLVED** — `@types/papaparse` moved to devDependencies. New test infrastructure (`vitest.convex.config.ts`, `test:convex` script). New deps: Vercel analytics, Context7 MCP, Lighthouse CI. Dead dependencies (`tailwindcss-animate`, `@huggingface/inference`) still present.
+*   **02-Build Tooling & Config**: ✅ **RESOLVED** — Build-time env validation via `src/lib/env.ts` + `src/instrumentation.ts`. X-XSS-Protection header removed. Convex backend test config added. `'unsafe-eval'` in CSP remains (required by SDKs).
+*   **03-Project Structure & Git**: ✅ **RESOLVED** — Documentation gaps filled (`README.md`, `CONTRIBUTING.md`, `docs/AGENT-SETUP.md`, `docs/API.md`). 5 test files (42 test cases total).
+*   **04-Database Schema**: ✅ **RESOLVED** — Soft-delete on 22 tables, TTL on conversations/messages (90-day default), `v.any()` reduced from 11 to 3, cron jobs increased from 11 to 13. `openRouterApiKey` encrypted via `encryptSecret()`.
+*   **05-Queries (Read Operations)**: ✅ **RESOLVED** — All conversation queries now enforce org-scoped ownership via `assertConversationOwnership()`. Dashboard `.take(2000)` concern remains.
+*   **06-Mutations (Write Operations)**: ✅ **RESOLVED** — All conversation mutations enforce org-scoped ownership. Soft-delete pattern applied. `conversations.create` unauthenticated by design (public widget).
+*   **07-Auth & Authorization**: ✅ **RESOLVED** — Ownership checks on all 13 conversation functions. `convex/lib/auth.ts` provides typed helpers. `as unknown as` type casts still present in some files.
+*   **08-Backend Utilities**: ✅ **RESOLVED** — New modules: `auth.ts`, `softDelete.ts`, `jsonExtract.ts`. Cron count: 13. AI JSON parsing replaced with robust bracket-counting extractor.
+*   **10-Layout & Structural Components**: No changes needed. All findings remain accurate.
+*   **11-Design Tokens & Styling**: No changes needed. All findings remain accurate.
+*   **13-Page Components & Views**: No changes needed. All findings remain accurate.
+*   **14-State Management & Fetching**: No changes needed. All findings remain accurate.
+*   **15-Feature Modules**: ✅ **RESOLVED** — AI JSON parsing robustness fixed. Test coverage added (Convex backend tests). Soft-delete across all modules.
+*   **18-Documentation & DX**: ✅ **RESOLVED** — All critical gaps filled. Human-facing docs (`README.md`, `CONTRIBUTING.md`, `docs/AGENT-SETUP.md`, `docs/API.md`) alongside AI-facing docs (`.agent/AGENT.md`, `.agent/DESIGN.md`).
 
 ## 4. Strengths
 
 *   **Modern Foundational Stack**: Fully leverages Next.js 16 server/client separation with Turbopack parsing alongside Tailwind CSS v4.
 *   **Robust Internationalization (i18n)**: Employs deep configuration enforcing Right-To-Left UI compatibility organically matching locale selections.
-*   **Advanced AI Pipelines**: Phenomenal integration utilizing LLMs to synthesize and dictate logical React Flow graph generation natively.
+*   **Advanced AI Pipelines**: Phenomenal integration utilizing LLMs to synthesize and dictate logical React Flow graph generation natively. Now with robust JSON extraction (14 test cases).
 *   **Secure Webhook Architecture**: Exceptionally well-organized ingestion processing preventing exploits utilizing strict Svix, Telegram, and Meta HMAC signature validation models.
-*   **Multi-tenant Scaling**: Built-in multi-tenant isolation utilizing Clerk Organization IDs paired optimally with Convex's indexed project references dynamically.
+*   **Multi-tenant Scaling**: Built-in multi-tenant isolation utilizing Clerk Organization IDs paired optimally with Convex's indexed project references dynamically. Now enforced with `assertConversationOwnership()` on all conversation functions.
+*   **Comprehensive Testing**: 42 test cases across frontend (12) and Convex backend (30) with separate test configurations.
+*   **Data Retention**: Soft-delete on 22 tables, TTL on conversations/messages, 13 cron jobs for data lifecycle management.
+*   **Build-time Safety**: Zod env validation at startup prevents silent runtime failures.
 
-## 5. Risks & Concerns
-
-**HIGH Severity:**
-*   **Data Authorization Gaps**: Multiple conversation mutations (`join`, `resolve`, `updateVisitorInfo`) and `conversations.get` lack logic verifying the user's specific Organization matches the underlying parent Project.
-*   **Unauthenticated Writes**: `conversations.create` bypasses user authentication checks natively permitting uncontrolled endpoint invocation contexts. 
-*   **Boundless Table Scaling**: The highest-volume tables (`conversations`, `messages`) feature absolutely zero scheduled TTL cleanup configurations pointing toward explosive long-term operational scaling costs.
-*   **Destructive Data Architecture**: Hard database deletes are applied uniformly leaving no operational recovery opportunities and presenting heightened risks of cascading referential disconnects.
-*   **Plaintext Secret Leaks**: Active embedding of the `openRouterApiKey` inside `projects` tables explicitly omitting critical database encryption wrappers.
-*   **Absent Onboarding Setup**: The complete absence of standard human documentation architectures (lack of root `README.md` and basic bootstrapping commands).
+## 5. Risks & Concerns — Remaining
 
 **MEDIUM Severity:**
-*   **Weakened CSP Policy**: Security postures lowered utilizing explicit `'unsafe-inline'` and `'unsafe-eval'` script boundaries.
-*   **Unsafe Schema Declarations**: Schema definitions randomly adopt `v.any()` (e.g. for nodes/attachments), totally disabling database evaluation assurances.
-*   **Runtime Environment Fragility**: Unvalidated environment configurations risk triggering hidden runtime faults omitting build-time deployment verification completely.
-*   **Scattered Artificial Form Load**: Extreme repetitive reliance on inline React state hooks bounding inputs limits systematic UI component abstraction scaling logically.
+*   **Weakened CSP Policy**: `'unsafe-inline'` and `'unsafe-eval'` in script-src still present (required by Clerk/Convex SDKs).
+*   **`as unknown as` type casts**: Fragile Clerk claims access in some files (`cannedResponses.ts`, `webhooks.ts`). The `ClerkIdentity` type exists but isn't consistently used.
+*   **No rate limiting on authenticated functions**: Only widget HTTP endpoints are rate-limited. Authenticated users face no limits on queries/mutations.
+*   **Dashboard scaling**: `getHomeStats` bounds to `.take(2000)` — may be inaccurate at scale.
+*   **Dead dependencies**: `tailwindcss-animate` and `@huggingface/inference` installed but unused.
+
+**LOW Severity:**
+*   **No code formatter**: No Prettier/Biome configured.
+*   **No Dependabot/Renovate**: Dependency updates remain manual.
+*   **No ADRs**: No Architecture Decision Records for key decisions.
+*   **Missing DX scripts**: No `lint:fix`, `typecheck`, `format`, `clean`.
+*   **Stale tsconfig excludes**: Tiledesk references in `exclude` array no longer exist.
+*   **No design system docs for humans**: `.agent/DESIGN.md` is gitignored.
+*   **No runbooks**: No deployment, monitoring, or incident response playbooks.
 
 ## 6. Recommendations
 
-*   **Immediate Auth Patching**: Add rigorous `assertProjectOwnership()` guards to explicitly enforce organization isolation surrounding every conversation endpoint instantly.
-*   **Consolidated Form Abstraction**: Establish a unified form dependency architecture employing `react-hook-form` coupled closely to `Zod` validation mitigating massive local `useState` boilerplate code.
-*   **Soften Data Removal Strategy**: Revise database schemas instituting simple `deletedAt` metadata capturing properties avoiding hard-removal triggers immediately natively.
-*   **Scheduled Pruning Mechanisms**: Institutionalize formal TTL auto-dropping constraints executing asynchronously to protect unbound log table cost inflation automatically.
-*   **Safe Dependency Bootstrapping**: Elevate environmental secrets against schema models utilizing strictly verified boundary parsing structures extending like `@t3-oss/env-nextjs`.
+*   **Cleanup dead dependencies**: Remove `tailwindcss-animate` and `@huggingface/inference`.
+*   **Consolidate Clerk claims typing**: Replace `as unknown as` casts with the existing `ClerkIdentity` type.
+*   **Add rate limiting to authenticated functions**: Consider per-user rate limits on expensive operations (AI calls, bulk imports).
+*   **Migrate dashboard to paginated queries**: Replace `.take(2000)` with cursor-based pagination for accuracy at scale.
+*   **Add Dependabot/Renovate**: Automate dependency update PRs.
+*   **Add code formatter**: Prettier or Biome for consistent code style.
+*   **Create ADRs**: Document key architectural decisions (OCC separation, soft-delete pattern, etc.).
 
-## 7. Technical Debt
+## 7. Technical Debt — Remaining
 
-*   Over 120 disorganized vanilla `useState` hooks bound to uncontrolled native configurations replacing functional robust centralized library forms.
-*   Highly unstandardized structural schema definitions parsing specific timestamp behaviors (`createdAt` alongside omitted `updatedAt`).
-*   Independent, unchecked implicit mapping between Clerk identities referencing decoupled Convex items lacking hard referential verification locks.
-*   Lingering deprecated, duplicate bot state attributes arbitrarily persisting mutually across localized conversation spaces alongside separated table environments. 
+*   Over 120 disorganized vanilla `useState` hooks (form state) — could benefit from `react-hook-form` + `Zod`.
+*   Inconsistent timestamp tracking — some tables lack `updatedAt`.
+*   Implicit Clerk → Convex ID mapping without hard referential verification.
+*   Legacy deprecated fields in `conversations` table (kept for backward compatibility).
+*   `contacts.list` uses `.take(500)` without proper pagination.
+*   `conversations.list` uses `.take(100)` without cursor pagination.
 
-## 8. Security Audit
+## 8. Security Audit — Remaining
 
-*   **Data Ownership Risk**: Read constraints like `conversations.get` bypass organization isolation restrictions allowing potential arbitrary parameter scraping.
-*   **Data Ownership Risk**: `conversations.create` completely omits mandatory identifier parsing rules globally.
-*   **Data Integrity Risk**: Application-specific private API parameters, notably the `openRouterApiKey`, are committed transparently to generic tables explicitly inside `projects`. 
-*   **Script Evaluation Risk**: Relaxations mapped actively within global application load policies enabling explicit XSS attack surfaces directly over inline script payloads.
+*   **`'unsafe-eval'` in CSP**: Required by Clerk/Convex SDKs but weakens script execution security.
+*   **No rate limiting on authenticated Convex functions**: Potential for abuse.
+*   **No session timeout**: Agents remain authenticated indefinitely.
+*   **Widget CORS: `Access-Control-Allow-Origin: *`**: Necessary for embeddable widgets but exposes API surface fully.
 
-## 9. Dependency Health
+## 9. Dependency Health — Remaining
 
-*   Structural configuration failures persist positioning type abstractions like `@types/papaparse` poorly into standard production dependencies.
-*   Stale component dependencies including `tailwindcss-animate` and `@huggingface/inference` reside globally inactive taking up lockfile bandwidth pointlessly.
-*   Enormous data visualizer packages like `recharts` alongside heavy computational modules (`@xyflow/react` and `exceljs`) substantially damage chunk footprints urgently requiring code splitting through delayed React loading optimization.
+*   `tailwindcss-animate` — Dead dependency (not imported anywhere).
+*   `@huggingface/inference` — Dead dependency (not imported anywhere).
+*   `@radix-ui/react-icons` — Used in only one file (replaceable with `lucide-react`).
+*   `recharts` (~470 KB), `@xyflow/react` (~200 KB), `exceljs` (~200 KB) — Heavy bundles requiring code-splitting.
+*   No automated dependency update tooling.
 
-## 10. Next Steps
+## 10. Resolved Items (Previously Critical)
 
-1.  **High Priority**: Implement explicit ownership filters strictly enforcing `assertProjectOwnership()` on cross-database conversational access protocols natively mapped through `convex/conversations.ts`.
-2.  **High Priority**: Construct core developer operational guides immediately outlining setup contexts integrating standard `README.md` and `CONTRIBUTING.md`.
-3.  **High Priority**: Transition `openRouterApiKey` handling actively through local `crypto.ts` methodologies abstracting raw string persistence immediately internally.
-4.  **Medium Priority**: Begin systematic reduction of internal component states utilizing strict contextual mapping tools specifically bridging local inputs toward `Zod` references smoothly. 
-5.  **Medium Priority**: Convert core operational wipe functions seamlessly toward explicit `deletedAt` metadata constraints enabling recoverable action flows automatically.
+| Issue | Resolution |
+|-------|-----------|
+| Missing org-scoping on conversations | `assertConversationOwnership()` on 13 functions ✅ |
+| No soft-delete pattern | 22 tables with `deletedAt`, utility module, weekly cron ✅ |
+| No TTL on conversations/messages | `expiresAt` fields, 90-day default, daily cron ✅ |
+| `v.any()` overuse (11 instances) | Reduced to 3 (all justified) ✅ |
+| No env validation | Zod schemas + instrumentation startup hook ✅ |
+| Fragile AI JSON parsing | Robust bracket-counting extractor (14 tests) ✅ |
+| X-XSS-Protection header | Removed from vercel.json ✅ |
+| No human-facing documentation | `README.md`, `CONTRIBUTING.md`, `docs/AGENT-SETUP.md`, `docs/API.md` ✅ |
+| `@types/papaparse` in runtime deps | Moved to devDependencies ✅ |
+| No Convex backend tests | `vitest.convex.config.ts`, 30 backend test cases ✅ |
+
+## 11. Next Steps
+
+1.  **Cleanup dead dependencies** — Remove `tailwindcss-animate` and `@huggingface/inference`.
+2.  **Consolidate Clerk claims typing** — Replace `as unknown as` with `ClerkIdentity` type.
+3.  **Add rate limiting to authenticated functions** — Per-user limits on expensive operations.
+4.  **Add code formatter** — Prettier or Biome for consistent style.
+5.  **Set up Dependabot/Renovate** — Automated dependency updates.
+6.  **Migrate dashboard to paginated queries** — Replace `.take(2000)` with cursor pagination.
+7.  **Create ADRs** — Document key architectural decisions.
+8.  **Add runbooks** — Deployment, monitoring, incident response guides.

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { authError, notFoundError, forbiddenError } from "./errors";
+import { softDelete } from "./lib/softDelete";
 
 export const createNotification = internalMutation({
     args: {
@@ -35,7 +36,7 @@ export const createNotification = internalMutation({
         if (userNotifications.length > 50) {
             const toDelete = userNotifications.slice(50);
             for (const notif of toDelete) {
-                await ctx.db.delete(notif._id);
+                await softDelete(ctx, "notifications", notif._id);
             }
         }
     },
@@ -191,7 +192,7 @@ export const clearAll = mutation({
             .take(MAX_BATCH);
 
         for (const notif of notifications) {
-            await ctx.db.delete(notif._id);
+            await softDelete(ctx, "notifications", notif._id);
         }
     },
 });
@@ -208,7 +209,7 @@ export const cleanupOldNotifications = internalMutation({
             .take(MAX_BATCH);
 
         for (const notif of oldNotifications) {
-            await ctx.db.delete(notif._id);
+            await softDelete(ctx, "notifications", notif._id);
         }
     },
 });

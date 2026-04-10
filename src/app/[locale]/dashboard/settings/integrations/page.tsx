@@ -137,7 +137,7 @@ export default function IntegrationsPage() {
 
     useEffect(() => {
         if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
-            const saved = (integrations ?? []).find((r: { provider?: string; credentials?: Record<string, unknown> }) => r.provider === "whatsapp")
+            const saved = (integrations ?? []).find((r: { provider?: string; credentials?: Record<string, string> }) => r.provider === "whatsapp")
             setWhatsappState(saved ? {
                 phoneNumberId: saved.credentials?.phone_number_id || "",
                 accessToken: "",
@@ -168,14 +168,14 @@ export default function IntegrationsPage() {
     const clearOpenRouter = useMutation(api.openrouter_api.clearOpenRouterKey)
     const testOpenRouter = useAction(api.openrouter_api.testOpenRouterKey)
 
-    const savedMap: Record<string, { credentials?: Record<string, unknown>; enabled?: boolean }> = {}
-        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, unknown>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
+    const savedMap: Record<string, { credentials?: Record<string, string>; enabled?: boolean }> = {}
+        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, string>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
 
     const openConfig = (integration: IntegrationDef) => {
         if (integration.locked) return
         setActiveConfig(integration)
         const saved = savedMap[integration.id]
-        if (saved) { setFormValues(saved.credentials as Record<string, string> || {}); setFormEnabled(saved.enabled || false) }
+        if (saved) { setFormValues(saved.credentials || {}); setFormEnabled(saved.enabled || false) }
         else { const d: Record<string, string> = {}; integration.fields.forEach(f => d[f.key] = ""); setFormValues(d); setFormEnabled(false) }
     }
 

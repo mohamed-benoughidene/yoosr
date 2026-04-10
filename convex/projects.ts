@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { requireAdmin } from "./utils";
 import { ClerkIdentity } from "./types";
 import { authError, notFoundError } from "./errors";
+import { softDelete, SoftDeletableTable } from "./lib/softDelete";
 
 // Internal: get project for widget (no auth required)
 export const getPublic = internalQuery({
@@ -255,12 +256,12 @@ export const deleteProjectData = internalMutation({
                     .withIndex("by_botId", q => q.eq("botId", bot._id))
                     .take(BATCH_SIZE - deletedCount);
                 for (const f of flows) {
-                    await ctx.db.delete(f._id);
+                    await softDelete(ctx, "bot_flows", f._id);
                     deletedCount++;
                 }
                 if (deletedCount >= BATCH_SIZE) break;
             }
-        } 
+        }
         else if (currentStep === "knowledge_base_sources") {
             const kbs = await ctx.db.query("knowledge_bases")
                 .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
@@ -270,7 +271,7 @@ export const deleteProjectData = internalMutation({
                     .withIndex("by_kbId", q => q.eq("kbId", kb._id))
                     .take(BATCH_SIZE - deletedCount);
                 for (const s of sources) {
-                    await ctx.db.delete(s._id);
+                    await softDelete(ctx, "knowledge_base_sources", s._id);
                     deletedCount++;
                 }
                 if (deletedCount >= BATCH_SIZE) break;
@@ -279,7 +280,7 @@ export const deleteProjectData = internalMutation({
         else if (currentStep === "projects") {
             const project = await ctx.db.get(args.projectId);
             if (project) {
-                await ctx.db.delete(args.projectId);
+                await softDelete(ctx, "projects", args.projectId);
                 deletedCount = 1;
             }
         }
@@ -289,7 +290,7 @@ export const deleteProjectData = internalMutation({
                 .withIndex("by_projectId", q => q.eq("projectId", args.projectId))
                 .take(BATCH_SIZE);
             for (const item of batch) {
-                await ctx.db.delete(item._id);
+                await softDelete(ctx, currentStep as SoftDeletableTable, item._id);
                 deletedCount++;
             }
         }

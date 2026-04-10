@@ -449,7 +449,7 @@ export const executeNextBlock = internalAction({
         }
 
         // 4. Execute each action sequentially
-        let attributes = { ...conversation.attributes };
+        let attributes: Record<string, unknown> = { ...(conversation.attributes as Record<string, unknown> || {}) };
         let nextNodeId = currentNode.nextBlock;
         let newBotId = null;
         let resetNode = false;
