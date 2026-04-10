@@ -6,42 +6,24 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ============================================================
+  # Quality gates — runs on all PRs and pushes to main/develop.
+  # Vercel handles frontend deployments natively via its GitHub
+  # integration, so this job only validates code quality.
+  # ============================================================
   quality-gates:
     name: Lint & Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-
-
-      - name: Install dependencies
-        run: bun install
+      - name: Setup Bun and install
+        uses: ./.github/actions/setup-bun
 
       - name: Run linter
         run: bun run lint
@@ -53,145 +35,43 @@ jobs:
         run: bun run build
 
   # ============================================================
-  # Staging deployment — triggered on pushes to develop branch.
-  # Uses GitHub environment 'staging' for protection rules.
-  # Requires VERCEL_PROJECT_ID_STAGING secret for the staging Vercel project.
+  # Convex staging — deployed when develop receives a push.
+  # Uses the staging Convex deploy key.
+  # Vercel auto-deploys the frontend to a Preview URL.
   # ============================================================
-  deploy-staging:
-    name: Deploy to Staging (develop only)
+  deploy-convex-develop:
+    name: Deploy Convex (develop)
     needs: quality-gates
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: "Preview – yoosr"
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Deploy Convex to Staging
-        run: npx convex deploy --cmd 'bun run build'
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_STAGING }}
-
-      - name: Deploy Frontend to Vercel (Staging)
-        run: |
-          bunx vercel deploy --target preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-
-  deploy-convex:
-    name: Deploy Convex (main only)
-    needs: quality-gates
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     timeout-minutes: 10
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Setup Bun and install
+        uses: ./.github/actions/setup-bun
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Deploy to Convex
-        run: npx convex deploy --cmd 'bun run build'
+      - name: Deploy Convex to Staging
+        run: npx convex deploy
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_STAGING }}
 
-  deploy-frontend:
-    name: Deploy Frontend to Vercel (main only)
+  # ============================================================
+  # Convex production — deployed when main receives a push.
+  # Uses the production Convex deploy key.
+  # Vercel auto-deploys the frontend to Production.
+  # ============================================================
+  deploy-convex-prod:
+    name: Deploy Convex (main)
     needs: quality-gates
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Setup Bun and install
+        uses: ./.github/actions/setup-bun
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Deploy to Vercel
-        run: |
-          bunx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Convex to Production
+        run: npx convex deploy
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
