@@ -8,14 +8,16 @@
         "solutions": "Solutions",
         "howItWorks": "How it Works",
         "customers": "Customers",
-        "pricing": "Pricing"
+        "pricing": "Pricing",
+        "docs": "Docs"
       },
       "login": "Login",
       "getEarlyAccess": "Get Early Access",
       "dropdowns": {
         "products": "Products",
         "resources": "Resources"
-      }
+      },
+      "github": "GitHub Repository"
     },
     "footer": {
       "tagline": "The open-source, no-code platform to build AI agents and automate customer conversations.",
@@ -32,8 +34,10 @@
       },
       "legal": {
         "privacy": "Privacy Policy",
-        "terms": "Terms of Service"
+        "terms": "Terms of Service",
+        "docs": "Documentation"
       },
+      "github": "GitHub Repository",
       "disclaimer": "Yoosr is currently in early access. Some features are still in development expect frequent updates.",
       "copyright": "Yoosr, Inc. Open Source. MIT License."
     },
@@ -817,7 +821,14 @@
     "error_update_priority": "Failed to update priority",
     "system_assigned_to": "Conversation assigned to {name}",
     "system_transferred_to_agent": "Conversation transferred to {name}",
-    "system_transferred_to_dept": "Conversation transferred to {name}"
+    "system_transferred_to_dept": "Conversation transferred to {name}",
+    "system": {
+      "welcome": "Hi there! How can we help you?",
+      "resolved": "This conversation has been resolved. Thank you!",
+      "agentConnected": "You are now connected with an agent.",
+      "inactiveClosed": "This conversation was automatically closed due to inactivity.",
+      "agentJoined": "An agent has joined the conversation."
+    }
   },
   "requests": {
     "title": "Requests",
@@ -1930,5 +1941,10 @@
       "ctaMicrocopy": "No credit card. Setup takes less than 5 minutes.",
       "secondary": "Join 50+ teams already on the waitlist."
     }
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Everything you need to build with Yoosr — from embedding your first widget to configuring AI chatbots and integrating external channels.",
+    "brandName": "Yoosr Docs"
   }
 }

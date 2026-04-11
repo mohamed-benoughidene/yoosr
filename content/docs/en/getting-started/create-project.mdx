@@ -1,0 +1,77 @@
+export const meta = {
+  title: "Create a Project",
+  description: "Set up your first project in Yoosr and understand the key configuration options.",
+  section: "getting-started"
+}
+
+# Create Your First Project
+
+A **project** in Yoosr represents a single support workspace. Each project has its own widget configuration, AI settings, knowledge bases, channels, and team members.
+
+## Step-by-Step Guide
+
+<Step number={1} title="Navigate to the Dashboard">
+After signing in to Yoosr, you'll land on your dashboard. If you don't have any projects yet, you'll see a prompt to create one.
+</Step>
+
+<Step number={2} title="Click "New Project">
+Look for the **"New Project"** button in your dashboard. Click it to open the project creation form.
+</Step>
+
+<Step number={3} title="Fill in Project Details">
+You'll need to provide:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Project Name** | A display name for your project | `My Store Support` |
+| **Description** *(optional)* | What this project is for | `Customer support for our e-commerce store` |
+
+Click **Create** to finish.
+</Step>
+
+<Step number={4} title="Find Your Project ID">
+After creation, your project is assigned a unique ID (e.g., `proj_abc123xyz`). You'll need this ID to embed your widget.
+
+You can find it in two places:
+
+1. **URL bar** — When viewing the project dashboard, the URL contains the project ID
+2. **Settings → Widget Setup** — The Project ID is displayed in the installation code
+
+<Callout variant="info" title="Keep it handy">
+You'll paste this Project ID into your website's widget installation code.
+</Callout>
+</Step>
+
+## Project Settings Overview
+
+Once your project is created, you can configure it from the **Settings** page:
+
+| Setting | Description |
+|---------|-------------|
+| **Widget Setup** | Widget appearance, behavior, and installation code |
+| **AI Configuration** | LLM model selection, API keys, knowledge base |
+| **Channels** | Connect Telegram, WhatsApp, Messenger, Instagram |
+| **Webhooks** | Manage outbound webhook subscriptions |
+| **Team** | Invite and manage organization members |
+
+## Multi-Tenant Isolation
+
+Every project is scoped to your **Clerk organization** (`orgId`). This means:
+
+- Team members in your organization can access all projects
+- Data is isolated — projects cannot see each other's conversations
+- You can create multiple projects for different websites or brands
+
+<Callout variant="tip" title="One project per website">
+For clean data separation, create one project per website or brand you support.
+</Callout>
+
+## Feature Flags
+
+Yoosr supports feature flags configured via the `FEATURE_FLAGS` environment variable. These are set at the platform level and apply across all projects. Contact support if you need access to beta features.
+
+## Next Steps
+
+Now that your project is set up, it's time to embed the widget on your website.
+
+[Embed Your First Widget →](/docs/getting-started/first-widget)

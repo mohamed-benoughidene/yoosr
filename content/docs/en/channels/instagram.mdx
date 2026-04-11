@@ -1,0 +1,80 @@
+export const meta = {
+  title: "Instagram",
+  description: "Connect Instagram Direct Messages to Yoosr via Meta for Developers for unified omnichannel support.",
+  section: "channels"
+}
+
+# Instagram Integration
+
+Connect Instagram DMs to Yoosr so direct messages and mentions appear in your agent dashboard.
+
+## Prerequisites
+
+- An **Instagram Business** or **Creator** account
+- The Instagram account must be **linked to a Facebook Page**
+- A **Meta Developer** app with Messenger products
+
+## Step 1: Link Instagram to Facebook Page
+
+1. Open Instagram → **Settings** → **Account**
+2. Tap **Linked Accounts** → **Facebook**
+3. Select your Facebook Page
+
+<Callout variant="warning" title="Business or Creator only">
+Personal Instagram accounts don't support the Messaging API. Convert to a Business account in Instagram Settings → Account → Switch to Professional Account.
+</Callout>
+
+## Step 2: Configure Your Meta App
+
+1. Go to [Meta for Developers](https://developers.facebook.com)
+2. Open your app (or create one with **Business** type)
+3. Add **Messenger** product
+4. Under **Messenger → Settings**, grant Instagram permissions:
+   - `instagram_manage_messages`
+   - `instagram_basic`
+
+## Step 3: Configure in Yoosr
+
+1. Go to **Settings → Channels** → **Instagram** → **Connect**
+2. Enter your **Instagram Account ID** (found in Meta App under Instagram settings)
+3. Enter your **Page Access Token** (same as Messenger)
+4. Enter your **App Secret**
+5. Yoosr generates a **Verify Token**
+6. Click **Save**
+
+## Step 4: Configure the Webhook
+
+In your Meta App:
+
+1. Go to **Messenger → Settings** → **Webhooks**
+2. Use the **same Callback URL** as WhatsApp/Messenger
+3. Paste the **Verify Token** from Yoosr
+4. Subscribe to: `instagram`, `instagram_direct`, `instagram_message_metadata`
+
+## Step 5: Test
+
+1. Send a DM to your Instagram account from another account
+2. The conversation appears in Yoosr with the Instagram indicator
+3. Reply from Yoosr — the reply appears in Instagram DMs
+
+## What's Supported
+
+| Feature | Supported |
+|---------|-----------|
+| Direct messages | ✅ |
+| Image messages | ✅ |
+| Quick replies | ✅ |
+| Story mentions | Partial — depends on API version |
+| Voice messages | ✅ |
+
+## How It Works
+
+Like Messenger and WhatsApp, Instagram messages arrive at the shared `/webhooks/meta` endpoint. Yoosr identifies them by the `object` field value of `instagram`.
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Messages not arriving | Verify Instagram is linked to the correct Facebook Page |
+| `403 Forbidden` | App secret or access token mismatch — re-enter credentials |
+| Can't see Instagram option | Ensure `instagram_manage_messages` permission is granted and approved by Meta |

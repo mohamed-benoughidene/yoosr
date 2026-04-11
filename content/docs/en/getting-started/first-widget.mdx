@@ -1,0 +1,116 @@
+export const meta = {
+  title: "Your First Widget",
+  description: "Embed a live chat widget on your website in under 2 minutes using a single code snippet.",
+  section: "getting-started"
+}
+
+# Embed Your First Widget
+
+The Yoosr widget is a lightweight, embeddable chat interface that lives on your website. It loads asynchronously so it won't slow down your page, and it connects directly to your Yoosr project's conversation system.
+
+## How It Works
+
+The widget works in two steps:
+
+1. You set a global configuration object (`window.yoosrSettings`) with your Project ID
+2. You load the widget script (`widget.js`) which reads that config and renders the chat button
+
+The entire integration is **two lines of code**.
+
+## Step-by-Step Guide
+
+<Step number={1} title="Open Widget Settings">
+In your Yoosr project dashboard, navigate to **Settings → Widget Setup**.
+</Step>
+
+<Step number={2} title="Copy the Installation Code">
+Switch to the **Installation** tab. You'll see a code snippet that looks like this:
+
+```html
+<script>
+  window.yoosrSettings = { projectId: "proj_abc123xyz" };
+</script>
+<script src="https://app.yoosr.com/widget.js" async></script>
+```
+
+Your actual Project ID will be pre-filled. Click the **Copy** button to copy the snippet.
+</Step>
+
+<Step number={3} title="Paste Before `</body>`">
+Open your website's HTML and paste the code **right before the closing `</body>` tag**.
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <!-- Your website content -->
+
+  <!-- Yoosr Widget — paste here -->
+  <script>
+    window.yoosrSettings = { projectId: "proj_abc123xyz" };
+  </script>
+  <script src="https://app.yoosr.com/widget.js" async></script>
+</body>
+</html>
+```
+
+<Callout variant="warning" title="Important">
+The script must load **after** your page content. Placing it before `</body>` ensures the widget initializes correctly.
+</Callout>
+</Step>
+
+<Step number={4} title="Test the Widget">
+Open your website in a browser. You should see a circular chat button in the bottom-right corner.
+
+**What to check:**
+
+- The chat button is visible and clickable
+- Clicking it opens the chat window
+- The welcome message appears after the configured delay
+- You can send messages and they appear in your Yoosr dashboard
+
+<Callout variant="tip" title="Use an incognito window">
+The widget tracks visitors via `localStorage`. Use an incognito window to simulate a new visitor session.
+</Callout>
+</Step>
+
+## Widget Behavior
+
+Once loaded, the widget will:
+
+| Behavior | Description |
+|----------|-------------|
+| **Launcher button** | Circular chat button, bottom-right (or left) of the viewport |
+| **Welcome message** | Appears after the configured delay (default: 3 seconds) |
+| **Pre-chat form** | If enabled, visitors fill in name/email/phone before chatting |
+| **Real-time messaging** | Messages sync instantly with the agent dashboard |
+| **File attachments** | Visitors can upload images and files |
+| **CSAT rating** | After a conversation closes, visitors can rate their experience |
+
+## Platform-Specific Installation
+
+The HTML snippet above works for any website. For framework-specific instructions (Next.js, React, Vue, WordPress, Shopify, etc.), see the [Widget Installation Guide](/docs/widget/installation).
+
+## Troubleshooting
+
+**Widget not showing?**
+- Verify the script is placed before `</body>`
+- Check that your Project ID matches the one in Settings
+- Open browser DevTools → Console and look for errors
+
+**Widget shows but messages don't send?**
+- Verify your project has an active conversation system configured
+- Check network tab for failed API calls to the Convex backend
+
+**Widget styles look wrong?**
+- The widget uses its own scoped styles and won't conflict with your CSS
+- If you have aggressive CSS resets, they may affect the iframe — check the iframe directly
+
+## Next Steps
+
+Now that your widget is live, you can customize its appearance and behavior.
+
+[Customize Your Widget →](/docs/widget/customization)

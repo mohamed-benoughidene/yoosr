@@ -1,0 +1,92 @@
+export const meta = {
+  title: "Webhooks",
+  description: "Overview of webhook integrations — inbound from external platforms and outbound to your servers.",
+  section: "api"
+}
+
+# Webhooks
+
+Yoosr uses webhooks in two directions:
+
+1. **Inbound** — Receiving messages from external platforms (Meta, Telegram, Clerk)
+2. **Outbound** — Sending event notifications to your servers (RestHooks)
+
+## Inbound Webhooks
+
+These endpoints receive events from external services and route them into Yoosr's conversation system.
+
+| Endpoint | Platform | Verification |
+|----------|----------|-------------|
+| `/webhooks/meta` | WhatsApp, Messenger, Instagram | HMAC-SHA256 signature |
+| `/webhooks/telegram` | Telegram | Secret token header |
+| `/clerk-webhook` | Clerk (auth) | Svix signature |
+
+All inbound webhooks return `200 OK` immediately to prevent retry storms. Processing happens asynchronously.
+
+## Outbound Webhooks (RestHooks)
+
+Yoosr sends HTTP POST notifications to subscriber URLs when specific events occur.
+
+### Event Types
+
+| Event | Triggered When |
+|-------|---------------|
+| `message.create` | A message is sent (any sender) |
+| `conversation.opened` | A new conversation is created |
+| `conversation.closed` | A conversation is resolved |
+| `agent.assigned` | A conversation is assigned to an agent |
+| `contact.created` | A new contact is created |
+
+### Delivery Format
+
+**HTTP POST** with headers:
+
+```
+Content-Type: application/json
+X-Yoosr-Event: message.create
+X-Yoosr-Signature: sha256=<hmac-hex>
+```
+
+**Body:**
+```json
+{
+  "event": "message.create",
+  "projectId": "proj_xyz",
+  "timestamp": 1712345678000,
+  "data": {
+    "conversationId": "conv_abc123",
+    "messageId": "msg_xyz789",
+    "content": "Hello!",
+    "senderType": "visitor"
+  }
+}
+```
+
+### Retry Policy
+
+| Attempt | Delay | Notes |
+|---------|-------|-------|
+| 1 | Immediate | Scheduled with 0ms delay |
+| 2 | 60 seconds | |
+| 3 | 300 seconds (5 min) | Final attempt |
+
+**Request timeout:** 10 seconds.
+
+All delivery attempts are logged to the `webhook_deliveries` table.
+
+## Managing Subscriptions
+
+Create and manage outbound webhook subscriptions from **Dashboard → Settings → Webhooks**:
+
+| Action | Description |
+|--------|-------------|
+| **Create** | Provide URL and event types — a signing secret is generated |
+| **List** | View all active subscriptions for your project |
+| **Toggle** | Enable/disable a subscription without deleting |
+| **Remove** | Soft-delete (with org ownership check) |
+
+## Next Steps
+
+[Outbound RestHooks →](/docs/webhooks/outbound)
+[Inbound Webhooks →](/docs/webhooks/inbound)
+[Signature Verification →](/docs/webhooks/verification)

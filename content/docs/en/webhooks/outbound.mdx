@@ -1,0 +1,97 @@
+export const meta = {
+  title: "Outbound Webhooks (RestHooks)",
+  description: "Configure outbound webhook subscriptions to receive real-time event notifications from Yoosr.",
+  section: "webhooks"
+}
+
+# Outbound Webhooks (RestHooks)
+
+RestHooks let your server receive **real-time notifications** when events happen in Yoosr — new messages, conversation status changes, agent assignments, and more.
+
+## Creating a Subscription
+
+1. Go to **Dashboard → Settings → Webhooks**
+2. Click **New Webhook**
+3. Enter your **endpoint URL** (must be HTTPS)
+4. Select the **event types** you want to receive
+5. Click **Create**
+
+A **signing secret** is generated — save it securely. You'll need it to verify delivery signatures.
+
+## Event Types
+
+| Event | Triggered When |
+|-------|---------------|
+| `message.create` | Any message is sent (agent, visitor, bot) |
+| `conversation.opened` | A new conversation starts |
+| `conversation.closed` | A conversation is resolved |
+| `agent.assigned` | A conversation gets assigned to an agent |
+| `contact.created` | A new contact record is created |
+
+## Delivery Format
+
+Each delivery is an HTTP POST to your endpoint:
+
+**Headers:**
+```
+Content-Type: application/json
+X-Yoosr-Event: message.create
+X-Yoosr-Signature: sha256=<hex-hmac-sha256>
+```
+
+**Body:**
+```json
+{
+  "event": "message.create",
+  "projectId": "proj_xyz",
+  "timestamp": 1712345678000,
+  "data": {
+    "conversationId": "conv_abc123",
+    "messageId": "msg_xyz789",
+    "content": "Hello!",
+    "senderType": "visitor"
+  }
+}
+```
+
+The `data` object varies by event type. The `message.create` event includes message details; `conversation.opened` includes conversation and contact info.
+
+## Retry Policy
+
+If your endpoint doesn't respond with a `2xx` status code:
+
+| Attempt | Delay After Previous |
+|---------|---------------------|
+| 1 | Immediate |
+| 2 | 60 seconds |
+| 3 | 300 seconds (5 minutes) |
+
+**Request timeout:** 10 seconds. If your endpoint takes longer, the delivery fails and retries.
+
+After all 3 attempts fail, the delivery is marked as **failed** and logged.
+
+## Delivery Logging
+
+Every delivery attempt is recorded in the `webhook_deliveries` table:
+
+| Field | Description |
+|-------|-------------|
+| `subscriptionId` | Which webhook subscription |
+| `projectId` | The project this belongs to |
+| `event` | Event type |
+| `url` | The delivery endpoint |
+| `attempt` | Attempt number (1–3) |
+| `success` | Whether it succeeded |
+| `statusCode` | HTTP response status |
+| `error` | Error message (if failed) |
+| `timestamp` | When the attempt was made |
+
+Review delivery logs in the dashboard to debug failed deliveries.
+
+## Best Practices
+
+1. **Respond with 2xx quickly** — Acknowledge receipt, then process asynchronously
+2. **Verify signatures** — Never trust webhook payloads without HMAC verification
+3. **Handle duplicates** — The same event may be delivered more than once (retries)
+4. **Log everything** — Store incoming webhooks for debugging and auditing
+5. **Monitor failures** — Check the webhook delivery logs regularly

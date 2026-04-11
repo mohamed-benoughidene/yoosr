@@ -3,7 +3,7 @@ import React from "react";
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Yoosr",
+  title: "Privacy Policy",
   description: "How Yoosr collects, uses, and protects your data."
 }
 

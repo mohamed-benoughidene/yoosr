@@ -3,7 +3,7 @@ import { LoginClient } from "./LoginClient"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-    title: "Sign In — Yoosr",
+    title: "Sign In",
     description: "Sign in to your Yoosr account to manage customer conversations."
 }
 

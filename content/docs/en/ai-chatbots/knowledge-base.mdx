@@ -1,0 +1,125 @@
+export const meta = {
+  title: "Knowledge Base",
+  description: "Build a knowledge base with RAG — upload documents, configure embeddings, and enable AI-powered search.",
+  section: "ai-chatbots"
+}
+
+# Knowledge Base
+
+The knowledge base is your bot's memory. It stores your company's documentation, FAQs, policies, and other reference materials that the AI uses to answer visitor questions accurately.
+
+## What Is RAG?
+
+**RAG** (Retrieval-Augmented Generation) works like this:
+
+1. Your documents are split into chunks and converted to **vector embeddings**
+2. When a visitor asks a question, Yoosr searches for the most relevant chunks
+3. Those chunks are injected into the LLM's prompt as context
+4. The LLM generates a response based on your actual documentation
+
+This means the bot answers from **your content** — not from its training data — reducing hallucinations.
+
+## Create a Knowledge Base
+
+<Step number={1} title="Open Knowledge Bases">
+In your dashboard, navigate to **AI → Knowledge Bases**.
+</Step>
+
+<Step number={2} title="Create a New Knowledge Base">
+Click **New Knowledge Base** and provide:
+
+| Field | Description |
+|-------|-------------|
+| **Name** | Internal name for the knowledge base |
+| **Description** *(optional)* | What this knowledge base covers |
+</Step>
+
+<Step number={3} title="Add Sources">
+Upload documents or paste URLs. Supported source types:
+
+| Source Type | Format | Notes |
+|-------------|--------|-------|
+| **PDF** | `.pdf` | Scanned PDFs may have poor text extraction |
+| **Text** | `.txt` | Plain text files |
+| **Markdown** | `.md` | Markdown-formatted documents |
+| **DOCX** | `.docx` | Microsoft Word documents |
+| **URL** | Web URL | The page is scraped at upload time |
+
+Each source is processed, chunked, and embedded automatically.
+</Step>
+
+## Embedding Configuration
+
+Your documents are converted to vector embeddings using:
+
+| Setting | Value |
+|---------|-------|
+| **Embedding Model** | `nvidia/llama-nemotron-embed-vl-1b-v2` |
+| **Dimensions** | 2048 |
+| **Vector Index** | Convex vector search index |
+
+The embedding model is configured via `EMBEDDING_MODEL` and `EMBEDDING_DIMENSIONS` environment variables.
+
+<Callout variant="info" title="Why 2048 dimensions?">
+Higher dimensions capture more semantic nuance, leading to more accurate search results. The Convex vector index handles 2048-dim vectors efficiently.
+</Callout>
+
+## Managing Sources
+
+### Adding Sources
+
+1. Open your knowledge base
+2. Click **Add Source**
+3. Upload a file or paste a URL
+4. The source is processed immediately and appears in the source list
+
+### Re-indexing
+
+If you update a source document:
+
+1. Delete the old source from the knowledge base
+2. Re-upload the updated version
+3. The new chunks replace the old ones
+
+### Source Status
+
+Each source shows a processing status:
+
+| Status | Meaning |
+|--------|---------|
+| **Processing** | Document is being chunked and embedded |
+| **Ready** | Source is indexed and available for search |
+| **Error** | Processing failed — check file format or URL accessibility |
+
+## Chunking Strategy
+
+Documents are split into chunks for vector search:
+
+- **Chunk size**: ~500 tokens per chunk
+- **Overlap**: ~50 tokens between adjacent chunks (preserves context)
+- **Metadata**: Each chunk stores the source document name and page/section
+
+<Callout variant="tip" title="Write for chunking">
+Structure your documents with clear headings and short paragraphs. This produces cleaner chunks that search more accurately.
+</Callout>
+
+## Best Practices
+
+1. **Start with your FAQ page** — It's the highest-impact content to add first
+2. **Keep documents up to date** — Stale content leads to stale bot answers
+3. **Use clear headings** — They help the chunking system preserve context
+4. **Split by topic** — Multiple knowledge bases (e.g., "Billing", "Technical", "Product") let you route queries more precisely
+5. **Test search quality** — Ask the bot questions and verify it pulls from the right sources
+6. **Remove irrelevant sources** — If a document is outdated, delete it to prevent bad answers
+
+## Troubleshooting
+
+**Bot answers aren't from my knowledge base:**
+- Check that the source is in "Ready" status (not "Processing" or "Error")
+- Verify the document contains the information the bot should reference
+- Try re-uploading the source
+
+**Search returning irrelevant results:**
+- Review your document structure — long, unstructured text produces poor chunks
+- Add clear headings and section breaks
+- Consider splitting large documents into smaller, focused ones

@@ -1,0 +1,126 @@
+export const meta = {
+  title: "Widget Configuration",
+  description: "Configure widget behavior — auto-open, welcome delay, pre-chat form, auto-close, and multi-language text labels.",
+  section: "widget"
+}
+
+# Widget Configuration
+
+Beyond appearance, you control how the widget **behaves** — when it opens, what visitors see first, and how conversations start.
+
+## Auto-Open
+
+Toggle whether the widget opens automatically when a visitor lands on your page.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Auto-open** | Enabled | Automatically expands the widget on page load |
+
+When enabled, the widget fires a `yoosr:auto_open` event that opens the chat window without user interaction.
+
+<Callout variant="tip" title="When to use auto-open">
+Enable it for proactive support. Disable it for a less intrusive experience where visitors choose to engage.
+</Callout>
+
+## Welcome Delay
+
+Control how many seconds before the welcome message appears.
+
+| Setting | Range | Default |
+|---------|-------|---------|
+| **Welcome Delay** | 0–60 seconds | 3 seconds |
+
+The welcome message is the first bot message a visitor sees. A short delay (1–3s) feels natural; longer delays give visitors time to explore the widget on their own.
+
+## Pre-Chat Form
+
+Require visitors to provide their information before starting a conversation.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Pre-chat form** | Enabled | Shows a form before the chat starts |
+
+When enabled, visitors see a form asking for:
+
+- **Name** (always required)
+- **Email** or **Phone** (based on contact method setting)
+
+### Contact Method
+
+Choose what information the pre-chat form collects:
+
+- **Email** — Collects the visitor's email address
+- **Phone** — Collects the visitor's phone number
+
+The collected data creates a **contact record** in your Yoosr project, which helps agents identify and follow up with visitors.
+
+<Callout variant="info" title="Contact records">
+Every email or phone collected creates a contact in your Contacts table. This enables future CRM features and conversation history lookup.
+</Callout>
+
+## Auto-Close
+
+Automatically close conversations after a period of inactivity.
+
+| Setting | Range | Default |
+|---------|-------|---------|
+| **Auto-close** | 0–1440 minutes (24 hours) | 30 minutes |
+
+Set to **0** to disable auto-close entirely. When auto-close triggers:
+
+1. The conversation status changes to **Closed**
+2. The visitor sees a rating prompt (if enabled)
+3. Agents can still reopen the conversation from the dashboard
+
+<Callout variant="warning" title="Don't set too low">
+A short auto-close (under 5 minutes) may frustrate visitors who step away briefly. 15–30 minutes is a good range for most use cases.
+</Callout>
+
+## Multi-Language Text Labels
+
+Customize every text string the widget displays — in **English**, **Arabic**, and **French**.
+
+| Text Field | Description | Default (EN) |
+|------------|-------------|--------------|
+| **Header Title** | Text shown in the widget header | `Chat with us` |
+| **Welcome Message** | First message from the bot | `Hi! How can we help you today?` |
+| **Pre-Chat Title** | Title of the pre-chat form | `Welcome` |
+| **Pre-Chat Subtitle** | Description below the pre-chat title | `Please fill in your details to start a conversation.` |
+
+### How to Edit
+
+1. Switch to the **Text** tab in Widget Setup
+2. Select the language (English, العربية, Français) from the dropdown
+3. Edit each field for that language
+4. Click **Save Config**
+
+<Callout variant="tip" title="RTL support">
+When a visitor views the widget in Arabic, the layout automatically switches to RTL (right-to-left) mode.
+</Callout>
+
+### Fallback Behavior
+
+If a translation is missing for a language, the widget falls back to the English value. Always ensure English translations are filled in.
+
+## Testing Your Configuration
+
+Use the **Test Widget** button (external link icon) next to Save to open a full-screen widget preview in a new tab. This lets you:
+
+- Interact with the widget without the iPhone frame
+- Test pre-chat form submission
+- Send messages and verify they appear in the dashboard
+- Test the welcome message timing
+
+## How Configuration Is Loaded
+
+The widget fetches project configuration at runtime from:
+
+```
+GET /api/widget/project?projectId=YOUR_PROJECT_ID
+```
+
+This endpoint returns your `widgetConfig` object, which includes all the settings described above. The API response is cached for 60 seconds to prevent excessive database queries.
+
+<Callout variant="success" title="No redeployment needed">
+All configuration changes take effect immediately across every widget instance. You don't need to update your website code.
+</Callout>

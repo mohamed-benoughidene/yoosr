@@ -8,14 +8,16 @@
         "solutions": "Solutions",
         "howItWorks": "Comment ça marche",
         "customers": "Clients",
-        "pricing": "Tarifs"
+        "pricing": "Tarifs",
+        "docs": "Documentation"
       },
       "login": "Connexion",
       "getEarlyAccess": "Accès Anticipé",
       "dropdowns": {
         "products": "Produits",
         "resources": "Ressources"
-      }
+      },
+      "github": "Dépôt GitHub"
     },
     "footer": {
       "tagline": "La plateforme open-source sans-code pour créer des agents IA et automatiser vos conversations clients.",
@@ -32,8 +34,10 @@
       },
       "legal": {
         "privacy": "Politique de Confidentialité",
-        "terms": "Conditions d'Utilisation"
+        "terms": "Conditions d'Utilisation",
+        "docs": "Documentation"
       },
+      "github": "Dépôt GitHub",
       "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement attendez-vous à des mises à jour fréquentes.",
       "copyright": "Yoosr, Inc. Open Source. Licence MIT."
     },
@@ -801,7 +805,14 @@
     "error_update_priority": "Échec de la mise à jour de la priorité",
     "system_assigned_to": "Conversation assignée à {name}",
     "system_transferred_to_agent": "Conversation transférée à {name}",
-    "system_transferred_to_dept": "Conversation transférée à {name}"
+    "system_transferred_to_dept": "Conversation transférée à {name}",
+    "system": {
+      "welcome": "Salut ! Comment pouvons-nous vous aider ?",
+      "resolved": "Cette conversation a été résolue. Merci !",
+      "agentConnected": "Vous êtes maintenant connecté avec un agent.",
+      "inactiveClosed": "Cette conversation a été automatiquement fermée en raison d'inactivité.",
+      "agentJoined": "Un agent a rejoint la conversation."
+    }
   },
   "requests": {
     "title": "Demandes",
@@ -1914,5 +1925,10 @@
       "ctaMicrocopy": "Sans carte bancaire. La configuration prend moins de 5 minutes.",
       "secondary": "Rejoignez 50+ équipes déjà sur liste d'attente."
     }
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Tout ce dont vous avez besoin pour construire avec Yoosr — de l'intégration de votre premier widget à la configuration des chatbots IA et à l'intégration de canaux externes.",
+    "brandName": "Documentation Yoosr"
   }
 }

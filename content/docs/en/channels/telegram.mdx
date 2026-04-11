@@ -1,0 +1,81 @@
+export const meta = {
+  title: "Telegram",
+  description: "Connect a Telegram bot to Yoosr so Telegram messages create conversations in your agent dashboard.",
+  section: "channels"
+}
+
+# Telegram Integration
+
+Connect your Telegram bot to Yoosr so every message sent to your bot appears as a conversation in the agent dashboard.
+
+## Step 1: Create a Telegram Bot
+
+1. Open Telegram and search for **@BotFather**
+2. Send the command `/newbot`
+3. Choose a **display name** (e.g., `Acme Support`)
+4. Choose a **username** ending in `bot` (e.g., `acme_support_bot`)
+5. BotFather returns a **Bot Token** (e.g., `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
+
+<Callout variant="warning" title="Keep your token secret">
+Never share your bot token publicly. Anyone with the token can control your bot.
+</Callout>
+
+## Step 2: Configure in Yoosr
+
+1. Go to **Settings → Channels** → **Telegram** → **Connect**
+2. Paste your **Bot Token**
+3. Yoosr generates a **Secret Token** automatically
+4. Click **Save**
+
+## Step 3: Set the Webhook
+
+Tell Telegram to send messages to your Yoosr instance:
+
+```
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOOSR_WEBHOOK_URL>&secret_token=<SECRET_TOKEN>
+```
+
+Replace:
+- `<YOUR_BOT_TOKEN>` — Your bot token from Step 1
+- `<YOOSR_WEBHOOK_URL>` — Your Yoosr webhook URL (shown in the channel settings, typically `https://<your-convex-site>.convex.site/webhooks/telegram`)
+- `<SECRET_TOKEN>` — The secret token Yoosr generated in Step 2
+
+Open this URL in your browser or send it as a GET request. You should see:
+
+```json
+{ "ok": true, "result": true, "description": "Webhook was set" }
+```
+
+## Step 4: Test
+
+Send a message to your Telegram bot. Within seconds:
+
+1. A new conversation appears in your Yoosr dashboard
+2. The conversation shows the Telegram channel indicator
+3. The contact is created with the Telegram user's name
+
+Reply from the Yoosr dashboard — your reply is sent back to the user on Telegram.
+
+## How It Works
+
+| Step | What happens |
+|------|-------------|
+| User messages bot | Telegram POSTs an Update to your Yoosr webhook |
+| Yoosr receives it | Authenticates via `X-Telegram-Bot-Api-Secret-Token` header |
+| Creates conversation | Matches or creates contact + conversation records |
+| Routes message | Through bot → agents → queue |
+| Agent replies | Yoosr POSTs the reply to Telegram's `sendMessage` API |
+
+## Security
+
+- **Authentication**: Every webhook request is verified against the stored secret token via the `X-Telegram-Bot-Api-Secret-Token` header
+- **POST-only**: GET requests to the webhook return `405 Method Not Allowed`
+- **Always 200**: Yoosr returns `200 OK` to prevent Telegram's retry storms
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Messages not arriving | Verify the webhook URL is set correctly — call `getWebhookInfo` on the Telegram API |
+| `403 Forbidden` | The secret token in your webhook doesn't match the one stored in Yoosr — re-save the channel config |
+| Bot doesn't respond | Check that an agent or AI bot is available to handle the conversation |

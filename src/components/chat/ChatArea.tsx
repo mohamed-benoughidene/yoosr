@@ -552,7 +552,14 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                         <div className="flex flex-col items-end gap-1 max-w-[70%]">
                                             {msg.content && (
                                                 <div className="p-3 rounded-lg bg-primary text-primary-foreground">
-                                                    <p className="text-sm">{msg.content}</p>
+                                                    <p className="text-sm">
+                                                        {msg.type === "system" ? (() => {
+                                                            const content = msg.content as string;
+                                                            // Convert "system.xyz" or "widget.xyz" to just "xyz" for the chat namespace
+                                                            const key = content.includes(".") ? content.split(".").pop() : content;
+                                                            return key ? t(`system.${key}`) : content;
+                                                        })() : msg.content as string}
+                                                    </p>
                                                 </div>
                                             )}
                                             {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}
@@ -574,7 +581,14 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                             </span>
                                             {msg.content && (
                                                 <div className="p-3 rounded-lg bg-muted">
-                                                    <p className="text-sm">{msg.content}</p>
+                                                    <p className="text-sm">
+                                                        {msg.type === "system" ? (() => {
+                                                            const content = msg.content as string;
+                                                            // Convert "system.xyz" or "widget.xyz" to just "xyz" for the chat namespace
+                                                            const key = content.includes(".") ? content.split(".").pop() : content;
+                                                            return key ? t(`system.${key}`) : content;
+                                                        })() : msg.content as string}
+                                                    </p>
                                                 </div>
                                             )}
                                             {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}

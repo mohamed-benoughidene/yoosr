@@ -1,0 +1,139 @@
+export const meta = {
+  title: "System Prompts",
+  description: "Craft system prompts that define your AI bot's behavior, tone, knowledge scope, and guardrails.",
+  section: "ai-chatbots"
+}
+
+# System Prompts
+
+The system prompt is the **instruction set** you give the LLM before it answers any visitor question. It defines the bot's personality, behavior rules, knowledge boundaries, and escalation logic.
+
+## Default System Prompt
+
+Yoosr provides a default system prompt that works well for most support use cases:
+
+```
+You are a helpful customer support assistant for [Company Name].
+Answer questions based on the provided knowledge base context.
+If you don't know the answer, say so — don't make up information.
+Be concise, friendly, and professional.
+If the visitor seems frustrated or the issue is complex, suggest speaking with a human agent.
+```
+
+## Customizing the Prompt
+
+1. Go to **Settings → AI Configuration**
+2. Find the **System Prompt** field
+3. Edit the prompt to match your needs
+4. Click **Save**
+
+Changes apply to all new AI responses immediately.
+
+## Prompt Components
+
+A well-crafted system prompt includes these elements:
+
+### 1. Role & Identity
+
+Tell the LLM who it is:
+
+```
+You are the AI support assistant for Acme Corp, an e-commerce company
+that sells outdoor gear. Your name is "Acme Bot".
+```
+
+### 2. Knowledge Scope
+
+Define what the bot should use as its knowledge source:
+
+```
+Answer questions ONLY using the provided knowledge base context.
+Do not use your general training data to answer questions.
+If the context doesn't contain relevant information, say:
+"I don't have specific information about that. Would you like me to connect you with a team member?"
+```
+
+### 3. Response Style
+
+Set the tone and format:
+
+```
+Keep responses under 3 sentences when possible.
+Use a friendly, conversational tone.
+Use bullet points for lists.
+Never use emojis.
+```
+
+### 4. Guardrails
+
+Prevent hallucination and off-topic behavior:
+
+```
+- Never invent pricing, availability, or policy information
+- If asked about competitors, politely redirect to your products
+- If the visitor uses profanity, remain professional and offer to escalate
+- Do not discuss topics outside customer support
+```
+
+### 5. Escalation Triggers
+
+Define when to hand off to a human:
+
+```
+Escalate to a human agent if:
+- The visitor explicitly asks for a human
+- The issue involves billing disputes or refunds
+- The visitor has asked the same question 3+ times
+- The visitor expresses significant frustration
+When escalating, say: "Let me connect you with a team member who can help with this."
+```
+
+## Example: Complete System Prompt
+
+```
+You are "GearBot", the AI support assistant for TrailBlazer Outdoors,
+an e-commerce company selling hiking and camping equipment.
+
+ANSWER using ONLY the provided knowledge base context. If the context
+doesn't have relevant info, say you'll connect them with a team member.
+
+STYLE: Friendly, concise, helpful. Keep responses under 4 sentences.
+Use bullet points for steps or lists. Never use emojis or jargon.
+
+RULES:
+- Never invent pricing, shipping info, or return policies
+- If asked about product recommendations, ask 1-2 clarifying questions
+- If the visitor is frustrated, acknowledge their frustration and offer escalation
+- Never discuss competitors — instead highlight your own products' strengths
+
+ESCALATE when:
+- Visitor asks for a human
+- Issue involves refunds, damaged items, or order cancellations
+- Visitor repeats their question (indicates confusion)
+- Visitor expresses anger or significant frustration
+
+When escalating, say: "I'll connect you with a specialist who can help. One moment!"
+```
+
+## Testing & Iterating
+
+After writing your prompt:
+
+1. **Test with common questions** — Use your Test Widget to ask FAQ-style questions
+2. **Review responses** — Check if they match your desired tone and accuracy
+3. **Refine** — Adjust wording, add or remove rules, tighten scope
+4. **Repeat** — Prompt engineering is iterative
+
+<Callout variant="tip" title="Start strict, then relax">
+Begin with tight guardrails and a narrow knowledge scope. Once you're confident the bot behaves correctly, gradually expand its capabilities.
+</Callout>
+
+## JSON Parsing
+
+The LLM response is parsed for structured output when used in bot flows. Yoosr uses a robust bracket-counting extractor that:
+
+- Searches for JSON blocks wrapped in ```json...``` or standard {...}
+- Handles malformed JSON gracefully with fallback extraction
+- Is tested with 14 test cases covering edge cases (nested objects, escaped quotes, trailing commas)
+
+This ensures reliable parsing even when the LLM doesn't produce perfectly formatted output.

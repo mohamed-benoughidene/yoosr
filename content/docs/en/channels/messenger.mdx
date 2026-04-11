@@ -1,0 +1,64 @@
+export const meta = {
+  title: "Messenger",
+  description: "Connect Facebook Messenger to Yoosr so Facebook Page messages appear in your agent dashboard.",
+  section: "channels"
+}
+
+# Messenger Integration
+
+Connect your Facebook Page to Yoosr so Messenger conversations appear alongside all your other channels.
+
+## Step 1: Create a Meta App
+
+1. Go to [Meta for Developers](https://developers.facebook.com)
+2. Click **My Apps** → **Create App**
+3. Select **Business** as the app type
+4. Add the **Messenger** product to your app
+
+## Step 2: Connect Your Facebook Page
+
+1. In your Meta App, go to **Messenger → Settings**
+2. Under **Access Tokens**, select your Facebook Page
+3. Grant the required permissions:
+   - `pages_messaging`
+   - `pages_manage_metadata`
+4. Copy the **Page Access Token**
+
+## Step 3: Configure in Yoosr
+
+1. Go to **Settings → Channels** → **Messenger** → **Connect**
+2. Enter your **Page ID**
+3. Enter your **Page Access Token**
+4. Enter your **App Secret** (from Meta App → Settings → Basic)
+5. Yoosr generates a **Verify Token**
+6. Click **Save**
+
+## Step 4: Configure the Webhook
+
+In your Meta App:
+
+1. Go to **Messenger → Settings** → **Webhooks**
+2. Click **Add Callback URL**
+3. Paste the **Callback URL** from Yoosr (same as WhatsApp: `https://<your-convex-site>.convex.site/webhooks/meta`)
+4. Paste the **Verify Token** from Yoosr
+5. Click **Verify and Save**
+6. Subscribe to: `messages`, `messaging_postbacks`, `message_deliveries`, `message_reads`
+
+## Step 5: Test
+
+1. Go to your Facebook Page and click **Message**
+2. Send a test message
+3. A conversation appears in Yoosr with the Messenger channel indicator
+4. Reply from Yoosr — it appears in Messenger
+
+## How It Works
+
+Messenger and WhatsApp share the same webhook endpoint (`/webhooks/meta`). Yoosr distinguishes them by the `object` field in the webhook payload:
+
+- `page` → Messenger
+- `whatsapp_business_account` → WhatsApp
+- `instagram` → Instagram
+
+## Security
+
+Same HMAC-SHA256 signature verification as WhatsApp. The app secret is used to verify the `X-Hub-Signature-256` header on every request.

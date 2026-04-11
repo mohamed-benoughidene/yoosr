@@ -1,0 +1,58 @@
+export const meta = {
+  title: "API Reference",
+  description: "Overview of Yoosr's public APIs — Widget API for embedded chat and webhook integrations.",
+  section: "api"
+}
+
+# API Reference
+
+Yoosr provides public APIs for embedding the chat widget and integrating with external systems. This section covers the Widget API endpoints and webhook formats.
+
+## Base URLs
+
+| API | Base URL |
+|-----|----------|
+| **Next.js (App)** | `https://app.yoosr.com` (or your domain) |
+| **Convex (Backend)** | `https://<project>.convex.site` — from `NEXT_PUBLIC_CONVEX_SITE_URL` |
+| **Widget endpoints** | Convex base URL + `/widget/*` |
+| **Webhook endpoints** | Convex base URL + `/webhooks/*` |
+
+## Authentication
+
+### Widget API (Public)
+
+All widget endpoints are **public** — no authentication required. They rely on `projectId` for identification and implement rate limiting to prevent abuse.
+
+### Webhooks (Verified)
+
+Inbound webhooks are verified using platform-specific signatures:
+
+| Platform | Verification |
+|----------|-------------|
+| **Meta (WhatsApp/Messenger/Instagram)** | `X-Hub-Signature-256` HMAC-SHA256 |
+| **Telegram** | `X-Telegram-Bot-Api-Secret-Token` header |
+| **Clerk** | Svix signature verification |
+
+## Error Codes
+
+| Status | Meaning |
+|--------|---------|
+| `200` | Success |
+| `400` | Bad request — missing or invalid parameters |
+| `401` | Unauthorized — invalid webhook signature |
+| `403` | Forbidden — credential mismatch |
+| `404` | Not found — integration not configured |
+| `405` | Method not allowed |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
+
+## Rate Limits
+
+| Endpoint | Limit | Strategy |
+|----------|-------|----------|
+| `POST /widget/conversations` | 5 req/min per visitorId or projectId | Fixed window |
+| `POST /widget/messages` | 20 req/min, burst capacity 5 | Token bucket |
+
+## Next Steps
+
+[Widget API Endpoints →](/docs/api/widget-api)

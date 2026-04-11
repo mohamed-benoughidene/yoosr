@@ -62,7 +62,10 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://yoosr.io",
     siteName: "Yoosr",
-    title: "Yoosr - AI-Powered Customer Support Platform",
+    title: {
+      default: "Yoosr - AI-Powered Customer Support Platform",
+      template: "%s | Yoosr",
+    },
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
     images: [
       {
@@ -75,7 +78,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Yoosr - AI-Powered Customer Support Platform",
+    title: {
+      default: "Yoosr - AI-Powered Customer Support Platform",
+      template: "%s | Yoosr",
+    },
     description: "Build intelligent customer support bots with visual flow builder, knowledge base RAG, and omnichannel support.",
     images: ["/og/image"],
   },
@@ -88,9 +94,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon-16x16.svg",
-    apple: "/apple-touch-icon.svg",
+    icon: "/favicon.png",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
 };

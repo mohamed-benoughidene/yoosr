@@ -1,0 +1,79 @@
+export const meta = {
+  title: "FAQ",
+  description: "Frequently asked questions about using Yoosr.",
+  section: "troubleshooting"
+}
+
+# Frequently Asked Questions
+
+## Account & Projects
+
+### How do I find my Project ID?
+Go to **Settings → Widget Setup** → **Installation** tab. Your Project ID is displayed in the code snippet. It looks like `proj_abc123xyz`.
+
+### Can I use Yoosr on multiple websites?
+Yes. Create one project per website for clean data separation. Each project gets its own widget code, settings, and team.
+
+### How do I add team members to my organization?
+In your Clerk organization settings, invite members by email. Once they join, they'll have access to all your Yoosr projects based on their role (admin or agent).
+
+### Can I disable the AI bot and use only human agents?
+Yes. Simply don't configure an OpenRouter API key, or disable the AI chatbot in your project settings. All messages will route directly to agents.
+
+## Conversations
+
+### How many conversations can I have simultaneously?
+There's no hard limit. Conversations scale with your plan. Check your plan details in the billing section.
+
+### How do I export conversation data?
+Go to **Dashboard → Conversations** → select conversations → **Export**. Data is exported as CSV or JSON.
+
+### What data is stored and for how long?
+Yoosr uses a **90-day default TTL** for conversations and messages. After 90 days, data is soft-deleted and scheduled for permanent removal by the weekly cleanup cron job. 22 tables use soft-delete patterns for data safety.
+
+### How do I reset a visitor's session for testing?
+The widget stores a visitor ID in `localStorage` (`yoosr_visitor_id`). Clear your browser's localStorage or open an incognito window to simulate a new visitor. In the dashboard's Widget Setup preview, use the **Reset Session** button.
+
+## Widget & Customization
+
+### Can I customize the widget for different languages?
+Yes. The widget supports **English, Arabic, and French** with full RTL layout for Arabic. Customize text labels per language in Settings → Widget Setup → Text tab.
+
+### What browsers are supported?
+All modern browsers: Chrome, Firefox, Safari, Edge. The widget uses standard HTML/CSS/JS with no legacy browser support.
+
+## AI & Chatbots
+
+### What happens when the AI rate limit is reached?
+When `AI_RATE_LIMIT_PER_HOUR` is exceeded, incoming messages skip the AI and route directly to human agents. A log entry is created in your Token Usage dashboard.
+
+### Can the AI bot handle file attachments?
+The AI processes text messages. File attachments (images, documents) are visible to human agents in the conversation view.
+
+## Channels
+
+### Do all channels work simultaneously?
+Yes. You can connect Widget, Telegram, WhatsApp, Messenger, and Instagram at the same time. All feed into the same conversation system.
+
+### Can I use different bots for different channels?
+Yes. Configure separate bot flows or AI settings per channel through department-specific bot configurations.
+
+## Security & Compliance
+
+### Is the widget GDPR compliant?
+Yes. The widget:
+- Collects only necessary data (name, email/phone via pre-chat form)
+- Supports data deletion requests via the soft-delete system
+- Uses encrypted credentials for channel integrations
+- Does not share data with third parties beyond the platforms you configure
+
+### Are webhook payloads encrypted in transit?
+Yes. All webhook deliveries use HTTPS. Additionally, each delivery is signed with HMAC-SHA256 for authenticity verification.
+
+## Support
+
+### How do I get help?
+- **Documentation** — You're already here
+- **In-app support** — Use the widget on app.yoosr.com to chat with our team
+- **Email** — Contact support@yoosr.com
+- **Status** — Check platform status at status.yoosr.com

@@ -1,0 +1,87 @@
+export const meta = {
+  title: "AI Models",
+  description: "Configure LLM models via OpenRouter, manage API keys, rate limits, and select the best model for your support use case.",
+  section: "ai-chatbots"
+}
+
+# AI Models
+
+Yoosr connects to 100+ LLM models through **OpenRouter**, a unified API that gives you access to models from OpenAI, Anthropic, Google, Meta, Mistral, and more.
+
+## OpenRouter Integration
+
+### Get Your API Key
+
+1. Create an account at [openrouter.ai](https://openrouter.ai)
+2. Go to **API Keys** in your dashboard
+3. Create a new key and copy it
+4. Paste it into your Yoosr project's **AI Settings** under OpenRouter API Key
+
+<Callout variant="warning" title="Keep it secret">
+Your OpenRouter API key is encrypted at rest using AES-GCM encryption. Never share it in client-side code or public repositories.
+</Callout>
+
+## Model Selection
+
+OpenRouter provides access to models from multiple providers. Here are recommended models for customer support:
+
+| Model | Provider | Best For | Speed | Cost |
+|-------|----------|----------|-------|------|
+| **claude-3-haiku** | Anthropic | Fast, accurate support replies | Fast | Low |
+| **gpt-4o-mini** | OpenAI | General-purpose support | Fast | Low |
+| **gemini-pro** | Google | Multi-language support | Medium | Low |
+| **claude-3-sonnet** | Anthropic | Complex technical support | Medium | Medium |
+| **gpt-4o** | OpenAI | Premium, high-quality responses | Medium | Medium |
+| **llama-3-70b** | Meta | Open-source, cost-effective | Medium | Low |
+
+<Callout variant="tip" title="Start with claude-3-haiku or gpt-4o-mini">
+These models offer the best balance of speed, quality, and cost for most support use cases. Upgrade to premium models if you need deeper reasoning.
+</Callout>
+
+### How to Change Models
+
+1. Go to **Settings → AI Configuration** in your dashboard
+2. Select your desired model from the dropdown
+3. Click **Save**
+
+Changes apply immediately — no restart needed.
+
+## Rate Limiting
+
+Control how many AI requests your project makes per hour to prevent unexpected costs.
+
+| Setting | Description |
+|---------|-------------|
+| `AI_RATE_LIMIT_PER_HOUR` | Maximum LLM API calls per hour |
+
+Set this via environment variable or in your project settings. When the limit is reached:
+
+- Additional messages skip the AI and route directly to agents
+- A log entry is created in your Token Usage dashboard
+
+## Retry Configuration
+
+If an LLM call fails (timeout, API error, etc.), Yoosr automatically retries.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LLM_RETRY_MAX_ATTEMPTS` | 3 | Maximum retry attempts before failing |
+
+Each retry uses exponential backoff. After all attempts fail, the message routes to a human agent.
+
+## Monitoring Usage
+
+Track your AI consumption from the dashboard:
+
+- **Token Usage** — Total tokens consumed per model
+- **Cost estimation** — Approximate cost based on model pricing
+- **Response times** — Average latency per model
+- **Error rates** — Failed API calls and retry counts
+
+## Best Practices
+
+1. **Start with a fast, cheap model** and upgrade only if quality isn't sufficient
+2. **Set a rate limit** to cap hourly spending
+3. **Monitor token usage** regularly — long conversations consume more tokens
+4. **Use knowledge base RAG** to reduce the context the LLM needs to process
+5. **Test with real visitor queries** before going live
