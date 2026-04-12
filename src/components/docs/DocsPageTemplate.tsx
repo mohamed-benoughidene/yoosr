@@ -9,8 +9,7 @@
 import { DocsBreadcrumbs } from "@/components/docs/DocsBreadcrumbs"
 import { DocsToc } from "@/components/docs/DocsToc"
 import { DocsPrevNext } from "@/components/docs/DocsPrevNext"
-import { mdxComponents } from "@/components/docs/MDXComponents"
-import { getDocsNav } from "@/lib/docs.client"
+
 
 interface DocsPageTemplateProps {
   children: React.ReactNode
@@ -32,7 +31,7 @@ export function DocsPageTemplate({
   breadcrumbs,
   prevPage,
   nextPage,
-  title,
+
 }: DocsPageTemplateProps) {
   // Merge custom MDX components with the page children
   return (

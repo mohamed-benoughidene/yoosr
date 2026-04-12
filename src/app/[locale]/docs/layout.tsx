@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { DocsSidebar } from "@/components/docs/DocsSidebar"
 import { DocsSearch } from "@/components/docs/DocsSearch"
-import { DocsBreadcrumbs } from "@/components/docs/DocsBreadcrumbs"
+
 import { parseDocsFrontmatter } from "@/lib/docs"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"

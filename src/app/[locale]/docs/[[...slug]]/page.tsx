@@ -4,7 +4,7 @@ import { DocsBreadcrumbs } from "@/components/docs/DocsBreadcrumbs"
 import { DocsToc } from "@/components/docs/DocsToc"
 import { DocsPrevNext } from "@/components/docs/DocsPrevNext"
 import { getDocsNav, type DocsNavSection, type DocsNavItem } from "@/lib/docs.client"
-import { parseDocsFrontmatter, type DocsPageMeta } from "@/lib/docs"
+import { type DocsPageMeta } from "@/lib/docs"
 import { BookOpen, Rocket, MessageSquare, Bot, Workflow, Shield, Webhook, LifeBuoy } from "lucide-react"
 import Link from "next/link"
 import fs from "fs"
@@ -200,7 +200,7 @@ export default async function DocsPage({
 
   // Root docs page — render landing page
   if (!doc && (!slug || slug.length === 0)) {
-    return <DocsLanding locale={locale} />
+    return <DocsLanding />
   }
 
   if (!doc) {
@@ -233,7 +233,7 @@ export default async function DocsPage({
   const renderedHtml = String(html)
 
   const navTree = getDocsNav(locale)
-  const allPages = parseDocsFrontmatter(locale)
+
   const currentHref = `/docs/${slug?.join("/") || ""}`
   const { prev: prevPage, next: nextPage } = getPrevNext(navTree, currentHref)
 
@@ -338,15 +338,15 @@ const DOCS_FEATURES = [
   },
 ]
 
-function DocsLanding({ locale }: { locale: string }) {
+function DocsLanding() {
   // We use the same getTranslations promise resolution for async components, but
   // since DocsLanding is called as a regular component in a server component tree
   // that's already awaited, we should make it async. Wait, a functional
   // async component returning JSX is completely valid in Next.js Server Components.
-  return <DocsLandingAsync locale={locale} />;
+  return <DocsLandingAsync />;
 }
 
-async function DocsLandingAsync({ locale }: { locale: string }) {
+async function DocsLandingAsync() {
   const t = await getTranslations("docs");
 
   return (

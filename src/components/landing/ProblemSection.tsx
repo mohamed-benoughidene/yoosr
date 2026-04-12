@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { ScrollReveal } from "./ScrollReveal";
 
 export function ProblemSection() {
@@ -77,12 +78,12 @@ export function ProblemSection() {
             </ScrollReveal>
           </div>
 
-          {/* Right column — SVG image */}
           <div className="flex-1 relative min-h-[300px] md:min-h-[400px]">
-            <img
+            <Image
               src="/Problem.svg"
               alt="Customer overwhelmed by chaotic support"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
               style={{ opacity: 0.8 }}
             />
           </div>

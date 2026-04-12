@@ -104,7 +104,10 @@ function NavUser() {
   const [mounted, setMounted] = useState(false)
   const { setTheme, resolvedTheme } = useTheme()
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(timer)
+  }, [])
 
   const isAdmin = activeProject?.userRole === "org:admin"
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
