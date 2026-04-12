@@ -70,23 +70,19 @@ function OrgSwitcher() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton size="lg" asChild className="p-0 hover:bg-transparent">
-          <div>
-            <OrganizationSwitcher
-              hidePersonal
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  organizationSwitcherTrigger: "flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent transition-colors text-sidebar-foreground",
-                  organizationPreviewAvatarBox: "size-8 shrink-0",
-                  organizationPreviewMainIdentifier: "text-sm font-semibold",
-                  organizationPreviewSecondaryIdentifier: "text-xs text-muted-foreground",
-                  organizationSwitcherTriggerIcon: "ms-auto text-muted-foreground",
-                },
-              }}
-            />
-          </div>
-        </SidebarMenuButton>
+        <OrganizationSwitcher
+          hidePersonal
+          appearance={{
+            elements: {
+              rootBox: "w-full",
+              organizationSwitcherTrigger: "flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent transition-colors text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
+              organizationPreviewAvatarBox: "size-8 shrink-0",
+              organizationPreviewMainIdentifier: "text-sm font-semibold",
+              organizationPreviewSecondaryIdentifier: "text-xs text-muted-foreground",
+              organizationSwitcherTriggerIcon: "ms-auto text-muted-foreground",
+            },
+          }}
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   )
@@ -111,7 +107,7 @@ function NavUser() {
 
   const isAdmin = activeProject?.userRole === "org:admin"
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
-  const fullName = user?.fullName ?? user?.firstName ?? "Account"
+  const fullName = user?.fullName ?? user?.firstName ?? t("account_fallback")
   const email = user?.emailAddresses?.[0]?.emailAddress ?? ""
   const isDark = resolvedTheme === "dark"
 
@@ -162,7 +158,7 @@ function NavUser() {
               {mounted && (
                 <DropdownMenuItem onClick={toggleTheme}>
                   {isDark ? <Sun className="me-2 size-4" /> : <Moon className="me-2 size-4" />}
-                  {isDark ? "Light Mode" : "Dark Mode"}
+                  {isDark ? t("light_mode") : t("dark_mode")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -171,7 +167,7 @@ function NavUser() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => signOut({ redirectUrl: `/${locale}` })}>
-                <LogOut className="me-2 size-4" />Log out
+                <LogOut className="me-2 size-4" />{t("log_out")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

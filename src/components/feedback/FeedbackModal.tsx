@@ -91,28 +91,28 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent dir={dir} className="sm:max-w-[500px] border-none shadow-2xl bg-white/95 backdrop-blur-sm dark:bg-slate-950/95 overflow-hidden">
+      <DialogContent dir={dir} className="sm:max-w-[500px] border border-border/50 shadow-2xl bg-background/95 backdrop-blur-xl overflow-hidden rounded-2xl">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold tracking-tight">{t("title")}</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">{t("title")}</DialogTitle>
+          <DialogDescription className="text-muted-foreground/80">
             {t("subtitle")}
           </DialogDescription>
         </DialogHeader>
 
         {isSuccess ? (
-          <div className="py-12 flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-300">
-            <div className="h-20 w-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+          <div className="py-12 flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-500">
+            <div className="h-20 w-20 rounded-full bg-success/10 flex items-center justify-center shadow-inner">
+              <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
             <div className="text-center space-y-1">
-              <h3 className="text-xl font-semibold">Multiple thanks!</h3>
+              <h3 className="text-xl font-semibold text-foreground">Multiple thanks!</h3>
               <p className="text-muted-foreground">{t("successMessage")}</p>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 pt-4">
             <div className="space-y-3">
-              <Label className="text-sm font-medium">{t("whatsOnYourMind")}</Label>
+              <Label className="text-sm font-medium text-foreground/80">{t("whatsOnYourMind")}</Label>
               <ToggleGroup
                 type="single"
                 value={type}
@@ -123,10 +123,9 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   value="bug"
                   aria-label="Bug"
                   className={cn(
-                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-transparent",
-                    "data-[state=on]:bg-red-50 data-[state=on]:text-red-700 data-[state=on]:border-red-200 data-[state=on]:shadow-sm",
-                    "dark:data-[state=on]:bg-red-900/20 dark:data-[state=on]:text-red-400 dark:data-[state=on]:border-red-800",
-                    "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-border/50",
+                    "data-[state=on]:bg-destructive/10 data-[state=on]:text-destructive data-[state=on]:border-destructive/30 data-[state=on]:shadow-sm",
+                    "hover:bg-muted/50"
                   )}
                 >
                   <Bug className="h-4 w-4" />
@@ -136,10 +135,9 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   value="feature"
                   aria-label="Feature Request"
                   className={cn(
-                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-transparent text-center px-1",
-                    "data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200 data-[state=on]:shadow-sm",
-                    "dark:data-[state=on]:bg-amber-900/20 dark:data-[state=on]:text-amber-400 dark:data-[state=on]:border-amber-800",
-                    "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-border/50 text-center px-1",
+                    "data-[state=on]:bg-warning/10 data-[state=on]:text-warning data-[state=on]:border-warning/30 data-[state=on]:shadow-sm",
+                    "hover:bg-muted/50"
                   )}
                 >
                   <Lightbulb className="h-4 w-4" />
@@ -149,10 +147,9 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   value="general"
                   aria-label="General"
                   className={cn(
-                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-transparent",
-                    "data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 data-[state=on]:border-blue-200 data-[state=on]:shadow-sm",
-                    "dark:data-[state=on]:bg-blue-900/20 dark:data-[state=on]:text-blue-400 dark:data-[state=on]:border-blue-800",
-                    "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    "flex-1 h-14 flex flex-col items-center justify-center gap-1.5 transition-all border border-border/50",
+                    "data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/30 data-[state=on]:shadow-sm",
+                    "hover:bg-muted/50"
                   )}
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -162,12 +159,12 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="feedback-message" className="text-sm font-medium">{t("messageLabel")}</Label>
+              <Label htmlFor="feedback-message" className="text-sm font-medium text-foreground/80">{t("messageLabel")}</Label>
               <div className="relative">
                 <Textarea
                   id="feedback-message"
                   placeholder={t("placeholder")}
-                  className="min-h-[150px] resize-none focus-visible:ring-primary/20 transition-all border-slate-200 dark:border-slate-800"
+                  className="min-h-[150px] resize-none focus-visible:ring-primary/20 transition-all border-border/50 bg-muted/30 focus:bg-background"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={MAX_CHARS}
@@ -175,7 +172,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 <div 
                   className={cn(
                     "absolute bottom-3 end-3 text-[11px] font-medium px-2 py-0.5 rounded-md backdrop-blur-md text-start",
-                    message.length >= MAX_CHARS ? "text-red-500 bg-red-50 dark:bg-red-950/20" : "text-slate-400 bg-slate-50 dark:bg-slate-900/20"
+                    message.length >= MAX_CHARS ? "text-destructive bg-destructive/10" : "text-muted-foreground bg-muted/50"
                   )}
                 >
                   {t("characterCount", { count: message.length })}
@@ -184,7 +181,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg animate-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg animate-in slide-in-from-top-2 duration-300">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -194,7 +191,7 @@ export function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               <Button
                 type="submit"
                 disabled={isLoading || message.length === 0}
-                className="w-full h-11 text-base font-semibold transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
+                className="w-full h-11 text-base font-semibold transition-all active:scale-[0.98] shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isLoading ? (
                   <>

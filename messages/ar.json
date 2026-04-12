@@ -645,7 +645,11 @@
     "settings": "الإعدادات",
     "test_widget": "معاينة الويدجت",
     "group_ai": "الذكاء الاصطناعي",
-    "group_data": "البيانات"
+    "group_data": "البيانات",
+    "account_fallback": "الحساب",
+    "log_out": "تسجيل الخروج",
+    "light_mode": "الوضع الفاتح",
+    "dark_mode": "الوضع الداكن"
   },
   "dashboard": {
     "title": "نظرة عامة على لوحة القيادة",

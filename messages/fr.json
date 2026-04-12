@@ -645,7 +645,11 @@
     "settings": "Paramètres",
     "test_widget": "Aperçu du Widget",
     "group_ai": "IA",
-    "group_data": "Données"
+    "group_data": "Données",
+    "account_fallback": "Compte",
+    "log_out": "Se déconnecter",
+    "light_mode": "Mode clair",
+    "dark_mode": "Mode sombre"
   },
   "dashboard": {
     "title": "Aperçu du tableau de bord",
