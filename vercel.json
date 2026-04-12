@@ -32,7 +32,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://*.clerk.accounts.dev https://clerk.yoosr.io https://*.convex.cloud https://*.convex.site https://vercel.live https://yoosr.io; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.clerk.accounts.dev https://clerk.yoosr.io https://*.convex.cloud https://*.convex.site wss://*.convex.cloud wss://*.convex.site https://openrouter.ai https://clerk-telemetry.com https://vercel.live https://yoosr.io wss://yoosr.io; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://*.clerk.accounts.dev https://clerk.yoosr.io https://*.convex.cloud https://*.convex.site https://vercel.live; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.clerk.accounts.dev https://clerk.yoosr.io https://*.convex.cloud https://*.convex.site wss://*.convex.cloud wss://*.convex.site https://openrouter.ai https://clerk-telemetry.com https://vercel.live; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
         }
       ]
     },

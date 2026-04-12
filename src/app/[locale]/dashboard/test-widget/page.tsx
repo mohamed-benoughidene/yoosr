@@ -42,7 +42,7 @@ export default function TestWidgetPage() {
     projectId: "${projectId}"
   };
 </script>
-<script src="${baseUrl}/widget.js" async></script>`
+<script src="${baseUrl}/loader.js" async></script>`
 
     const handleCopy = () => {
         navigator.clipboard.writeText(embedCode)
