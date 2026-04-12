@@ -114,8 +114,9 @@ describe("WidgetLoader", () => {
       render(<WidgetLoader projectId="abc123" />);
 
       const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
-      expect(wrapper.style.width).toBe("400px");
-      expect(wrapper.style.height).toBe("600px");
+      expect(wrapper.style.width).toBe("380px");
+      expect(wrapper.style.height).toBe("520px");
+      expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
       expect(wrapper.style.borderRadius).toBe("12px");
       expect(wrapper.style.boxShadow).toContain("rgba");
       expect(wrapper.style.transition).toContain("transform");
@@ -296,6 +297,144 @@ describe("WidgetLoader", () => {
       render(<WidgetLoader projectId="abc123" onError={onError} />);
 
       expect(typeof onError).toBe("function");
+    });
+  });
+
+  describe("toast notification", () => {
+    it("should NOT show a toast by default", () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      const toast = document.querySelector("[aria-live='polite']");
+      expect(toast).toBeNull();
+    });
+
+    it("should show a toast when a yoosr:new_message is received while minimized", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message", senderName: "Agent", message: "Hi there!" },
+            origin: "null",
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const toast = document.querySelector("[aria-live='polite']");
+        expect(toast).toBeTruthy();
+        expect((toast as HTMLElement).textContent).toContain("Agent");
+        expect((toast as HTMLElement).textContent).toContain("Hi there!");
+      });
+    });
+
+    it("should NOT show a toast when the widget is open", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message", senderName: "Agent", message: "Hello" },
+            origin: "null",
+          })
+        );
+      });
+
+      const toast = document.querySelector("[aria-live='polite']");
+      expect(toast).toBeNull();
+    });
+
+    it("should dismiss the toast after 4 seconds", async () => {
+      vi.useFakeTimers();
+      render(<WidgetLoader projectId="abc123" />);
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message", senderName: "Agent", message: "Hey" },
+            origin: "null",
+          })
+        );
+      });
+
+      // Toast should be visible initially
+      expect(document.querySelector("[aria-live='polite']")).toBeTruthy();
+
+      // Advance timers past the 4s auto-dismiss
+      await act(async () => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      expect(document.querySelector("[aria-live='polite']")).toBeNull();
+      vi.useRealTimers();
+    });
+
+    it("should open the widget and clear the badge when toast is clicked", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message", senderName: "Agent", message: "Click me" },
+            origin: "null",
+          })
+        );
+      });
+
+      await waitFor(() => {
+        expect(document.querySelector("[aria-live='polite']")).toBeTruthy();
+      });
+
+      fireEvent.click(document.querySelector("[aria-live='polite']")!);
+
+      expect(screen.getByRole("button", { name: "Close chat" })).toBeTruthy();
+      expect(document.querySelector("[aria-live='polite']")).toBeNull();
+      const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+      expect(badge).toBeNull();
+    });
+  });
+
+  describe("launcher pulse animation", () => {
+    it("should add the pulse class when a new message arrives", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      const button = screen.getByRole("button", { name: "Open chat" });
+      expect(button.className).not.toContain("yoosr-launcher-pulse");
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message" },
+            origin: "null",
+          })
+        );
+      });
+
+      expect(button.className).toContain("yoosr-launcher-pulse");
+    });
+  });
+
+  describe("iframe visibility postMessage", () => {
+    it("should send yoosr:visibility_change to iframe when opened", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      // Verify the button state changed (visibility message sent to iframe)
+      expect(screen.getByRole("button", { name: "Close chat" })).toBeTruthy();
+    });
+
+    it("should send yoosr:visibility_change to iframe when closed", async () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      // Open first
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+      // Then close
+      fireEvent.click(screen.getByRole("button", { name: "Close chat" }));
+
+      expect(screen.getByRole("button", { name: "Open chat" })).toBeTruthy();
     });
   });
 });
