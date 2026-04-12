@@ -144,20 +144,6 @@ function compileToExecutionNodes(nodes: FlowNode[], edges: FlowEdge[]) {
                 });
                 break;
             }
-            case "ai_assistant": {
-                const aiSuccessEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "true")?.target;
-                const aiFailureEdge = safeEdges.find((e: FlowEdge) => e.source === node.id && e.sourceHandle === "false")?.target;
-                actions.push({
-                    _type: "ai_assistant",
-                    systemPrompt: data.systemPrompt || "",
-                    model: data.model || "",
-                    maxTurns: data.maxTurns || 3,
-                    assignTo: data.assignTo || "assistant_reply",
-                    successPath: aiSuccessEdge,
-                    failurePath: aiFailureEdge,
-                });
-                break;
-            }
             case "hitlHandoff":
                 actions.push({ _type: "reply", text: data.handoffMessage || "Transferring you to an agent..." });
                 actions.push({ _type: "hitl_handoff" });

@@ -444,7 +444,6 @@
       "saveOutputToVariable": "Save output to variable",
       "outputVariablePlaceholder": "e.g., gpt_reply",
       "jsonHint": "If the LLM returns valid JSON, keys are auto-mapped to context attributes.",
-      "aiAssistantPromptPlaceholder": "Define your AI assistant persona and guardrails...",
       "maxTurns": "Max Turns",
       "maxTurnsHelper": "How many user messages this block handles before exiting via Success.",
       "saveFinalReplyTo": "Save final reply to variable",
@@ -514,10 +513,6 @@
       "aiTask": {
         "name": "AI Task",
         "description": "Execute an LLM prompt"
-      },
-      "aiAssistant": {
-        "name": "AI Assistant",
-        "description": "Autonomous multi-turn LLM"
       },
       "hitlHandoff": {
         "name": "HITL Handoff",

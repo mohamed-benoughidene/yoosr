@@ -56,7 +56,7 @@ function BotEditor() {
                 "aiTask", "hitlHandoff", "close", "if_operating_hours",
                 "if_online_agent", "capture_user_reply", "wait", "ask_kb",
                 "replace_bot", "change_department", "code_action",
-                "clear_transcript", "ai_assistant",
+                "clear_transcript",
             ]);
 
             // Common AI mistakes → correct type
