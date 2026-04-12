@@ -1,6 +1,6 @@
 import { NextIntlClientProvider } from "next-intl";
 import WidgetChat from "./components/WidgetChat";
-import { Providers } from "@/components/providers";
+import { WidgetProviders } from "./components/WidgetProviders";
 
 export default async function WidgetPage(props: {
     searchParams: Promise<{ lang?: string; projectId?: string }>;
@@ -46,9 +46,9 @@ export default async function WidgetPage(props: {
     return (
         <NextIntlClientProvider locale={locale} messages={{ widget: messages.widget }}>
             <div lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className="h-full">
-                <Providers>
+                <WidgetProviders>
                     <WidgetChat />
-                </Providers>
+                </WidgetProviders>
             </div>
         </NextIntlClientProvider>
     );

@@ -47,14 +47,14 @@ export function AuthProviders({ children }: { children: React.ReactNode }) {
                 appearance={{
                     baseTheme: shadcn,
                     variables: {
-                        colorPrimary: "var(--lp-gold)",
-                        colorBackground: "var(--lp-surface)",
-                        colorForeground: "var(--lp-text)",
-                        colorMutedForeground: "var(--lp-text-secondary)",
-                        colorInput: "var(--lp-surface-2)",
-                        colorInputForeground: "var(--lp-text)",
-                        colorMuted: "var(--lp-surface)",
-                        colorBorder: "var(--lp-border)",
+                        colorPrimary: "var(--primary)",
+                        colorBackground: "var(--background)",
+                        colorForeground: "var(--foreground)",
+                        colorMutedForeground: "var(--muted-foreground)",
+                        colorInput: "var(--input)",
+                        colorInputForeground: "var(--foreground)",
+                        colorMuted: "var(--muted)",
+                        colorBorder: "var(--border)",
                         fontFamily: "inherit",
                     },
                 }}

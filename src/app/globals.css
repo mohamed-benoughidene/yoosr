@@ -1032,3 +1032,35 @@ body[data-scroll-locked] {
 :lang(ar) .ds-closing {
   font-family: var(--font-mirza), "Mirza", sans-serif;
 }
+
+/* ===== WIDGET ISOLATION ===== */
+/* Prevent theme provider from affecting the embedded widget */
+.widget-root {
+  /* Reset all shadcn theme variables to transparent/inherit */
+  --background: transparent !important;
+  --foreground: inherit !important;
+  --card: transparent !important;
+  --card-foreground: inherit !important;
+  --popover: transparent !important;
+  --popover-foreground: inherit !important;
+  --primary: inherit !important;
+  --primary-foreground: inherit !important;
+  --secondary: transparent !important;
+  --secondary-foreground: inherit !important;
+  --muted: transparent !important;
+  --muted-foreground: inherit !important;
+  --accent: transparent !important;
+  --accent-foreground: inherit !important;
+  --destructive: inherit !important;
+  --border: transparent !important;
+  --input: transparent !important;
+  --ring: transparent !important;
+  --sidebar: transparent !important;
+  --sidebar-foreground: inherit !important;
+  --sidebar-primary: inherit !important;
+  --sidebar-primary-foreground: inherit !important;
+  --sidebar-accent: transparent !important;
+  --sidebar-accent-foreground: inherit !important;
+  --sidebar-border: transparent !important;
+  --sidebar-ring: transparent !important;
+}

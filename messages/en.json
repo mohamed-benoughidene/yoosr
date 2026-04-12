@@ -656,7 +656,11 @@
     "settings": "Settings",
     "test_widget": "Widget Preview",
     "group_ai": "AI",
-    "group_data": "Data"
+    "group_data": "Data",
+    "account_fallback": "Account",
+    "log_out": "Log out",
+    "light_mode": "Light Mode",
+    "dark_mode": "Dark Mode"
   },
   "header": {
     "available": "Available"
