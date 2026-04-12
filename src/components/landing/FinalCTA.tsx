@@ -8,33 +8,45 @@ export function FinalCTA() {
   const t = useTranslations("landingPage.finalCta")
 
   return (
-    <section className="relative flex flex-col items-center justify-center py-20 md:py-32 w-full overflow-hidden" style={{ backgroundColor: "var(--lp-bg)" }}>
+    <section className="relative flex flex-col items-center justify-center py-20 md:py-32 w-full overflow-hidden" style={{ backgroundColor: "var(--lp-bg-deep)" }}>
       {/* Background glow behind text block */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
         style={{
           width: "600px",
           height: "600px",
-          background: "var(--lp-gold-glow)",
-          filter: "blur(8px)",
-          opacity: 0.25,
+          background: "radial-gradient(circle, var(--lp-gold-alpha-15), transparent 65%)",
+          filter: "blur(40px)",
           zIndex: 0
         }}
       />
 
+      {/* Grid pattern overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(var(--lp-grid-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--lp-grid-line) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
+        }}
+      />
+
       <div className="relative z-10 w-full max-w-[680px] px-6 text-center mx-auto flex flex-col items-center">
-        
+
         {/* Illustration: Relaxed agent blob */}
         <div className="mb-10 w-full flex justify-center items-center h-[160px] relative">
-          {/* Label floating */}
-          <div 
+          {/* Label floating - glass card */}
+          <div
             className="absolute top-0 px-3 py-1.5 rounded-full border text-xs font-semibold flex items-center justify-center gap-1.5 z-10 animate-bounce"
             style={{
-              backgroundColor: "var(--lp-surface-2)",
-              borderColor: "var(--lp-gold)",
-              borderWidth: "1px",
+              backgroundColor: "var(--lp-gold-alpha-10)",
+              borderColor: "var(--lp-gold-alpha-30)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
               color: "var(--lp-gold)",
-              boxShadow: "0 4px 12px var(--lp-gold-glow)"
+              boxShadow: "0 4px 12px var(--lp-gold-alpha-15)"
             }}
           >
             Queue: 0
@@ -47,14 +59,14 @@ export function FinalCTA() {
           <div className="mt-12 relative w-[200px] h-[100px]">
             {/* Desk Line */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[140px] h-[3px] rounded-full" style={{ backgroundColor: "var(--lp-border)" }}></div>
-            
+
             {/* Relaxed Blob */}
             <svg className="absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[80px] h-[70px]" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 70C10 40 25 10 40 10C55 10 70 40 70 70" stroke="var(--lp-gold)" strokeWidth="3" fill="var(--lp-surface)" />
+              <path d="M10 70C10 40 25 10 40 10C55 10 70 40 70 70" stroke="var(--lp-gold)" strokeWidth="3" fill="var(--lp-gold-alpha-08)" />
               {/* Headset Arc resting */}
               <path d="M20 30C20 15 60 15 60 30" stroke="var(--lp-gold)" strokeWidth="3" strokeLinecap="round" />
             </svg>
-            
+
             {/* Feet up (abstract lines crossed) */}
             <svg className="absolute bottom-[10px] right-[10px] w-[30px] h-[30px]" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
               <line x1="5" y1="25" x2="25" y2="5" stroke="var(--lp-gold)" strokeWidth="3" strokeLinecap="round" />
@@ -83,8 +95,8 @@ export function FinalCTA() {
         >
           {t("headline")}
         </h2>
-        
-        <p 
+
+        <p
           className="mb-10 text-[18px] max-w-[520px] mx-auto"
           style={{
             fontFamily: "'Inter', sans-serif",
@@ -96,32 +108,33 @@ export function FinalCTA() {
           {t("subheadline")}
         </p>
 
-        <Link 
+        <Link
           href="/waitlist"
           style={{
             height: '48px',
-            padding: '0 24px',
-            background: 'var(--lp-gold)',
-            color: '#0C0B0F',
-            borderRadius: '8px',
+            padding: '0 28px',
+            background: 'linear-gradient(135deg, var(--lp-gold), var(--lp-violet))',
+            color: 'var(--lp-on-primary)',
+            borderRadius: '12px',
             border: 'none',
             cursor: 'pointer',
             fontFamily: "var(--font-cabinet-grotesk), sans-serif",
             fontWeight: 600,
             fontSize: '14px',
-            transition: '100ms',
+            transition: '150ms',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            textDecoration: 'none'
+            textDecoration: 'none',
+            boxShadow: '0 4px 16px var(--lp-gold-alpha-25)',
           }}
-          className="hover:opacity-[0.88] hover:scale-[1.02]"
+          className="hover:opacity-[0.90] hover:scale-[1.02] hover:shadow-[0_8px_24px_var(--lp-gold-alpha-35)]"
         >
           {t("cta")}
         </Link>
 
         <div className="flex flex-col gap-1.5 mt-2">
-          <p 
+          <p
             className="text-[13px]"
             style={{
               fontFamily: "'Inter', sans-serif",
@@ -131,7 +144,7 @@ export function FinalCTA() {
           >
             {t("ctaMicrocopy")}
           </p>
-          <p 
+          <p
             className="text-[14px]"
             style={{
               fontFamily: "'Inter', sans-serif",

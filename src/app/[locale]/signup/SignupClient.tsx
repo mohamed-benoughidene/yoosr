@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { SignUp } from "@clerk/nextjs"
-import { dark } from "@clerk/themes"
 import { useLocale } from "next-intl"
 import { AuthProviders } from "@/components/AuthProviders"
 
@@ -13,14 +12,6 @@ function SignupContent() {
             <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
                 <div className="flex justify-center">
                     <SignUp
-                        appearance={{
-                            baseTheme: dark,
-                            elements: {
-                                rootBox: "w-full",
-                                cardBox: "w-full shadow-none",
-                                card: "shadow-none w-full",
-                            },
-                        }}
                         routing="hash"
                         forceRedirectUrl={`/${locale}/onboarding`}
                         signInUrl={`/${locale}/login`}

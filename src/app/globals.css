@@ -13,17 +13,61 @@
 }
 
 :root {
-  --lp-bg:#0C0B0F;
-  --lp-surface:#161420;
-  --lp-surface-2:#1E1C2A;
-  --lp-border:rgba(255,255,255,0.08);
-  --lp-gold:#3B82F6;
-  --lp-gold-glow:rgba(59,130,246,0.15);
-  --lp-violet:#6C63FF;
-  --lp-violet-glow:rgba(108,99,255,0.12);
-  --lp-text:#F2EFE9;
-  --lp-text-secondary:#9E9AA8;
-  --lp-text-muted:#9E9AAD;
+  color-scheme: light dark;
+  /* ===== LIGHT THEME ===== */
+  --lp-bg:#F5F5F7;
+  --lp-bg-deep:#EAEAEF;
+  --lp-surface:rgba(255,255,255,0.70);
+  --lp-surface-2:rgba(255,255,255,0.90);
+  --lp-surface-hover:rgba(255,255,255,0.95);
+  --lp-border:rgba(0,0,0,0.08);
+  --lp-border-strong:rgba(0,0,0,0.15);
+  --lp-gold:#2563EB;
+  --lp-gold-glow:rgba(37,99,235,0.20);
+  --lp-glow:rgba(37,99,235,0.08);
+  --lp-violet:#7C3AED;
+  --lp-violet-glow:rgba(124,58,237,0.15);
+  --lp-text:#0F0F14;
+  --lp-text-secondary:#4A4760;
+  --lp-text-muted:#7B7790;
+  --lp-glass-bg:rgba(255,255,255,0.60);
+  --lp-glass-border:rgba(0,0,0,0.08);
+  --lp-glass-hover:rgba(0,0,0,0.12);
+
+  /* Derived brand alphas — light theme (dark-on-light text) */
+  --lp-gold-alpha-03:rgba(37,99,235,0.03);
+  --lp-gold-alpha-08:rgba(37,99,235,0.08);
+  --lp-gold-alpha-10:rgba(37,99,235,0.10);
+  --lp-gold-alpha-12:rgba(37,99,235,0.12);
+  --lp-gold-alpha-15:rgba(37,99,235,0.15);
+  --lp-gold-alpha-18:rgba(37,99,235,0.18);
+  --lp-gold-alpha-20:rgba(37,99,235,0.20);
+  --lp-gold-alpha-25:rgba(37,99,235,0.25);
+  --lp-gold-alpha-30:rgba(37,99,235,0.30);
+  --lp-gold-alpha-35:rgba(37,99,235,0.35);
+
+  --lp-violet-alpha-06:rgba(124,58,237,0.06);
+  --lp-violet-alpha-08:rgba(124,58,237,0.08);
+  --lp-violet-alpha-10:rgba(124,58,237,0.10);
+  --lp-violet-alpha-12:rgba(124,58,237,0.12);
+  --lp-violet-alpha-15:rgba(124,58,237,0.15);
+
+  --lp-white-alpha-02:rgba(255,255,255,0.02);
+  --lp-white-alpha-03:rgba(255,255,255,0.03);
+  --lp-white-alpha-05:rgba(255,255,255,0.05);
+
+  --lp-black-alpha-10:rgba(0,0,0,0.10);
+  --lp-black-alpha-30:rgba(0,0,0,0.30);
+  --lp-black-alpha-40:rgba(0,0,0,0.40);
+
+  --lp-on-primary:#FFFFFF;
+
+  --lp-footer-bg:rgba(255,255,255,0.70);
+
+  --lp-grid-line:rgba(0,0,0,0.04);
+
+  --lp-nav-bg:rgba(255,255,255,0.80);
+  --lp-nav-border:rgba(0,0,0,0.06);
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -91,7 +135,7 @@
 
   /* Marketing fonts — loaded via next/font in marketing layout */
   --font-cabinet-grotesk: var(--font-cabinet-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-noto-naskh-arabic: var(--font-noto-naskh-arabic), "Noto Naskh Arabic", sans-serif;
+  --font-mirza: var(--font-mirza), "Mirza", sans-serif;
 
   /* Magicui Colors */
   --color-1: oklch(66.2% 0.225 25.9);
@@ -151,6 +195,58 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+}
+
+/* ===== DARK THEME — override LP tokens ===== */
+.dark {
+  --lp-bg:#070D1A;
+  --lp-bg-deep:#040810;
+  --lp-surface:rgba(255,255,255,0.04);
+  --lp-surface-2:rgba(255,255,255,0.07);
+  --lp-surface-hover:rgba(255,255,255,0.10);
+  --lp-border:rgba(255,255,255,0.08);
+  --lp-border-strong:rgba(255,255,255,0.15);
+  --lp-gold:#3B82F6;
+  --lp-gold-glow:rgba(59,130,246,0.20);
+  --lp-glow:rgba(59,130,246,0.08);
+  --lp-violet:#6C63FF;
+  --lp-violet-glow:rgba(108,99,255,0.15);
+  --lp-text:#F2EFE9;
+  --lp-text-secondary:#9E9AA8;
+  --lp-text-muted:#6B6780;
+  --lp-glass-bg:rgba(255,255,255,0.03);
+  --lp-glass-border:rgba(255,255,255,0.10);
+  --lp-glass-hover:rgba(255,255,255,0.16);
+
+  --lp-gold-alpha-03:rgba(59,130,246,0.03);
+  --lp-gold-alpha-08:rgba(59,130,246,0.08);
+  --lp-gold-alpha-10:rgba(59,130,246,0.10);
+  --lp-gold-alpha-12:rgba(59,130,246,0.12);
+  --lp-gold-alpha-15:rgba(59,130,246,0.15);
+  --lp-gold-alpha-18:rgba(59,130,246,0.18);
+  --lp-gold-alpha-20:rgba(59,130,246,0.20);
+  --lp-gold-alpha-25:rgba(59,130,246,0.25);
+  --lp-gold-alpha-30:rgba(59,130,246,0.30);
+  --lp-gold-alpha-35:rgba(59,130,246,0.35);
+
+  --lp-violet-alpha-06:rgba(108,99,255,0.06);
+  --lp-violet-alpha-08:rgba(108,99,255,0.08);
+  --lp-violet-alpha-10:rgba(108,99,255,0.10);
+  --lp-violet-alpha-12:rgba(108,99,255,0.12);
+  --lp-violet-alpha-15:rgba(108,99,255,0.15);
+
+  --lp-white-alpha-02:rgba(255,255,255,0.02);
+  --lp-white-alpha-03:rgba(255,255,255,0.03);
+  --lp-white-alpha-05:rgba(255,255,255,0.05);
+
+  --lp-on-primary:#0C0B0F;
+
+  --lp-footer-bg:rgba(7,13,26,0.60);
+
+  --lp-grid-line:rgba(255,255,255,0.03);
+
+  --lp-nav-bg:rgba(7,13,26,0.80);
+  --lp-nav-border:rgba(255,255,255,0.08);
 }
 
 @theme inline {
@@ -254,7 +350,8 @@
   --font-text: var(--font-text);
   --font-handwriting: var(--font-handwriting);
   --font-cabinet-grotesk: var(--font-cabinet-grotesk);
-  --font-noto-naskh-arabic: var(--font-noto-naskh-arabic);
+  --font-inter: var(--font-inter);
+  --font-mirza: var(--font-mirza);
 
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
@@ -792,6 +889,109 @@ body[data-scroll-locked] {
 @media(min-width:1024px){ .lp-section { padding-top:96px; padding-bottom:96px; } }
 .lp-label { font-family:Inter,sans-serif; font-size:11px; font-weight:500; color:var(--lp-gold); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px; }
 
+/* Glassmorphism utility classes */
+.glass-card {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 16px;
+  transition: all 200ms ease;
+}
+.glass-card:hover {
+  background: var(--lp-surface-hover);
+  border-color: var(--lp-glass-hover);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.glass-card-elevated {
+  background: var(--lp-surface);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--lp-border-strong);
+  border-radius: 20px;
+  transition: all 200ms ease;
+}
+.glass-card-elevated:hover {
+  background: var(--lp-surface-2);
+  border-color: var(--lp-gold);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.4), 0 0 0 1px var(--lp-gold), 0 0 32px var(--lp-gold-glow);
+}
+
+.glass-card-primary {
+  background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(108,99,255,0.08));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(59,130,246,0.25);
+  border-radius: 20px;
+  transition: all 200ms ease;
+}
+.glass-card-primary:hover {
+  background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(108,99,255,0.12));
+  border-color: var(--lp-gold);
+  box-shadow: 0 12px 48px rgba(59,130,246,0.15), 0 0 0 1px var(--lp-gold);
+}
+
+.glass-nav {
+  background: var(--lp-nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--lp-nav-border);
+}
+
+/* Background grid pattern */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.bg-grid-fine {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Gradient overlay for sections */
+.gradient-overlay-blue {
+  background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.15), transparent 60%);
+}
+
+.gradient-overlay-violet {
+  background: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.12), transparent 60%);
+}
+
+/* Noise texture */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow: 0 0 40px var(--lp-gold-glow), 0 0 80px rgba(59,130,246,0.08);
+}
+
+.glow-violet {
+  box-shadow: 0 0 40px var(--lp-violet-glow), 0 0 80px rgba(108,99,255,0.06);
+}
+
+/* Ambient glow band */
+.ambient-glow {
+  position: absolute;
+  width: 100%;
+  height: 400px;
+  pointer-events: none;
+  opacity: 0.5;
+  filter: blur(60px);
+}
+
 @keyframes driftGold {
   from { transform: translate(0, 0) scale(1); }
   to   { transform: translate(40px, 30px) scale(1.1); }
@@ -799,4 +999,27 @@ body[data-scroll-locked] {
 @keyframes driftViolet {
   from { transform: translate(0, 0) scale(1.1); }
   to   { transform: translate(-30px, 40px) scale(1); }
+}
+
+/* ==========================================
+   ARABIC FONT OVERRIDES
+   When lang="ar", use Mirza for headings
+   Body text stays Inter
+   ========================================== */
+
+:lang(ar) {
+  /* Headings: Mirza — overrides --font-cabinet-grotesk */
+  --font-cabinet-grotesk: var(--font-mirza), "Mirza", sans-serif;
+}
+
+/* Specific landing page heading classes → Mirza */
+:lang(ar) .lp-headline,
+:lang(ar) .lp-badge,
+:lang(ar) .hero-headline,
+:lang(ar) .hero-badge,
+:lang(ar) .ch-heading,
+:lang(ar) .ds-card-title,
+:lang(ar) .ds-card-number,
+:lang(ar) .ds-closing {
+  font-family: var(--font-mirza), "Mirza", sans-serif;
 }

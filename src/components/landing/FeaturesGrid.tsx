@@ -41,40 +41,15 @@ export function FeaturesGrid() {
     }
   ]
   return (
-    <section className="relative w-full overflow-hidden py-16 lg:py-24" style={{ backgroundColor: "var(--lp-bg)" }}>
-      {/* Background glow band */}
-      <div
-        className="absolute w-full h-[600px] pointer-events-none opacity-20"
-        style={{
-          background: "var(--lp-violet-glow)",
-          filter: "blur(8px)",
-          top: "50%",
-          left: 0,
-          transform: "translateY(-50%)",
-          zIndex: 0
-        }}
-      />
-
+    <section className="relative w-full overflow-hidden py-16 lg:py-24 section-glass" style={{ backgroundColor: "var(--lp-bg)" }}>
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6">
         <ScrollReveal>
-          <div className="flex flex-col items-center text-center mb-16">
-            <span 
-              className="font-medium uppercase mb-4"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "11px",
-                color: "var(--lp-gold)",
-                letterSpacing: "0.1em",
-              }}
-            >
+          <div className="flex flex-col items-center text-center mb-12">
+            <span className="lp-badge">
               FEATURES
             </span>
-            <h2 
-              className="font-bold text-4xl lg:text-[48px] leading-tight"
-              style={{
-                fontFamily: "var(--font-cabinet-grotesk), sans-serif",
-                color: "var(--lp-text)",
-              }}
+            <h2
+              className="lp-headline mt-4 mb-0"
             >
               {t("headline")}
             </h2>
@@ -109,14 +84,16 @@ function FeatureCard({ feature }: { feature: Feature }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        background: isHovered ? "var(--lp-surface-2)" : "var(--lp-surface)",
-        border: `1px solid ${isHovered ? "var(--lp-gold)" : "var(--lp-border)"}`,
-        borderRadius: "12px",
+        background: isHovered ? "var(--lp-surface-hover)" : "var(--lp-glass-bg)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: `1px solid ${isHovered ? "var(--lp-gold)" : "var(--lp-glass-border)"}`,
+        borderRadius: "16px",
         padding: "28px",
-        transition: "background 150ms ease, border-color 150ms ease, box-shadow 150ms ease",
+        transition: "all 200ms ease",
         boxShadow: isHovered
-          ? "0 0 0 1px var(--lp-gold), 0 4px 24px var(--lp-gold-glow)"
-          : "none",
+          ? "0 8px 32px var(--lp-black-alpha-30), 0 0 0 1px var(--lp-gold), 0 0 24px var(--lp-gold-glow)"
+          : "0 4px 16px var(--lp-black-alpha-10)",
         zIndex: isHovered ? 10 : 1
       }}
     >
@@ -134,7 +111,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
       >
         {feature.title}
       </h3>
-      <p 
+      <p
         className="font-normal"
         style={{
           fontFamily: "'Inter', sans-serif",

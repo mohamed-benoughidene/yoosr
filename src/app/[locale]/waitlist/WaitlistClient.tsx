@@ -2,7 +2,6 @@
 
 import { Waitlist } from "@clerk/nextjs"
 import { useSearchParams } from "@/i18n/navigation"
-import { dark } from "@clerk/themes"
 import { Suspense } from "react"
 import { AuthProviders } from "@/components/AuthProviders"
 
@@ -15,14 +14,6 @@ function WaitlistForm() {
         <div className="flex flex-col items-center justify-center w-full" style={{ backgroundColor: 'var(--lp-bg)', minHeight: '100vh' }}>
             <Waitlist
                 signInUrl="/login"
-                appearance={{
-                    baseTheme: dark,
-                    elements: {
-                        rootBox: "w-full",
-                        cardBox: "w-full shadow-none",
-                        card: "shadow-none w-full",
-                    },
-                }}
             />
         </div>
     )

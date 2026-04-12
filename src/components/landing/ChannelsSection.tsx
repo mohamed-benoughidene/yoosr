@@ -32,9 +32,9 @@ export function ChannelsSection() {
   ];
 
   return (
-    <section className="bg-[var(--lp-bg)] py-[64px] md:py-[120px] overflow-hidden" id="channels-section">
+    <section className="py-16 md:py-24 overflow-hidden section-glass" style={{ backgroundColor: "var(--lp-bg)" }} id="channels-section">
 
-      <div className="max-w-[1200px] mx-auto px-6">
+      <div className="max-w-[1200px] mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
             <ScrollReveal>
               <div className="flex flex-col gap-4">
@@ -51,11 +51,11 @@ export function ChannelsSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {channels.map((channel, i) => (
                 <ScrollReveal key={channel.title} delay={i * 100}>
-                  <div className="group p-5 rounded-[10px] bg-[var(--lp-surface)] border border-[var(--lp-border)] hover:bg-[var(--lp-surface-2)] hover:border-[var(--lp-gold)] transition-all duration-300 h-full flex flex-col gap-4">
+                  <div className="ch-card group">
                     <div className="w-10 h-10 flex items-center justify-center">
                       {channel.iconSVG}
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 mt-4">
                       <h3 className="ch-card-title">
                         {channel.title}
                       </h3>

@@ -13,23 +13,23 @@ export function PricingTeaser() {
   };
 
   return (
-    <div className="w-full bg-[var(--lp-bg)] py-16 md:py-24">
-      <div className="mx-auto max-w-[1200px] px-6">
+    <div className="w-full py-16 md:py-24 section-glass" style={{ backgroundColor: "var(--lp-bg-deep)" }}>
+      <div className="mx-auto max-w-[1200px] px-6 relative z-10">
         <div className="flex flex-col items-center text-center">
-          <span className="mb-4 font-inter text-[11px] font-medium uppercase leading-none tracking-[0.1em] text-[var(--lp-gold)]">
+          <span className="lp-badge">
             PRICING
           </span>
-          <h2 className="mb-4 font-cabinet-grotesk text-4xl font-bold leading-tight tracking-tight text-[var(--lp-text)] md:text-[48px] md:leading-[56px]">
+          <h2 className="lp-headline mt-4">
             {t("headline")}
           </h2>
-          <p className="mx-auto mb-16 max-w-[520px] font-inter text-[18px] leading-[28px] text-[var(--lp-text-secondary)]">
+          <p className="mx-auto mt-4 max-w-[520px] font-inter text-[18px] leading-[28px] text-[var(--lp-text-secondary)]">
             {t("subheadline")}
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-[1020px] gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-[1020px] gap-6 md:grid-cols-3 mt-12">
           {/* Card 1 */}
-          <div className="flex flex-col rounded-[10px] border border-[var(--lp-border)] bg-[var(--lp-surface-2)] p-[28px] transition-all duration-300 hover:border-[var(--lp-gold)] hover:shadow-[0_0_0_1px_var(--lp-gold),0_4px_24px_var(--lp-gold-glow)] h-full">
+          <div className="info-card">
             <div className="mb-5 flex h-10 w-10 items-center justify-center">
               {/* Ticket / Free Tag Icon */}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--lp-gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -45,7 +45,7 @@ export function PricingTeaser() {
           </div>
 
           {/* Card 2 */}
-          <div className="flex flex-col rounded-[10px] border border-[var(--lp-border)] bg-[var(--lp-surface-2)] p-[28px] transition-all duration-300 hover:border-[var(--lp-gold)] hover:shadow-[0_0_0_1px_var(--lp-gold),0_4px_24px_var(--lp-gold-glow)] h-full">
+          <div className="info-card">
             <div className="mb-5 flex h-10 w-10 items-center justify-center">
               {/* Lock Icon */}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--lp-gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +62,7 @@ export function PricingTeaser() {
           </div>
 
           {/* Card 3 */}
-          <div className="flex flex-col rounded-[10px] border border-[var(--lp-border)] bg-[var(--lp-surface-2)] p-[28px] transition-all duration-300 hover:border-[var(--lp-gold)] hover:shadow-[0_0_0_1px_var(--lp-gold),0_4px_24px_var(--lp-gold-glow)] h-full">
+          <div className="info-card">
             <div className="mb-5 flex h-10 w-10 items-center justify-center">
               {/* Sparkle Icon */}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--lp-gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -78,10 +78,10 @@ export function PricingTeaser() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center">
+        <div className="mt-12 flex flex-col items-center">
           <button
             onClick={scrollToWaitlist}
-            className="flex h-[52px] w-full max-w-[320px] items-center justify-center rounded-lg bg-[var(--lp-gold)] font-cabinet-grotesk text-[16px] font-semibold text-[#0C0B0F] transition-all duration-150 hover:scale-[1.02] hover:opacity-90"
+            className="btn-glass btn-glass-primary"
           >
             {t("cta")}
           </button>

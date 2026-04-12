@@ -61,7 +61,7 @@ export function SocialProofBar() {
         }
       `}</style>
       <div
-        className="group flex h-[48px] w-full items-center overflow-hidden border-y border-[var(--lp-border)] bg-[var(--lp-surface)]"
+        className="group flex h-[48px] w-full items-center overflow-hidden marquee-glass"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         <div className="animate-marquee flex w-max items-center group-hover:[animation-play-state:paused]">

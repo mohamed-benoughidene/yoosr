@@ -25,9 +25,11 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden w-full hero-section" style={{ backgroundColor: "var(--lp-bg)", zIndex: 1 }}>
 
+      {/* Grid background */}
+      <div className="hero-grid-bg"></div>
       <div className="hero-noise"></div>
 
-      {/* Ambient background orbs */}
+      {/* Ambient background orbs - enhanced glow */}
       <div
         className="absolute rounded-full"
         style={{
@@ -35,7 +37,7 @@ export function Hero() {
           left: "-10%",
           width: "800px",
           height: "800px",
-          background: "radial-gradient(circle, rgba(200,169,110,0.25), transparent 65%)",
+          background: "radial-gradient(circle, var(--lp-gold-alpha-18), transparent 65%)",
           filter: "blur(8px)",
           animation: "driftGold 12s ease-in-out infinite alternate",
           zIndex: -1,
@@ -49,9 +51,24 @@ export function Hero() {
           right: "-10%",
           width: "700px",
           height: "700px",
-          background: "radial-gradient(circle, rgba(108,99,255,0.20), transparent 65%)",
+          background: "radial-gradient(circle, var(--lp-violet-alpha-15), transparent 65%)",
           filter: "blur(8px)",
           animation: "driftViolet 15s ease-in-out infinite alternate",
+          zIndex: -1,
+          pointerEvents: "none"
+        }}
+      />
+      {/* Top center gradient glow */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          top: "-40%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "1200px",
+          height: "600px",
+          background: "radial-gradient(ellipse, var(--lp-gold-alpha-12), transparent 70%)",
+          filter: "blur(40px)",
           zIndex: -1,
           pointerEvents: "none"
         }}
@@ -59,7 +76,7 @@ export function Hero() {
 
       <div className="hero-content">
         <div className="hero-badge">Built for MENA · Early Access</div>
-        
+
         <h1 className="hero-headline">
           {sentences.map((sentence, sIdx) => (
             <span key={sIdx} className="headline-sentence">
@@ -67,8 +84,8 @@ export function Hero() {
                 const delay = 200 + (globalWordIdx * 30);
                 globalWordIdx++;
                 return (
-                  <span 
-                    key={wIdx} 
+                  <span
+                    key={wIdx}
                     className="headline-word inline-block mr-[0.25em]"
                     style={{ animationDelay: `${delay}ms` }}
                   >
@@ -89,22 +106,23 @@ export function Hero() {
           href="/waitlist"
           style={{
             height: '48px',
-            padding: '0 24px',
-            background: 'var(--lp-gold)',
-            color: '#0C0B0F',
-            borderRadius: '8px',
+            padding: '0 28px',
+            background: 'linear-gradient(135deg, var(--lp-gold), var(--lp-violet))',
+            color: 'var(--lp-on-primary)',
+            borderRadius: '12px',
             border: 'none',
             cursor: 'pointer',
             fontFamily: "var(--font-cabinet-grotesk), sans-serif",
             fontWeight: 600,
             fontSize: '14px',
-            transition: '100ms',
+            transition: '150ms',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             textDecoration: 'none',
+            boxShadow: '0 4px 16px var(--lp-gold-alpha-25)',
           }}
-          className="hover:opacity-[0.88] hover:scale-[1.02]"
+          className="hover:opacity-[0.90] hover:scale-[1.02] hover:shadow-[0_8px_24px_var(--lp-gold-alpha-35)]"
         >
           {t("cta")}
         </Link>
@@ -112,13 +130,13 @@ export function Hero() {
         <div className="hero-microcopy">
           {t("ctaMicrocopy")}
         </div>
-        
+
         <div className="product-showcase-container">
           <div className="product-showcase">
-            <LandingVideo 
-              src="/walkthrough.mp4" 
-              autoPlay 
-              showControls={false} 
+            <LandingVideo
+              src="/walkthrough.mp4"
+              autoPlay
+              showControls={false}
               priority={true}
             />
           </div>
@@ -127,4 +145,3 @@ export function Hero() {
     </section>
   )
 }
-
