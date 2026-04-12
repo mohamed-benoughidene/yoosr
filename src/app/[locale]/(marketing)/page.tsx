@@ -3,6 +3,7 @@ import { SocialProofBar } from "@/components/landing/SocialProofBar"
 import { ProblemSection } from "@/components/landing/ProblemSection"
 import { ScrollReveal } from "@/components/landing/ScrollReveal"
 import dynamic from "next/dynamic"
+import Script from "next/script"
 
 const FeaturesGrid = dynamic(() => import("@/components/landing/FeaturesGrid").then(m => ({ default: m.FeaturesGrid })))
 const DesignStudioSection = dynamic(() => import("@/components/landing/DesignStudioSection").then(m => ({ default: m.DesignStudioSection })))
@@ -49,6 +50,12 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     unstable_setRequestLocale(locale);
   return (
     <>
+      {/* Yoosr Widget - Live Demo */}
+      <Script id="yoosr-init" strategy="afterInteractive">
+        {`window.yoosrSettings = { projectId: "mx792dt3gv4z3wdh82jwacdzth84qtwg" };`}
+      </Script>
+      <Script src="https://yoosr.io/widget.js" strategy="afterInteractive" />
+
       <section id="home">
         <Hero />
       </section>
