@@ -114,8 +114,9 @@ describe("WidgetLoader", () => {
       render(<WidgetLoader projectId="abc123" />);
 
       const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
-      expect(wrapper.style.width).toBe("400px");
-      expect(wrapper.style.height).toBe("600px");
+      expect(wrapper.style.width).toBe("380px");
+      expect(wrapper.style.height).toBe("520px");
+      expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
       expect(wrapper.style.borderRadius).toBe("12px");
       expect(wrapper.style.boxShadow).toContain("rgba");
       expect(wrapper.style.transition).toContain("transform");

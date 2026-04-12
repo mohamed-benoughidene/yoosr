@@ -33,10 +33,15 @@ interface ToastData {
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────
+// Industry-standard dimensions (Intercom, Zendesk, Drift):
+// - Width: 380px (fits small viewports, matches competitors)
+// - Max height: 520px (avoids overflow on 768px screens)
+// - Z-index: 999999 (avoids conflicts with modals/navbars)
 
-const IFRAME_WIDTH = 400;
-const IFRAME_HEIGHT = 600;
-const IFRAME_Z_INDEX = 9999;
+const IFRAME_WIDTH = 380;
+const IFRAME_HEIGHT = 520;
+const IFRAME_MAX_HEIGHT = "calc(100vh - 140px)";
+const IFRAME_Z_INDEX = 999999;
 const OFFSET = 20;
 const LAUNCHER_SIZE = 56;
 const UNREAD_BADGE_SIZE = 20;
@@ -247,6 +252,7 @@ export function WidgetLoader({
           ...(isRight ? { right: OFFSET } : { left: OFFSET }),
           width: IFRAME_WIDTH,
           height: IFRAME_HEIGHT,
+          maxHeight: IFRAME_MAX_HEIGHT,
           borderRadius: "12px",
           overflow: "hidden",
           boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
