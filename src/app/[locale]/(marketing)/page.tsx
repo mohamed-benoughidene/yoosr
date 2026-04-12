@@ -51,7 +51,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <>
       {/* Yoosr Widget — Live Demo (iframe-isolated, no CSP issues) */}
-      <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || "mx792dt3gv4z3wdh82jwacdzth84qtwg"} />
+      <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || ""} />
 
       <section id="home">
         <Hero />
