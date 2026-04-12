@@ -258,6 +258,21 @@ export default function WidgetChat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectConfig])
 
+    // Track if widget iframe is currently visible in parent (for suppressing notifications)
+    // Use ref to avoid re-creating fetchMessages callback on every visibility change
+    const isWidgetVisibleRef = useRef(false)
+
+    // Listen for visibility changes from parent
+    useEffect(() => {
+        const handler = (e: MessageEvent) => {
+            if (e.data?.type === "yoosr:visibility_change") {
+                isWidgetVisibleRef.current = !!e.data.visible
+            }
+        }
+        window.addEventListener("message", handler)
+        return () => window.removeEventListener("message", handler)
+    }, [])
+
     // Find or create conversation
     useEffect(() => {
         if (!projectId || !visitorId || !projectConfig) return
@@ -304,15 +319,22 @@ export default function WidgetChat() {
                     const newMsgs = msgs.slice(prevCount)
                     const hasAgentMessage = newMsgs.some((m: Message) => m.senderType === "agent" || m.senderType === "bot")
                     if (hasAgentMessage) {
-                        // Play notification sound
-                        try {
-                            audioRef.current?.play().catch(() => playBeep())
-                        } catch {
-                            playBeep()
+                        // Play notification sound ONLY if widget is minimized (not actively reading)
+                        if (!isWidgetVisibleRef.current) {
+                            try {
+                                audioRef.current?.play().catch(() => playBeep())
+                            } catch {
+                                playBeep()
+                            }
                         }
-                        // Notify parent (widget.js) for badge
+                        // Notify parent for badge + toast preview
+                        const latestMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null
                         try {
-                            window.parent.postMessage({ type: "yoosr:new_message" }, "*")
+                            window.parent.postMessage({
+                                type: "yoosr:new_message",
+                                senderName: latestMsg?.senderName ?? "Support",
+                                message: latestMsg?.content ?? "",
+                            }, "*")
                         } catch { /* ignore */ }
                     }
                 }
