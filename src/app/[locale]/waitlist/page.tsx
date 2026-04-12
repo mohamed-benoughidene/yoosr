@@ -3,7 +3,7 @@ import { WaitlistClient } from "./WaitlistClient"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-    title: "Join Waitlist — Yoosr",
+    title: "Join Waitlist",
     description: "Get early access to Yoosr's AI-powered omnichannel inbox."
 }
 

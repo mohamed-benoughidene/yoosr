@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co"
     const ogUrl = `${baseUrl}/og/image?title=${encodeURIComponent(formattedSlug)}&description=${encodeURIComponent(`Learn about ${formattedSlug} from Yoosr`)}`
     return {
-        title: `${formattedSlug} — Yoosr`,
+        title: formattedSlug,
         description: `Learn about ${formattedSlug} from Yoosr.`,
         openGraph: {
             images: [{ url: ogUrl, width: 1200, height: 630, alt: formattedSlug }],

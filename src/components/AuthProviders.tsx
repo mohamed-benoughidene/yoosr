@@ -1,8 +1,10 @@
 "use client"
 
 import { ClerkProvider } from "@clerk/nextjs"
+import { shadcn } from "@clerk/themes"
 import { useLocale } from "next-intl"
 import { arSA, enUS, frFR } from "@clerk/localizations"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const arSAWithPlaceholders = {
     ...arSA,
@@ -27,7 +29,7 @@ export function AuthProviders({ children }: { children: React.ReactNode }) {
     const locale = useLocale()
     const localeMap = { ar: arSAWithPlaceholders, en: enUS, fr: frFR }
     const clerkLocalization = localeMap[locale as keyof typeof localeMap] ?? enUS
-    
+
     // Locale-aware URLs for Clerk redirects
     const urls = {
         signInUrl: `/${locale}/login`,
@@ -39,11 +41,27 @@ export function AuthProviders({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <ClerkProvider
-            localization={clerkLocalization}
-            {...urls}
-        >
-            {children}
-        </ClerkProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <ClerkProvider
+                localization={clerkLocalization}
+                appearance={{
+                    baseTheme: shadcn,
+                    variables: {
+                        colorPrimary: "var(--lp-gold)",
+                        colorBackground: "var(--lp-surface)",
+                        colorForeground: "var(--lp-text)",
+                        colorMutedForeground: "var(--lp-text-secondary)",
+                        colorInput: "var(--lp-surface-2)",
+                        colorInputForeground: "var(--lp-text)",
+                        colorMuted: "var(--lp-surface)",
+                        colorBorder: "var(--lp-border)",
+                        fontFamily: "inherit",
+                    },
+                }}
+                {...urls}
+            >
+                {children}
+            </ClerkProvider>
+        </ThemeProvider>
     )
 }

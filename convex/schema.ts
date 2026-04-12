@@ -411,7 +411,7 @@ export default defineSchema({
         projectId: v.id("projects"),
         model: v.string(),
         tokensUsed: v.number(),
-        operation: v.string(), // "ai_task" | "ai_assistant" | "ask_kb"
+        operation: v.string(), // "ai_task" | "ask_kb"
         createdAt: v.number(),
         // Soft-delete
         deletedAt: v.optional(v.number()),

@@ -376,13 +376,6 @@ function NodePropertiesPanelContent({
                     </>
                 )}
 
-                {/* AI Assistant Node (Removed) */}
-                {node.type === "ai_assistant" && (
-                    <p className="text-sm text-destructive font-medium p-3 bg-destructive/10 rounded-md border border-destructive/20">
-                        This block has been removed. Replace it with the Knowledge Base block.
-                    </p>
-                )}
-
                 {/* Wait Node fields */}
                 {node.type === "wait" && (
                     <div className="space-y-1.5">

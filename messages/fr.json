@@ -8,14 +8,16 @@
         "solutions": "Solutions",
         "howItWorks": "Comment ça marche",
         "customers": "Clients",
-        "pricing": "Tarifs"
+        "pricing": "Tarifs",
+        "docs": "Documentation"
       },
       "login": "Connexion",
       "getEarlyAccess": "Accès Anticipé",
       "dropdowns": {
         "products": "Produits",
         "resources": "Ressources"
-      }
+      },
+      "github": "Dépôt GitHub"
     },
     "footer": {
       "tagline": "La plateforme open-source sans-code pour créer des agents IA et automatiser vos conversations clients.",
@@ -32,10 +34,12 @@
       },
       "legal": {
         "privacy": "Politique de Confidentialité",
-        "terms": "Conditions d'Utilisation"
+        "terms": "Conditions d'Utilisation",
+        "docs": "Documentation"
       },
+      "github": "Dépôt GitHub",
       "disclaimer": "Yoosr est actuellement en accès anticipé. Certaines fonctionnalités sont encore en développement attendez-vous à des mises à jour fréquentes.",
-      "copyright": "Yoosr, Inc. Open Source. Licence MIT."
+      "copyright": "Yoosr, Inc. Open Source. Licence GNU GPLv3."
     },
     "meta": {
       "title": "Yoosr Support Client pour les Entreprises de la région MENA",
@@ -801,7 +805,14 @@
     "error_update_priority": "Échec de la mise à jour de la priorité",
     "system_assigned_to": "Conversation assignée à {name}",
     "system_transferred_to_agent": "Conversation transférée à {name}",
-    "system_transferred_to_dept": "Conversation transférée à {name}"
+    "system_transferred_to_dept": "Conversation transférée à {name}",
+    "system": {
+      "welcome": "Salut ! Comment pouvons-nous vous aider ?",
+      "resolved": "Cette conversation a été résolue. Merci !",
+      "agentConnected": "Vous êtes maintenant connecté avec un agent.",
+      "inactiveClosed": "Cette conversation a été automatiquement fermée en raison d'inactivité.",
+      "agentJoined": "Un agent a rejoint la conversation."
+    }
   },
   "requests": {
     "title": "Demandes",
@@ -1768,6 +1779,7 @@
       "bar": "Accès anticipé | 4 canaux, une boîte de réception | IA + transfert humain | Automatisation sans code | Rejoignez 50+ équipes sur liste d'attente"
     },
     "problem": {
+      "badge": "LE PROBLÈME",
       "headline": "Vos clients en ont assez de se répéter. Votre équipe en a assez de répondre aux mêmes questions.",
       "painPoint1": "Transféré trois fois pour quelque chose que la première personne aurait dû gérer",
       "painPoint2": "\"Où est ma commande ?\" répondu manuellement, toute la journée, tous les jours",
@@ -1775,6 +1787,7 @@
       "transition": "Yoosr répare le système, pas seulement les symptômes. Routage intelligent, contexte complet à chaque transfert, et un bot qui gère le travail répétitif pour que votre équipe n'intervienne que lorsque ça compte vraiment."
     },
     "features": {
+      "badge": "FONCTIONNALITÉS",
       "headline": "Conçu autour du fonctionnement réel du support.",
       "botBuilder": {
         "title": "Constructeur de bot visuel",
@@ -1802,6 +1815,7 @@
       }
     },
     "designStudio": {
+      "badge": "DESIGN STUDIO",
       "headline": "Créez votre premier bot en quelques minutes. Sans écrire une seule ligne de code.",
       "subheadline": "Design Studio est un canevas visuel où vous faites glisser des blocs, connectez des conditions et créez des flux d'automatisation qui fonctionnent vraiment sans développeur, sans prérequis technique.",
       "aiFlow": {
@@ -1815,10 +1829,10 @@
       "liveHandoff": {
         "title": "Transfert en direct intégré",
         "description": "Chaque flux peut escalader vers un agent humain au bon moment avec le contexte complet de la conversation. Pas d'explications répétées. Pas d'historique perdu."
-      },
-      "closing": "Si votre processus de support peut être décrit, il peut être automatisé."
+      }
     },
     "channels": {
+      "badge": "CANAUX",
       "headline": "Rejoignez vos clients là où ils se trouvent déjà.",
       "subheadline": "Vos clients ne changent pas d'application pour vous. Yoosr se connecte aux canaux qu'ils utilisent déjà et route chaque message dans une boîte de réception unifiée.",
       "webWidget": {
@@ -1857,6 +1871,7 @@
       "closing": "Votre équipe gère les exceptions. Yoosr gère tout le reste."
     },
     "audience": {
+      "badge": "POUR QUI ?",
       "headline": "Conçu pour les équipes qui ne peuvent pas se permettre de manquer un message.",
       "ecommerce": {
         "title": "Boutiques e-commerce",
@@ -1873,6 +1888,7 @@
       "closing": "Quel que soit votre modèle d'activité, vos clients attendent des réponses rapides et claires. Yoosr le rend possible sans épuiser votre équipe."
     },
     "trust": {
+      "badge": "SIGNES DE CONFIANCE",
       "headline": "Accès anticipé. Vrai produit. Pas de promesses en l'air.",
       "subheadline": "Yoosr est en ligne, testé et utilisé par des équipes pilotes dès maintenant. Nous ne vendons pas une feuille de route tout ce qui figure sur cette page existe et fonctionne aujourd'hui.",
       "builtInPublic": {
@@ -1890,6 +1906,7 @@
       "closing": "Nous laissons le produit parler de lui-même. Entrez et voyez."
     },
     "pricing": {
+      "badge": "TARIFS",
       "headline": "Des prix pour de vraies entreprises. Pas des budgets Silicon Valley.",
       "subheadline": "Nous finalisons nos plans. Ce que nous pouvons vous dire maintenant : Yoosr sera tarifé pour les équipes qui construisent quelque chose de réel pas pour des entreprises avec des budgets logiciels à six chiffres.",
       "free": {
@@ -1914,5 +1931,10 @@
       "ctaMicrocopy": "Sans carte bancaire. La configuration prend moins de 5 minutes.",
       "secondary": "Rejoignez 50+ équipes déjà sur liste d'attente."
     }
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Tout ce dont vous avez besoin pour construire avec Yoosr — de l'intégration de votre premier widget à la configuration des chatbots IA et à l'intégration de canaux externes.",
+    "brandName": "Documentation Yoosr"
   }
 }

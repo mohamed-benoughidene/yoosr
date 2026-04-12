@@ -8,14 +8,16 @@
         "solutions": "Solutions",
         "howItWorks": "How it Works",
         "customers": "Customers",
-        "pricing": "Pricing"
+        "pricing": "Pricing",
+        "docs": "Docs"
       },
       "login": "Login",
       "getEarlyAccess": "Get Early Access",
       "dropdowns": {
         "products": "Products",
         "resources": "Resources"
-      }
+      },
+      "github": "GitHub Repository"
     },
     "footer": {
       "tagline": "The open-source, no-code platform to build AI agents and automate customer conversations.",
@@ -32,10 +34,12 @@
       },
       "legal": {
         "privacy": "Privacy Policy",
-        "terms": "Terms of Service"
+        "terms": "Terms of Service",
+        "docs": "Documentation"
       },
+      "github": "GitHub Repository",
       "disclaimer": "Yoosr is currently in early access. Some features are still in development expect frequent updates.",
-      "copyright": "Yoosr, Inc. Open Source. MIT License."
+      "copyright": "Yoosr, Inc. Open Source. GNU GPLv3 License."
     },
     "meta": {
       "title": "Yoosr Customer Support for MENA Businesses",
@@ -440,7 +444,6 @@
       "saveOutputToVariable": "Save output to variable",
       "outputVariablePlaceholder": "e.g., gpt_reply",
       "jsonHint": "If the LLM returns valid JSON, keys are auto-mapped to context attributes.",
-      "aiAssistantPromptPlaceholder": "Define your AI assistant persona and guardrails...",
       "maxTurns": "Max Turns",
       "maxTurnsHelper": "How many user messages this block handles before exiting via Success.",
       "saveFinalReplyTo": "Save final reply to variable",
@@ -510,10 +513,6 @@
       "aiTask": {
         "name": "AI Task",
         "description": "Execute an LLM prompt"
-      },
-      "aiAssistant": {
-        "name": "AI Assistant",
-        "description": "Autonomous multi-turn LLM"
       },
       "hitlHandoff": {
         "name": "HITL Handoff",
@@ -817,7 +816,14 @@
     "error_update_priority": "Failed to update priority",
     "system_assigned_to": "Conversation assigned to {name}",
     "system_transferred_to_agent": "Conversation transferred to {name}",
-    "system_transferred_to_dept": "Conversation transferred to {name}"
+    "system_transferred_to_dept": "Conversation transferred to {name}",
+    "system": {
+      "welcome": "Hi there! How can we help you?",
+      "resolved": "This conversation has been resolved. Thank you!",
+      "agentConnected": "You are now connected with an agent.",
+      "inactiveClosed": "This conversation was automatically closed due to inactivity.",
+      "agentJoined": "An agent has joined the conversation."
+    }
   },
   "requests": {
     "title": "Requests",
@@ -1775,6 +1781,7 @@
   },
   "landingPage": {
     "hero": {
+      "badge": "Built for MENA · Early Access",
       "headline": "Automate Support. Capture Sales. Hand Off to Humans.",
       "subheadline": "Yoosr gives your business an AI-powered inbox - with a no-code bot builder, smart agent routing, order tracking, and live handoff across Web, Telegram, Messenger, and Instagram.",
       "cta": "Get Early Access - It's Free",
@@ -1784,6 +1791,7 @@
       "bar": "Early Access | 4 channels, one inbox | AI + human handoff | No-code automation | Join 50+ teams on the waitlist"
     },
     "problem": {
+      "badge": "THE PROBLEM",
       "headline": "Your customers are tired of repeating themselves. Your team is tired of answering the same questions.",
       "painPoint1": "Transferred three times for something the first person should have handled",
       "painPoint2": "\"Where's my order?\" - answered manually, all day, every day",
@@ -1791,6 +1799,7 @@
       "transition": "Yoosr fixes the system, not just the symptoms. Smart routing, full context on every handoff, and a bot that handles the repetitive work - so your team only steps in when it actually matters."
     },
     "features": {
+      "badge": "FEATURES",
       "headline": "Built around how support actually works.",
       "botBuilder": {
         "title": "Visual Bot Builder",
@@ -1818,6 +1827,7 @@
       }
     },
     "designStudio": {
+      "badge": "DESIGN STUDIO",
       "headline": "Build your first bot in minutes. Without writing a single line of code.",
       "subheadline": "Design Studio is a visual canvas where you drag blocks, connect conditions, and create automation flows that actually work - no developer required, no technical knowledge assumed.",
       "aiFlow": {
@@ -1831,10 +1841,10 @@
       "liveHandoff": {
         "title": "Live Handoff Built In",
         "description": "Every flow can escalate to a human agent at exactly the right moment - with full conversation context intact. No repeat explanations. No lost history."
-      },
-      "closing": "If your support process can be described, it can be automated."
+      }
     },
     "channels": {
+      "badge": "CHANNELS",
       "headline": "Meet your customers where they already are.",
       "subheadline": "Your customers don't switch apps for you. Yoosr connects to the channels they're already using - and routes every message into one unified inbox.",
       "webWidget": {
@@ -1873,6 +1883,7 @@
       "closing": "Your team handles the exceptions. Yoosr handles everything else."
     },
     "audience": {
+      "badge": "WHO IT'S FOR",
       "headline": "Built for teams that can't afford to miss a message.",
       "ecommerce": {
         "title": "E-commerce Stores",
@@ -1889,6 +1900,7 @@
       "closing": "Whatever your business looks like, your customers expect fast, clear answers. Yoosr makes that possible without burning out your team."
     },
     "trust": {
+      "badge": "TRUST SIGNALS",
       "headline": "Early access. Real product. No vaporware.",
       "subheadline": "Yoosr is live, tested, and being used by early teams right now. We're not selling a roadmap - everything on this page exists and works today.",
       "builtInPublic": {
@@ -1906,6 +1918,7 @@
       "closing": "We'll let the product speak for itself. Get in and see."
     },
     "pricing": {
+      "badge": "PRICING",
       "headline": "Priced for real businesses. Not Silicon Valley budgets.",
       "subheadline": "We're finalizing our plans. What we can tell you now: Yoosr will be priced for teams that are building something real - not enterprises with six-figure software budgets.",
       "free": {
@@ -1930,5 +1943,10 @@
       "ctaMicrocopy": "No credit card. Setup takes less than 5 minutes.",
       "secondary": "Join 50+ teams already on the waitlist."
     }
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Everything you need to build with Yoosr — from embedding your first widget to configuring AI chatbots and integrating external channels.",
+    "brandName": "Yoosr Docs"
   }
 }

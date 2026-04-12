@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const desc = `See how Yoosr helps ${slug.replace(/-/g, ' ')} businesses manage customer support.`
     const ogUrl = `${baseUrl}/og/image?title=${encodeURIComponent(`${formattedSlug} Solutions`)}&description=${encodeURIComponent(desc)}`
     return {
-        title: `${formattedSlug} Solutions — Yoosr`,
+        title: `${formattedSlug} Solutions`,
         description: desc,
         openGraph: {
             images: [{ url: ogUrl, width: 1200, height: 630, alt: `${formattedSlug} Solutions` }],

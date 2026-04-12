@@ -21,6 +21,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  
+  async redirects() {
+    return [
+      // TODO: Re-enable docs redirects when ready
+      // {
+      //   source: '/:locale/doc',
+      //   destination: '/:locale/docs',
+      //   permanent: true,
+      // },
+      // {
+      //   source: '/:locale/doc/:slug*',
+      //   destination: '/:locale/docs/:slug*',
+      //   permanent: true,
+      // },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

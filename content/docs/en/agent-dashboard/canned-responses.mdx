@@ -1,0 +1,89 @@
+export const meta = {
+  title: "Canned Responses",
+  description: "Create and manage pre-written reply templates with shortcuts for faster agent responses.",
+  section: "agent-dashboard"
+}
+
+# Canned Responses
+
+Canned responses are **pre-written reply templates** that agents can insert with a keyboard shortcut. They save time on common questions and ensure consistent messaging.
+
+## Creating a Canned Response
+
+1. Go to **Settings → Canned Responses**
+2. Click **New Response**
+3. Fill in:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Title** | Internal name for the response | `Refund Policy` |
+| **Shortcut** | Short trigger word (no spaces) | `refund` |
+| **Content** | The reply text | `Our refund policy allows returns within 30 days...` |
+| **Department** *(optional)* | Restrict to a specific department | `Billing` |
+
+4. Click **Save**
+
+## Using Canned Responses
+
+In any conversation's reply box:
+
+1. Type `/` followed by the shortcut
+2. A dropdown shows matching responses
+3. Press **Enter** to insert the response
+4. Edit if needed, then **Send**
+
+Example:
+```
+/refund
+  ↓ Inserts ↓
+Our refund policy allows returns within 30 days of purchase.
+Please provide your order number and we'll process it right away.
+```
+
+<Callout variant="tip" title="Keep shortcuts mnemonic">
+Use intuitive shortcuts: `refund` for refunds, `shipping` for shipping info, `hours` for business hours.
+</Callout>
+
+## Variables & Placeholders
+
+Include placeholders in your canned responses that agents fill in manually:
+
+```
+Hi [NAME],
+
+Your order #[ORDER_NUMBER] has shipped!
+Tracking: [TRACKING_LINK]
+
+Expected delivery: [DATE]
+```
+
+Agents replace the bracketed text before sending.
+
+## Organizing with Departments
+
+Assign canned responses to specific departments so agents only see relevant templates:
+
+| Department | Canned Responses |
+|------------|-----------------|
+| **Billing** | Refund policy, invoice request, payment methods |
+| **Technical** | Troubleshooting steps, system requirements |
+| **General** | Greeting, sign-off, business hours |
+
+Responses without a department assignment are available to **all agents**.
+
+## Managing Canned Responses
+
+| Action | Description |
+|--------|-------------|
+| **Edit** | Update the content, shortcut, or department |
+| **Duplicate** | Create a variation of an existing response |
+| **Delete** | Remove a response no longer needed |
+| **Search** | Filter by title or content |
+
+## Best Practices
+
+1. **Keep them concise** — Short responses are easier to edit and send
+2. **Update regularly** — Outdated information erodes trust
+3. **Use formatting** — Line breaks, lists, and links make responses scannable
+4. **Audit usage** — Check which responses are used most and retire unused ones
+5. **Personalize tone** — Agents should be encouraged to adapt canned responses, not copy-paste blindly

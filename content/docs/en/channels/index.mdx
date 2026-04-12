@@ -1,0 +1,62 @@
+export const meta = {
+  title: "Channels",
+  description: "Connect WhatsApp, Telegram, Messenger, and Instagram to your Yoosr project for unified omnichannel support.",
+  section: "channels"
+}
+
+# Channels
+
+Yoosr isn't limited to your website. Connect external messaging platforms so every conversation — no matter where it starts — lands in the **same agent dashboard**.
+
+## Supported Channels
+
+| Channel | Setup Time | Requirements |
+|---------|-----------|--------------|
+| **Telegram** | ~5 minutes | A Telegram bot token from @BotFather |
+| **WhatsApp** | ~15 minutes | Meta Developer account, verified phone number |
+| **Messenger** | ~15 minutes | Facebook Page, Meta Developer app |
+| **Instagram** | ~15 minutes | Instagram Business account linked to a Facebook Page |
+
+## How Channels Work
+
+All channels follow the same pattern:
+
+1. **Create the external resource** (bot, app, page) on the platform
+2. **Configure credentials** in Yoosr's channel settings
+3. **Set the webhook URL** on the platform to point to your Yoosr instance
+4. **Verify** — Yoosr confirms the connection with a test message
+
+Once connected, messages from that channel:
+
+- Create conversations in your Yoosr project
+- Are routed through the same smart routing system (bot → agents → queue)
+- Appear in your agent dashboard with channel indicators
+- Support the same features (labels, assignments, canned responses)
+
+## Add a Channel
+
+1. Go to **Settings → Channels** in your dashboard
+2. Click **Connect** next to the platform you want
+3. Fill in the required credentials
+4. Follow the platform-specific setup guide below
+5. Send a test message to verify
+
+<Callout variant="info" title="Encrypted credentials">
+All channel secrets (tokens, API keys) are encrypted with AES-GCM before storage. The encryption key is set via the `ENCRYPTION_KEY` environment variable.
+</Callout>
+
+## Channel Indicator
+
+In the conversation list, each conversation shows a small icon indicating its source channel:
+
+- 🌐 — Website widget
+- ✈️ — Telegram
+- 📱 — WhatsApp
+- 💬 — Messenger
+- 📷 — Instagram
+
+This helps agents quickly understand the context and capabilities available for each conversation.
+
+## Next Steps
+
+[Set up Telegram →](/docs/channels/telegram)

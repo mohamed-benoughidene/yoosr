@@ -3,16 +3,17 @@
 import {
   Activity, BarChart3, BookOpen, Bot, ChevronsUpDown,
   History, LayoutDashboard, LogOut, MessageSquare,
-  MonitorPlay, Settings, Ticket, Users, ShoppingBag
+  MonitorPlay, Settings, Ticket, Users, ShoppingBag, Sun, Moon
 } from "lucide-react"
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { OrganizationSwitcher, useUser, useClerk } from "@clerk/nextjs"
 import { useProject } from "@/context/ProjectContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
+import { useTheme } from "next-themes"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -100,11 +101,21 @@ function NavUser() {
   const { activeProject } = useProject()
   const router = useRouter()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
-  
+  const [mounted, setMounted] = useState(false)
+  const { setTheme, resolvedTheme } = useTheme()
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(timer)
+  }, [])
+
   const isAdmin = activeProject?.userRole === "org:admin"
   const initial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?"
   const fullName = user?.fullName ?? user?.firstName ?? "Account"
   const email = user?.emailAddresses?.[0]?.emailAddress ?? ""
+  const isDark = resolvedTheme === "dark"
+
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark")
   return (
     <>
       <SidebarMenu>
@@ -147,6 +158,13 @@ function NavUser() {
                 <DropdownMenuSeparator />
               </div>
               <LanguageSwitcher />
+              <DropdownMenuSeparator />
+              {mounted && (
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {isDark ? <Sun className="me-2 size-4" /> : <Moon className="me-2 size-4" />}
+                  {isDark ? "Light Mode" : "Dark Mode"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
                 <MessageSquare className="me-2 size-4" />{tFeedback("menuItem")}

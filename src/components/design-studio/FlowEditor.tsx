@@ -39,7 +39,6 @@ import { ReplaceBotNode } from "./nodes/ReplaceBotNode";
 import { ChangeDepartmentNode } from "./nodes/ChangeDepartmentNode";
 import { CodeActionNode } from "./nodes/CodeActionNode";
 import { ClearTranscriptNode } from "./nodes/ClearTranscriptNode";
-import { AIAssistantNode } from "./nodes/AIAssistantNode";
 import { ApplyLabelNode } from "./nodes/ApplyLabelNode";
 import { SetPriorityNode } from "./nodes/SetPriorityNode";
 import { BlockPalette } from "./BlockPalette";
@@ -66,7 +65,6 @@ const nodeTypes: NodeTypes = {
     change_department: ChangeDepartmentNode,
     code_action: CodeActionNode,
     clear_transcript: ClearTranscriptNode,
-    ai_assistant: AIAssistantNode,
     applyLabel: ApplyLabelNode,
     setPriority: SetPriorityNode,
 };

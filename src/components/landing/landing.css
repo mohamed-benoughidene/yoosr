@@ -1,7 +1,10 @@
-/* Landing Page Styles - extracted from dangerouslySetInnerHTML */
+/* Landing Page Styles - Glassmorphism Edition */
 
-/* Design Studio Section */
-.ds-label {
+/* ==========================================
+   SECTION HEADINGS & TYPOGRAPHY
+   ========================================== */
+
+.lp-badge {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   font-size: 11px;
@@ -9,20 +12,36 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--lp-gold-alpha-08);
+  border: 1px solid var(--lp-gold-alpha-20);
 }
 
-.ds-headline {
+.lp-headline {
   font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 700;
   color: var(--lp-text);
   font-size: 36px;
   line-height: 1.1;
   letter-spacing: -0.03em;
-  margin-bottom: 24px;
 }
-@media (min-width: 768px) { .ds-headline { font-size: 48px; } }
 
-.ds-subheadline {
+@media (min-width: 768px) {
+  .lp-headline {
+    font-size: 48px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-headline {
+    font-size: 56px;
+  }
+}
+
+.lp-subheadline {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 18px;
@@ -32,18 +51,27 @@
   margin: 0 auto;
 }
 
+/* ==========================================
+   DESIGN STUDIO SECTION
+   ========================================== */
+
 .ds-card {
-  background-color: var(--lp-surface-2);
-  border: 1px solid var(--lp-border);
-  border-radius: 10px;
-  padding: 24px;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 200ms ease;
   display: flex;
   flex-direction: column;
   height: 100%;
 }
+
 .ds-card:hover {
+  background: var(--lp-surface-hover);
   border-color: var(--lp-gold);
+  box-shadow: 0 8px 32px var(--lp-black-alpha-30), 0 0 0 1px var(--lp-gold), 0 0 24px var(--lp-gold-glow);
 }
 
 .ds-card-number {
@@ -81,39 +109,85 @@
 }
 
 @keyframes drawEdge {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
+
 .flow-edge {
   opacity: 0;
   animation: drawEdge 800ms ease-out forwards;
   will-change: opacity;
 }
-.edge-1 { animation-delay: 100ms; }
-.edge-2 { animation-delay: 250ms; }
-.edge-3 { animation-delay: 400ms; }
-.edge-4 { animation-delay: 550ms; }
+
+.edge-1 {
+  animation-delay: 100ms;
+}
+
+.edge-2 {
+  animation-delay: 250ms;
+}
+
+.edge-3 {
+  animation-delay: 400ms;
+}
+
+.edge-4 {
+  animation-delay: 550ms;
+}
 
 @keyframes nodeAppear {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .flow-node {
   opacity: 0;
   animation: nodeAppear 400ms ease-out forwards;
   will-change: opacity, transform;
 }
-.node-1 { animation-delay: 0ms; }
-.node-2 { animation-delay: 150ms; }
-.node-3 { animation-delay: 300ms; }
-.node-4 { animation-delay: 450ms; }
-.node-5 { animation-delay: 600ms; }
 
-/* Hero Section */
+.node-1 {
+  animation-delay: 0ms;
+}
+
+.node-2 {
+  animation-delay: 150ms;
+}
+
+.node-3 {
+  animation-delay: 300ms;
+}
+
+.node-4 {
+  animation-delay: 450ms;
+}
+
+.node-5 {
+  animation-delay: 600ms;
+}
+
+/* ==========================================
+   HERO SECTION
+   ========================================== */
+
 .hero-section {
   padding-top: 80px;
   padding-bottom: 64px;
+  position: relative;
 }
+
 @media (min-width: 1024px) {
   .hero-section {
     padding-top: 120px;
@@ -121,11 +195,22 @@
   }
 }
 
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--lp-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lp-grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .hero-noise {
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
+  opacity: 0.025;
   pointer-events: none;
   z-index: 0;
 }
@@ -148,8 +233,8 @@
   align-items: center;
   border-radius: 9999px;
   padding: 6px 16px;
-  background: var(--lp-surface);
-  border: 1px solid var(--lp-gold);
+  background: var(--lp-gold-alpha-08);
+  border: 1px solid var(--lp-gold-alpha-25);
   color: var(--lp-gold);
   font-family: 'Inter', sans-serif;
   font-weight: 500;
@@ -165,6 +250,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -182,9 +268,24 @@
   font-size: 32px;
   max-width: 800px;
 }
-@media (min-width: 640px) { .hero-headline { font-size: 42px; } }
-@media (min-width: 768px) { .hero-headline { font-size: 56px; } }
-@media (min-width: 1024px) { .hero-headline { font-size: 72px; } }
+
+@media (min-width: 640px) {
+  .hero-headline {
+    font-size: 42px;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-headline {
+    font-size: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-headline {
+    font-size: 72px;
+  }
+}
 
 .headline-sentence {
   white-space: nowrap;
@@ -195,8 +296,11 @@
   opacity: 0;
   animation: wordFade 400ms ease forwards;
 }
+
 @keyframes wordFade {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
 
 .hero-subheadline {
@@ -210,7 +314,10 @@
   opacity: 0;
   transition: opacity 400ms ease;
 }
-.hero-subheadline.visible { opacity: 1; }
+
+.hero-subheadline.visible {
+  opacity: 1;
+}
 
 .hero-form {
   display: flex;
@@ -222,6 +329,7 @@
   width: 100%;
   max-width: 480px;
 }
+
 @media (min-width: 640px) {
   .hero-form {
     flex-direction: row;
@@ -234,17 +342,21 @@
   background: var(--lp-surface-2);
   border: 1px solid var(--lp-border);
   color: var(--lp-text);
-  border-radius: 8px;
+  border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 15px;
   width: 100%;
   outline: none;
   transition: all 150ms;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
+
 .waitlist-input::placeholder {
   color: var(--lp-text-muted);
 }
+
 .waitlist-input:focus {
   border-color: var(--lp-gold);
   box-shadow: 0 0 0 3px var(--lp-gold-glow);
@@ -253,24 +365,29 @@
 .waitlist-button {
   height: 48px;
   padding: 0 24px;
-  background: var(--lp-gold);
-  color: #0C0B0F;
-  border-radius: 8px;
+  background: linear-gradient(135deg, var(--lp-gold), var(--lp-violet));
+  color: var(--lp-on-primary);
+  border-radius: 12px;
   font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 600;
   font-size: 14px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 100ms, opacity 100ms;
+  transition: transform 100ms, opacity 100ms, box-shadow 100ms;
   width: 100%;
 }
+
 @media (min-width: 640px) {
-  .waitlist-button { width: auto; }
+  .waitlist-button {
+    width: auto;
+  }
 }
+
 .waitlist-button:hover {
-  opacity: 0.88;
+  opacity: 0.90;
   transform: scale(1.02);
+  box-shadow: 0 8px 24px var(--lp-gold-alpha-35);
 }
 
 .hero-microcopy {
@@ -292,25 +409,52 @@
 .product-showcase {
   width: 100%;
   aspect-ratio: 16/9;
-  border: 1px solid var(--lp-border);
-  border-radius: 16px;
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 20px;
   overflow: hidden;
   background: var(--lp-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 24px 64px var(--lp-black-alpha-40), inset 0 1px 0 var(--lp-white-alpha-05);
 }
 
-/* Channels Section */
+/* ==========================================
+   CHANNELS SECTION
+   ========================================== */
+
 .ch-heading {
   font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
+
+.ch-card {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 200ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ch-card:hover {
+  background: var(--lp-surface-hover);
+  border-color: var(--lp-gold);
+  box-shadow: 0 8px 32px var(--lp-black-alpha-30), 0 0 0 1px var(--lp-gold), 0 0 24px var(--lp-gold-glow);
+}
+
 .ch-card-title {
   font-family: var(--font-cabinet-grotesk), sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: var(--lp-text);
 }
+
 .ch-label {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
@@ -319,7 +463,15 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--lp-gold-alpha-08);
+  border: 1px solid var(--lp-gold-alpha-20);
 }
+
 .ch-subheadline {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
@@ -327,4 +479,306 @@
   color: var(--lp-text-secondary);
   line-height: 28px;
   max-width: 520px;
+}
+
+.ch-card-description {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--lp-text-secondary);
+  line-height: 1.5;
+}
+
+.ch-closing {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--lp-text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ==========================================
+   GLASS SECTION WRAPPERS
+   ========================================== */
+
+.section-glass {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, var(--lp-gold-alpha-03) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.section-glass>* {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================
+   PROBLEM SECTION PAIN POINT CARDS
+   ========================================== */
+
+.pain-point-card {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: all 200ms ease;
+}
+
+.pain-point-card:hover {
+  background: var(--lp-surface);
+  border-color: var(--lp-border-strong);
+}
+
+/* ==========================================
+   AUDIENCE / WHO ITS FOR CARDS
+   ========================================== */
+
+.audience-card {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 200ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.audience-card:hover {
+  background: var(--lp-surface-hover);
+  border-color: var(--lp-gold);
+  box-shadow: 0 8px 32px var(--lp-black-alpha-30), 0 0 0 1px var(--lp-gold), 0 0 24px var(--lp-gold-glow);
+}
+
+.audience-card-primary {
+  background: linear-gradient(135deg, var(--lp-gold-alpha-10), var(--lp-violet-alpha-06));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--lp-gold-alpha-30);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 200ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 8px 32px var(--lp-gold-alpha-10), inset 0 1px 0 var(--lp-white-alpha-05);
+}
+
+.audience-card-primary:hover {
+  background: linear-gradient(135deg, var(--lp-gold-alpha-15), var(--lp-violet-alpha-10));
+  border-color: var(--lp-gold);
+  box-shadow: 0 12px 48px var(--lp-gold-alpha-15), 0 0 0 1px var(--lp-gold), 0 0 32px var(--lp-gold-glow);
+}
+
+/* ==========================================
+   TIMELINE / HOW IT WORKS
+   ========================================== */
+
+.timeline-step {
+  position: relative;
+  padding-left: 64px;
+}
+
+@media (min-width: 768px) {
+  .timeline-step {
+    padding-left: 96px;
+  }
+}
+
+.timeline-line {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--lp-border);
+}
+
+@media (min-width: 768px) {
+  .timeline-line {
+    left: 40px;
+  }
+}
+
+.timeline-line-active {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--lp-gold), transparent);
+  margin-left: -0.5px;
+}
+
+@media (min-width: 768px) {
+  .timeline-line-active {
+    left: 40px;
+  }
+}
+
+/* ==========================================
+   PRICING & TRUST CARDS
+   ========================================== */
+
+.info-card {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 200ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.info-card:hover {
+  background: var(--lp-surface-hover);
+  border-color: var(--lp-gold);
+  box-shadow: 0 8px 32px var(--lp-black-alpha-30), 0 0 0 1px var(--lp-gold), 0 0 24px var(--lp-gold-glow);
+}
+
+/* ==========================================
+   BUTTONS - GLASSMORPHISM
+   ========================================== */
+
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 48px;
+  border-radius: 12px;
+  font-family: var(--font-cabinet-grotesk), sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 150ms ease;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+
+.btn-glass-primary {
+  background: linear-gradient(135deg, var(--lp-gold), var(--lp-violet));
+  color: var(--lp-on-primary);
+  box-shadow: 0 4px 16px var(--lp-gold-alpha-25);
+}
+
+.btn-glass-primary:hover {
+  opacity: 0.90;
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px var(--lp-gold-alpha-35);
+}
+
+.btn-glass-secondary {
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-glass-border);
+  color: var(--lp-text);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-glass-secondary:hover {
+  background: var(--lp-surface-hover);
+  border-color: var(--lp-gold);
+  color: var(--lp-gold);
+}
+
+.btn-glass-ghost {
+  background: transparent;
+  color: var(--lp-text-secondary);
+}
+
+.btn-glass-ghost:hover {
+  background: var(--lp-surface);
+  color: var(--lp-text);
+}
+
+/* ==========================================
+   SOCIAL PROOF BAR
+   ========================================== */
+
+@keyframes scroll-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-33.333333%);
+  }
+}
+
+.marquee-glass {
+  background: var(--lp-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--lp-glass-border);
+  border-bottom: 1px solid var(--lp-glass-border);
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+
+@keyframes driftGold {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(40px, 30px) scale(1.1);
+  }
+}
+
+@keyframes driftViolet {
+  from {
+    transform: translate(0, 0) scale(1.1);
+  }
+
+  to {
+    transform: translate(-30px, 40px) scale(1);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+
+.footer-glass {
+  background: var(--lp-footer-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--lp-glass-border);
 }

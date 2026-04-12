@@ -1,0 +1,85 @@
+export const meta = {
+  title: "Bot Flows",
+  description: "Overview of visual bot flow designer — build conversation automation with a drag-and-drop graph editor.",
+  section: "bot-flows"
+}
+
+# Bot Flows
+
+Bot Flows let you build **visual conversation automations** using a drag-and-drop graph editor. Create decision trees, FAQ routers, lead qualification workflows, and more — without writing code.
+
+## What Are Bot Flows?
+
+A bot flow is a **graph** made of nodes connected by edges:
+
+- **Nodes** — Actions, messages, conditions, or triggers
+- **Edges** — Connections that define the flow path between nodes
+
+When a visitor sends a message, Yoosr evaluates the active flow, follows the graph path, and executes each node in sequence.
+
+## Bot Flow vs AI Chatbot
+
+| Feature | Bot Flow | AI Chatbot |
+|---------|----------|------------|
+| **Logic** | Pre-defined rules and paths | LLM-generated responses |
+| **Setup** | Visual graph editor | Knowledge base + system prompt |
+| **Best for** | Structured workflows (order status, booking) | Open-ended Q&A |
+| **Flexibility** | Fixed paths | Adapts to any question |
+| **Fallback** | Can hand off to AI chatbot | Can escalate to human agent |
+
+Use both together: bot flows handle structured processes, the AI chatbot handles everything else.
+
+## Key Concepts
+
+### Nodes
+
+| Node Type | Purpose |
+|-----------|---------|
+| **Trigger** | Entry point — defines what starts the flow (keyword, event, default) |
+| **Message** | Sends text, buttons, or quick replies to the visitor |
+| **Condition** | Branching logic — routes flow based on visitor input or context |
+| **Action** | Performs an operation — API call, variable assignment, database lookup |
+| **End** | Terminates the flow, optionally hands off to agent or AI |
+
+### Edges
+
+Edges connect nodes and define the conversation path. Each edge can have a condition:
+
+- **Default edge** — Always followed if no condition matches
+- **Conditional edge** — Only followed if the visitor's input matches the edge label
+
+### Flow State
+
+The flow's execution state is tracked in the `conversation_bot_state` table, which is separated from the main `conversations` table to prevent Optimistic Concurrency Control (OCC) write conflicts during bot execution.
+
+## How Bot Flows Execute
+
+```
+Visitor sends message
+    ↓
+Is there an active bot flow?
+    ↓ Yes
+Find the matching Trigger node
+    ↓
+Follow edges, executing nodes in order
+    ↓
+Condition node: which edge matches?
+    ↓
+Execute the matched branch
+    ↓
+Reach End node → Hand off or continue
+```
+
+## Creating Your First Flow
+
+1. Go to **Design Studio** in your dashboard
+2. Click **New Flow**
+3. Add a **Trigger** node — set it to match a keyword like "pricing"
+4. Add a **Message** node — write your pricing response
+5. Connect the Trigger to the Message with an edge
+6. Add an **End** node
+7. Click **Publish**
+
+## Next Steps
+
+[Learn the Visual Designer →](/docs/bot-flows/designer)

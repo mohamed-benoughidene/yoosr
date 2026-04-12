@@ -5,7 +5,7 @@ import { TestWidgetClient } from "./TestWidgetClient"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Widget Test | Yoosr",
+  title: "Widget Test",
   description: "Test your Yoosr chat widget integration.",
   robots: { index: false },
 }

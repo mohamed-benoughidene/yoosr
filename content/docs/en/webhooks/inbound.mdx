@@ -1,0 +1,104 @@
+export const meta = {
+  title: "Inbound Webhooks",
+  description: "How Yoosr receives and processes webhooks from Meta (WhatsApp/Messenger/Instagram), Telegram, and Clerk.",
+  section: "webhooks"
+}
+
+# Inbound Webhooks
+
+Inbound webhooks are how external platforms send messages and events **into** Yoosr.
+
+## Meta Webhook — WhatsApp / Messenger / Instagram
+
+```
+POST /webhooks/meta
+```
+
+A single endpoint handles all three Meta platforms. The `object` field in the payload determines which:
+
+| `object` Value | Platform |
+|----------------|----------|
+| `whatsapp_business_account` | WhatsApp |
+| `page` | Messenger |
+| `instagram` | Instagram |
+
+### Verification
+
+Every request is verified with HMAC-SHA256:
+
+| Header | Description |
+|--------|-------------|
+| `X-Hub-Signature-256` | `sha256=<hex>` — computed using the per-integration `app_secret` (AES-GCM encrypted) |
+
+The signature comparison uses **constant-time comparison** to prevent timing attacks.
+
+**Response:** `OK` (200). Always 200 per Meta requirements.
+
+### Webhook Verification (GET)
+
+During setup, Meta sends a GET request:
+
+```
+GET /webhooks/meta?hub.mode=subscribe&hub.verify_token=<token>&hub.challenge=<challenge>
+```
+
+**Response:** Returns the `hub.challenge` value (200) if the token matches, or `Forbidden` (403).
+
+### Processing
+
+1. **Deduplication** — By `messageId` to prevent duplicate conversations
+2. **Contact matching** — Creates or updates the contact record
+3. **Conversation routing** — Creates a new conversation or adds to existing one
+4. **Bot execution** — Triggers AI chatbot or bot flow if enabled
+
+---
+
+## Telegram Webhook
+
+```
+POST /webhooks/telegram
+```
+
+Receives incoming Telegram messages.
+
+### Authentication
+
+| Header | Description |
+|--------|-------------|
+| `X-Telegram-Bot-Api-Secret-Token` | Per-bot secret token set during `setWebhook` |
+
+**Response:** `OK` (200). Always 200 to prevent retries. `Forbidden` (403) if token doesn't match.
+
+> **Note:** GET requests return `405 Method Not Allowed`. Telegram uses POST-only webhooks.
+
+### Processing
+
+Same pipeline as Meta: deduplication → contact → conversation → routing → bot/agent.
+
+---
+
+## Clerk Webhook
+
+```
+POST /clerk-webhook
+```
+
+Syncs Clerk authentication events to Convex.
+
+### Authentication
+
+Verified via **Svix signature** using `CLERK_WEBHOOK_SECRET`.
+
+### Events Handled
+
+| Clerk Event | Action |
+|-------------|--------|
+| `user.created` | Sync new user profile to Convex `profiles` table |
+| `user.updated` | Update existing profile |
+| `organization.deleted` | Remove associated projects and schedule data deletion |
+
+**Response:** `OK` (200), `Invalid signature` (401), `Webhook secret not configured` (500).
+
+<Callout variant="warning" title="Organization deletion">
+When a Clerk organization is deleted, Yoosr schedules cascading deletion of all associated projects and data. This is irreversible.
+</Callout>

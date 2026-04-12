@@ -3,7 +3,7 @@ import { OnboardingClient } from "./OnboardingClient"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-    title: "Set Up Your Workspace — Yoosr",
+    title: "Set Up Your Workspace",
     description: "Configure your Yoosr workspace to get started."
 }
 

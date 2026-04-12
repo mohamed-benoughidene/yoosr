@@ -1,0 +1,91 @@
+export const meta = {
+  title: "Widget Customization",
+  description: "Customize your widget's appearance — colors, themes, logo, and alignment.",
+  section: "widget"
+}
+
+# Widget Customization
+
+Make your widget match your brand. Yoosr gives you full control over colors, logos, and positioning — all configurable from the dashboard with a live preview.
+
+## Color Themes
+
+Yoosr ships with five pre-built color presets:
+
+| Preset | Color | Use Case |
+|--------|-------|----------|
+| **Ocean Blue** | `#2563eb` | Professional, tech-focused brands |
+| **Forest Green** | `#16a34a` | Nature, health, wellness brands |
+| **Royal Purple** | `#7c3aed` | Creative, premium brands |
+| **Midnight** | `#0f172a` | Dark mode, modern interfaces |
+| **Custom** | `#000000` | Your own brand color |
+
+Click any preset to apply it instantly. The preview updates in real-time.
+
+## Primary Color
+
+For full control, use the **color picker** or **hex input**:
+
+1. Click the color swatch to open the color picker
+2. Select any color, or type a hex value (e.g., `#6366f1`)
+3. The color applies to the launcher button, chat header, and interactive elements
+
+<Callout variant="tip" title="Brand consistency">
+Use your brand's primary color for a seamless experience. The widget will automatically feel like part of your site.
+</Callout>
+
+## Logo & Branding
+
+Upload your company logo to appear in the widget header:
+
+| Setting | Description | Example |
+|---------|-------------|---------|
+| **Logo URL** | A public URL to your logo image (PNG, SVG, or WebP) | `https://example.com/logo.png` |
+
+<Callout variant="info" title="Image requirements">
+Use a square image (at least 64×64px) with a transparent or solid background. SVG files scale best.
+</Callout>
+
+## Alignment
+
+Choose where the widget appears on your page:
+
+- **Right** (default) — Bottom-right corner, standard placement
+- **Left** — Bottom-left corner, useful if you have other right-aligned widgets
+
+The alignment setting affects both the launcher button and the chat window.
+
+## Live Preview
+
+The right side of the Widget Setup page shows a **live preview** of your widget inside an iPhone-style frame. The preview:
+
+- Reflects your current color, logo, and alignment settings
+- Uses your project's actual widget configuration
+- Updates when you click **Save Config**
+
+<Callout variant="warning" title="Preview limitations">
+The preview runs in an iframe and may have session state. Use the "Reset Session" button below the preview to clear the visitor ID and test as a new user.
+</Callout>
+
+## Reset Session
+
+When testing, the widget remembers your visitor session. To test as a new visitor:
+
+1. Click the **Reset Session** button below the preview
+2. This clears `yoosr_visitor_id` from localStorage
+3. The widget reloads as a fresh visitor
+
+Alternatively, open your site in an **incognito/private window**.
+
+## Saving Changes
+
+After making changes:
+
+1. Click **Save Config** at the bottom of the page
+2. A success toast confirms the save
+3. The preview reloads to reflect changes
+4. Changes propagate to all live widget instances immediately
+
+<Callout variant="success" title="Instant propagation">
+Widget configuration is fetched at runtime, not cached. Changes take effect immediately — no redeployment needed.
+</Callout>

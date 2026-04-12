@@ -1,0 +1,80 @@
+export const meta = {
+  title: "Labels",
+  description: "Create and manage custom tags to categorize conversations for better organization and reporting.",
+  section: "agent-dashboard"
+}
+
+# Labels
+
+Labels are **color-coded tags** that agents attach to conversations for categorization. They help you filter, search, and analyze conversation patterns.
+
+## Creating a Label
+
+1. Go to **Settings → Labels**
+2. Click **New Label**
+3. Fill in:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Name** | Display name (max 30 chars) | `Bug Report` |
+| **Color** | Hex color code or color picker | `#ef4444` (red) |
+| **Description** *(optional)* | What this label means | `Use for software bugs and technical issues` |
+
+4. Click **Save**
+
+## Applying Labels
+
+In a conversation's detail view:
+
+1. Click the **Label** icon in the right panel
+2. Select one or more labels from the dropdown
+3. Labels appear as colored badges in the conversation list
+
+### Bulk Labeling
+
+Select multiple conversations in the list and use the **bulk actions** menu to add labels to all selected conversations at once.
+
+## Filtering by Labels
+
+On the Conversations page:
+
+1. Click the **Filter** button
+2. Select one or more labels
+3. Only conversations with those labels are shown
+
+Combine label filters with status and channel filters for precise results.
+
+## Common Label Use Cases
+
+| Label | Purpose |
+|-------|---------|
+| **Bug Report** | Technical issues reported by customers |
+| **Feature Request** | Suggestions for new features |
+| **Billing Issue** | Payment, refund, or invoice questions |
+| **VIP** | High-priority customer requiring special attention |
+| **Escalated** | Conversation moved to a senior agent or manager |
+| **Follow-up Needed** | Requires action after a delay |
+| **Resolved** | Issue fixed — keep for reference |
+
+<Callout variant="tip" title="Keep it organized">
+Start with 5–10 labels. Too many labels become hard to manage and dilute their usefulness.
+</Callout>
+
+## Managing Labels
+
+| Action | Description |
+|--------|-------------|
+| **Rename** | Change the label name (applies to all existing conversations) |
+| **Recolor** | Update the color (visual change only) |
+| **Delete** | Remove the label from all conversations and the label list |
+| **Merge** | Combine two labels into one (rename one to match the other) |
+
+## Label Analytics
+
+Labels feed into your reporting:
+
+- **Conversations by label** — See which categories are most common
+- **Resolution time by label** — How long each category takes to resolve
+- **Agent performance by label** — Which agents handle which types of conversations
+
+Use these insights to staff your departments and train your team effectively.

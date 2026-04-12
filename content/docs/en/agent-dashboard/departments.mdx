@@ -1,0 +1,83 @@
+export const meta = {
+  title: "Departments",
+  description: "Create departments to group agents into teams and configure conversation routing rules.",
+  section: "agent-dashboard"
+}
+
+# Departments
+
+Departments let you **organize your team** into groups (e.g., "Sales", "Technical Support", "Billing") and automatically route conversations to the right people.
+
+## Creating a Department
+
+1. Go to **Settings → Departments**
+2. Click **New Department**
+3. Enter a **name** (e.g., `Technical Support`)
+4. Click **Create**
+
+## Assigning Agents
+
+After creating a department:
+
+1. Open the department's settings
+2. Under **Team Members**, click **Add Agent**
+3. Select agents from your organization
+4. Click **Save**
+
+Agents can belong to **multiple departments**.
+
+## Routing Rules
+
+Conversations are routed to departments based on rules you configure:
+
+| Rule Type | Description | Example |
+|-----------|-------------|---------|
+| **Channel** | Route by source channel | All WhatsApp messages → WhatsApp Team |
+| **Keyword** | Route by message keywords | Messages with "refund" → Billing Team |
+| **Default** | Fallback department | Everything else → General Support |
+
+### How Routing Works
+
+```
+New conversation arrives
+    ↓
+Check routing rules in order
+    ↓
+Match found? → Assign to department's queue
+    ↓
+No match → Default department
+    ↓
+Notify available agents in the department
+```
+
+<Callout variant="info" title="Rule order matters">
+Rules are evaluated top-to-bottom. Place specific rules (keyword matches) above general ones (channel routing).
+</Callout>
+
+## Department-Specific Bot Configuration
+
+Each department can have its own:
+
+- **AI chatbot settings** — Different models or knowledge bases per team
+- **Bot flows** — Different automation graphs for different use cases
+- **Canned responses** — Team-specific reply templates
+
+## Managing Departments
+
+| Action | Description |
+|--------|-------------|
+| **Rename** | Change the department name |
+| **Add/Remove agents** | Update team membership |
+| **Edit routing rules** | Change how conversations are assigned |
+| **Delete** | Remove the department (conversations are not deleted) |
+
+<Callout variant="warning" title="Deleting departments">
+Deleting a department does not delete its conversations. Unrouted conversations will fall back to the default department.
+</Callout>
+
+## Best Practices
+
+1. **Start with one department** — "General Support" — and split as your team grows
+2. **Use clear names** — "Billing" is better than "Team 2"
+3. **Set a default department** — Ensure no conversation goes unassigned
+4. **Review routing logs** — Check if conversations are being routed correctly in the Activity Log

@@ -44,10 +44,6 @@ export function AIPromptBar({ onGenerate, visible = true }: AIPromptBarProps) {
             label: t("aiPromptBar.examples.kbLookup.label"),
             prompt: t("aiPromptBar.examples.kbLookup.prompt"),
         },
-        {
-            label: t("aiPromptBar.examples.aiAssistant.label"),
-            prompt: t("aiPromptBar.examples.aiAssistant.prompt"),
-        },
     ];
 
     const handleGenerate = async () => {

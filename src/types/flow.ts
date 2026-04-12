@@ -51,15 +51,6 @@ export interface AITaskNodeData {
     [key: string]: unknown;
 }
 
-export interface AIAssistantNodeData {
-    label: string;
-    systemPrompt: string;
-    model?: string;
-    maxTurns?: number;
-    assignTo?: string;
-    [key: string]: unknown;
-}
-
 export interface ConditionNodeData {
     label: string;
     attributeKey: string;
@@ -101,7 +92,6 @@ export type FlowNodeData =
     | SetAttributeNodeData
     | WebRequestNodeData
     | AITaskNodeData
-    | AIAssistantNodeData
     | ConditionNodeData
     | HITLHandoffNodeData
     | ApplyLabelNodeData

@@ -1,0 +1,176 @@
+export const meta = {
+  title: "Nodes & Actions",
+  description: "Detailed reference for every bot flow node type — Trigger, Message, Condition, Action, and End.",
+  section: "bot-flows"
+}
+
+# Nodes & Actions
+
+Every node in a bot flow has a specific role. Here's a detailed reference for each type.
+
+## Trigger Node
+
+The **entry point** of your bot flow. Defines what starts the flow.
+
+### Configuration
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Match Type** | How to match the visitor's message | `keyword`, `event`, `default` |
+| **Keywords** | Words or phrases to match (for keyword type) | `["pricing", "plans", "cost"]` |
+| **Event** | System event to trigger on (for event type) | `conversation.opened` |
+
+### Example
+
+```
+Trigger: keyword
+Keywords: ["pricing", "plans", "how much"]
+  ↓
+When a visitor sends "What are your plans?"
+  ↓
+Flow activates
+```
+
+<Callout variant="tip" title="Use synonyms">
+Include common variations of keywords so the trigger catches more visitor messages.
+</Callout>
+
+## Message Node
+
+Sends a **text response** to the visitor.
+
+### Configuration
+
+| Field | Description |
+|-------|-------------|
+| **Text** | The message body (supports line breaks) |
+| **Quick Replies** | Optional buttons the visitor can tap |
+| **Delay** | Typing indicator duration before sending (ms) |
+
+### Example
+
+```
+Text: "Our plans start at $9/mo for the Starter plan. Would you like details?"
+Quick Replies: ["Starter", "Pro", "Enterprise"]
+  ↓
+Visitor sees the message with three tappable buttons
+```
+
+## Condition Node
+
+**Branching logic** that routes the flow based on visitor input or context.
+
+### Configuration
+
+| Field | Description |
+|-------|-------------|
+| **Condition Type** | What to evaluate: `text_match`, `variable`, `conversation_status` |
+| **Branches** | Each branch has a label and a condition value |
+| **Default Branch** | Fallback if no branch matches |
+
+### Example
+
+```
+Condition: text_match
+Branches:
+  - "yes" → proceed to booking
+  - "no" → offer alternatives
+Default → ask again
+```
+
+<Callout variant="info" title="Case insensitive">
+Text matching in conditions is case-insensitive. "Yes", "yes", and "YES" all match.
+</Callout>
+
+## Action Node
+
+Performs an **operation** — API calls, database lookups, setting variables.
+
+### Configuration
+
+| Field | Description |
+|-------|-------------|
+| **Action Type** | `http_request`, `set_variable`, `lookup_contact`, `create_ticket` |
+| **URL** | (for HTTP requests) The endpoint to call |
+| **Method** | GET, POST, PUT, DELETE |
+| **Headers** | Custom headers for the request |
+| **Body** | Request body (for POST/PUT) |
+| **Variable Name** | (for set_variable) The name to store the result |
+
+### Example: HTTP Request
+
+```
+Action: http_request
+URL: https://api.example.com/orders/{{visitor.email}}
+Method: GET
+  ↓
+Response stored in variable: order_status
+  ↓
+Next node uses {{order_status}} in its message
+```
+
+### Example: Set Variable
+
+```
+Action: set_variable
+Variable: customer_tier
+Value: "premium"
+  ↓
+Later nodes can reference {{customer_tier}} in conditions or messages
+```
+
+## End Node
+
+**Terminates** the bot flow execution.
+
+### Configuration
+
+| Field | Description |
+|-------|-------------|
+| **Next Step** | What happens after the flow ends: `handoff_to_agent`, `handoff_to_ai`, `end_conversation` |
+| **Message** | Optional final message before ending |
+
+### Example
+
+```
+Text: "I've connected you with a team member. They'll be with you shortly!"
+Next Step: handoff_to_agent
+  ↓
+Conversation is marked as needing agent attention
+Routing system assigns it to an available agent
+```
+
+## Variables & Data Flow
+
+Variables allow data to flow between nodes:
+
+- **Set variables** with Action nodes
+- **Reference variables** in Message text and Condition values using `{{variable_name}}`
+- **Built-in variables**: `{{visitor.name}}`, `{{visitor.email}}`, `{{conversation.id}}`
+
+### Variable Scope
+
+Variables are scoped to the **conversation**. They persist throughout the conversation but don't cross between conversations.
+
+## Error Handling
+
+When a node fails (e.g., HTTP request times out):
+
+1. The error is logged to the activity log
+2. The flow continues to the next node (graceful degradation)
+3. If the node was critical (no fallback), the flow ends and hands off to an agent
+
+<Callout variant="warning" title="Always provide fallbacks">
+Design your flows with error handling — add Condition nodes that check for empty API responses and show a "try again" message.
+</Callout>
+
+## State Management
+
+Bot flow state is stored in the `conversation_bot_state` table, which is **separate** from the `conversations` table. This separation prevents Optimistic Concurrency Control (OCC) write conflicts when both the bot and an agent try to update a conversation simultaneously.
+
+Each state record tracks:
+
+- Current node being executed
+- Variable values
+- Edge traversed
+- Last execution timestamp

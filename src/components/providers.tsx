@@ -1,6 +1,7 @@
 "use client"
 
 import { ConvexClientProvider } from "@/components/ConvexClientProvider"
+import { ThemeProvider } from "@/components/theme-provider"
 import { ProjectProvider } from "@/context/ProjectContext"
 import { Toaster } from "sonner"
 import { DirectionProvider } from "@radix-ui/react-direction"
@@ -26,13 +27,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const dir = locale === "ar" ? "rtl" : "ltr"
 
     return (
-        <DirectionProvider dir={dir}>
-            <ConvexClientProvider>
-                <ProjectProvider>
-                    {children}
-                    <AppToaster dir={dir} />
-                </ProjectProvider>
-            </ConvexClientProvider>
-        </DirectionProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <DirectionProvider dir={dir}>
+                <ConvexClientProvider>
+                    <ProjectProvider>
+                        {children}
+                        <AppToaster dir={dir} />
+                    </ProjectProvider>
+                </ConvexClientProvider>
+            </DirectionProvider>
+        </ThemeProvider>
     )
 }

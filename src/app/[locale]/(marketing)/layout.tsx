@@ -2,7 +2,8 @@ import { LandingHeaderNoAuth } from "@/components/layout/LandingHeaderNoAuth";
 import { LandingFooter } from "@/components/layout/LandingFooter";
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server";
 import { MarketingProviders } from "@/components/MarketingProviders";
-import { Noto_Naskh_Arabic, Space_Grotesk } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Mirza, Space_Grotesk } from "next/font/google";
 
 const spaceGrotesk = Space_Grotesk({
     weight: "variable",
@@ -13,10 +14,11 @@ const spaceGrotesk = Space_Grotesk({
     preload: false,
 });
 
-const notoNaskhArabic = Noto_Naskh_Arabic({
-    weight: "700",
+// Arabic heading/title font
+const mirza = Mirza({
+    weight: ["400", "500", "600", "700"],
     subsets: ["arabic"],
-    variable: "--font-noto-naskh-arabic",
+    variable: "--font-mirza",
     display: "swap",
     preload: false,
 });
@@ -31,15 +33,21 @@ export default async function MarketingLayout({
     const { locale } = await params;
     unstable_setRequestLocale(locale);
 
-    const fontClasses = `${spaceGrotesk.variable} ${locale === "ar" ? notoNaskhArabic.variable : ""}`;
+    const fontClasses = `${spaceGrotesk.variable} ${locale === "ar" ? mirza.variable : ""}`;
 
     return (
-        <MarketingProviders>
-            <div className={`flex min-h-screen flex-col ${fontClasses}`}>
-                <LandingHeaderNoAuth />
-                <main className="flex-1">{children}</main>
-                <LandingFooter />
-            </div>
-        </MarketingProviders>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <MarketingProviders>
+                <div
+                    className={`flex min-h-screen flex-col ${fontClasses}`}
+                    style={{ backgroundColor: "var(--lp-bg)" }}
+                    suppressHydrationWarning
+                >
+                    <LandingHeaderNoAuth />
+                    <main className="flex-1">{children}</main>
+                    <LandingFooter />
+                </div>
+            </MarketingProviders>
+        </ThemeProvider>
     );
 }

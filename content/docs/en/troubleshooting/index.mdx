@@ -1,0 +1,134 @@
+export const meta = {
+  title: "Troubleshooting",
+  description: "Common issues, their causes, and step-by-step solutions.",
+  section: "troubleshooting"
+}
+
+# Troubleshooting
+
+Common issues and how to resolve them.
+
+## Widget Not Showing on My Website
+
+**Symptoms:** No chat button appears after installing the widget code.
+
+**Checklist:**
+
+1. **Script placement** — Verify the code is pasted before the closing `</body>` tag
+2. **Project ID** — Confirm the `projectId` in `window.yoosrSettings` matches your project
+3. **Browser console** — Open DevTools (F12) and check for JavaScript errors
+4. **Script URL** — Ensure the `widget.js` URL is accessible (paste it directly in the browser)
+5. **Ad blockers** — Some ad blockers block third-party scripts — test with extensions disabled
+
+<Callout variant="tip" title="Quick test">
+Open your site in an incognito window with DevTools open. If the script loads, you'll see no errors in the Console tab.
+</Callout>
+
+---
+
+## CORS Errors When Loading widget.js
+
+**Symptoms:** Console shows `Access-Control-Allow-Origin` error.
+
+**Cause:** The widget script is being loaded from a different origin than expected.
+
+**Fix:**
+- Ensure the `src` URL in your script tag matches your app's origin exactly
+- Check that your app URL (e.g., `https://app.yoosr.com`) is correct and accessible
+- If you have a custom CSP (Content Security Policy), add your app's origin to `script-src`
+
+---
+
+## AI Bot Not Responding
+
+**Symptoms:** Messages send but the bot never replies.
+
+**Checklist:**
+
+1. **OpenRouter API key** — Verify it's configured in AI Settings and not expired
+2. **Rate limit** — Check if you've hit the `AI_RATE_LIMIT_PER_HOUR` cap
+3. **Knowledge base** — Ensure at least one source is in "Ready" status (not "Processing" or "Error")
+4. **System prompt** — Review for conflicting instructions or overly restrictive guardrails
+5. **Bot flow interference** — If a bot flow is active, it may be handling the message instead of the AI
+
+---
+
+## Webhook Not Receiving Events
+
+**Symptoms:** Outbound webhook deliveries are failing or not happening.
+
+**Checklist:**
+
+1. **Endpoint accessibility** — Your URL must be publicly reachable via HTTPS
+2. **Signature verification** — Your server may be rejecting valid deliveries — check your verification code
+3. **Delivery logs** — Check **Dashboard → Settings → Webhooks → Delivery Logs** for status codes
+4. **Retry status** — All 3 retries may have failed — review the error messages in the logs
+5. **Subscription active** — Verify the webhook hasn't been toggled off or deleted
+
+---
+
+## Telegram Bot Not Receiving Messages
+
+**Symptoms:** Messages sent to your Telegram bot don't appear in Yoosr.
+
+**Checklist:**
+
+1. **Webhook set** — Call `https://api.telegram.org/bot<TOKEN>/getWebhookInfo` and verify the URL matches your Yoosr webhook endpoint
+2. **Secret token** — The secret token in the `setWebhook` call must match what's stored in Yoosr
+3. **Bot token validity** — Test the bot token with `https://api.telegram.org/bot<TOKEN>/getMe`
+4. **403 errors** — If you see 403 in Yoosr logs, the secret token doesn't match — re-save the channel config
+
+---
+
+## WhatsApp Messages Not Arriving
+
+**Symptoms:** Messages sent to your WhatsApp number don't appear in Yoosr.
+
+**Checklist:**
+
+1. **Webhook subscription** — In Meta Developer Console, verify `messages` is subscribed
+2. **Signature verification** — Check that the app secret is correct in Yoosr channel settings
+3. **Phone number verified** — In Meta Developer Console, ensure the test phone number is verified
+4. **Access token** — Temporary tokens expire — use a System User token for production
+
+---
+
+## Knowledge Base Search Returning Irrelevant Results
+
+**Symptoms:** The AI bot answers with unrelated information.
+
+**Checklist:**
+
+1. **Chunk size** — Large chunks may contain unrelated context — consider splitting documents
+2. **Document structure** — Use clear headings and short paragraphs for better chunking
+3. **Embedding model** — Verify `EMBEDDING_MODEL` is set to `nvidia/llama-nemotron-embed-vl-1b-v2`
+4. **Source quality** — Remove outdated or irrelevant sources from the knowledge base
+5. **System prompt** — Tighten the prompt's knowledge scope to reduce off-topic answers
+
+---
+
+## Dashboard Loading Slowly
+
+**Symptoms:** The agent dashboard takes more than a few seconds to load.
+
+**Checklist:**
+
+1. **Network connection** — Test your internet speed
+2. **Large data sets** — Conversations use `.take(2000)` — at very high volumes this may slow down
+3. **Browser performance** — Try a different browser or clear cache
+4. **Contact support** — If the issue persists, it may be a platform-side concern
+
+---
+
+## Error Codes Reference
+
+| Code | Meaning | Common Cause |
+|------|---------|-------------|
+| `200` | Success | — |
+| `400` | Bad request | Missing `projectId`, invalid parameters |
+| `401` | Unauthorized | Invalid webhook signature |
+| `403` | Forbidden | Credential mismatch (Telegram secret, Meta app secret) |
+| `404` | Not found | Integration not configured, wrong endpoint |
+| `405` | Method not allowed | GET request to POST-only endpoint (Telegram) |
+| `429` | Rate limit exceeded | Too many widget requests in a short window |
+| `500` | Internal server error | Platform issue — contact support |

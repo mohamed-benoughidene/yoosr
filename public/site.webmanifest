@@ -8,14 +8,14 @@
   "theme_color": "#6D28D9",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/favicon.png",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "/apple-touch-icon.svg",
+      "src": "/apple-touch-icon.png",
       "sizes": "180x180",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

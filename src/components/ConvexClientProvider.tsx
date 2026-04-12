@@ -3,6 +3,7 @@
 import { ConvexReactClient } from "convex/react";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { shadcn } from "@clerk/themes";
 import { ReactNode } from "react";
 import { useLocale } from "next-intl";
 import { arSA, enUS, frFR } from "@clerk/localizations";
@@ -38,7 +39,27 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     // In that case, just render children without Convex provider (static pages
     // like marketing won't need it; dashboard pages will render empty anyway).
     if (!convex) {
-        return <ClerkProvider localization={clerkLocalization}>{children}</ClerkProvider>;
+        return (
+            <ClerkProvider
+                localization={clerkLocalization}
+                appearance={{
+                    baseTheme: shadcn,
+                    variables: {
+                        colorPrimary: "var(--lp-gold)",
+                        colorBackground: "var(--lp-surface)",
+                        colorForeground: "var(--lp-text)",
+                        colorMutedForeground: "var(--lp-text-secondary)",
+                        colorInput: "var(--lp-surface-2)",
+                        colorInputForeground: "var(--lp-text)",
+                        colorMuted: "var(--lp-surface)",
+                        colorBorder: "var(--lp-border)",
+                        fontFamily: "inherit",
+                    },
+                }}
+            >
+                {children}
+            </ClerkProvider>
+        );
     }
 
     // Locale-aware URLs for Clerk redirects
@@ -54,6 +75,20 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     return (
         <ClerkProvider
             localization={clerkLocalization}
+            appearance={{
+                baseTheme: shadcn,
+                variables: {
+                    colorPrimary: "var(--lp-gold)",
+                    colorBackground: "var(--lp-surface)",
+                    colorForeground: "var(--lp-text)",
+                    colorMutedForeground: "var(--lp-text-secondary)",
+                    colorInput: "var(--lp-surface-2)",
+                    colorInputForeground: "var(--lp-text)",
+                    colorMuted: "var(--lp-surface)",
+                    colorBorder: "var(--lp-border)",
+                    fontFamily: "inherit",
+                },
+            }}
             {...urls}
         >
             <ConvexProviderWithClerk client={convex} useAuth={useAuth}>

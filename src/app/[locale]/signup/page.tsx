@@ -3,7 +3,7 @@ import { SignupClient } from "./SignupClient"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
 export const metadata: Metadata = {
-    title: "Get Started — Yoosr",
+    title: "Get Started",
     description: "Create your Yoosr account and start managing customer support in minutes."
 }
 
