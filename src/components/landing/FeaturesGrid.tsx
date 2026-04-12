@@ -46,7 +46,7 @@ export function FeaturesGrid() {
         <ScrollReveal>
           <div className="flex flex-col items-center text-center mb-12">
             <span className="lp-badge">
-              FEATURES
+              {t("badge")}
             </span>
             <h2
               className="lp-headline mt-4 mb-0"

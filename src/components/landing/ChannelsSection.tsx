@@ -38,7 +38,7 @@ export function ChannelsSection() {
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
             <ScrollReveal>
               <div className="flex flex-col gap-4">
-                <span className="ch-label">CHANNELS</span>
+                <span className="ch-label">{t("badge")}</span>
                 <h2 className="ch-heading text-[36px] md:text-[48px] text-[var(--lp-text)]">
                   {t("headline")}
                 </h2>
@@ -59,7 +59,7 @@ export function ChannelsSection() {
                       <h3 className="ch-card-title">
                         {channel.title}
                       </h3>
-                      <p className="text-[13px] text-[var(--lp-text-secondary)] font-['Inter'] leading-[1.5]">
+                      <p className="ch-card-description">
                         {channel.description}
                       </p>
                     </div>
@@ -69,9 +69,9 @@ export function ChannelsSection() {
             </div>
 
             <ScrollReveal delay={500}>
-              <p className="text-[14px] text-[var(--lp-text-secondary)] italic font-['Inter']">
+              <div className="ch-closing">
                 {t("closing")}
-              </p>
+              </div>
             </ScrollReveal>
         </div>
       </div>

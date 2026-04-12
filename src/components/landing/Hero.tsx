@@ -75,8 +75,6 @@ export function Hero() {
       />
 
       <div className="hero-content">
-        <div className="hero-badge">Built for MENA · Early Access</div>
-
         <h1 className="hero-headline">
           {sentences.map((sentence, sIdx) => (
             <span key={sIdx} className="headline-sentence">

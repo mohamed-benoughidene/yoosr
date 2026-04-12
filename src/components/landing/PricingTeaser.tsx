@@ -17,7 +17,7 @@ export function PricingTeaser() {
       <div className="mx-auto max-w-[1200px] px-6 relative z-10">
         <div className="flex flex-col items-center text-center">
           <span className="lp-badge">
-            PRICING
+            {t("badge")}
           </span>
           <h2 className="lp-headline mt-4">
             {t("headline")}

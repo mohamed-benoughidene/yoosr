@@ -13,7 +13,7 @@ export function DesignStudioSection() {
       <div className="max-w-[1200px] mx-auto px-6 relative z-10">
         <ScrollReveal>
           <div className="flex flex-col items-center text-center mb-12">
-            <div className="lp-badge">DESIGN STUDIO</div>
+            <div className="lp-badge">{t("badge")}</div>
             <h2 className="lp-headline mt-4">{t("headline")}</h2>
             <p className="lp-subheadline mt-4">
               {t("subheadline")}
@@ -67,12 +67,6 @@ export function DesignStudioSection() {
               showControls={true}
               priority={false}
             />
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal delay={500}>
-          <div className="ds-closing">
-            {t("closing")}
           </div>
         </ScrollReveal>
       </div>

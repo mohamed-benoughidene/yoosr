@@ -1012,9 +1012,18 @@ body[data-scroll-locked] {
   --font-cabinet-grotesk: var(--font-mirza), "Mirza", sans-serif;
 }
 
+/* Arabic badges need slightly larger size to match Latin optical weight */
+:lang(ar) .lp-badge,
+:lang(ar) .ch-label,
+:lang(ar) .hero-badge {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
 /* Specific landing page heading classes → Mirza */
 :lang(ar) .lp-headline,
 :lang(ar) .lp-badge,
+:lang(ar) .ch-label,
 :lang(ar) .hero-headline,
 :lang(ar) .hero-badge,
 :lang(ar) .ch-heading,

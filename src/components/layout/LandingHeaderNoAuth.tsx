@@ -27,12 +27,14 @@ export function LandingHeaderNoAuth() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
+          {/* TODO: Re-enable docs link when ready
           <Link
             href="/docs"
             className="text-sm font-medium text-[var(--lp-text-secondary)] hover:text-[var(--lp-text)] transition-colors"
           >
             {t('nav.docs')}
           </Link>
+          */}
 
           <a
             href="https://github.com/mohamed-benoughidene/yoosr"
@@ -106,12 +108,14 @@ export function LandingHeaderNoAuth() {
                 <SheetTitle className="text-[var(--lp-text)]">{t('logo')}</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4">
+                {/* TODO: Re-enable docs link when ready
                 <Link
                   href="/docs"
                   className="text-lg font-medium text-[var(--lp-text)] hover:text-[var(--lp-gold)] transition-colors"
                 >
                   {t('nav.docs')}
                 </Link>
+                */}
                 <a
                   href="https://github.com/mohamed-benoughidene/yoosr"
                   target="_blank"

@@ -23,7 +23,7 @@ export function WhoItsFor() {
       <div className="max-w-[1200px] mx-auto relative z-10">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="lp-badge">
-            WHO IT&apos;S FOR
+            {t("badge")}
           </span>
           <h2 className="lp-headline mt-4">
             {t("headline")}

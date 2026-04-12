@@ -39,7 +39,7 @@
       },
       "github": "GitHub Repository",
       "disclaimer": "Yoosr is currently in early access. Some features are still in development expect frequent updates.",
-      "copyright": "Yoosr, Inc. Open Source. MIT License."
+      "copyright": "Yoosr, Inc. Open Source. GNU GPLv3 License."
     },
     "meta": {
       "title": "Yoosr Customer Support for MENA Businesses",
@@ -1781,6 +1781,7 @@
   },
   "landingPage": {
     "hero": {
+      "badge": "Built for MENA · Early Access",
       "headline": "Automate Support. Capture Sales. Hand Off to Humans.",
       "subheadline": "Yoosr gives your business an AI-powered inbox - with a no-code bot builder, smart agent routing, order tracking, and live handoff across Web, Telegram, Messenger, and Instagram.",
       "cta": "Get Early Access - It's Free",
@@ -1790,6 +1791,7 @@
       "bar": "Early Access | 4 channels, one inbox | AI + human handoff | No-code automation | Join 50+ teams on the waitlist"
     },
     "problem": {
+      "badge": "THE PROBLEM",
       "headline": "Your customers are tired of repeating themselves. Your team is tired of answering the same questions.",
       "painPoint1": "Transferred three times for something the first person should have handled",
       "painPoint2": "\"Where's my order?\" - answered manually, all day, every day",
@@ -1797,6 +1799,7 @@
       "transition": "Yoosr fixes the system, not just the symptoms. Smart routing, full context on every handoff, and a bot that handles the repetitive work - so your team only steps in when it actually matters."
     },
     "features": {
+      "badge": "FEATURES",
       "headline": "Built around how support actually works.",
       "botBuilder": {
         "title": "Visual Bot Builder",
@@ -1824,6 +1827,7 @@
       }
     },
     "designStudio": {
+      "badge": "DESIGN STUDIO",
       "headline": "Build your first bot in minutes. Without writing a single line of code.",
       "subheadline": "Design Studio is a visual canvas where you drag blocks, connect conditions, and create automation flows that actually work - no developer required, no technical knowledge assumed.",
       "aiFlow": {
@@ -1837,10 +1841,10 @@
       "liveHandoff": {
         "title": "Live Handoff Built In",
         "description": "Every flow can escalate to a human agent at exactly the right moment - with full conversation context intact. No repeat explanations. No lost history."
-      },
-      "closing": "If your support process can be described, it can be automated."
+      }
     },
     "channels": {
+      "badge": "CHANNELS",
       "headline": "Meet your customers where they already are.",
       "subheadline": "Your customers don't switch apps for you. Yoosr connects to the channels they're already using - and routes every message into one unified inbox.",
       "webWidget": {
@@ -1879,6 +1883,7 @@
       "closing": "Your team handles the exceptions. Yoosr handles everything else."
     },
     "audience": {
+      "badge": "WHO IT'S FOR",
       "headline": "Built for teams that can't afford to miss a message.",
       "ecommerce": {
         "title": "E-commerce Stores",
@@ -1895,6 +1900,7 @@
       "closing": "Whatever your business looks like, your customers expect fast, clear answers. Yoosr makes that possible without burning out your team."
     },
     "trust": {
+      "badge": "TRUST SIGNALS",
       "headline": "Early access. Real product. No vaporware.",
       "subheadline": "Yoosr is live, tested, and being used by early teams right now. We're not selling a roadmap - everything on this page exists and works today.",
       "builtInPublic": {
@@ -1912,6 +1918,7 @@
       "closing": "We'll let the product speak for itself. Get in and see."
     },
     "pricing": {
+      "badge": "PRICING",
       "headline": "Priced for real businesses. Not Silicon Valley budgets.",
       "subheadline": "We're finalizing our plans. What we can tell you now: Yoosr will be priced for teams that are building something real - not enterprises with six-figure software budgets.",
       "free": {

@@ -464,6 +464,8 @@
   letter-spacing: 0.1em;
   margin-bottom: 16px;
   display: inline-flex;
+  align-items: center;
+  width: fit-content;
   padding: 6px 14px;
   border-radius: 999px;
   background: var(--lp-gold-alpha-08);
@@ -477,6 +479,24 @@
   color: var(--lp-text-secondary);
   line-height: 28px;
   max-width: 520px;
+}
+
+.ch-card-description {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--lp-text-secondary);
+  line-height: 1.5;
+}
+
+.ch-closing {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--lp-text-secondary);
+  line-height: 1.6;
+  text-align: center;
 }
 
 /* ==========================================
