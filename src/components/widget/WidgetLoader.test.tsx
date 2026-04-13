@@ -207,7 +207,7 @@ describe("WidgetLoader", () => {
     it("should NOT show the unread badge by default", () => {
       render(<WidgetLoader projectId="abc123" />);
 
-      const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+      const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
       expect(badge).toBeNull();
     });
 
@@ -224,7 +224,7 @@ describe("WidgetLoader", () => {
       });
 
       await waitFor(() => {
-        const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+        const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
         expect(badge).toBeTruthy();
         expect((badge as HTMLElement).textContent).toBe("1");
       });
@@ -249,7 +249,7 @@ describe("WidgetLoader", () => {
       });
 
       await waitFor(() => {
-        const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+        const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
         expect((badge as HTMLElement).textContent).toBe("2");
       });
     });
@@ -269,7 +269,7 @@ describe("WidgetLoader", () => {
       });
 
       await waitFor(() => {
-        const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+        const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
         expect((badge as HTMLElement).textContent).toBe("9+");
       });
     });
@@ -295,7 +295,7 @@ describe("WidgetLoader", () => {
       fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
 
       await waitFor(() => {
-        const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+        const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
         expect(badge).toBeNull();
       });
     });
@@ -314,7 +314,7 @@ describe("WidgetLoader", () => {
 
       await new Promise((r) => setTimeout(r, 50));
 
-      const badge = document.querySelector(".yoosr-widget-launcher span.absolute");
+      const badge = document.querySelector(".yoosr-widget-launcher span.bg-red-500");
       expect(badge).toBeNull();
     });
   });
