@@ -421,8 +421,8 @@ export const getTypingStatus = internalQuery({
     },
 });
 
-// Internal: record a typing event (used by agent dashboard)
-export const recordTyping = internalMutation({
+// Public: record a typing event (used by agent dashboard)
+export const recordTyping = mutation({
     args: {
         projectId: v.id("projects"),
         conversationId: v.id("conversations"),

@@ -87,7 +87,6 @@ export function PreChatForm({ onSubmit, primaryColor, title, subtitle, contactMe
                             type="text"
                             required
                             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-primary"
-                            style={{ focusRingColor: primaryColor }}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder={t("preChatForm.namePlaceholder")}
