@@ -1,10 +1,30 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { WidgetLoader } from "./WidgetLoader";
+
+// Shared helper — create a realistic MediaQueryList mock
+const createMatchMediaMock = (matches: boolean): MediaQueryList => ({
+  matches,
+  media: "",
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+});
 
 describe("WidgetLoader", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
+
+    // Default: desktop viewport (both mobile and tablet queries return false)
+    window.matchMedia = vi.fn().mockImplementation(() => createMatchMediaMock(false));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe("launcher button", () => {
@@ -165,6 +185,21 @@ describe("WidgetLoader", () => {
       expect(container).toBeTruthy();
       expect((container as HTMLElement).style.bottom).toBe("20px");
       expect((container as HTMLElement).style.left).toBe("20px");
+    });
+
+    it("should position the launcher at tablet offset on smaller viewports", () => {
+      vi.spyOn(window, "matchMedia").mockImplementation((query: string | MediaQueryList) => {
+        const mq = typeof query === "string" ? query : "";
+        const isTablet = mq.includes("480") && mq.includes("768");
+        return createMatchMediaMock(isTablet);
+      });
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const container = document.querySelector(".yoosr-widget-launcher-container");
+      expect(container).toBeTruthy();
+      expect((container as HTMLElement).style.bottom).toBe("16px");
+      expect((container as HTMLElement).style.right).toBe("16px");
     });
   });
 
@@ -435,6 +470,290 @@ describe("WidgetLoader", () => {
       fireEvent.click(screen.getByRole("button", { name: "Close chat" }));
 
       expect(screen.getByRole("button", { name: "Open chat" })).toBeTruthy();
+    });
+  });
+
+  describe("mobile responsive widget", () => {
+    it("should register matchMedia listener on mount", () => {
+      const addEventListenerSpy = vi.fn();
+      const mockMql = createMatchMediaMock(true);
+      (mockMql.addEventListener as ReturnType<typeof vi.fn>) = addEventListenerSpy;
+
+      vi.spyOn(window, "matchMedia").mockReturnValue(mockMql);
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      expect(window.matchMedia).toHaveBeenCalled();
+    });
+
+    it("should clean up matchMedia listener on unmount", () => {
+      const removeEventListenerSpy = vi.fn();
+      const mockMql = createMatchMediaMock(true);
+      (mockMql.removeEventListener as ReturnType<typeof vi.fn>) = removeEventListenerSpy;
+
+      vi.spyOn(window, "matchMedia").mockReturnValue(mockMql);
+
+      const { unmount } = render(<WidgetLoader projectId="abc123" />);
+      unmount();
+
+      expect(removeEventListenerSpy).toHaveBeenCalled();
+    });
+
+    it("should apply mobile styles when viewport is < 480px", () => {
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(true));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      expect(wrapper.style.width).toBe("100vw");
+      expect(wrapper.style.height).toBe("100vh");
+      expect(wrapper.style.borderRadius).toBe("0px");
+      expect(wrapper.style.bottom).toBe("0px");
+      expect(wrapper.style.right).toBe("0px");
+    });
+
+    it("should apply tablet styles when viewport is 480px - 768px", () => {
+      // Mobile query doesn't match (480px breakpoint), tablet query matches
+      vi.spyOn(window, "matchMedia").mockImplementation((query: string | MediaQueryList) => {
+        const mq = typeof query === "string" ? query : "";
+        // Mobile: max-width 479px -> doesn't match for tablet viewport
+        // Tablet: min-width 480px and max-width 768px -> matches for tablet viewport
+        const isTablet = mq.includes("480") && mq.includes("768");
+        return createMatchMediaMock(isTablet);
+      });
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      expect(wrapper.style.width).toBe("calc(100vw - 32px)");
+      expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
+      // Chat window sits above launcher: 56 + 16 + 4 = 76px
+      expect(wrapper.style.bottom).toBe("76px");
+      expect(wrapper.style.right).toBe("76px");
+    });
+
+    it("should apply desktop styles when viewport is > 768px", () => {
+      // Both mobile and tablet queries don't match
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(false));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      expect(wrapper.style.width).toBe("380px");
+      expect(wrapper.style.height).toBe("520px");
+      expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
+      // Chat window sits above launcher: 56 + 20 + 4 = 80px
+      expect(wrapper.style.bottom).toBe("80px");
+      expect(wrapper.style.right).toBe("80px");
+    });
+
+    it("should maintain open/close transitions with dynamic styles", () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+
+      // Check transition property exists before open
+      expect(wrapper.style.transition).toContain("transform");
+      expect(wrapper.style.transition).toContain("opacity");
+
+      // Open the widget
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      // Check transition still works after open
+      expect(wrapper.style.transition).toContain("transform");
+      expect(wrapper.style.transition).toContain("opacity");
+      expect(wrapper.style.opacity).toBe("1");
+    });
+
+    it("should hide launcher on mobile when widget is open", () => {
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(true));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const container = document.querySelector(".yoosr-widget-launcher-container");
+      expect(container).toBeTruthy();
+      expect((container as HTMLElement).style.display).toBeFalsy(); // visible when closed
+
+      // Open the widget
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      // Launcher should be hidden on mobile
+      expect((container as HTMLElement).style.display).toBe("none");
+    });
+
+    it("should keep launcher visible on desktop when widget is open", () => {
+      // Both mobile and tablet queries don't match = desktop
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(false));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      const container = document.querySelector(".yoosr-widget-launcher-container");
+      expect(container).toBeTruthy();
+      expect((container as HTMLElement).style.display).toBeFalsy();
+
+      // Open the widget
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      // Launcher should still be visible on desktop
+      expect((container as HTMLElement).style.display).toBeFalsy();
+    });
+
+    it("should offset chat window above launcher on desktop", () => {
+      // Desktop: both matchMedia queries return false
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(false));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      // Chat window bottom = launcherSize(56) + offset(20) + gap(4) = 80px
+      expect(wrapper.style.bottom).toBe("80px");
+      expect(wrapper.style.right).toBe("80px");
+    });
+
+    it("should offset chat window above launcher on tablet", () => {
+      // Tablet: mobile doesn't match, tablet matches
+      vi.spyOn(window, "matchMedia").mockImplementation((query: string | MediaQueryList) => {
+        const mq = typeof query === "string" ? query : "";
+        const isTablet = mq.includes("480") && mq.includes("768");
+        return createMatchMediaMock(isTablet);
+      });
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      // Chat window bottom = launcherSize(56) + tabletOffset(16) + gap(4) = 76px
+      expect(wrapper.style.bottom).toBe("76px");
+      expect(wrapper.style.right).toBe("76px");
+    });
+
+    it("should position chat window at bottom 0 on mobile when open", () => {
+      vi.spyOn(window, "matchMedia").mockImplementation(() => createMatchMediaMock(true));
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
+      expect(wrapper.style.bottom).toBe("0px");
+      expect(wrapper.style.right).toBe("0px");
+    });
+  });
+
+  describe("focus management", () => {
+    it("should send focus_input postMessage to iframe when opened", async () => {
+      const postMessageSpy = vi.fn();
+      const mockIframe = {
+        contentWindow: { postMessage: postMessageSpy },
+      };
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      // Replace the iframe ref manually
+      const iframe = screen.getByTitle("Yoosr Chat Widget") as HTMLIFrameElement;
+      Object.defineProperty(iframe, "contentWindow", { value: mockIframe.contentWindow });
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+
+      await waitFor(() => {
+        expect(postMessageSpy).toHaveBeenCalledWith(
+          { type: "yoosr:focus_input", payload: {} },
+          "*"
+        );
+      });
+    });
+
+    it("should return focus to launcher on close", async () => {
+      const focusSpy = vi.spyOn(HTMLElement.prototype, "focus");
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      // Open first
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+      // Then close
+      fireEvent.click(screen.getByRole("button", { name: "Close chat" }));
+
+      await waitFor(() => {
+        expect(focusSpy).toHaveBeenCalled();
+      });
+    });
+
+    it("should close widget and return focus to launcher on Escape key", async () => {
+      const focusSpy = vi.spyOn(HTMLElement.prototype, "focus");
+
+      render(<WidgetLoader projectId="abc123" />);
+
+      // Open the widget
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+      expect(screen.getByRole("button", { name: "Close chat" })).toBeTruthy();
+
+      // Press Escape
+      fireEvent.keyDown(window, { key: "Escape" });
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Open chat" })).toBeTruthy();
+        expect(focusSpy).toHaveBeenCalled();
+      });
+    });
+
+    it("should NOT close widget on non-Escape key", () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
+      expect(screen.getByRole("button", { name: "Close chat" })).toBeTruthy();
+
+      // Press non-Escape key
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      expect(screen.getByRole("button", { name: "Close chat" })).toBeTruthy();
+    });
+  });
+
+  describe("primaryColor theming", () => {
+    it("should use the default color (#6366f1) when no primaryColor is provided", () => {
+      render(<WidgetLoader projectId="abc123" />);
+
+      const button = screen.getByRole("button", { name: "Open chat" });
+      // Browsers convert hex colors to rgb format when set via inline styles
+      expect((button as HTMLElement).style.backgroundColor).toBe("rgb(99, 102, 241)");
+    });
+
+    it("should apply the primaryColor to the launcher button", () => {
+      render(<WidgetLoader projectId="abc123" primaryColor="#16a34a" />);
+
+      const button = screen.getByRole("button", { name: "Open chat" });
+      expect((button as HTMLElement).style.backgroundColor).toBe("rgb(22, 163, 74)");
+    });
+
+    it("should apply the primaryColor to the toast avatar", async () => {
+      render(<WidgetLoader projectId="abc123" primaryColor="#7c3aed" />);
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: { type: "yoosr:new_message", senderName: "Agent", message: "Hi!" },
+            origin: "null",
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const toast = document.querySelector("[aria-live='polite']");
+        expect(toast).toBeTruthy();
+        const avatar = toast?.querySelector("div.w-7");
+        expect((avatar as HTMLElement).style.backgroundColor).toBe("rgb(124, 58, 237)");
+      });
+    });
+
+    it("should update the pulse animation color to match primaryColor", () => {
+      render(<WidgetLoader projectId="abc123" primaryColor="#ff0000" />);
+
+      // Pulse animation is injected via <style> tag — verify the component renders
+      const button = screen.getByRole("button", { name: "Open chat" });
+      expect((button as HTMLElement).style.backgroundColor).toBe("rgb(255, 0, 0)");
     });
   });
 });

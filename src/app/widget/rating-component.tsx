@@ -44,8 +44,8 @@ export function RatingComponent({ onSubmit, primaryColor }: RatingComponentProps
     }
 
     return (
-        <div className="bg-white rounded-lg border p-4 shadow-sm w-full max-w-sm mx-auto mt-2">
-            <h3 className="text-sm font-medium text-center mb-3 text-gray-700">How would you rate our support?</h3>
+        <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm w-full max-w-sm mx-auto mt-2">
+            <h3 className="text-sm font-medium text-center mb-3 text-gray-700 dark:text-gray-200">How would you rate our support?</h3>
 
             <div className="flex justify-center gap-2 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -60,7 +60,7 @@ export function RatingComponent({ onSubmit, primaryColor }: RatingComponentProps
                         <Star
                             className={`w-8 h-8 ${(hoverRating || rating) >= star
                                 ? "fill-yellow-400 text-yellow-400"
-                                : "text-gray-300"
+                                : "text-gray-300 dark:text-gray-600"
                                 }`}
                         />
                     </button>
@@ -73,7 +73,7 @@ export function RatingComponent({ onSubmit, primaryColor }: RatingComponentProps
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
                         placeholder="Any additional feedback? (Optional)"
-                        className="w-full text-sm p-2 border rounded-md focus:outline-none focus:ring-2 resize-none h-20"
+                        className="w-full text-sm p-2 border rounded-md focus:outline-none focus:ring-2 resize-none h-20 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                         style={{ borderColor: primaryColor }}
 
                     />

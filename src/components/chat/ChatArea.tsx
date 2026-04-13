@@ -19,7 +19,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useSearchParams } from "@/i18n/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -131,6 +131,40 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     const updateConversation = useMutation(api.conversations.update)
     const transferToDept = useMutation(api.conversations.transferToDepartment)
     const sendSystemMessage = useMutation(api.messages.send)
+    const recordTyping = useMutation(api.messages.recordTyping)
+
+    // Debounced typing indicator — emit typing event to Convex when agent types
+    // Then clear after 2s of no input (widget auto-hides after 5s, so 2s gives plenty of buffer)
+    const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const emitTyping = useCallback(() => {
+        if (!conversationId || !conversation || !user) return
+        // Fire-and-forget — don't await, don't block input
+        recordTyping({
+            projectId: conversation.projectId,
+            conversationId,
+            eventType: "agent_typing",
+            agentId: user.id,
+            senderName: user.fullName ?? t("agent_fallback"),
+        }).catch(() => { /* silently fail — typing is non-critical */ })
+    }, [conversationId, conversation, user, recordTyping, t])
+
+    const scheduleTypingStop = useCallback(() => {
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+        emitTyping()
+        // After 2s of no input, the typing event will expire (5s window in Convex)
+        typingTimerRef.current = setTimeout(() => {
+            // No-op — just let the Convex TTL handle cleanup
+            typingTimerRef.current = null
+        }, 2000)
+    }, [emitTyping])
+
+    // Cleanup typing timer on unmount
+    useEffect(() => {
+        return () => {
+            if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+        }
+    }, [])
 
     // Mark conversation as read when opened (debounced to avoid OCC conflicts with bot engine)
     useEffect(() => {
@@ -282,6 +316,11 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setInputValue(val);
+
+        // Emit typing event for public messages (debounced via scheduleTypingStop)
+        if (messageMode === "public" && val.trim()) {
+            scheduleTypingStop()
+        }
 
         if (messageMode !== "public") {
             setShowPicker(false);
@@ -536,15 +575,15 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                     msg.type === "internal" ? (
                                         <div className="flex flex-col items-end gap-1 max-w-[70%]">
                                             {msg.content && (
-                                                <div className="p-3 rounded-lg bg-yellow-50/80 border border-yellow-200 text-yellow-900">
+                                                <div className="p-3 rounded-lg bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-100">
                                                     <div className="flex items-center gap-1 mb-1">
-                                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-700">{t("internal_note_badge")}</span>
+                                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-yellow-800 dark:text-yellow-200">{t("internal_note_badge")}</span>
                                                     </div>
                                                     <p className="text-sm">{msg.content}</p>
                                                 </div>
                                             )}
                                             {msg.fileId && <MessageImage fileId={msg.fileId} fileName={msg.fileName} />}
-                                            <span className="text-[10px] block text-yellow-700/70">
+                                            <span className="text-[10px] block text-yellow-800/70 dark:text-yellow-300/70">
                                                 {formatDistanceToNow(new Date(msg._creationTime), { addSuffix: true })}
                                             </span>
                                         </div>
@@ -616,7 +655,9 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                 </div>
                 <div className={cn(
                     "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
-                    messageMode === "internal" ? "bg-yellow-50/50 border-yellow-200 focus-within:ring-yellow-300" : "bg-white focus-within:ring-ring"
+                    messageMode === "internal" 
+                        ? "bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800 focus-within:ring-yellow-300 dark:focus-within:ring-yellow-700" 
+                        : "bg-card focus-within:ring-ring"
                 )}>
                     {showPicker && cannedResponses && (
                         <CannedResponsePicker

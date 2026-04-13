@@ -1,6 +1,6 @@
 "use client"
 
-import { useReducer, useEffect, useRef, useCallback } from "react"
+import { useReducer, useEffect, useRef, useCallback, useState } from "react"
 import Image from "next/image"
 import { RatingComponent } from "../rating-component"
 import { PreChatForm } from "./PreChatForm"
@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import { useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Paperclip, Loader2 } from "lucide-react"
+import { Paperclip, Loader2, X as XIcon } from "lucide-react"
 import { CONVERSATION_STATUS } from "@/lib/constants"
 
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || ""
@@ -77,9 +77,12 @@ interface ChatState {
     showPreChat: boolean;
     preChatData: { name: string, email?: string, phone?: string } | null;
     isUploading: boolean;
+    isAgentTyping: boolean;
+    typingSenderName: string;
+    isSendingMessage: boolean;
 }
 
-type ChatAction = 
+type ChatAction =
     | { type: "SET_PROJECT_ID", payload: string | null }
     | { type: "SET_VISITOR_ID", payload: string }
     | { type: "SET_CONVERSATION_ID", payload: string | null }
@@ -93,6 +96,8 @@ type ChatAction =
     | { type: "SET_SHOW_PRE_CHAT", payload: boolean }
     | { type: "SET_PRE_CHAT_DATA", payload: { name: string, email?: string, phone?: string } | null }
     | { type: "SET_UPLOADING", payload: boolean }
+    | { type: "SET_AGENT_TYPING", payload: { isTyping: boolean; senderName?: string } }
+    | { type: "SET_SENDING_MESSAGE", payload: boolean }
 
 const initialState: ChatState = {
     projectId: null,
@@ -108,6 +113,9 @@ const initialState: ChatState = {
     showPreChat: false,
     preChatData: null,
     isUploading: false,
+    isAgentTyping: false,
+    typingSenderName: "",
+    isSendingMessage: false,
 }
 
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
@@ -128,6 +136,12 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         case "SET_SHOW_PRE_CHAT": return { ...state, showPreChat: action.payload }
         case "SET_PRE_CHAT_DATA": return { ...state, preChatData: action.payload }
         case "SET_UPLOADING": return { ...state, isUploading: action.payload }
+        case "SET_AGENT_TYPING": return {
+            ...state,
+            isAgentTyping: action.payload.isTyping,
+            typingSenderName: action.payload.senderName ?? "",
+        }
+        case "SET_SENDING_MESSAGE": return { ...state, isSendingMessage: action.payload }
         default: return state;
     }
 }
@@ -162,17 +176,53 @@ function MessageImage({ fileId, fileName }: { fileId: string; fileName?: string 
 export default function WidgetChat() {
     const t = useTranslations("widget")
     const [state, dispatch] = useReducer(chatReducer, initialState)
+    const [isMobileViewport, setIsMobileViewport] = useState(false)
     const {
         projectId, visitorId, conversationId, messages, input, loading, error,
-        projectConfig, conversationStatus, showRating, showPreChat, preChatData, isUploading
+        projectConfig, conversationStatus, showRating, showPreChat, preChatData, isUploading,
+        isAgentTyping, typingSenderName, isSendingMessage
     } = state
 
     const chatEndRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const prevMessageCountRef = useRef<number>(0)
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const welcomeShownRef = useRef(false)
+
+    // Connection timeout state
+    const [connectionTimeout, setConnectionTimeout] = useState(false)
+    const [isRetrying, setIsRetrying] = useState(false)
+    const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+    // Use refs to avoid stale closures in timeout callback
+    const loadingRef = useRef(false)
+    const conversationIdRef = useRef<string | null>(null)
+
+    // Keep refs in sync
+    useEffect(() => {
+        loadingRef.current = loading
+    }, [loading])
+
+    useEffect(() => {
+        conversationIdRef.current = conversationId
+    }, [conversationId])
+
+    // Online/offline detection
+    useEffect(() => {
+        const handleOnline = () => setIsOffline(false)
+        const handleOffline = () => setIsOffline(true)
+
+        window.addEventListener('online', handleOnline)
+        window.addEventListener('offline', handleOffline)
+
+        return () => {
+            window.removeEventListener('online', handleOnline)
+            window.removeEventListener('offline', handleOffline)
+        }
+    }, [])
 
     // Create audio element for notifications
     useEffect(() => {
@@ -193,6 +243,12 @@ export default function WidgetChat() {
             dispatch({ type: "SET_LOADING", payload: false })
         }
 
+        // Read viewport size from parent to conditionally show close button
+        const vp = urlParams.get("vp")
+        if (vp === "mobile") {
+            setIsMobileViewport(true)
+        }
+
         const stored = localStorage.getItem("yoosr_visitor_id")
         if (stored) {
             dispatch({ type: "SET_VISITOR_ID", payload: stored })
@@ -201,6 +257,16 @@ export default function WidgetChat() {
             localStorage.setItem("yoosr_visitor_id", vid)
             dispatch({ type: "SET_VISITOR_ID", payload: vid })
         }
+
+        // Set connection timeout after 15 seconds
+        const timeoutTimer = setTimeout(() => {
+            if (loadingRef.current && !conversationIdRef.current) {
+                setConnectionTimeout(true)
+                dispatch({ type: "SET_LOADING", payload: false })
+            }
+        }, 15000)
+
+        return () => clearTimeout(timeoutTimer)
     }, [t])
 
     // Fetch project config
@@ -262,15 +328,35 @@ export default function WidgetChat() {
     // Use ref to avoid re-creating fetchMessages callback on every visibility change
     const isWidgetVisibleRef = useRef(false)
 
-    // Listen for visibility changes from parent
+    // Listen for visibility changes, focus requests, and typing status from parent
     useEffect(() => {
         const handler = (e: MessageEvent) => {
             if (e.data?.type === "yoosr:visibility_change") {
                 isWidgetVisibleRef.current = !!e.data.visible
             }
+            if (e.data?.type === "yoosr:focus_input") {
+                requestAnimationFrame(() => {
+                    inputRef.current?.focus()
+                })
+            }
+            if (e.data?.type === "yoosr:typing_status") {
+                const { isTyping, senderName } = e.data.payload || {}
+                dispatch({ type: "SET_AGENT_TYPING", payload: { isTyping: !!isTyping, senderName } })
+
+                // Auto-hide after 5s
+                if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+                if (isTyping) {
+                    typingTimerRef.current = setTimeout(() => {
+                        dispatch({ type: "SET_AGENT_TYPING", payload: { isTyping: false, senderName: "" } })
+                    }, 5000)
+                }
+            }
         }
         window.addEventListener("message", handler)
-        return () => window.removeEventListener("message", handler)
+        return () => {
+            window.removeEventListener("message", handler)
+            if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+        }
     }, [])
 
     // Find or create conversation
@@ -307,12 +393,25 @@ export default function WidgetChat() {
         init()
     }, [projectId, visitorId, projectConfig, t, preChatData])
 
-    // Poll for messages
+    // Clear connection timeout when conversation is established or loading finishes
+    useEffect(() => {
+        if (conversationId || !loading) {
+            setConnectionTimeout(false)
+        }
+    }, [conversationId, loading])
+
+    // Poll for messages and typing status
     const fetchMessages = useCallback(async () => {
         if (!conversationId) return
         try {
             // Also check conversation status periodically
-            const msgs = await apiGet("/widget/messages", { conversationId })
+            const response = await apiGet("/widget/messages", { conversationId })
+
+            // Handle both old (array) and new (object with messages + typing) response formats
+            const msgs = Array.isArray(response) ? response : response.messages
+            const isAgentTyping = response.isAgentTyping ?? false
+            const typingSenderName = response.typingSenderName ?? ""
+
             if (Array.isArray(msgs)) {
                 const prevCount = prevMessageCountRef.current
                 if (prevCount > 0 && msgs.length > prevCount) {
@@ -341,6 +440,13 @@ export default function WidgetChat() {
                 prevMessageCountRef.current = msgs.length
                 dispatch({ type: "SET_MESSAGES", payload: msgs })
                 welcomeShownRef.current = true // Don't show welcome if real messages exist
+            }
+
+            // Update typing state from poll response (primary source)
+            if (isAgentTyping) {
+                dispatch({ type: "SET_AGENT_TYPING", payload: { isTyping: true, senderName: typingSenderName } })
+            } else {
+                dispatch({ type: "SET_AGENT_TYPING", payload: { isTyping: false, senderName: "" } })
             }
         } catch {
             /* silently fail on poll */
@@ -406,6 +512,8 @@ export default function WidgetChat() {
     const handleSendText = async (text: string) => {
         if (!text.trim()) return
 
+        dispatch({ type: "SET_SENDING_MESSAGE", payload: true })
+
         // Optimistic update
         const tempId = "temp_" + Date.now()
         dispatch({ type: "SET_MESSAGES", payload: (prev) => [
@@ -423,6 +531,7 @@ export default function WidgetChat() {
         const convId = await ensureConversation(isNewConversation ? text : undefined)
         if (!convId) {
             dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
+            dispatch({ type: "SET_SENDING_MESSAGE", payload: false })
             return
         }
 
@@ -431,6 +540,7 @@ export default function WidgetChat() {
             // Fast-forward UI:
             dispatch({ type: "SET_CONVERSATION_ID", payload: convId })
             fetchMessages()
+            dispatch({ type: "SET_SENDING_MESSAGE", payload: false })
             return
         }
 
@@ -451,6 +561,8 @@ export default function WidgetChat() {
         } catch {
             dispatch({ type: "SET_MESSAGES", payload: prev => prev.filter(m => m._id !== tempId) })
             dispatch({ type: "SET_ERROR", payload: t("failedToSendMessage") })
+        } finally {
+            dispatch({ type: "SET_SENDING_MESSAGE", payload: false })
         }
     }
 
@@ -545,6 +657,11 @@ export default function WidgetChat() {
         }
     }
 
+    // Close widget — tell parent to close via postMessage
+    const handleClose = useCallback(() => {
+        window.parent.postMessage({ type: "yoosr:close" }, "*")
+    }, [])
+
     // Read widget config
     const widgetCfg = projectConfig?.widgetConfig as { primaryColor?: string; translations?: Record<string, Record<string, string> | undefined>; logoUrl?: string; contactMethod?: "email" | "phone" } | undefined
     const translations = widgetCfg?.translations
@@ -571,6 +688,52 @@ export default function WidgetChat() {
     const onlineStatus = resolveText("onlineStatus", "Online")
     const logoUrl = widgetCfg?.logoUrl || ""
 
+    // Retry connection timeout
+    const handleRetryConnection = useCallback(() => {
+        setConnectionTimeout(false)
+        setIsRetrying(true)
+        dispatch({ type: "SET_LOADING", payload: true })
+        dispatch({ type: "SET_ERROR", payload: null })
+
+        // Reset timeout timer - use refs to avoid stale closures
+        setTimeout(() => {
+            if (loadingRef.current && !conversationIdRef.current) {
+                setConnectionTimeout(true)
+                dispatch({ type: "SET_LOADING", payload: false })
+            }
+            setIsRetrying(false)
+        }, 15000)
+    }, [])
+
+    if (connectionTimeout && !conversationId) {
+        return (
+            <div className="flex flex-col h-screen items-center justify-center bg-white p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">{t("connectionTimeout") || "Connection timed out"}</h3>
+                <p className="text-xs text-gray-500 mb-4">{t("connectionTimeoutDesc") || "Please check your internet connection and try again."}</p>
+                <button
+                    onClick={handleRetryConnection}
+                    disabled={isRetrying}
+                    className="px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: widgetColor }}
+                >
+                    {isRetrying ? (
+                        <span className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {t("retrying") || "Retrying..."}
+                        </span>
+                    ) : (
+                        t("retry") || "Retry"
+                    )}
+                </button>
+            </div>
+        )
+    }
+
     if (error && !conversationId) {
         return (
             <div className="flex h-screen items-center justify-center bg-white">
@@ -596,27 +759,90 @@ export default function WidgetChat() {
 
     return (
         <div className="flex flex-col h-screen bg-white">
+            {/* Offline Banner */}
+            {isOffline && (
+                <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 flex items-center gap-2 text-xs text-yellow-800" role="alert" aria-live="assertive">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="flex-1">{t("offline") || "You are offline. Messages may not be sent until you reconnect."}</span>
+                    <button
+                        onClick={() => setIsOffline(!navigator.onLine)}
+                        className="text-yellow-700 hover:text-yellow-900 font-medium underline"
+                    >
+                        {t("checkConnection") || "Check"}
+                    </button>
+                </div>
+            )}
+
             {/* Header */}
             <div
                 style={{ backgroundColor: widgetColor }}
                 className="px-4 py-3 text-white flex items-center gap-3 shadow-sm"
             >
-                {logoUrl && (
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
-                        <Image src={logoUrl} width={40} height={40} className="w-full h-full object-cover" alt="Logo" />
+                {loading ? (
+                    <div className="flex items-center gap-3 flex-1">
+                        {logoUrl ? (
+                            <Skeleton className="w-10 h-10 rounded-full bg-white/20" />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-white/20" />
+                        )}
+                        <div className="space-y-1.5 flex-1">
+                            <Skeleton className="h-4 w-24 bg-white/30 rounded" />
+                            <Skeleton className="h-3 w-16 bg-white/20 rounded" />
+                        </div>
                     </div>
+                ) : (
+                    <>
+                        {logoUrl && (
+                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                                <Image src={logoUrl} width={40} height={40} className="w-full h-full object-cover" alt="Logo" />
+                            </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-sm font-semibold">{widgetTitle}</h1>
+                            <p className="text-xs opacity-80 truncate">{onlineStatus}</p>
+                        </div>
+                        {/* Close button — only for mobile where launcher is hidden */}
+                        {isMobileViewport && (
+                            <button
+                                onClick={handleClose}
+                                aria-label="Close chat"
+                                className="p-1 rounded-md hover:bg-white/20 transition-colors cursor-pointer"
+                            >
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        )}
+                    </>
                 )}
-                <div className="flex-1">
-                    <h1 className="text-sm font-semibold">{widgetTitle}</h1>
-                    <p className="text-xs opacity-80">{onlineStatus}</p>
-                </div>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {loading ? (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        {t("connecting")}
+                    <div className="space-y-4 py-4" aria-live="polite" aria-label={t("loadingMessages") || "Loading messages"}>
+                        {/* Bot message skeleton (left-aligned) */}
+                        <div className="flex justify-start mb-4">
+                            <Skeleton className="w-8 h-8 rounded-full bg-gray-200 mr-2 mt-1" />
+                            <div className="flex flex-col gap-1 max-w-[80%]">
+                                <Skeleton className="h-3 w-16 bg-gray-200 rounded ml-1" />
+                                <Skeleton className="h-12 w-48 bg-gray-100 rounded-2xl" />
+                            </div>
+                        </div>
+                        {/* Visitor message skeleton (right-aligned) */}
+                        <div className="flex justify-end mb-4">
+                            <div className="flex flex-col gap-1 max-w-[80%] items-end">
+                                <Skeleton className="h-10 w-40 rounded-2xl" style={{ backgroundColor: widgetColor, opacity: 0.3 }} />
+                            </div>
+                        </div>
+                        {/* Another bot message skeleton */}
+                        <div className="flex justify-start mb-4">
+                            <Skeleton className="w-8 h-8 rounded-full bg-gray-200 mr-2 mt-1" />
+                            <div className="flex flex-col gap-1 max-w-[80%]">
+                                <Skeleton className="h-3 w-16 bg-gray-200 rounded ml-1" />
+                                <Skeleton className="h-16 w-56 bg-gray-100 rounded-2xl" />
+                            </div>
+                        </div>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-gray-400 text-sm">
@@ -655,11 +881,11 @@ export default function WidgetChat() {
 
                                     {msg.content && (
                                         <div
-                                            className="rounded-2xl px-4 py-2 text-sm shadow-sm"
+                                            className="rounded-2xl px-4 py-2 text-sm shadow-sm dark:border"
                                             style={
                                                 isVisitor
                                                     ? { backgroundColor: widgetColor, color: "#fff", borderBottomRightRadius: "4px" }
-                                                    : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px" }
+                                                    : { backgroundColor: "#f3f4f6", color: "#1f2937", borderBottomLeftRadius: "4px", borderColor: "#e5e7eb" }
                                             }
                                         >
                                             {msg.type === "system" ? (() => {
@@ -667,6 +893,11 @@ export default function WidgetChat() {
                                                 const key = content.startsWith("widget.") ? content.replace("widget.", "") : content;
                                                 return t(key);
                                             })() : msg.content as string}
+                                            {msg._creationTime && (
+                                                <div className={`text-[10px] mt-1 ${isVisitor ? "text-white/70" : "text-gray-500 dark:text-gray-400"}`}>
+                                                    {new Date(msg._creationTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                     {!isVisitor && (msg.attachments as { payload?: { buttons?: Array<{ label: string }> } } | undefined)?.payload?.buttons && (
@@ -675,7 +906,7 @@ export default function WidgetChat() {
                                                 <button
                                                     key={`btn-${btn.label}-${i}`}
                                                     onClick={() => handleSendText(btn.label)}
-                                                    className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors text-center shadow-sm"
+                                                    className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium transition-colors text-center shadow-sm"
                                                     disabled={loading || conversationStatus === CONVERSATION_STATUS.CLOSED}
                                                 >
                                                     {btn.label}
@@ -699,8 +930,54 @@ export default function WidgetChat() {
                 <div ref={chatEndRef} />
             </div>
 
+            {/* Typing Indicator */}
+            {isAgentTyping && (
+                <div className="px-4 py-1 flex items-center gap-1" aria-live="polite">
+                    <span className="text-xs text-gray-400">
+                        {t("typingIndicator", { senderName: typingSenderName || "Agent" })}
+                    </span>
+                    <span className="flex gap-0.5">
+                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse" />
+                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "300ms" }} />
+                    </span>
+                    {/* Reduced motion fallback */}
+                    <style>{`
+                        @media (prefers-reduced-motion: reduce) {
+                            .animate-pulse {
+                                animation: none !important;
+                                opacity: 0.5;
+                            }
+                        }
+                    `}</style>
+                </div>
+            )}
+
+            {/* Powered by Yoosr Footer */}
+            {loading ? (
+                <Skeleton className="h-4 w-20 mx-auto bg-gray-200 rounded" />
+            ) : (
+                <div className="px-3 py-1 text-center">
+                    <a
+                        href="https://yoosr.io"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        {t("poweredBy", { brand: "Yoosr" })}
+                    </a>
+                </div>
+            )}
+
             {/* Input */}
-            <div className="border-t px-3 py-2 flex gap-2 items-center">
+            {loading ? (
+                <div className="border-t px-3 py-2 flex gap-2 items-center">
+                    <Skeleton className="w-8 h-8 rounded-md bg-gray-200" />
+                    <Skeleton className="flex-1 h-10 rounded-md bg-gray-100" />
+                    <Skeleton className="w-16 h-10 rounded-md" style={{ backgroundColor: widgetColor, opacity: 0.3 }} />
+                </div>
+            ) : (
+                <div className="border-t px-3 py-2 flex gap-2 items-center">
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -721,6 +998,7 @@ export default function WidgetChat() {
                     )}
                 </button>
                 <input
+                    ref={inputRef}
                     type="text"
                     className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
                     placeholder={conversationStatus === CONVERSATION_STATUS.CLOSED ? t("conversationResolved") : t("inputPlaceholder")}
@@ -733,11 +1011,19 @@ export default function WidgetChat() {
                     onClick={handleSend}
                     disabled={loading || !input.trim() || conversationStatus === CONVERSATION_STATUS.CLOSED || isUploading}
                     style={{ backgroundColor: widgetColor }}
-                    className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                    {t("send")}
+                    {isSendingMessage ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="sr-only">{t("sending") || "Sending..."}</span>
+                        </>
+                    ) : (
+                        t("send")
+                    )}
                 </button>
             </div>
+            )}
         </div>
     )
 }

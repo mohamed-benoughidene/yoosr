@@ -389,3 +389,56 @@ export const getStorageUrl = query({
     },
 });
 
+// Internal: check if agent is typing for a conversation (used by widget poll)
+// Returns the most recent typing event within the last TYPING_WINDOW_MS
+const TYPING_WINDOW_MS = 5000; // 5 seconds — matches widget auto-hide timeout
+
+export const getTypingStatus = internalQuery({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const now = Date.now();
+        const cutoff = now - TYPING_WINDOW_MS;
+
+        // Find the most recent typing event for this conversation
+        const typingEvent = await ctx.db
+            .query("typing_events")
+            .withIndex("by_conversationId_createdAt", (q) =>
+                q.eq("conversationId", args.conversationId).gte("createdAt", cutoff)
+            )
+            .order("desc")
+            .first();
+
+        if (!typingEvent) {
+            return { isTyping: false, senderName: "" };
+        }
+
+        return {
+            isTyping: true,
+            senderName: typingEvent.senderName ?? "",
+        };
+    },
+});
+
+// Internal: record a typing event (used by agent dashboard)
+export const recordTyping = internalMutation({
+    args: {
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing")),
+        agentId: v.optional(v.string()),
+        senderName: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("typing_events", {
+            projectId: args.projectId,
+            conversationId: args.conversationId,
+            eventType: args.eventType,
+            agentId: args.agentId,
+            senderName: args.senderName,
+            createdAt: Date.now(),
+        });
+    },
+});
+

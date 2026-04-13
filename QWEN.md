@@ -6,7 +6,7 @@
 
 ### Core Features
 - **Live Chat Widget** — Embeddable customer-facing chat widget with multi-channel support
-- **AI Chatbots** — LLM-powered bots via OpenRouter (various models), with knowledge base RAG (vector embeddings)
+- **AI Chatbots** — LLM-powered automation via OpenRouter with knowledge base RAG (vector embeddings)
 - **Bot Flow Designer** — Visual graph-based automation builder using React Flow (`@xyflow/react`)
 - **Agent Dashboard** — Conversation management, assignment, departments, labels, canned responses
 - **Multi-tenant Architecture** — Organization-scoped data via Clerk org IDs
@@ -43,7 +43,7 @@
 ```
 yoosr/
 ├── convex/                  # Convex backend (schema, queries, mutations, HTTP endpoints)
-│   ├── schema.ts            # Full database schema (18+ tables)
+│   ├── schema.ts            # Full database schema (28 tables)
 │   ├── lib/                 # Backend utilities
 │   ├── http.ts              # HTTP API endpoints (webhooks, widget API)
 │   ├── bot.ts, botFlows.ts  # Bot execution engine
@@ -79,6 +79,7 @@ yoosr/
 ├── messages/                # i18n translation files (en.json, ar.json, fr.json)
 ├── docs/                    # Documentation, analysis maps, specs
 ├── public/                  # Static assets
+├── design-system/           # Design system assets
 └── .github/workflows/ci.yml # CI/CD pipeline
 ```
 
@@ -103,6 +104,7 @@ bun run lint     # ESLint (Next.js core-web-vitals + TypeScript)
 bun run test           # Run all tests (Vitest)
 bun run test:watch     # Watch mode
 bun run test:coverage  # Coverage report (v8 provider)
+bun run test:convex    # Run Convex backend tests
 ```
 
 Tests live alongside source files as `*.test.{ts,tsx}`. The Convex backend is excluded from frontend test runs.
@@ -124,7 +126,7 @@ npx convex deploy # Deploy to production
 4. **Convex auth config** validates Clerk JWT tokens
 
 ### Database Schema (Convex)
-The schema (`convex/schema.ts`) defines 18+ tables with multi-tenant isolation via `orgId` and `projectId` foreign keys:
+The schema (`convex/schema.ts`) defines 28 tables with multi-tenant isolation via `orgId` and `projectId` foreign keys:
 
 - **Core**: `profiles`, `projects`, `conversations`, `messages`
 - **Bot Engine**: `bots`, `bot_flows`, `conversation_bot_state` (separated to avoid OCC conflicts)

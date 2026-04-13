@@ -617,7 +617,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                 {/* 5. Orders */}
                 <AccordionItem value="orders" className="border-0 border-t">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-muted/50">
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="h-4 w-4 text-muted-foreground shrink-0" />
                             {t("orders_label")}
@@ -635,7 +635,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                             ) : (
                                 <div className="space-y-2">
                                     {conversationOrders?.map((order) => (
-                                        <div key={order._id} className="flex items-start justify-between bg-muted/30 border rounded-md p-2 gap-2 text-sm group">
+                                        <div key={order._id} className="flex items-start justify-between bg-card border rounded-md p-2 gap-2 text-sm group">
                                             <div className="flex flex-col gap-1 overflow-hidden min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 truncate whitespace-nowrap">
                                                     <span className="font-medium truncate block">{order.contactName}</span>
@@ -691,7 +691,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     {t("order_form_title")}
                                 </Button>
                             ) : (
-                                <div className="border rounded-md bg-muted/10 p-3 space-y-3 shadow-inner">
+                                <div className="border rounded-md bg-muted/30 dark:bg-muted/20 p-3 space-y-3 shadow-inner">
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-contact-name" className="text-xs font-medium flex items-center gap-1.5">
                                             <User className="h-3 w-3 text-muted-foreground" /> {t("order_form_contact")} <span className="text-red-500">*</span>
@@ -727,7 +727,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                             value={orderForm.product}
                                             onChange={(e) => setOrderForm(p => ({ ...p, product: e.target.value }))}
                                             placeholder={t("order_form_product_placeholder")}
-                                            className="h-8 text-xs bg-yellow-50/50 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50"
+                                            className="h-8 text-xs bg-yellow-50/50 dark:bg-yellow-950/30 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50 dark:focus-visible:bg-yellow-950/50"
                                         />
                                     </div>
 

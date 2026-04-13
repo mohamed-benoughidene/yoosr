@@ -1713,6 +1713,7 @@
     },
     "noProjectId": "لم يتم تقديم معرّف المشروع",
     "connecting": "جارٍ الاتصال...",
+    "loadingMessages": "جارٍ تحميل الرسائل",
     "failedToConnect": "فشل الاتصال. يرجى تحديث الصفحة.",
     "failedToCreateConversation": "فشل إنشاء المحادثة",
     "failedToSendMessage": "فشل إرسال الرسالة",
@@ -1729,6 +1730,13 @@
     "supportAgent": "وكيل الدعم",
     "inputPlaceholder": "اكتب رسالة...",
     "send": "إرسال",
+    "sending": "جارٍ الإرسال...",
+    "retry": "إعادة المحاولة",
+    "retrying": "جارٍ إعادة المحاولة...",
+    "connectionTimeout": "انتهت مهلة الاتصال",
+    "connectionTimeoutDesc": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "offline": "أنت غير متصل. قد لا يتم إرسال الرسائل حتى تعود للاتصال.",
+    "checkConnection": "تحقق",
     "preChatForm": {
       "welcome": "مرحباً!",
       "subtitle": "يرجى ملء بياناتك لبدء المحادثة.",
@@ -1743,7 +1751,8 @@
       "phoneRequired": "رقم الهاتف مطلوب",
       "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
       "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
-      "startChat": "بدء المحادثة"
+      "startChat": "بدء المحادثة",
+      "submitting": "جارٍ بدء المحادثة..."
     },
     "rating": {
       "thankYou": "شكراً لك!",
@@ -1752,7 +1761,9 @@
       "submit": "إرسال التقييم",
       "submitting": "جارٍ الإرسال...",
       "failedToSubmit": "فشل إرسال التقييم"
-    }
+    },
+    "typingIndicator": "{senderName} يكتب...",
+    "poweredBy": "مدعوم من {brand}"
   },
   "testWidget": {
     "embedCopied": "تم نسخ كود التضمين!",

@@ -530,7 +530,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                                 <AvatarFallback>{conversation.user.initials}</AvatarFallback>
                                             </Avatar>
                                             <div className="max-w-[75%]">
-                                                <div className="rounded-2xl rounded-tl-none bg-white p-3 shadow-sm border border-slate-100 text-sm whitespace-pre-wrap">
+                                                <div className="rounded-2xl rounded-tl-none bg-card p-3 shadow-sm border text-sm whitespace-pre-wrap">
                                                     {msg.content}
                                                 </div>
                                                 <span className="mt-1 block text-[10px] text-muted-foreground ml-1">
@@ -543,9 +543,9 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     // Agent or bot message
                                     return (
                                         <div key={msg._id} className="flex items-end gap-3 flex-row-reverse">
-                                            <Avatar className={cn("h-8 w-8 border", isInternal ? "bg-yellow-100" : "bg-blue-100")}>
+                                            <Avatar className={cn("h-8 w-8 border", isInternal ? "bg-yellow-100 dark:bg-yellow-900" : "bg-blue-100 dark:bg-blue-900")}>
                                                 <AvatarImage src={msg.senderType === "agent" ? "https://github.com/shadcn.png" : undefined} />
-                                                <AvatarFallback className={isInternal ? "text-yellow-700" : "text-blue-700"}>
+                                                <AvatarFallback className={isInternal ? "text-yellow-900 dark:text-yellow-100" : "text-blue-900 dark:text-blue-100"}>
                                                     {msg.senderType === "bot" ? "BOT" : "AG"}
                                                 </AvatarFallback>
                                             </Avatar>
@@ -553,11 +553,11 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                                 <div className={cn(
                                                     "rounded-2xl rounded-tr-none p-3 shadow-sm text-sm whitespace-pre-wrap",
                                                     isInternal
-                                                        ? "bg-yellow-50 border border-yellow-100 text-foreground"
+                                                        ? "bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 text-foreground"
                                                         : "bg-primary text-primary-foreground"
                                                 )}>
                                                     {isInternal && (
-                                                        <span className="mb-1 block text-[10px] font-semibold text-yellow-700 uppercase tracking-wider">Internal Note</span>
+                                                        <span className="mb-1 block text-[10px] font-semibold text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">Internal Note</span>
                                                     )}
                                                     {msg.content}
                                                 </div>
@@ -588,7 +588,9 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
 
                 <div className={cn(
                     "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
-                    messageMode === "internal" ? "bg-yellow-50/50 border-yellow-200 focus-within:ring-yellow-300" : "bg-white focus-within:ring-ring"
+                    messageMode === "internal" 
+                        ? "bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800 focus-within:ring-yellow-300 dark:focus-within:ring-yellow-700" 
+                        : "bg-card focus-within:ring-ring"
                 )}>
                     {showPicker && cannedResponses && (
                         <CannedResponsePicker
@@ -605,7 +607,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                         onKeyDown={handleKeyDown}
                         disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
                         placeholder={conversation.status === CONVERSATION_STATUS.CLOSED ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}
-                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", conversation.status === CONVERSATION_STATUS.CLOSED && "cursor-not-allowed opacity-50")}
+                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/70 dark:placeholder:text-yellow-300/70", conversation.status === CONVERSATION_STATUS.CLOSED && "cursor-not-allowed opacity-50")}
                     />
 
                     <div className="flex items-center justify-between p-2">
@@ -623,7 +625,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     size="sm"
                                     onClick={handleSend}
                                     disabled={!inputValue.trim() || conversation.status === CONVERSATION_STATUS.CLOSED}
-                                    className="gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+                                    className="gap-2 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white"
                                 >
                                     Save Note
                                     <Send className="h-3 w-3" />

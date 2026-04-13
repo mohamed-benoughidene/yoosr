@@ -1724,6 +1724,7 @@
     },
     "noProjectId": "No project ID provided",
     "connecting": "Connecting...",
+    "loadingMessages": "Loading messages",
     "failedToConnect": "Failed to connect. Please refresh the page.",
     "failedToCreateConversation": "Failed to create conversation",
     "failedToSendMessage": "Failed to send message",
@@ -1740,6 +1741,13 @@
     "supportAgent": "Support Agent",
     "inputPlaceholder": "Type a message...",
     "send": "Send",
+    "sending": "Sending...",
+    "retry": "Retry",
+    "retrying": "Retrying...",
+    "connectionTimeout": "Connection timed out",
+    "connectionTimeoutDesc": "Please check your internet connection and try again.",
+    "offline": "You are offline. Messages may not be sent until you reconnect.",
+    "checkConnection": "Check",
     "preChatForm": {
       "welcome": "Welcome!",
       "subtitle": "Please fill in your details to start the chat.",
@@ -1754,7 +1762,8 @@
       "phoneRequired": "Phone number is required",
       "invalidEmail": "Please enter a valid email address",
       "invalidPhone": "Please enter a valid phone number",
-      "startChat": "Start Chat"
+      "startChat": "Start Chat",
+      "submitting": "Starting chat..."
     },
     "rating": {
       "thankYou": "Thank you!",
@@ -1763,7 +1772,9 @@
       "submit": "Submit Feedback",
       "submitting": "Submitting...",
       "failedToSubmit": "Failed to submit rating"
-    }
+    },
+    "typingIndicator": "{senderName} is typing...",
+    "poweredBy": "Powered by {brand}"
   },
   "testWidget": {
     "embedCopied": "Embed code copied!",
