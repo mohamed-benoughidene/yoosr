@@ -1,0 +1,49 @@
+---
+title: What gets logged as an unanswered query
+description: Understand exactly which bot interactions trigger an unanswered query entry and which ones do not.
+section: Unanswered Queries
+order: 3
+keywords: [unanswered queries, logging, Ask KB, Not found, conditions, triggers, bot flow]
+related:
+  - unanswered-queries/what-are-unanswered-queries
+  - knowledge-base/connecting-to-bot
+  - knowledge-base/how-semantic-search-works
+---
+
+# What gets logged as an unanswered query
+
+Not every bot interaction that fails to produce an answer is logged as an unanswered query. Understanding exactly when a log entry is created helps you interpret the report accurately and build flows that capture the right signals.
+
+## What triggers a log entry
+
+An entry is logged when all of the following are true:
+
+1. The bot flow reached an **Ask knowledge base** block.
+2. The block ran a semantic search against the selected knowledge base.
+3. The search returned no chunk above the similarity threshold — the block took the **Not found** output edge.
+
+When this happens, Yoosr records the visitor's input text (the message that triggered the search), increments the count if the same text has been logged before, and updates the last-asked timestamp.
+
+## What does not trigger a log entry
+
+The following situations do not create an unanswered query entry:
+
+- The bot answered using a **Reply** block, **AI Task** block, or **AI Assistant** block. These blocks do not use the knowledge base and are not tracked here.
+- The **Ask knowledge base** block found a result and took the **Found** output edge — the query was answered successfully.
+- The knowledge base block was never reached because the flow took a different branch before it (for example, a Condition block routed the visitor elsewhere).
+- The knowledge base block exists in the flow but no bot is active on the project.
+- A human agent sent the reply — only bot-executed flows are tracked.
+
+## How the count works
+
+Yoosr deduplicates entries by exact query text. If two visitors ask "what is your return policy?" and the bot cannot answer either time, the count for that exact phrase becomes 2, not 2 separate rows.
+
+Because of this exact-match deduplication, variations in phrasing appear as separate entries. "Return policy", "how do I return an item", and "can I get a refund" would each be their own row even if they are asking the same underlying question.
+
+<Callout variant="info" title="Use the count as a relative signal">
+The count tells you how often that exact phrasing went unanswered. High-count queries are clear gaps. Low-count queries with varied phrasing about the same topic may represent a bigger gap than any single count suggests — group related queries when you create KB entries to cover the full range of phrasing.
+</Callout>
+
+## Retention
+
+Unanswered query entries remain in the table until manually deleted. Unlike conversations, they do not have a 90-day TTL. Review and triage the list regularly to keep it actionable rather than letting old, resolved gaps accumulate.

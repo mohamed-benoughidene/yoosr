@@ -1,0 +1,54 @@
+---
+title: Activity log
+description: A read-only audit trail of significant actions taken by agents and admins in your project.
+section: Analytics
+order: 4
+keywords: [activity log, audit, actions, agents, admins, history, paginated, read-only]
+related:
+  - analytics/conversation-volume
+  - monitor/joining-assigning
+  - settings/departments
+---
+
+# Activity log
+
+The activity log is a paginated, read-only record of significant actions performed by agents and admins in your project. It provides an audit trail you can use to understand who did what and when.
+
+## Finding the activity log
+
+Go to **Activities** in the left sidebar. The activity log appears as a table of entries in chronological order, most recent first.
+
+<Callout variant="info" title="Read-only">
+The activity log cannot be edited or deleted. Entries are written automatically by the system when logged actions occur.
+</Callout>
+
+## What each entry shows
+
+Each row in the activity log contains:
+
+| Column | Description |
+|--------|-------------|
+| **Date** | When the action occurred, shown as a relative time (e.g., "2 hours ago") |
+| **Actor** | The name of the agent or admin who performed the action |
+| **Action type** | The category of action — for example, conversation assigned, label applied, bot paused |
+| **Target** | The object the action was performed on — for example, a conversation ID or department name |
+
+## What gets logged
+
+Significant administrative and operational actions are logged automatically. Examples include:
+
+- An agent joining a conversation
+- A conversation being transferred to a different agent or department
+- A label being applied or removed
+- A bot being paused or resumed
+- Settings changes (department creation, label changes)
+
+Routine events — individual messages sent, widget pings, Convex queries — are not logged. The log is designed for audit and oversight, not as a full message history. For conversation message history, use the **History** section.
+
+## Pagination
+
+The activity log is paginated. Scroll to the bottom of the list and select **Load more** to fetch older entries. Entries do not expire — they remain in the log indefinitely.
+
+## Relationship to Analytics
+
+The activity log and the Analytics page serve different purposes. The Analytics page shows aggregate metrics over time — volume, CSAT, tokens. The activity log shows individual events attributed to specific people. Use analytics to identify trends and use the activity log to investigate specific incidents.

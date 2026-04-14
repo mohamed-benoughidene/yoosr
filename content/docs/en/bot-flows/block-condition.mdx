@@ -1,0 +1,99 @@
+---
+title: "Block: Condition"
+description: "The Condition block checks an attribute against a value and routes the flow down one of two branches — true or false. It is the primary way to add logic and branching to a bot flow."
+section: "bot-flows"
+order: 7
+keywords: ["condition", "branch", "if", "logic", "true", "false", "equals", "contains", "comparison", "routing"]
+related: ["block-set-attribute", "block-capture-reply", "template-syntax"]
+---
+
+# Block: Condition
+
+The Condition block checks an attribute against a value and splits the flow into two branches — one for when the condition is true and one for when it is false. It is how you add decision-making to a bot.
+
+## What it does
+
+When the bot reaches a Condition block, it evaluates the expression you configured. If the result is true, the flow follows the **true** output. If false, it follows the **false** output. One branch always runs — the block never gets stuck.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Attribute to check | Yes | The attribute name to evaluate. Do not include `{{ }}`. |
+| Operator | Yes | How to compare the attribute against the value. |
+| Compare value | Yes | The value to compare against. |
+
+## Operators
+
+| Operator | What it does |
+|---|---|
+| Equals | True if the attribute value exactly matches the compare value |
+| Not equals | True if the attribute value does not match |
+| Contains | True if the attribute value includes the compare value as a substring |
+| Greater than | True if the attribute value (as a number) is greater than the compare value |
+| Less than | True if the attribute value (as a number) is less than the compare value |
+
+All comparisons are case-insensitive for string operators (equals, not equals, contains).
+
+## How to configure it
+
+1. Add a **Condition** block to the canvas.
+2. Click it to open the properties panel.
+3. Type the attribute name in **Attribute to check** — for example, `plan_type`. Do not include `{{ }}` here.
+4. Select the operator from the dropdown.
+5. Type the compare value — for example, `premium`.
+6. Connect the **true** output handle to what should happen when the condition passes.
+7. Connect the **false** output handle to what should happen when it does not.
+
+## The two output handles
+
+The Condition block has two output handles on the canvas node. The handle labelled **true** (green) is the path taken when the condition passes. The handle labelled **false** (red) is taken when it does not.
+
+Both handles must be connected. If either handle has no outgoing edge, the flow stops on that branch.
+
+## Example: routing by plan type
+
+```
+[Capture Reply] → stores input in: plan_type
+
+[Condition]
+Attribute to check: plan_type
+Operator: equals
+Compare value: premium
+
+True path → [Reply] "You have full access. Here's what you can do..."
+False path → [Reply] "You're on the free plan. Upgrade to unlock this feature."
+```
+
+## Example: checking a number
+
+```
+[Set Attribute] attempt_count = {{attempt_count}} + 1
+
+[Condition]
+Attribute to check: attempt_count
+Operator: greater than
+Compare value: 3
+
+True path  → [HITL Handoff] "Too many attempts — connecting you to an agent"
+False path → [Reply] "Let's try again..."
+```
+
+## What happens if the attribute does not exist
+
+If the attribute named in **Attribute to check** has not been set yet, the condition evaluates as false. The flow takes the false branch. This is a silent failure — no error is shown to the visitor.
+
+<Callout variant="warning" title="Always connect both branches">
+A Condition block with only one branch connected will silently stop the flow on the unconnected branch. Visitors will receive no response. Even if you think one branch will never be reached, connect it to a safe fallback.
+</Callout>
+
+## Chaining conditions
+
+You can connect the output of one Condition block to another Condition block to check multiple attributes in sequence. This is how you build `if / else if / else` logic in a bot flow.
+
+## Next steps
+
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Block: Capture Reply →](/docs/bot-flows/block-capture-reply)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

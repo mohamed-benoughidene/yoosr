@@ -393,6 +393,23 @@ export default defineSchema({
         .index("by_projectId_createdAt", ["projectId", "createdAt"])
         .index("by_conversationId", ["conversationId"]),
 
+    // Typing events — real-time agent typing indicator for widget visitors
+    // Agents emit typing events from the dashboard; widgets poll this state
+    // Works for all channels (widget, telegram, whatsapp, messenger, instagram)
+    typing_events: defineTable({
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing"), v.literal("visitor_typing")),
+        agentId: v.optional(v.string()), // Clerk user ID of the typing agent
+        senderName: v.optional(v.string()), // Display name of the typing person
+        createdAt: v.number(), // Date.now() — widget checks if within last 5s
+        // Soft-delete
+        deletedAt: v.optional(v.number()),
+    })
+        .index("by_projectId", ["projectId"])
+        .index("by_conversationId_createdAt", ["conversationId", "createdAt"])
+        .index("by_projectId_createdAt", ["projectId", "createdAt"]),
+
     // CSAT ratings (submitted from chat widget)
     csat_ratings: defineTable({
         projectId: v.id("projects"),

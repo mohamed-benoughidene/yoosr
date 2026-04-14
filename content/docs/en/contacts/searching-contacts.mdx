@@ -1,0 +1,85 @@
+---
+title: "Searching and filtering contacts"
+description: "The Contacts section stores all visitor profiles for your project. You can search, sort, import from CSV or Excel, and export in three formats."
+section: "contacts"
+order: 3
+keywords: ["contacts", "search", "filter", "sort", "import", "export", "CSV", "Excel", "JSON", "batch import", "contact list"]
+related: ["contact-profile", "bot-set-attributes", "history"]
+---
+
+# Searching and filtering contacts
+
+The Contacts section is a directory of all visitor profiles saved in your project. It is separate from conversations — a contact record persists even after the conversation that created it has expired.
+
+## The contacts table
+
+Go to **Dashboard → Contacts** to see the full list. The table shows:
+
+- **Name** — The visitor's name
+- **Email** — Their email address (sortable)
+- **Phone** — Their phone number
+- **Tags** — Any tags applied to this contact
+- **Created** — When the contact record was created
+
+Click a column header to sort by that column. Click the same header again to reverse the sort order.
+
+## Searching
+
+The search bar at the top of the table filters by name in real time as you type. It is a client-side filter — all contacts load first, then the search narrows them down.
+
+<Callout variant="info" title="Contacts load up to 500 at a time">
+The contacts list loads a maximum of 500 records. If your project has more than 500 contacts, use the export feature to access the full list.
+</Callout>
+
+## Adding a contact manually
+
+Click **New contact** to open the create dialog. Fill in the fields:
+
+| Field | Required | Notes |
+|---|---|---|
+| Name | Yes | Display name for the contact |
+| Email | No | Must be unique within the project |
+| Phone | No | Must be unique within the project |
+| Address | No | Free text |
+| Note | No | Internal note about this contact |
+
+Email and phone are deduplicated — if you try to create a contact with an email or phone that already exists in the project, Yoosr will reject it with an error.
+
+## Editing a contact
+
+Click the three-dot menu (⋮) on any row and select **Edit** to open the edit dialog. All fields are editable. The same deduplication rules apply when editing.
+
+## Deleting a contact
+
+Click the three-dot menu (⋮) on any row and select **Delete**. Yoosr will ask for confirmation before deleting.
+
+You cannot delete a contact that is linked to an active (open) conversation. Close the conversation first, then delete the contact.
+
+## Importing contacts
+
+Click **Import** to upload a contact list in bulk. Supported formats are **CSV** and **Excel (.xlsx)**.
+
+Your file must have a header row with at least a `Name` column. Optional columns: `Email`, `Phone`, `Address`, `Note`, `Tags`.
+
+For CSV files, tags should be semicolon-separated in a single cell — for example: `billing;vip;arabic`.
+
+After uploading, Yoosr shows you a preview of how many contacts will be imported and how many rows were skipped (due to missing name, duplicate email, or duplicate phone). Confirm to complete the import.
+
+The batch import accepts between 1 and 500 contacts per file.
+
+## Exporting contacts
+
+Click **Export** to download your contacts in one of three formats:
+
+**CSV** — A plain text spreadsheet. Works in Excel, Google Sheets, and any data tool.
+
+**JSON** — Structured data format. Useful for importing into other systems programmatically.
+
+**Excel (.xlsx)** — A formatted spreadsheet with proper column widths. Best for sharing with non-technical teammates.
+
+The export includes all contacts currently visible in the table — if you have a search or filter active, only the filtered results are exported.
+
+## Next steps
+
+- [The contact profile →](/docs/contacts/contact-profile)
+- [Bot-set attributes →](/docs/contacts/bot-set-attributes)

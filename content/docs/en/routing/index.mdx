@@ -1,0 +1,30 @@
+---
+title: "Routing"
+description: "Routing determines how incoming conversations are assigned — to a bot, to a human agent, or to the unassigned queue. Understanding routing helps you configure your project for faster response times."
+section: "routing"
+order: 1
+keywords: ["routing", "assignment", "bot routing", "agent assignment", "unassigned queue", "least-busy"]
+related: ["how-routing-works", "pooled-vs-assigned", "unassigned-queue"]
+---
+
+# Routing
+
+Routing is how Yoosr decides who handles each incoming conversation. It runs automatically every time a visitor starts a conversation, and it chooses between three options in order.
+
+## The routing sequence
+
+1. **Bot (first priority)** — If the project has an active bot, the bot handles the conversation first
+2. **Available agents (second priority)** — If no bot, the least-busy available agent gets the conversation
+3. **Unassigned queue (fallback)** — If no agents are available, the conversation waits in the unassigned queue
+
+## What affects routing
+
+- Whether a bot is assigned to the project
+- How many agents are currently online and available
+- The least-busy algorithm — the agent with fewest assigned conversations gets priority
+- HITL Handoff blocks in bot flows that route to human agents
+
+## Next steps
+
+- [How routing works →](/docs/routing/how-routing-works)
+- [Pooled vs assigned →](/docs/routing/pooled-vs-assigned)

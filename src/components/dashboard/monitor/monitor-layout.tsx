@@ -15,6 +15,8 @@ import { useProject } from "@/context/ProjectContext"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import { Users, Clock, AlertTriangle, Bot } from "lucide-react"
 
 import { useTranslations } from "next-intl"
 
@@ -28,11 +30,37 @@ export default function MonitorLayout() {
 
     const [mobileView, setMobileView] = React.useState<"list" | "chat" | "contact">("list")
 
+    // Detect responsive layout - use lazy initializer for SSR safety
+    const isDesktop = React.useMemo(() => {
+        if (typeof window === "undefined") return true
+        return window.matchMedia("(min-width: 1024px)").matches
+    }, [])
+
+    // Auto-refresh: increment version every 15s to trigger re-fetch
+    const [refreshVersion, setRefreshVersion] = React.useState(0)
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setRefreshVersion((v) => v + 1)
+        }, 15_000)
+        return () => clearInterval(interval)
+    }, [])
+
     const conversations = useQuery(
         api.conversations.getConversations,
         projectId ? {
             projectId,
-            departmentId: activeDeptId ?? undefined
+            departmentId: activeDeptId ?? undefined,
+            _refresh: refreshVersion,
+        } : "skip"
+    )
+
+    // Count of all active conversations (for >100 indicator)
+    const totalActiveCount = useQuery(
+        api.conversations.countActiveConversations,
+        projectId ? {
+            projectId,
+            departmentId: activeDeptId ?? undefined,
+            _refresh: refreshVersion,
         } : "skip"
     )
 
@@ -49,6 +77,16 @@ export default function MonitorLayout() {
         (c) => c.id === selectedConversationId
     ) ?? null
 
+    // Derived KPIs for the command center header
+    const unassignedCount = conversations?.filter(c => !c.assignedTo).length ?? 0
+    const botActiveCount = conversations?.filter(c => c.botId).length ?? 0
+    const slaOverdueCount = conversations?.filter(c =>
+        c.slaDeadline && !c.firstResponseAt && c.slaDeadline < Date.now()
+    ).length ?? 0
+    const hasMoreConversations = (totalActiveCount?.count ?? 0) > (conversations?.length ?? 0)
+
+    const KpiSkeleton = () => <Skeleton className="h-5 w-8" />
+
     return (
         <div className="h-[calc(100vh-5rem)] w-full">
             <div className="flex h-full flex-col">
@@ -56,6 +94,54 @@ export default function MonitorLayout() {
                     <h1 className="text-xl font-bold">{tNav("monitor")}</h1>
                 </div>
                 <Separator />
+
+                {/* Command Center KPI Header */}
+                <div className="flex items-center gap-4 px-4 py-2 bg-muted/30 border-b">
+                    <div className="flex items-center gap-2 text-sm">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{t("kpi_active")}</span>
+                        {conversations === undefined ? (
+                            <KpiSkeleton />
+                        ) : (
+                            <Badge variant="secondary" className="font-mono">
+                                {hasMoreConversations ? `${conversations.length}+` : conversations.length}
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{t("kpi_unassigned")}</span>
+                        {conversations === undefined ? (
+                            <KpiSkeleton />
+                        ) : (
+                            <Badge variant={unassignedCount > 0 ? "destructive" : "secondary"} className="font-mono">
+                                {unassignedCount}
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{t("kpi_sla_breach")}</span>
+                        {conversations === undefined ? (
+                            <KpiSkeleton />
+                        ) : (
+                            <Badge variant={slaOverdueCount > 0 ? "destructive" : "secondary"} className="font-mono">
+                                {slaOverdueCount}
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Bot className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{t("kpi_bot_active")}</span>
+                        {conversations === undefined ? (
+                            <KpiSkeleton />
+                        ) : (
+                            <Badge variant="secondary" className="font-mono">
+                                {botActiveCount}
+                            </Badge>
+                        )}
+                    </div>
+                </div>
 
                 {conversations === undefined ? (
                     <div className="flex h-full items-center justify-center p-8">
@@ -68,7 +154,8 @@ export default function MonitorLayout() {
                 ) : (
                     <>
                         {/* Mobile View — hidden on desktop */}
-                        <div className="flex flex-col h-full lg:hidden w-full overflow-hidden">
+                        {!isDesktop && (
+                        <div className="flex flex-col h-full w-full overflow-hidden">
                             {mobileView === "list" && (
                                 <ConversationList
                                     items={conversations}
@@ -112,9 +199,11 @@ export default function MonitorLayout() {
                                 )
                             )}
                         </div>
+                        )}
 
-                        {/* Desktop View — hidden on mobile */}
-                        <div className="hidden lg:flex h-full w-full overflow-hidden">
+                        {/* Desktop View — visible on desktop */}
+                        {isDesktop && (
+                        <div className="flex h-full w-full overflow-hidden">
                             <ResizablePanelGroup
                                 direction="horizontal"
                                 className="h-full items-stretch"
@@ -154,6 +243,7 @@ export default function MonitorLayout() {
                                 </ResizablePanel>
                             </ResizablePanelGroup>
                         </div>
+                        )}
                     </>
                 )}
             </div>

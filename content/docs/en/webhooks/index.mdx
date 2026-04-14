@@ -1,0 +1,58 @@
+---
+title: "Webhooks overview"
+description: "Webhooks let Yoosr send real-time event data to your systems when conversations open, close, or receive messages. This article explains the two webhook types and when to use each."
+section: "webhooks"
+order: 1
+keywords: ["webhooks", "outbound", "inbound", "RestHooks", "events", "real-time", "integration", "HTTP"]
+related: ["outbound-webhooks", "webhook-events", "signature-verification"]
+---
+
+# Webhooks overview
+
+A webhook is an HTTP callback. When something happens in Yoosr — a new conversation opens, a message arrives, an agent is assigned — Yoosr sends a POST request to a URL you choose. Your server receives that request and acts on it: log the event, update a CRM, send a Slack notification, or anything else.
+
+Yoosr supports two webhook directions.
+
+## Outbound webhooks (RestHooks)
+
+Outbound webhooks send data **from Yoosr to your server**. You subscribe to one or more events, provide a URL, and Yoosr delivers a signed POST request every time one of those events occurs.
+
+Use outbound webhooks when you want to:
+
+- Sync new conversations to your CRM automatically
+- Send a Slack message when a conversation is resolved
+- Trigger a workflow in Zapier or Make when an agent is assigned
+- Log message data to your own analytics pipeline
+
+Yoosr retries failed deliveries up to three times with exponential back-off. Every request includes an `X-Yoosr-Signature` header so you can verify the payload is authentic.
+
+→ [Set up outbound webhooks](/docs/webhooks/outbound)
+
+## Inbound platform webhooks
+
+Inbound webhooks carry data **from third-party platforms to Yoosr**. When you connect WhatsApp, Messenger, Instagram, or Telegram, each platform sends incoming messages to a Yoosr-managed endpoint. Yoosr verifies the platform's signature, parses the message, and creates or updates the conversation automatically.
+
+You do not configure inbound webhooks directly — Yoosr handles the URL and verification as part of the channel setup flow.
+
+→ [Connect WhatsApp](/docs/channels/whatsapp)
+→ [Connect Telegram](/docs/channels/telegram)
+→ [Connect Messenger](/docs/channels/messenger)
+→ [Connect Instagram](/docs/channels/instagram)
+
+## Which type do you need?
+
+| Goal | Type to use |
+|---|---|
+| React to Yoosr events in your own systems | Outbound (RestHooks) |
+| Receive messages from WhatsApp, Telegram, etc. | Inbound (set up during channel connection) |
+| Verify that a payload really came from Yoosr | Outbound — see signature verification |
+
+<Callout variant="info" title="Admin access required">
+Creating and managing outbound webhook subscriptions requires admin access to the project. Regular agents cannot create or delete webhook subscriptions.
+</Callout>
+
+## Next steps
+
+- [Outbound webhooks →](/docs/webhooks/outbound)
+- [Webhook event reference →](/docs/webhooks/events)
+- [Signature verification →](/docs/webhooks/signature-verification)

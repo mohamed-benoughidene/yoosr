@@ -73,7 +73,10 @@ export const listForCurrentUser = query({
             .query("notifications")
             .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
             .order("desc")
-            .filter((q) => q.eq(q.field("projectId"), project._id))
+            .filter((q) => q.and(
+                q.eq(q.field("projectId"), project._id),
+                q.eq(q.field("deletedAt"), undefined)
+            ))
             .take(30);
 
         return notifications;
@@ -106,7 +109,10 @@ export const unreadCount = query({
             .withIndex("by_project_recipient", (q) =>
                 q.eq("projectId", project._id).eq("recipientId", userId)
             )
-            .filter((q) => q.eq(q.field("read"), false))
+            .filter((q) => q.and(
+                q.eq(q.field("read"), false),
+                q.eq(q.field("deletedAt"), undefined)
+            ))
             .take(51);
 
         return notifications.length >= 51 ? 999 : notifications.length; // 999 = "99+" sentinel for frontend

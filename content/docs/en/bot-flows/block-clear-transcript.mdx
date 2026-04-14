@@ -1,0 +1,77 @@
+---
+title: "Block: Clear Transcript"
+description: "The Clear Transcript block wipes all attributes stored in the conversation so far. Use it to reset the bot's memory between topics or before starting a new flow branch from scratch."
+section: "bot-flows"
+order: 13
+keywords: ["clear transcript", "reset", "clear attributes", "wipe", "bot memory", "fresh start", "attributes reset"]
+related: ["block-set-attribute", "block-capture-reply", "template-syntax", "bot-set-attributes"]
+---
+
+# Block: Clear Transcript
+
+The Clear Transcript block resets the bot's attribute store for the current conversation. Every attribute that has been set — by Set Attribute, Capture Reply, AI Task, Web Request, or any other block — is wiped. The bot starts the next block with an empty attribute slate.
+
+## What it does
+
+When the bot reaches a Clear Transcript block, it immediately clears all attributes and moves to the next block. No message is sent to the visitor.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+
+There are no other fields. The block does one thing and has no configuration.
+
+## What gets cleared
+
+Every attribute in the conversation's attribute store is deleted. This includes:
+
+- Any attribute set by a **Set Attribute** block
+- Any input captured by a **Capture Reply** block
+- Any output stored by an **AI Task** or **Web Request** block
+- The `kb_reply` variable from an **Ask Knowledge Base** block
+- Internal tracking attributes like `__kbTurns` and `__kbDone`
+
+Built-in session attributes like `channel`, `language`, `os`, `browser`, `sourcePage`, and `ip` are stored differently and are not affected by this block.
+
+## What does NOT get cleared
+
+- The conversation itself and its message history — the visitor can still scroll up and see everything said
+- Labels applied to the conversation
+- The visitor's contact info (name, email, phone)
+- The conversation status and assignment
+
+The block only clears the bot's working attribute memory. The conversation record and chat history remain intact.
+
+## When to use it
+
+**Starting a new topic in the same conversation** — If your bot handles multiple topics in a single conversation, clear the attributes when switching from one topic to another so old values do not bleed into the next flow branch.
+
+**Re-running a capture sequence** — If a visitor says "go back" and you want them to re-enter their details, clear the transcript first so the old values do not interfere.
+
+**Privacy-sensitive flows** — If the visitor provided personal information that should not persist beyond a specific section of the flow, clear it after you are done with it.
+
+<Callout variant="warning" title="Clearing is irreversible within the conversation">
+Once attributes are cleared, there is no way to retrieve the values that were stored. If you need any attribute value after the clear, copy it to another attribute using a Set Attribute block first.
+</Callout>
+
+## Example: multi-topic flow reset
+
+```
+[Topic 1 flow: asks for order ID, looks it up, replies]
+...
+[Reply]   "Is there anything else I can help you with?"
+[Capture Reply] → stores in: next_topic
+
+[Clear Transcript]   ← wipes order_id and all topic 1 attributes
+
+[Condition] check: next_topic == "billing"
+True path  → [Topic 2: billing flow]
+False path → [Close]
+```
+
+## Next steps
+
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Bot-set attributes in the contact panel →](/docs/contacts/bot-set-attributes)

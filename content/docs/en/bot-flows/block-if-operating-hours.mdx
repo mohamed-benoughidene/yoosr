@@ -1,0 +1,70 @@
+---
+title: "Block: If Operating Hours"
+description: "The If Operating Hours block checks whether your project is currently within its configured operating schedule and routes the flow down one of two branches — within hours or outside hours."
+section: "bot-flows"
+order: 17
+keywords: ["if operating hours", "operating hours", "schedule", "business hours", "open", "closed", "timezone"]
+related: ["operating-hours", "block-hitl-handoff", "block-if-online-agent", "block-condition"]
+---
+
+# Block: If Operating Hours
+
+The If Operating Hours block checks whether the current time falls within your project's configured operating schedule and routes the flow based on the result.
+
+## What it does
+
+When the bot reaches this block, it reads your project's operating hours configuration — including the weekly schedule and timezone — and checks whether right now is within open hours. It then routes the flow down one of two branches.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+
+There are no other configuration fields. The block reads the operating hours you set in Settings automatically. The properties panel shows a link to **Settings → Operating Hours** and displays the two output paths.
+
+## Output handles
+
+**Within hours (true)** — The current time is inside your configured open schedule. Route here to offer full support — human agent handoff, KB search, or whatever your normal flow provides.
+
+**Outside hours (false)** — The current time is outside your open schedule, or operating hours are not configured. Route here to manage visitor expectations — tell them you are closed, offer to take their details, or set up an automated response.
+
+## How to configure it
+
+1. First set up operating hours in **Settings → Operating Hours**. The block reads that configuration — it does not work without it.
+2. Add an **If Operating Hours** block to the canvas.
+3. Connect the **within hours** output to your open-hours flow branch.
+4. Connect the **outside hours** output to your closed-hours flow branch.
+
+## What happens if operating hours are not configured
+
+If you have not set up operating hours in Settings, the block defaults to treating the business as open — it always takes the true (within hours) branch. This is a safe default that prevents visitors from being incorrectly told you are closed.
+
+## Timezone
+
+Operating hours are evaluated against the timezone configured in Settings → Operating Hours. Make sure your timezone is set correctly or the block will route visitors based on the wrong clock.
+
+## Common flow pattern
+
+```
+[Start]
+  ↓
+[If Operating Hours]
+  Within hours → [If Online Agent]
+                   Agents online → [HITL Handoff]
+                   No agents     → [Reply] "All agents are busy. We'll be back shortly."
+  Outside hours → [Reply] "We are closed right now. Our hours are Mon–Fri 9am–6pm.
+                           Leave your message and we'll reply when we open."
+                  [Capture Reply] → stores in: after_hours_message
+                  [Close]
+```
+
+<Callout variant="tip" title="Combine with If Online Agent">
+Operating hours tell you whether you should be open. If Online Agent tells you whether anyone actually is. Use both together — operating hours as the outer check, agent availability as the inner check.
+</Callout>
+
+## Next steps
+
+- [Operating hours settings →](/docs/settings/operating-hours)
+- [Block: If Online Agent →](/docs/bot-flows/block-if-online-agent)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

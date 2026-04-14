@@ -109,7 +109,7 @@ export function JsonLd() {
     "thumbnailUrl": `${siteUrl}/yoosr-light.svg`,
     "contentUrl": `${siteUrl}/walkthrough.mp4`,
     "embedUrl": `${siteUrl}/walkthrough.mp4`,
-    "uploadDate": "2025-01-01",
+    "uploadDate": "2025-04-14T00:00:00Z",
     "duration": "PT2M",
   };
 

@@ -1,62 +1,38 @@
-export const meta = {
-  title: "Channels",
-  description: "Connect WhatsApp, Telegram, Messenger, and Instagram to your Yoosr project for unified omnichannel support.",
-  section: "channels"
-}
+---
+title: "Channels"
+description: "Connect multiple messaging channels to Yoosr so every conversation — from your website widget, WhatsApp, Telegram, Messenger, or Instagram — lands in the same dashboard."
+section: "channels"
+order: 1
+keywords: ["channels", "WhatsApp", "Telegram", "Messenger", "Instagram", "widget", "multi-channel"]
+related: ["chat-overview", "widget-visitor-experience"]
+---
 
 # Channels
 
-Yoosr isn't limited to your website. Connect external messaging platforms so every conversation — no matter where it starts — lands in the **same agent dashboard**.
+Channels are the different ways visitors can reach your team through Yoosr. Every conversation from every channel appears in the same Monitor, so your team works in one place regardless of where messages come from.
 
-## Supported Channels
+## Available channels
 
-| Channel | Setup Time | Requirements |
-|---------|-----------|--------------|
-| **Telegram** | ~5 minutes | A Telegram bot token from @BotFather |
-| **WhatsApp** | ~15 minutes | Meta Developer account, verified phone number |
-| **Messenger** | ~15 minutes | Facebook Page, Meta Developer app |
-| **Instagram** | ~15 minutes | Instagram Business account linked to a Facebook Page |
+**Website widget** — A chat button embedded on your website. Visitors click it and chat in real time.
 
-## How Channels Work
+**WhatsApp** — Connect your WhatsApp Business number. Messages from WhatsApp appear alongside widget conversations.
 
-All channels follow the same pattern:
+**Telegram** — Link a Telegram bot to receive and respond to messages from Telegram users.
 
-1. **Create the external resource** (bot, app, page) on the platform
-2. **Configure credentials** in Yoosr's channel settings
-3. **Set the webhook URL** on the platform to point to your Yoosr instance
-4. **Verify** — Yoosr confirms the connection with a test message
+**Facebook Messenger** — Connect a Facebook Page to handle Messenger conversations.
 
-Once connected, messages from that channel:
+**Instagram** — Link your Instagram business account for DM conversations.
 
-- Create conversations in your Yoosr project
-- Are routed through the same smart routing system (bot → agents → queue)
-- Appear in your agent dashboard with channel indicators
-- Support the same features (labels, assignments, canned responses)
+## How channels work
 
-## Add a Channel
+Each channel has its own setup process, but they all behave the same way once connected:
 
-1. Go to **Settings → Channels** in your dashboard
-2. Click **Connect** next to the platform you want
-3. Fill in the required credentials
-4. Follow the platform-specific setup guide below
-5. Send a test message to verify
+- Conversations appear in the Monitor with a channel icon
+- The same bot can handle visitors from any channel
+- The same agents can reply to any channel
+- Routing, labels, departments, and analytics work identically across channels
 
-<Callout variant="info" title="Encrypted credentials">
-All channel secrets (tokens, API keys) are encrypted with AES-GCM before storage. The encryption key is set via the `ENCRYPTION_KEY` environment variable.
-</Callout>
+## Next steps
 
-## Channel Indicator
-
-In the conversation list, each conversation shows a small icon indicating its source channel:
-
-- 🌐 — Website widget
-- ✈️ — Telegram
-- 📱 — WhatsApp
-- 💬 — Messenger
-- 📷 — Instagram
-
-This helps agents quickly understand the context and capabilities available for each conversation.
-
-## Next Steps
-
-[Set up Telegram →](/docs/channels/telegram)
+- [Chat overview →](/docs/channels/chat-overview)
+- [WhatsApp setup →](/docs/channels/whatsapp)

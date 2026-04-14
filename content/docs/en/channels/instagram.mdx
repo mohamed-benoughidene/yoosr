@@ -1,80 +1,86 @@
-export const meta = {
-  title: "Instagram",
-  description: "Connect Instagram Direct Messages to Yoosr via Meta for Developers for unified omnichannel support.",
-  section: "channels"
-}
+---
+title: Instagram
+description: Connect Instagram Direct Messages to Yoosr via Meta for Developers so DMs appear in your agent dashboard.
+section: Channels & Apps
+order: 4
+keywords: [Instagram, DM, direct messages, Meta, Facebook Page, webhook, channel, integration]
+related:
+  - channels/messenger
+  - channels/whatsapp
+  - routing/how-routing-works
+---
 
-# Instagram Integration
+# Instagram
 
-Connect Instagram DMs to Yoosr so direct messages and mentions appear in your agent dashboard.
+Connect your Instagram account to Yoosr so direct messages appear in your agent dashboard alongside all other channels.
 
 ## Prerequisites
 
-- An **Instagram Business** or **Creator** account
-- The Instagram account must be **linked to a Facebook Page**
-- A **Meta Developer** app with Messenger products
+Before you start, make sure you have:
 
-## Step 1: Link Instagram to Facebook Page
+- An **Instagram Business** or **Creator** account (personal accounts are not supported)
+- The Instagram account linked to a **Facebook Page** you administer
+- A Meta Developer account with a Business-type app that has the **Messenger** product added
 
-1. Open Instagram → **Settings** → **Account**
-2. Tap **Linked Accounts** → **Facebook**
-3. Select your Facebook Page
-
-<Callout variant="warning" title="Business or Creator only">
-Personal Instagram accounts don't support the Messaging API. Convert to a Business account in Instagram Settings → Account → Switch to Professional Account.
+<Callout variant="warning" title="Personal accounts are not supported">
+The Instagram Messaging API requires a Business or Creator account. To convert, go to Instagram Settings → Account → Switch to Professional Account.
 </Callout>
 
-## Step 2: Configure Your Meta App
+## Step 1: Link Instagram to your Facebook Page
 
-1. Go to [Meta for Developers](https://developers.facebook.com)
-2. Open your app (or create one with **Business** type)
-3. Add **Messenger** product
-4. Under **Messenger → Settings**, grant Instagram permissions:
-   - `instagram_manage_messages`
-   - `instagram_basic`
+1. Open Instagram and go to **Settings → Account**.
+2. Select **Linked Accounts → Facebook**.
+3. Choose the Facebook Page you want to connect.
+
+The Instagram account must be linked to the same Page you use in your Meta Developer app.
+
+## Step 2: Configure your Meta app
+
+1. Go to [Meta for Developers](https://developers.facebook.com) and open your existing Business app (or create one).
+2. Add the **Messenger** product if it is not already added.
+3. Under **Messenger → Settings**, grant these Instagram permissions: `instagram_manage_messages` and `instagram_basic`.
 
 ## Step 3: Configure in Yoosr
 
-1. Go to **Settings → Channels** → **Instagram** → **Connect**
-2. Enter your **Instagram Account ID** (found in Meta App under Instagram settings)
-3. Enter your **Page Access Token** (same as Messenger)
-4. Enter your **App Secret**
-5. Yoosr generates a **Verify Token**
-6. Click **Save**
+1. In the Yoosr dashboard, go to **Settings → Channels**.
+2. Find **Instagram** and select **Connect**.
+3. Enter your **Instagram Account ID** (found in your Meta App under Instagram settings).
+4. Enter your **Page Access Token** (the same token you use for Messenger).
+5. Enter your **App Secret**.
+6. Yoosr generates a **Verify Token** automatically.
+7. Select **Save**.
 
-## Step 4: Configure the Webhook
+## Step 4: Set the webhook in Meta
 
-In your Meta App:
+Instagram uses the same webhook endpoint as Messenger and WhatsApp.
 
-1. Go to **Messenger → Settings** → **Webhooks**
-2. Use the **same Callback URL** as WhatsApp/Messenger
-3. Paste the **Verify Token** from Yoosr
-4. Subscribe to: `instagram`, `instagram_direct`, `instagram_message_metadata`
+1. In your Meta App, go to **Messenger → Settings** → **Webhooks**.
+2. Use the same **Callback URL** as your Messenger or WhatsApp setup: `https://<your-convex-site>.convex.site/webhooks/meta`.
+3. Paste the **Verify Token** from Yoosr.
+4. Subscribe to: `instagram`, `instagram_direct`, `instagram_message_metadata`.
 
-## Step 5: Test
+## Step 5: Test the connection
 
-1. Send a DM to your Instagram account from another account
-2. The conversation appears in Yoosr with the Instagram indicator
-3. Reply from Yoosr — the reply appears in Instagram DMs
+Send a DM to your Instagram account from a separate account. Within seconds, the conversation appears in Yoosr with the Instagram channel indicator. Reply from the dashboard — your reply appears in the Instagram DM thread.
 
-## What's Supported
+## What is supported
 
 | Feature | Supported |
 |---------|-----------|
 | Direct messages | ✅ |
 | Image messages | ✅ |
 | Quick replies | ✅ |
-| Story mentions | Partial — depends on API version |
 | Voice messages | ✅ |
+| Story mentions | Partial — depends on API version |
 
-## How It Works
+## How it works
 
-Like Messenger and WhatsApp, Instagram messages arrive at the shared `/webhooks/meta` endpoint. Yoosr identifies them by the `object` field value of `instagram`.
+Instagram messages arrive at the shared `/webhooks/meta` endpoint. Yoosr identifies them by the `object` field value of `instagram` in the webhook payload. The rest of the processing — contact matching, conversation creation, routing — is identical to Messenger and WhatsApp.
 
 ## Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
+| Problem | Fix |
+|---------|-----|
 | Messages not arriving | Verify Instagram is linked to the correct Facebook Page |
-| `403 Forbidden` | App secret or access token mismatch — re-enter credentials |
-| Can't see Instagram option | Ensure `instagram_manage_messages` permission is granted and approved by Meta |
+| `403 Forbidden` | App secret or access token mismatch — re-enter your credentials in Yoosr |
+| Instagram option not available | Ensure `instagram_manage_messages` permission has been granted and approved by Meta |

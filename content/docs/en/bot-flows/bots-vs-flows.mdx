@@ -1,0 +1,45 @@
+---
+title: "Bots and flows — the mental model"
+description: "In Yoosr, a bot is the container and a flow is the logic inside it. Understanding the difference before you open Design Studio will save you a lot of confusion."
+section: "bot-flows"
+order: 1
+keywords: ["bot", "flow", "design studio", "mental model", "bot vs flow", "container", "logic"]
+related: ["canvas-overview", "template-syntax", "publishing-testing"]
+---
+
+# Bots and flows — the mental model
+
+Before opening Design Studio, it helps to understand two terms that Yoosr uses for related but distinct things: **bot** and **flow**.
+
+## What a bot is
+
+A bot is a named entity you create from the **Bots** section in the dashboard. It has a name, a description, and it can be assigned to a project. The bot is the container — it holds the flow that defines how it behaves.
+
+Think of a bot the way you think of a document. The document has a name and a location. The content inside is something else.
+
+## What a flow is
+
+A flow is the logic that lives inside a bot. It is a graph of connected blocks — Reply, Condition, Capture Reply, Ask Knowledge Base, and so on — that defines what the bot says and does when a visitor starts a conversation.
+
+You build the flow in **Design Studio**. Every bot has exactly one flow. When you open a bot in Design Studio, you are editing its flow.
+
+## How they connect
+
+```
+Project
+  └── Bot (name, description, assigned to this project)
+        └── Flow (the graph of blocks you build in Design Studio)
+```
+
+A project can have one bot assigned to it. When a visitor starts a conversation in that project, the bot's flow runs automatically.
+
+## Why this matters
+
+When something is not working — for example, the bot is not responding — the first thing to check is whether the bot is assigned to the project. Having a flow built in Design Studio is not enough. The bot needs to be assigned to the project before it runs.
+
+When you want to use the same logic across multiple projects, you would need to create separate bots — flows are not shared between bots.
+
+## Next steps
+
+- [The Design Studio canvas →](/docs/bot-flows/canvas-overview)
+- [Publishing and testing a bot →](/docs/bot-flows/publishing-testing)

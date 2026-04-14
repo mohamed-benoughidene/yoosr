@@ -1,0 +1,105 @@
+---
+title: "Block: Code Action"
+description: "The Code Action block evaluates a safe mathematical or logical expression using the expr-eval library. It has access to all conversation attributes and stores its result in a named variable."
+section: "bot-flows"
+order: 21
+keywords: ["code action", "expression", "expr-eval", "calculation", "math", "logic", "formula", "compute"]
+related: ["template-syntax", "block-set-attribute", "block-condition"]
+---
+
+# Block: Code Action
+
+The Code Action block evaluates a mathematical or logical expression and stores the result in a named attribute. It uses the `expr-eval` library — a safe expression evaluator — not JavaScript's `eval()`. It cannot make network calls, import modules, or access anything outside the conversation's attribute store.
+
+## What it does
+
+When the bot reaches a Code Action block, it evaluates the expression you wrote using the current conversation attributes as variables, stores the result, and moves to the next block. No message is sent to the visitor.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Expression | Yes | The expression to evaluate. Supports math, comparisons, and logical operators. |
+| Save output to | No | Attribute name to store the result. Default: `code_result`. |
+
+## Supported syntax
+
+The expression evaluator supports:
+
+**Arithmetic** — `+`, `-`, `*`, `/`, `^` (power), `%` (modulo)
+
+**Comparison** — `==`, `!=`, `<`, `>`, `<=`, `>=`
+
+**Logical** — `and`, `or`, `not`
+
+**Functions** — `abs()`, `ceil()`, `floor()`, `round()`, `sqrt()`, `min()`, `max()`, `log()`, `sin()`, `cos()`
+
+**String** — `length()`, `substr()`, `indexOf()`
+
+**Conditional** — `if(condition, true_value, false_value)`
+
+## Using attributes in expressions
+
+All conversation attributes are available as variables in the expression. Write the attribute name directly — no `{{ }}` needed:
+
+```
+price * quantity
+```
+
+If you set `price = 100` and `quantity = 3` earlier in the flow, the result is `300`.
+
+```
+if(age >= 18, "adult", "minor")
+```
+
+If `age = 25`, the result is `"adult"`.
+
+## How to reference attributes
+
+In Code Action, attributes are used as raw variable names — not wrapped in `{{ }}`. The block strips `{{ }}` automatically before evaluating, so both of these work the same way:
+
+```
+price * 1.2
+{{price}} * 1.2
+```
+
+## Examples
+
+**Calculate total with tax:**
+```
+Expression:  price * quantity * 1.2
+Save to:     total_with_tax
+```
+
+**Round a number:**
+```
+Expression:  round(score * 100) / 100
+Save to:     score_rounded
+```
+
+**Conditional label assignment:**
+```
+Expression:  if(rating >= 4, "satisfied", "unsatisfied")
+Save to:     csat_category
+```
+
+**Check string length:**
+```
+Expression:  length(customer_message) > 200
+Save to:     is_long_message
+```
+
+## Error handling
+
+If the expression has a syntax error or references an attribute that does not exist, the block logs the error and stores `null` in the output variable. The flow continues — the block does not stop the conversation. Check the debugger if a Code Action block does not produce the expected result.
+
+<Callout variant="warning" title="This is not JavaScript">
+Code Action uses expr-eval, not JavaScript. JavaScript syntax like `let`, `const`, `function`, `return`, array methods, or any browser or Node.js API will not work. Stick to the supported operators and functions listed above.
+</Callout>
+
+## Next steps
+
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Template syntax →](/docs/bot-flows/template-syntax)

@@ -1,0 +1,69 @@
+---
+title: Widget visitor experience
+description: What visitors see and can do when they use the Yoosr chat widget on your website.
+section: Channels & Apps
+order: 1
+keywords: [widget, visitor, pre-chat form, file upload, CSAT, rating, session, real-time, chat]
+related:
+  - widget/visitor-experience
+  - settings/operating-hours
+  - bot-flows/block-hitl-handoff
+---
+
+# Widget visitor experience
+
+The Yoosr widget is the chat interface that appears on your website. Visitors use it to start conversations without leaving the page. This article describes what visitors see at each stage of an interaction.
+
+## The launcher button
+
+When a visitor lands on your website, they see a circular chat button in the bottom-right corner of the screen. The button uses your project's primary color, set in Widget Setup.
+
+Clicking the button opens the chat window. Clicking it again closes it. The button position can be changed to the bottom-left in Widget Setup if needed.
+
+## Pre-chat form
+
+If you have enabled the pre-chat form in Widget Setup, the chat window opens with a form before the conversation starts. The form collects the visitor's name and either their email address or phone number, depending on the **Contact method** you selected.
+
+The visitor must submit the form to start the conversation. The data they provide is saved as a contact record in Yoosr and attached to every conversation they start.
+
+<Callout variant="info" title="Contact method options">
+You can require email, phone, or make contact information optional. If you set the contact method to none, the form collects only the visitor's name.
+</Callout>
+
+## The chat window
+
+After the pre-chat form (or immediately if the form is disabled), the chat window shows the conversation. The visitor sees:
+
+- **Bot messages** — sent automatically by any active bot flow.
+- **Agent messages** — replies from your support team, shown with the agent's name.
+- **Their own messages** — displayed on the right side of the chat.
+
+Messages appear in real time. The visitor does not need to refresh the page.
+
+## Sending messages
+
+Visitors type in the input field at the bottom of the chat window and press Enter or the send button. They can also attach a file using the paperclip icon.
+
+File attachments are sent directly to Convex storage and linked to the message. The attached file is visible to agents in the conversation view. Files must be under 5 MB.
+
+## Sound notification
+
+When a new message arrives while the chat window is closed or the visitor is on another tab, the widget plays a short sound to alert them. There is no separate toggle for this — it plays automatically on new incoming messages.
+
+## CSAT rating
+
+After a conversation is resolved (status 1000), the chat window shows a star rating prompt. The visitor can select 1–5 stars and optionally leave a written comment. Submitting the rating is optional.
+
+The rating is stored in the `csat_ratings` table and appears in the Analytics section of the dashboard. Visitors who close the widget without rating are not prompted again.
+
+## Session persistence
+
+The widget stores a visitor ID in `localStorage` under the key `yoosr_visitor_id`. This allows the visitor to return to the same conversation if they close and reopen the widget, or navigate to a different page on your site.
+
+To simulate a new visitor during testing, open an incognito window or clear `localStorage` in the browser developer tools. In the dashboard, the Widget Setup preview also has a **Reset Session** button for this purpose.
+
+## Language
+
+The widget language follows the `widgetLocale` setting on the project. If no locale is set, English is used. The language can also be set per page load by passing a `lang` query parameter to the widget URL — for example, `?lang=ar` for Arabic. This does not override a project-level `widgetLocale` if one is set.
+
+When Arabic is active, the widget switches to right-to-left layout automatically.

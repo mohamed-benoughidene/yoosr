@@ -3,12 +3,21 @@ import { PricingTable } from "@/components/pricing/PricingTable"
 import { PricingJsonLd } from "@/components/seo/PricingJsonLd"
 import { setRequestLocale as unstable_setRequestLocale } from "next-intl/server"
 
-export async function generateMetadata(): Promise<Metadata> {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io";
     const ogUrl = `${baseUrl}/og/image?title=Pricing&description=Simple,%20transparent%20pricing%20for%20teams%20of%20all%20sizes`;
     return {
         title: "Pricing",
         description: "Simple, transparent pricing for teams of all sizes.",
+        alternates: {
+            canonical: `${baseUrl}/${locale}/pricing`,
+            languages: {
+                "en": `${baseUrl}/en/pricing`,
+                "ar": `${baseUrl}/ar/pricing`,
+                "fr": `${baseUrl}/fr/pricing`,
+            },
+        },
         openGraph: {
             images: [{ url: ogUrl, width: 1200, height: 630, alt: "Yoosr Pricing" }],
         },
@@ -21,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PricingPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     unstable_setRequestLocale(locale);
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io";
 
     // Plan data matching the pricing table for structured data
     const plans = [

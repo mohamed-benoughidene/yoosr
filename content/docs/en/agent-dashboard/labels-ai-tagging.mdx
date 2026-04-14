@@ -1,0 +1,50 @@
+---
+title: AI auto-tagging
+description: How Yoosr automatically assigns labels to conversations when they close, using your predefined label dictionary.
+section: Settings
+order: 3
+keywords: [labels, AI, auto-tag, auto-tagging, conversation, close, resolved, LLM, predefined]
+related:
+  - settings/labels
+  - bot-flows/block-apply-label
+  - knowledge-base/how-semantic-search-works
+---
+
+# AI auto-tagging
+
+Yoosr can automatically assign labels to conversations when they are resolved, using the project's language model to analyze the conversation and match it against your predefined label dictionary. This saves agents from manually tagging every conversation and ensures consistent categorization.
+
+## How it works
+
+When a conversation is resolved (status 1000), Yoosr triggers the auto-tagging pipeline:
+
+1. The full conversation transcript is sent to the project's configured language model via OpenRouter.
+2. The model is given the list of labels defined in **Settings → Labels** for the project.
+3. The model selects which labels from that list apply to the conversation, based on the content.
+4. The selected labels are applied to the conversation automatically.
+
+<Callout variant="info" title="Constrained to your label dictionary">
+The AI is only allowed to select from labels that already exist in your project. It cannot create new labels or apply free-text tags. If none of your labels match the conversation, no tags are applied.
+</Callout>
+
+## What this means for your label design
+
+Because auto-tagging is constrained to your predefined labels, the quality of auto-tagging depends on how well your labels describe the actual patterns in your conversations.
+
+Labels that are too broad (such as "Support") will be applied too frequently to be useful. Labels that are too narrow (such as "Refund for order placed in December") will rarely match. The best labels are specific enough to be actionable but general enough to apply across many conversations.
+
+## Viewing auto-applied labels
+
+Auto-applied labels appear the same as manually applied labels — as colored badges in the conversation list and in the contact info panel. There is no indicator showing whether a label was applied by the AI or by an agent.
+
+Agents can remove auto-applied labels if the tagging was incorrect, using the **×** on the badge in the contact info panel.
+
+## Relationship to the Apply label block
+
+The **Apply label** block in Design Studio applies a specific label during a bot flow — for example, tagging a conversation as "Lead" when a visitor requests a demo. This happens during the conversation, not at close.
+
+AI auto-tagging runs at close and uses the full transcript to infer categories. Both mechanisms can apply labels to the same conversation without conflict.
+
+## Token usage
+
+Auto-tagging calls the language model once per resolved conversation. The token usage is logged in the `token_usage` table and appears in the token usage analytics report. For high-volume projects, auto-tagging can contribute meaningfully to token consumption.

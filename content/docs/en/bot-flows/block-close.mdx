@@ -1,0 +1,74 @@
+---
+title: "Block: Close"
+description: "The Close block sends a closing message to the visitor and immediately resolves the conversation. Use it at the end of a flow to cleanly finish a bot-handled interaction."
+section: "bot-flows"
+order: 8
+keywords: ["close block", "resolve", "end conversation", "closing message", "bot resolve", "conversation closed"]
+related: ["block-hitl-handoff", "block-reply", "resolving", "csat"]
+---
+
+# Block: Close
+
+The Close block ends the conversation. It sends a closing message to the visitor and then resolves the conversation automatically — the same outcome as an agent clicking **Resolve** in Monitor.
+
+## What it does
+
+When the bot reaches a Close block, it does two things in sequence:
+
+1. Sends the closing message you configured to the visitor
+2. Sets the conversation status to Closed (status 1000)
+
+After this, the conversation disappears from the Monitor queue and moves to History. If CSAT is configured, the visitor receives a rating prompt.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Closing message | Yes | The final message sent to the visitor before the conversation closes. |
+
+## How to configure it
+
+1. Add a **Close** block at the end of a flow branch.
+2. Click it to open the properties panel.
+3. Type the closing message — for example, `Thanks for reaching out! Have a great day.`
+4. The Close block has no output handle — it is always the final block in a branch.
+
+## Default closing message
+
+If the closing message field is left empty, the bot sends: `Conversation ended.`
+
+Always fill this in with something warmer. The closing message is the last thing the visitor reads.
+
+## How the Close block differs from HITL Handoff
+
+Both blocks end the bot's involvement in a conversation, but they do very different things:
+
+| | Close | HITL Handoff |
+|---|---|---|
+| Resolves the conversation | Yes — immediately | No — routes to an agent |
+| Sends a message | Yes — the closing message | Yes — the handoff message |
+| After this, visitor can reply | No — conversation is closed | Yes — agent takes over |
+
+Use **Close** when the bot has fully resolved the issue and no further action is needed. Use **HITL Handoff** when the visitor needs a human agent.
+
+<Callout variant="warning" title="Close is permanent from the bot's side">
+Once the Close block runs, the conversation is resolved. If the visitor sends another message after this, Yoosr creates a new conversation. The visitor cannot continue the same thread.
+</Callout>
+
+## Example: ending a FAQ flow
+
+```
+[Reply] "Here's the answer to your question: ..."
+[Close] Closing message: "Happy to help! Feel free to reach out again anytime."
+```
+
+## CSAT and the Close block
+
+When a bot closes a conversation via the Close block, it is recorded as "bot handled" in analytics. If CSAT is enabled for your project, the visitor still receives the rating prompt after the bot closes the conversation.
+
+## Next steps
+
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)
+- [CSAT scores →](/docs/analytics/csat)
+- [Resolving conversations →](/docs/agent-dashboard/resolving)

@@ -1,0 +1,55 @@
+---
+title: Unanswered queries dashboard
+description: How to read and act on the unanswered queries table in the Analytics page.
+section: Analytics
+order: 5
+keywords: [unanswered queries, analytics, dashboard, knowledge base, bot, gap, count, KB entry]
+related:
+  - unanswered-queries/what-are-unanswered-queries
+  - unanswered-queries/acting-on-unanswered-queries
+  - knowledge-base/improving-kb-accuracy
+---
+
+# Unanswered queries dashboard
+
+The unanswered queries table on the Analytics page shows every question a visitor asked that your bot searched for in the knowledge base but could not answer. It is a direct signal of gaps in your knowledge base and the primary tool for improving your bot's answer rate over time.
+
+## Finding the table
+
+Go to **Analytics** in the left sidebar. The **Unanswered Queries** section is on the analytics page, below the CSAT report. Unlike the other analytics sections, this table is not filtered by the date range picker — it shows all logged unanswered queries regardless of the selected period.
+
+## Reading the table
+
+Each row represents a unique query text that went unanswered at least once. The columns are:
+
+| Column | Description |
+|--------|-------------|
+| **Query** | The exact text the visitor sent when the bot searched the knowledge base |
+| **Count** | How many times this exact query went unanswered across all conversations |
+| **Last asked** | The timestamp of the most recent unanswered occurrence |
+
+The table is sorted by count descending — the most frequently unanswered queries appear first.
+
+## Acting on a query
+
+Each row has a **Create KB Entry** button. Selecting it opens a dialog where you can:
+
+1. Write an answer for the query.
+2. Select the knowledge base to add it to.
+3. Save the entry.
+
+Yoosr adds the content as a text source to the selected knowledge base, triggers the embedding pipeline, and the source becomes available to the bot once processing completes.
+
+<Callout variant="tip" title="Start with the top 10">
+After your bot has been live for a week, open this table and work through the top 10 rows by count. These represent the highest-impact gaps — fixing them improves the bot's answer rate for the most visitors in the shortest time.
+</Callout>
+
+## How counts accumulate
+
+Each time a visitor asks a question and the bot's Ask knowledge base block finds no result, Yoosr checks whether the same exact text has been logged before. If it has, the count increments. If not, a new row is created. This means the count reflects how often that precise phrasing has gone unanswered — not how many visitors have the underlying question.
+
+Different phrasings of the same question create separate rows. When you create a KB entry, write the answer to cover as many of the related phrasings as possible, not just the exact text in the row.
+
+## Relationship to the Unanswered Queries section
+
+The **Unanswered Queries** section in the left sidebar provides conceptual documentation about this feature. The **Analytics** page is where you take action on the actual data.

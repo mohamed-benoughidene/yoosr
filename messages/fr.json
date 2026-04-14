@@ -725,6 +725,10 @@
     "unserved": "Non servi",
     "served": "Servi",
     "active": "Actif",
+    "kpi_active": "Actif",
+    "kpi_unassigned": "Non assigné",
+    "kpi_sla_breach": "Rupture SLA",
+    "kpi_bot_active": "Bot actif",
     "no_conversations_found": "Aucune conversation trouvée.",
     "no_conversations_yet": "Aucune conversation pour l'instant",
     "select_conversation": "Sélectionnez une conversation pour commencer",
@@ -816,7 +820,8 @@
       "agentConnected": "Vous êtes maintenant connecté avec un agent.",
       "inactiveClosed": "Cette conversation a été automatiquement fermée en raison d'inactivité.",
       "agentJoined": "Un agent a rejoint la conversation."
-    }
+    },
+    "visitor_typing_indicator": "Le visiteur est en train d'écrire..."
   },
   "requests": {
     "title": "Demandes",
@@ -1713,6 +1718,7 @@
     },
     "noProjectId": "Aucun identifiant de projet fourni",
     "connecting": "Connexion en cours...",
+    "loadingMessages": "Chargement des messages",
     "failedToConnect": "Échec de la connexion. Veuillez actualiser la page.",
     "failedToCreateConversation": "Échec de la création de la conversation",
     "failedToSendMessage": "Échec de l'envoi du message",
@@ -1729,6 +1735,13 @@
     "supportAgent": "Agent de support",
     "inputPlaceholder": "Tapez un message...",
     "send": "Envoyer",
+    "sending": "Envoi en cours...",
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative...",
+    "connectionTimeout": "La connexion a expiré",
+    "connectionTimeoutDesc": "Veuillez vérifier votre connexion Internet et réessayer.",
+    "offline": "Vous êtes hors ligne. Les messages peuvent ne pas être envoyés jusqu'à ce que vous vous reconnectiez.",
+    "checkConnection": "Vérifier",
     "preChatForm": {
       "welcome": "Bienvenue !",
       "subtitle": "Veuillez remplir vos informations pour démarrer le chat.",
@@ -1743,7 +1756,8 @@
       "phoneRequired": "Le numéro de téléphone est requis",
       "invalidEmail": "Veuillez entrer une adresse e-mail valide",
       "invalidPhone": "Veuillez entrer un numéro de téléphone valide",
-      "startChat": "Démarrer le chat"
+      "startChat": "Démarrer le chat",
+      "submitting": "Démarrage du chat..."
     },
     "rating": {
       "thankYou": "Merci !",
@@ -1752,7 +1766,9 @@
       "submit": "Soumettre l'avis",
       "submitting": "Envoi en cours...",
       "failedToSubmit": "Échec de l'envoi de l'avis"
-    }
+    },
+    "typingIndicator": "{senderName} est en train d'écrire...",
+    "poweredBy": "Propulsé par {brand}"
   },
   "testWidget": {
     "embedCopied": "Code d'intégration copié !",

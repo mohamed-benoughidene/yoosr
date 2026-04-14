@@ -129,6 +129,16 @@ function filtersReducer(state: FiltersState, action: FiltersAction): FiltersStat
 
 import { useTranslations, useLocale } from "next-intl"
 
+/** Format elapsed time as human-readable duration (e.g. "5m", "2h 15m") */
+function formatElapsed(ms: number): string {
+    const totalMinutes = Math.floor(ms / 60000)
+    if (totalMinutes < 1) return "<1m"
+    if (totalMinutes < 60) return `${totalMinutes}m`
+    const hours = Math.floor(totalMinutes / 60)
+    const mins = totalMinutes % 60
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+}
+
 export function ConversationList({
     items,
     selectedId,
@@ -561,6 +571,16 @@ export function ConversationList({
 
                                                     return <Badge className="h-4 px-1 text-[9px] bg-emerald-500 hover:bg-emerald-500 text-white border-none uppercase font-bold">{label}</Badge>;
                                                 })()}
+                                                {/* Conversation duration badge */}
+                                                <Badge variant="outline" className="h-4 px-1 text-[9px] font-normal text-muted-foreground">
+                                                    {formatElapsed(Date.now() - item.createdAt)}
+                                                </Badge>
+                                                {/* Waiting time badge (shows time since last agent response or since creation if no response) */}
+                                                {!item.firstResponseAt && (
+                                                    <Badge className="h-4 px-1 text-[9px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200 dark:border-rose-800 font-normal">
+                                                        waiting {formatElapsed(Date.now() - item.createdAt)}
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                 {getChannelIcon(item.channel)}

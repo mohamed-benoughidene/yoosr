@@ -1,0 +1,65 @@
+---
+title: "Block: Apply Label"
+description: "The Apply Label block tags the current conversation with a label from your project's label dictionary. It runs silently with no message to the visitor."
+section: "bot-flows"
+order: 19
+keywords: ["apply label", "tag", "label", "categorize", "conversation tag", "label block"]
+related: ["labels", "block-set-attribute", "template-syntax"]
+---
+
+# Block: Apply Label
+
+The Apply Label block tags the current conversation with a label from your project's label dictionary. It runs silently — no message is sent to the visitor — and the flow continues immediately to the next block.
+
+## What it does
+
+When the bot reaches an Apply Label block, it looks up the label name you configured in the project's label dictionary and applies it to the conversation. The label then appears on the conversation in Monitor, in the contact info panel, and in any filter that uses labels.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Label name | Yes | The label to apply. Selected from a dropdown of your project's labels. |
+
+## How to configure it
+
+1. Add an **Apply Label** block to the canvas.
+2. Click it to open the properties panel.
+3. Select the label from the dropdown. Only labels that exist in your project's label dictionary appear here.
+4. Connect the output to the next block.
+
+If the dropdown is empty, you need to create labels first. Go to **Settings → Labels**.
+
+## Label must exist in the dictionary
+
+The Apply Label block only works with labels that are already in your project's label dictionary. You cannot create new labels from within the bot flow. If you try to apply a label name that does not exist, the block runs without error but nothing is applied — it fails silently.
+
+## Using variables for the label name
+
+The label name field supports `{{ }}` interpolation. This means you can set the label dynamically based on an attribute value — for example, if an AI Task block classifies the visitor's intent and stores it in `intent`, you could apply a label whose name matches that value:
+
+```
+[AI Task] classifies intent → stores in: intent
+[Apply Label] Label name: {{intent}}
+```
+
+This only works if the value of `{{intent}}` exactly matches an existing label name in your dictionary.
+
+## Where applied labels appear
+
+After the block runs, the label appears:
+
+- As a colored badge in the Monitor conversation list
+- In the Labels section of the contact info panel on the right
+- In the label filter in Monitor
+- In the History table
+- In Analytics tag distribution
+
+Labels applied by a bot look the same as labels applied manually by an agent.
+
+## Next steps
+
+- [Labels →](/docs/agent-dashboard/labels 
+- [AI auto-tagging →](/docs/agent-dashboard/labels-ai-tagging)
+- [Template syntax →](/docs/bot-flows/template-syntax)

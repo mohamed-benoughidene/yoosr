@@ -22,18 +22,18 @@ interface Props {
     isLoading: boolean;
 }
 
-// Generate a smooth gradient of colors for the tags
+// Generate a smooth gradient of colors for the tags using design tokens
 const COLORS = [
     "hsl(var(--chart-1))",
     "hsl(var(--chart-2))",
     "hsl(var(--chart-3))",
     "hsl(var(--chart-4))",
     "hsl(var(--chart-5))",
-    "#8b5cf6",
-    "#ec4899",
-    "#14b8a6",
-    "#f59e0b",
-    "#6366f1"
+    "hsl(var(--chart-6))",
+    "hsl(var(--chart-7))",
+    "hsl(var(--chart-8))",
+    "hsl(var(--chart-9))",
+    "hsl(var(--chart-10))"
 ];
 
 export function AnalyticsTagsChart({ data, isLoading }: Props) {

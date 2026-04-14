@@ -725,6 +725,10 @@
     "unserved": "غير مخدوم",
     "served": "مخدوم",
     "active": "نشط",
+    "kpi_active": "نشط",
+    "kpi_unassigned": "غير معين",
+    "kpi_sla_breach": "تجاوز SLA",
+    "kpi_bot_active": "بوت نشط",
     "no_conversations_found": "لم يتم العثور على محادثات.",
     "no_conversations_yet": "لا توجد محادثات بعد",
     "select_conversation": "اختر محادثة للبدء",
@@ -813,7 +817,8 @@
       "agentConnected": "أنت الآن متصل بأحد الوكلاء.",
       "inactiveClosed": "تم إغلاق هذه المحادثة تلقائياً بسبب عدم النشاط.",
       "agentJoined": "انضم أحد الوكلاء إلى المحادثة."
-    }
+    },
+    "visitor_typing_indicator": "الزائر يكتب الآن..."
   },
   "requests": {
     "title": "الطلبات",
@@ -1713,6 +1718,7 @@
     },
     "noProjectId": "لم يتم تقديم معرّف المشروع",
     "connecting": "جارٍ الاتصال...",
+    "loadingMessages": "جارٍ تحميل الرسائل",
     "failedToConnect": "فشل الاتصال. يرجى تحديث الصفحة.",
     "failedToCreateConversation": "فشل إنشاء المحادثة",
     "failedToSendMessage": "فشل إرسال الرسالة",
@@ -1729,6 +1735,13 @@
     "supportAgent": "وكيل الدعم",
     "inputPlaceholder": "اكتب رسالة...",
     "send": "إرسال",
+    "sending": "جارٍ الإرسال...",
+    "retry": "إعادة المحاولة",
+    "retrying": "جارٍ إعادة المحاولة...",
+    "connectionTimeout": "انتهت مهلة الاتصال",
+    "connectionTimeoutDesc": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "offline": "أنت غير متصل. قد لا يتم إرسال الرسائل حتى تعود للاتصال.",
+    "checkConnection": "تحقق",
     "preChatForm": {
       "welcome": "مرحباً!",
       "subtitle": "يرجى ملء بياناتك لبدء المحادثة.",
@@ -1743,7 +1756,8 @@
       "phoneRequired": "رقم الهاتف مطلوب",
       "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
       "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
-      "startChat": "بدء المحادثة"
+      "startChat": "بدء المحادثة",
+      "submitting": "جارٍ بدء المحادثة..."
     },
     "rating": {
       "thankYou": "شكراً لك!",
@@ -1752,7 +1766,9 @@
       "submit": "إرسال التقييم",
       "submitting": "جارٍ الإرسال...",
       "failedToSubmit": "فشل إرسال التقييم"
-    }
+    },
+    "typingIndicator": "{senderName} يكتب...",
+    "poweredBy": "مدعوم من {brand}"
   },
   "testWidget": {
     "embedCopied": "تم نسخ كود التضمين!",

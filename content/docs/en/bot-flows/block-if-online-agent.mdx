@@ -1,0 +1,79 @@
+---
+title: "Block: If Online Agent"
+description: "The If Online Agent block checks whether any agents in your organization are currently marked as available and routes the flow based on the result."
+section: "bot-flows"
+order: 18
+keywords: ["if online agent", "agent availability", "online agents", "available", "routing", "staffed"]
+related: ["block-if-operating-hours", "block-hitl-handoff", "agent-availability", "routing"]
+---
+
+# Block: If Online Agent
+
+The If Online Agent block checks whether any agents in your organization are currently marked as available and routes the flow down one of two branches based on the result.
+
+## What it does
+
+When the bot reaches this block, it queries the organization's agent profiles and checks how many have `isAvailable: true` and a recent heartbeat. If at least one agent is available, it takes the true branch. If none are, it takes the false branch.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+
+No other configuration is needed. The block checks availability automatically across your entire organization.
+
+## Output handles
+
+**Agents online (true)** — At least one agent is available right now. Route here to offer human support — for example, a HITL Handoff or a message offering to connect them with an agent.
+
+**No agents online (false)** — No agents are currently available. Route here to set expectations — an automated reply, an after-hours message, or a flow that collects their details for follow-up.
+
+## How to configure it
+
+1. Add an **If Online Agent** block to the canvas.
+2. Connect the **agents online** output to the branch that offers human support.
+3. Connect the **no agents online** output to the fallback branch.
+
+## What counts as online
+
+An agent is counted as online if:
+
+- Their availability toggle is set to **Available** in the dashboard header
+- Their last heartbeat was received within the past 90 seconds
+
+If an agent closes their browser tab, the system marks them offline automatically after 90 seconds. See [Agent availability →](/docs/agent-dashboard/agent-availability) for how the toggle and heartbeat work.
+
+## Scope — organization-wide, not department-specific
+
+The block checks all agents across your entire organization, regardless of departments. It does not check whether an agent is in a specific department. If you need to check availability for a specific department before routing there, use a **Change Department** block after the If Online Agent check.
+
+## Common flow patterns
+
+**Simple online/offline branch:**
+```
+[If Online Agent]
+  Agents online → [HITL Handoff] "Connecting you with a team member..."
+  No agents     → [Reply] "Our team is currently offline.
+                           Leave your message and we'll reply soon."
+                  [Close]
+```
+
+**Combined with operating hours:**
+```
+[If Operating Hours]
+  Within hours → [If Online Agent]
+                   Online  → [HITL Handoff]
+                   Offline → [Reply] "All agents are busy — we'll get back to you."
+  Outside hours → [Reply] "We are closed. Our hours are..."
+```
+
+<Callout variant="info" title="Availability is real-time">
+The check runs at the exact moment the visitor reaches this block. If an agent comes online while a visitor is mid-flow, the next visitor through will see them as available.
+</Callout>
+
+## Next steps
+
+- [Agent availability →](/docs/agent-dashboard/agent-availability)
+- [Block: If Operating Hours →](/docs/bot-flows/block-if-operating-hours)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

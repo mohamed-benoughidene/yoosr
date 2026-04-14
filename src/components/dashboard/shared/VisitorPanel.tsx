@@ -142,7 +142,7 @@ function InlineEditField({
                     )}
                     <button
                         onMouseDown={(e) => { e.preventDefault(); handleSave() }}
-                        className="p-1 text-green-600 hover:bg-green-500/10 rounded transition-colors"
+                        className="p-1 text-emerald-600 hover:bg-emerald-500/10 rounded transition-colors"
                     >
                         <Check className="h-3.5 w-3.5" />
                     </button>
@@ -227,8 +227,8 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
     // Orders state and queries
     const orders = useQuery(
-        api.orders.listOrders,
-        activeProject ? { projectId: activeProject._id } : "skip"
+        api.orders.listOrdersByConversation,
+        conversationId ? { conversationId } : "skip"
     )
     const createOrder = useMutation(api.orders.createOrder)
     const updateOrderStatus = useMutation(api.orders.updateOrderStatus)
@@ -244,7 +244,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
     })
 
 
-    const conversationOrders = orders?.filter(o => o.conversationId === conversationId)
+    const conversationOrders = orders
 
     const handleCreateOrder = async () => {
         if (!activeProject || !conversationId) return
@@ -387,7 +387,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
             <Accordion type="multiple" defaultValue={["visitor-info", "conversation-details"]} className="w-full -mx-2 px-2">
                 {/* 1. Visitor Info (Inline Editable) */}
                 <AccordionItem value="visitor-info" className="border-b">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-accent/50">
                         {t("section_info")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
@@ -408,7 +408,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                 {/* 2. Conversation Details (read-only) */}
                 <AccordionItem value="conversation-details" className="border-b">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-accent/50">
                         {t("section_conversation")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
@@ -425,13 +425,13 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                 <span className="text-muted-foreground">{t("status_label")}: </span>
                                 <span className="flex items-center gap-1.5 w-full">
                                     {conversation.status === CONVERSATION_STATUS.CLOSED ? (
-                                        <><div className="h-2 w-2 rounded-full bg-green-500" /> {t("status_resolved")}</>
+                                        <><div className="h-2 w-2 rounded-full bg-emerald-500" /> {t("status_resolved")}</>
                                     ) : conversation.status === CONVERSATION_STATUS.ASSIGNED && conversation.assignedTo ? (
                                         <><div className="h-2 w-2 rounded-full bg-blue-500" /> {t("status_assigned")}</>
                                     ) : conversation.status === CONVERSATION_STATUS.ASSIGNED && !conversation.assignedTo && conversation.botId ? (
-                                        <><div className="h-2 w-2 rounded-full bg-purple-500" /> {t("status_bot")}</>
+                                        <><div className="h-2 w-2 rounded-full bg-violet-500" /> {t("status_bot")}</>
                                     ) : (
-                                        <><div className="h-2 w-2 rounded-full bg-yellow-500" /> {t("status_open")}</>
+                                        <><div className="h-2 w-2 rounded-full bg-amber-500" /> {t("status_open")}</>
                                     )}
                                 </span>
                             </div>
@@ -454,16 +454,16 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     <SelectTrigger className="h-7 w-auto border-none p-0 focus:ring-0 shadow-none bg-transparent hover:bg-muted/50 rounded-md px-1 transition-colors">
                                         <div className="flex items-center gap-2">
                                             {conversation.priority === "urgent" && (
-                                                <Badge className="bg-red-600 hover:bg-red-600 border-none uppercase text-[10px] font-bold">{t("priority_urgent")}</Badge>
+                                                <Badge className="bg-destructive hover:bg-destructive border-none uppercase text-[10px] font-bold">{t("priority_urgent")}</Badge>
                                             )}
                                             {conversation.priority === "high" && (
-                                                <Badge className="bg-orange-500 hover:bg-orange-500 border-none uppercase text-[10px] font-bold">{t("priority_high")}</Badge>
+                                                <Badge className="bg-amber-500 hover:bg-amber-600 border-none uppercase text-[10px] font-bold">{t("priority_high")}</Badge>
                                             )}
                                             {conversation.priority === "low" && (
-                                                <Badge variant="secondary" className="bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase text-[10px] font-bold">{t("priority_low")}</Badge>
+                                                <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted border-none uppercase text-[10px] font-bold">{t("priority_low")}</Badge>
                                             )}
                                             {(!conversation.priority || conversation.priority === "normal") && (
-                                                <Badge variant="secondary" className="bg-gray-200 text-gray-700 hover:bg-gray-200 border-none uppercase text-[10px] font-bold">{t("priority_normal")}</Badge>
+                                                <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted border-none uppercase text-[10px] font-bold">{t("priority_normal")}</Badge>
                                             )}
                                         </div>
                                     </SelectTrigger>
@@ -496,7 +496,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                 {/* 3. Technical Info (collapsible accordion, read-only) */}
                 <AccordionItem value="technical-info" className="border-b">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-accent/50">
                         {t("tech_section")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
@@ -523,7 +523,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     <span className="truncate text-muted-foreground">{t("tech_source")}:</span>
                                 </div>
                                 {attributes.sourcePage ? (
-                                    <a href={attributes.sourcePage} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline inline-block truncate ml-7 w-[200px]">
+                                    <a href={attributes.sourcePage} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-block truncate ml-7 w-[200px]">
                                         {attributes.sourcePage}
                                     </a>
                                 ) : <span className="ml-7 text-muted-foreground">{t("tech_unknown")}</span>}
@@ -538,7 +538,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                 {/* 4. Tags */}
                 <AccordionItem value="tags" className="border-0">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-accent/50">
                         {t("tags_label")}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1 pb-3 px-2">
@@ -617,7 +617,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                 {/* 5. Orders */}
                 <AccordionItem value="orders" className="border-0 border-t">
-                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-slate-50">
+                    <AccordionTrigger className="text-xs font-semibold text-muted-foreground uppercase tracking-wider py-3 hover:no-underline rounded px-2 hover:bg-muted/50">
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="h-4 w-4 text-muted-foreground shrink-0" />
                             {t("orders_label")}
@@ -635,7 +635,7 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                             ) : (
                                 <div className="space-y-2">
                                     {conversationOrders?.map((order) => (
-                                        <div key={order._id} className="flex items-start justify-between bg-muted/30 border rounded-md p-2 gap-2 text-sm group">
+                                        <div key={order._id} className="flex items-start justify-between bg-card border rounded-md p-2 gap-2 text-sm group">
                                             <div className="flex flex-col gap-1 overflow-hidden min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 truncate whitespace-nowrap">
                                                     <span className="font-medium truncate block">{order.contactName}</span>
@@ -644,8 +644,8 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     {order.status === "new" && <Badge className="bg-blue-500 hover:bg-blue-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_new")}</Badge>}
-                                                    {order.status === "confirmed" && <Badge className="bg-green-500 hover:bg-green-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_confirmed")}</Badge>}
-                                                    {order.status === "cancelled" && <Badge className="bg-red-500 hover:bg-red-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_cancelled")}</Badge>}
+                                                    {order.status === "confirmed" && <Badge className="bg-emerald-500 hover:bg-emerald-600 outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_confirmed")}</Badge>}
+                                                    {order.status === "cancelled" && <Badge className="bg-destructive hover:bg-destructive outline-none border-none uppercase text-[9px] font-bold px-1.5 py-0 h-4">{t("order_status_cancelled")}</Badge>}
                                                 </div>
                                             </div>
 
@@ -691,10 +691,10 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                     {t("order_form_title")}
                                 </Button>
                             ) : (
-                                <div className="border rounded-md bg-muted/10 p-3 space-y-3 shadow-inner">
+                                <div className="border rounded-md bg-muted/30 dark:bg-muted/20 p-3 space-y-3 shadow-inner">
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-contact-name" className="text-xs font-medium flex items-center gap-1.5">
-                                            <User className="h-3 w-3 text-muted-foreground" /> {t("order_form_contact")} <span className="text-red-500">*</span>
+                                            <User className="h-3 w-3 text-muted-foreground" /> {t("order_form_contact")} <span className="text-destructive">*</span>
                                         </label>
                                         <Input
                                             id="order-contact-name"
@@ -720,14 +720,14 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
 
                                     <div className="space-y-1.5">
                                         <label htmlFor="order-product" className="text-xs font-medium flex items-center gap-1.5">
-                                            <ShoppingBag className="h-3 w-3 text-muted-foreground" /> {t("order_form_product")} <span className="text-red-500">*</span>
+                                            <ShoppingBag className="h-3 w-3 text-muted-foreground" /> {t("order_form_product")} <span className="text-destructive">*</span>
                                         </label>
                                         <Input
                                             id="order-product"
                                             value={orderForm.product}
                                             onChange={(e) => setOrderForm(p => ({ ...p, product: e.target.value }))}
                                             placeholder={t("order_form_product_placeholder")}
-                                            className="h-8 text-xs bg-yellow-50/50 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:bg-yellow-50"
+                                            className="h-8 text-xs bg-accent/50 dark:bg-accent/30 focus-visible:ring-offset-0 focus-visible:ring-1"
                                         />
                                     </div>
 
@@ -756,9 +756,9 @@ export function VisitorPanel({ conversationId, onBack }: { conversationId: Id<"c
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="new"><span className="text-blue-600 font-medium">{t("order_status_new")}</span></SelectItem>
-                                                <SelectItem value="confirmed"><span className="text-green-600 font-medium">{t("order_status_confirmed")}</span></SelectItem>
-                                                <SelectItem value="cancelled"><span className="text-red-600 font-medium">{t("order_status_cancelled")}</span></SelectItem>
+                                                <SelectItem value="new"><span className="text-blue-600 dark:text-blue-400 font-medium">{t("order_status_new")}</span></SelectItem>
+                                                <SelectItem value="confirmed"><span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("order_status_confirmed")}</span></SelectItem>
+                                                <SelectItem value="cancelled"><span className="text-destructive font-medium">{t("order_status_cancelled")}</span></SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

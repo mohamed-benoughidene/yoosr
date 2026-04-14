@@ -242,6 +242,7 @@ export const getMessages = query({
                     id: m._id,
                     content: m.content,
                     senderType: m.senderType, // "visitor" | "agent" | "bot"
+                    senderId: m.senderId,
                     createdAt: m._creationTime,
                     isInternal: isInternal,
                 };
@@ -386,6 +387,79 @@ export const getStorageUrl = query({
     args: { storageId: v.string() },
     handler: async (ctx, args) => {
         return await ctx.storage.getUrl(args.storageId);
+    },
+});
+
+// Internal: check if agent is typing for a conversation (used by widget poll)
+// Returns the most recent typing event within the last TYPING_WINDOW_MS
+const TYPING_WINDOW_MS = 5000; // 5 seconds — matches widget auto-hide timeout
+
+export const getTypingStatus = internalQuery({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const now = Date.now();
+        const cutoff = now - TYPING_WINDOW_MS;
+
+        const typingEvents = await ctx.db
+            .query("typing_events")
+            .withIndex("by_conversationId_createdAt", (q) =>
+                q.eq("conversationId", args.conversationId).gte("createdAt", cutoff)
+            )
+            .order("desc")
+            .collect();
+
+        const agentTyping = typingEvents.find(e => e.eventType === "agent_typing");
+        const visitorTyping = typingEvents.find(e => e.eventType === "visitor_typing");
+
+        return {
+            isAgentTyping: !!agentTyping,
+            agentName: agentTyping?.senderName ?? "",
+            isVisitorTyping: !!visitorTyping,
+        };
+    },
+});
+
+// Public: check if visitor is typing (for agent dashboard)
+export const isVisitorTyping = query({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const now = Date.now();
+        const cutoff = now - TYPING_WINDOW_MS;
+
+        const typingEvent = await ctx.db
+            .query("typing_events")
+            .withIndex("by_conversationId_createdAt", (q) =>
+                q.eq("conversationId", args.conversationId).gte("createdAt", cutoff)
+            )
+            .order("desc")
+            .first();
+
+        return typingEvent?.eventType === "visitor_typing";
+    },
+});
+
+// Public: record a typing event (used by agent dashboard)
+export const recordTyping = mutation({
+    args: {
+        projectId: v.id("projects"),
+        conversationId: v.id("conversations"),
+        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing"), v.literal("visitor_typing")),
+        agentId: v.optional(v.string()),
+        senderName: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("typing_events", {
+            projectId: args.projectId,
+            conversationId: args.conversationId,
+            eventType: args.eventType,
+            agentId: args.agentId,
+            senderName: args.senderName,
+            createdAt: Date.now(),
+        });
     },
 });
 

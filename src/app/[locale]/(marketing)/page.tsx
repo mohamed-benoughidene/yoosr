@@ -18,7 +18,7 @@ import type { Metadata } from "next"
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io";
 
   return {
     alternates: {

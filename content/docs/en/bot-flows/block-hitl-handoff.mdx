@@ -1,0 +1,80 @@
+---
+title: "Block: HITL Handoff"
+description: "The HITL Handoff block transfers a conversation from the bot to a human agent. It sends a handoff message, pauses the bot permanently, and routes the conversation to the unassigned queue."
+section: "bot-flows"
+order: 11
+keywords: ["HITL", "handoff", "human agent", "escalate", "transfer to agent", "bot pause", "live agent", "human in the loop"]
+related: ["block-close", "block-if-online-agent", "joining-assigning", "routing"]
+---
+
+# Block: HITL Handoff
+
+HITL stands for Human in the Loop. The HITL Handoff block transfers a conversation from the bot to a human agent. When this block runs, the bot stops responding and the conversation enters the agent queue.
+
+## What it does
+
+When the bot reaches a HITL Handoff block, it:
+
+1. Sends the handoff message to the visitor
+2. Sets the conversation status to Unassigned (status 100)
+3. Detaches the bot — the bot will not respond to further messages
+4. Sets `botPaused: true` — a hard stop that prevents the bot from being re-triggered even if something attempts to restart it
+5. Clears the bot's current node pointer so the flow cannot resume
+6. Triggers the routing engine to assign the conversation to an available agent
+
+The conversation then appears in the Monitor queue for your team to pick up.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Handoff message | Yes | The message sent to the visitor confirming the transfer. |
+
+## How to configure it
+
+1. Add a **HITL Handoff** block to the canvas.
+2. Click it to open the properties panel.
+3. Write the handoff message — for example: `Connecting you with a team member now. They'll be with you shortly.`
+4. The block has no output handle — it is always the final block in a branch.
+
+## Default handoff message
+
+If the message field is left empty, the bot sends: `Transferring you to an agent...`
+
+Always replace this with something warmer and more informative for your visitors.
+
+## What the agent sees
+
+When an agent opens a conversation that came from a HITL Handoff, they see a small badge indicating the conversation was escalated from a bot. They can read the full conversation history — including everything the bot said and everything the visitor typed — before they reply.
+
+## How HITL Handoff differs from Close
+
+Both blocks end the bot's involvement, but they are for opposite situations:
+
+| | HITL Handoff | Close |
+|---|---|---|
+| Conversation status after | Unassigned (100) — enters agent queue | Closed (1000) — resolved |
+| Bot responds again? | Never — `botPaused: true` | N/A — conversation is done |
+| Agent takes over? | Yes | No |
+| Visitor can reply? | Yes — agent responds | No — new conversation needed |
+
+## Bot cannot resume after handoff
+
+Once the HITL Handoff block runs, the bot is permanently detached from the conversation. There is no way to "hand back" to the bot from within the same conversation. If the agent resolves the conversation and the visitor starts a new one, the bot will run again from the beginning of the flow.
+
+<Callout variant="tip" title="Check agent availability first">
+Use an **If Online Agent** block before the HITL Handoff to check whether any agents are actually online. If no agents are online and you hand off anyway, the conversation will sit in the unassigned queue until someone comes online.
+</Callout>
+
+## Routing after handoff
+
+After the handoff, the routing engine runs and tries to assign the conversation to the least-busy available agent. If the conversation has a department assigned, only agents in that department are considered. If no agents are available, the conversation waits in the unassigned queue.
+
+See [How routing works →](/docs/routing/how-routing-works) for the full routing logic.
+
+## Next steps
+
+- [Block: If Online Agent →](/docs/bot-flows/block-if-online-agent)
+- [How routing works →](/docs/routing/how-routing-works)
+- [Block: Close →](/docs/bot-flows/block-close)

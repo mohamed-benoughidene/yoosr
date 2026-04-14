@@ -1,80 +1,56 @@
-export const meta = {
-  title: "Labels",
-  description: "Create and manage custom tags to categorize conversations for better organization and reporting.",
-  section: "agent-dashboard"
-}
+---
+title: Labels
+description: Create color-coded labels to categorize conversations and drive filters, reporting, and AI auto-tagging.
+section: Settings
+order: 2
+keywords: [labels, tags, color, categorize, filter, conversation, Monitor]
+related:
+  - settings/labels-ai-tagging
+  - monitor/filters
+  - contacts/bot-set-attributes
+---
 
 # Labels
 
-Labels are **color-coded tags** that agents attach to conversations for categorization. They help you filter, search, and analyze conversation patterns.
+Labels are color-coded tags that agents and bots attach to conversations to categorize them. They appear as colored badges in the Monitor conversation list and can be used to filter, search, and report on conversation patterns.
 
-## Creating a Label
-
-1. Go to **Settings → Labels**
-2. Click **New Label**
-3. Fill in:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name** | Display name (max 30 chars) | `Bug Report` |
-| **Color** | Hex color code or color picker | `#ef4444` (red) |
-| **Description** *(optional)* | What this label means | `Use for software bugs and technical issues` |
-
-4. Click **Save**
-
-## Applying Labels
-
-In a conversation's detail view:
-
-1. Click the **Label** icon in the right panel
-2. Select one or more labels from the dropdown
-3. Labels appear as colored badges in the conversation list
-
-### Bulk Labeling
-
-Select multiple conversations in the list and use the **bulk actions** menu to add labels to all selected conversations at once.
-
-## Filtering by Labels
-
-On the Conversations page:
-
-1. Click the **Filter** button
-2. Select one or more labels
-3. Only conversations with those labels are shown
-
-Combine label filters with status and channel filters for precise results.
-
-## Common Label Use Cases
-
-| Label | Purpose |
-|-------|---------|
-| **Bug Report** | Technical issues reported by customers |
-| **Feature Request** | Suggestions for new features |
-| **Billing Issue** | Payment, refund, or invoice questions |
-| **VIP** | High-priority customer requiring special attention |
-| **Escalated** | Conversation moved to a senior agent or manager |
-| **Follow-up Needed** | Requires action after a delay |
-| **Resolved** | Issue fixed — keep for reference |
-
-<Callout variant="tip" title="Keep it organized">
-Start with 5–10 labels. Too many labels become hard to manage and dilute their usefulness.
+<Callout variant="info" title="Admin only">
+Only admins can create and delete labels. All agents can apply and remove labels on conversations.
 </Callout>
 
-## Managing Labels
+## Create a label
 
-| Action | Description |
-|--------|-------------|
-| **Rename** | Change the label name (applies to all existing conversations) |
-| **Recolor** | Update the color (visual change only) |
-| **Delete** | Remove the label from all conversations and the label list |
-| **Merge** | Combine two labels into one (rename one to match the other) |
+1. Go to **Settings → Labels**.
+2. Select **New Label**.
+3. Enter a **Name** — this is the text displayed on the badge.
+4. Select a **Color** from the dropdown. The color is used for the badge background throughout the dashboard.
+5. Select **Save**.
 
-## Label Analytics
+The label is now available to all agents and to the bot engine's **Apply label** block.
 
-Labels feed into your reporting:
+## Applying labels to conversations
 
-- **Conversations by label** — See which categories are most common
-- **Resolution time by label** — How long each category takes to resolve
-- **Agent performance by label** — Which agents handle which types of conversations
+Agents apply labels in the contact info panel on the right side of Monitor:
 
-Use these insights to staff your departments and train your team effectively.
+1. Select a conversation.
+2. In the contact info panel, select the **+** button in the Labels section.
+3. A popover shows all available labels. Select one to apply it.
+4. The label appears as a badge on the conversation and in the conversation list.
+
+To remove a label, select the **×** on the badge in the contact info panel.
+
+## Filtering by label
+
+In the Monitor conversation list, use the **Label** filter to show only conversations with a specific label. Combine the label filter with status, department, or agent filters to narrow the list further.
+
+## Keeping your label list manageable
+
+Labels are most useful when the list is short and each label has a clear, distinct purpose. A label list with 30 entries becomes hard to use consistently.
+
+A practical starting set for a support team might include labels such as: Billing, Technical, Feature request, VIP, and Escalated. Add new labels only when a consistent category is emerging in your conversations that none of the existing labels covers.
+
+## Edit and delete
+
+To rename a label or change its color, select the edit icon on its row. Renaming updates the label everywhere it appears.
+
+To delete a label, select the trash icon. Deletion removes the label from all conversations that currently have it. This action cannot be undone.

@@ -16,12 +16,12 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { widgetConfigSchema, type WidgetConfigForm, defaultTranslations } from "./schema"
 import { toast } from "sonner"
-import { Loader2, MessageSquare, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink, UserMinus } from "lucide-react"
+import { Loader2, Copy, Check, Monitor, Languages, Code, Clock, ExternalLink } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
 import {
@@ -53,10 +53,8 @@ export default function WidgetSetupPage() {
     const t = useTranslations("settings.widget")
     const { activeProject } = useProject()
     const [loading, setLoading] = useState(false)
-    const [iframeKey, setIframeKey] = useState(0)
     const [copiedSnippet, setCopiedSnippet] = useState(false)
     const [selectedPlatform, setSelectedPlatform] = useState("html")
-    const iframeRef = useRef<HTMLIFrameElement>(null)
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://app.yoosr.com')
 
@@ -151,8 +149,6 @@ export default function WidgetSetupPage() {
                 widgetConfig: data,
             })
             toast.success(t("settings_updated"))
-            // Reload preview to reflect changes
-            setIframeKey(prev => prev + 1)
         } catch {
             toast.error(t("settings_update_failed"))
         }
@@ -220,40 +216,36 @@ export default function WidgetSetupPage() {
         }
     }
 
-    // Watch form values for live preview
-    const primaryColor = form.watch("primaryColor")
-
     return (
         <FormProvider {...form}>
         <form onSubmit={handleSave}>
-        <div className="flex flex-col lg:flex-row gap-8 relative items-start">
-            <div className="flex-1 min-w-0 space-y-6 pb-20">
-                <div>
-                    <h3 className="text-lg font-medium">{t("title")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t("description")}
-                    </p>
-                </div>
-                <Separator />
+        <div className="max-w-4xl space-y-6">
+            <div>
+                <h3 className="text-lg font-medium">{t("title")}</h3>
+                <p className="text-sm text-muted-foreground">
+                    {t("description")}
+                </p>
+            </div>
+            <Separator />
 
-                <Tabs defaultValue="appearance" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="appearance">
-                            <Monitor className="mr-2 h-4 w-4" /> {t("tab_appearance")}
-                        </TabsTrigger>
-                        <TabsTrigger value="translations">
-                            <Languages className="mr-2 h-4 w-4" /> {t("tab_text")}
-                        </TabsTrigger>
-                        <TabsTrigger value="behavior">
-                            <Clock className="mr-2 h-4 w-4" /> {t("tab_behavior")}
-                        </TabsTrigger>
-                        <TabsTrigger value="installation">
-                            <Code className="mr-2 h-4 w-4" /> {t("tab_install")}
-                        </TabsTrigger>
-                    </TabsList>
+            <Tabs defaultValue="appearance" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="appearance">
+                        <Monitor className="mr-2 h-4 w-4" /> {t("tab_appearance")}
+                    </TabsTrigger>
+                    <TabsTrigger value="translations">
+                        <Languages className="mr-2 h-4 w-4" /> {t("tab_text")}
+                    </TabsTrigger>
+                    <TabsTrigger value="behavior">
+                        <Clock className="mr-2 h-4 w-4" /> {t("tab_behavior")}
+                    </TabsTrigger>
+                    <TabsTrigger value="installation">
+                        <Code className="mr-2 h-4 w-4" /> {t("tab_install")}
+                    </TabsTrigger>
+                </TabsList>
 
-                    {/* APPEARANCE TAB */}
-                    <TabsContent value="appearance" className="space-y-4 mt-4">
+                {/* APPEARANCE TAB */}
+                <TabsContent value="appearance" className="space-y-4 mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>{t("theme_title")}</CardTitle>
@@ -631,13 +623,13 @@ export default function WidgetSetupPage() {
                                 </div>
 
                                 <div className="relative group">
-                                    <pre className="p-4 rounded-lg bg-[#09090b] text-zinc-100 text-xs overflow-x-auto whitespace-pre font-mono border border-zinc-800/80 ring-1 ring-white/5 shadow-2xl scrollbar-thin scrollbar-thumb-zinc-700">
+                                    <pre className="p-4 rounded-lg bg-card text-card-foreground text-xs overflow-x-auto whitespace-pre font-mono border border-border shadow-2xl">
                                         <code className="block lining-nums tabular-nums leading-relaxed">{getSnippet(selectedPlatform)}</code>
                                     </pre>
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="absolute top-2 right-2 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/80 transition-all duration-200"
+                                        className="absolute top-2 right-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                                         onClick={() => copyToClipboard(getSnippet(selectedPlatform), 'generic')}
                                     >
                                         {copiedSnippet ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
@@ -671,67 +663,6 @@ export default function WidgetSetupPage() {
                     </Button>
                 </div>
             </div>
-
-            {/* LIVE PREVIEW */}
-            <div className="lg:w-[400px] shrink-0 sticky top-6 hidden lg:block">
-                <div className="flex flex-col items-center gap-4">
-                    <Card className="w-full h-[660px] flex flex-col p-0 border-[12px] border-slate-900 rounded-[3rem] shadow-2xl relative bg-slate-900 overflow-hidden ring-4 ring-slate-800/50">
-                        {/* iPhone Notch */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-slate-900 rounded-b-3xl z-20"></div>
-
-                        {/* Speakers/Sensor (Subtle) */}
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
-                            <div className="w-10 h-1 bg-slate-800 rounded-full"></div>
-                            <div className="w-1 h-1 bg-slate-800 rounded-full"></div>
-                        </div>
-
-                        <div className="flex-1 bg-white relative rounded-[2.2rem] overflow-hidden mt-0 mb-0">
-                            <iframe
-                                ref={iframeRef}
-                                key={iframeKey}
-                                src={`/widget?projectId=${activeProject?._id}&lang=${editLocale}`}
-                                className="w-full h-full border-none"
-                                title="Widget Live Preview"
-                            />
-                            {/* Mock Launcher Button */}
-                            <div
-                                className="absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                <MessageSquare className="text-white h-5 w-5" />
-                            </div>
-                        </div>
-
-                        {/* Home Indicator */}
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-slate-800 rounded-full"></div>
-                    </Card>
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-foreground text-xs gap-2"
-                        onClick={() => {
-                            try {
-                                const win = iframeRef.current?.contentWindow
-                                if (win) {
-                                    win.localStorage.removeItem("yoosr_visitor_id")
-                                    setIframeKey(prev => prev + 1)
-                                    toast.success(t("session_reset"))
-                                }
-                            } catch {
-                                localStorage.removeItem("yoosr_visitor_id")
-                                setIframeKey(prev => prev + 1)
-                                toast.success(t("session_reset_global"))
-                            }
-                        }}
-                    >
-                        <UserMinus className="h-3.5 w-3.5" />
-                        {t("reset_session")}
-                    </Button>
-                </div>
-            </div>
-        </div>
         </form>
         </FormProvider>
     )

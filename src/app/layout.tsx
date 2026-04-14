@@ -86,7 +86,6 @@ export const metadata: Metadata = {
     images: ["/og/image"],
   },
   alternates: {
-    canonical: "/",
     languages: {
       "en": "https://yoosr.io/en",
       "ar": "https://yoosr.io/ar",

@@ -5,9 +5,6 @@ const pageLastModified: Record<string, string> = {
   '/': '2025-04-01',
   '/pricing': '2025-04-01',
   '/waitlist': '2025-03-15',
-  '/login': '2025-03-01',
-  '/signup': '2025-03-01',
-  '/onboarding': '2025-03-15',
   '/legal/privacy': '2025-03-01',
   '/legal/terms': '2025-03-01',
   '/solutions/customer-service': '2025-04-01',
@@ -30,14 +27,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yoosr.io';
   const locales = ['en', 'ar', 'fr'];
 
-  // Public marketing pages
+  // Public marketing pages (excluding auth pages with no SEO value)
   const publicPages = [
     { path: '', changeFrequency: 'weekly' as const, priority: 1 },
     { path: '/pricing', changeFrequency: 'monthly' as const, priority: 0.8 },
     { path: '/waitlist', changeFrequency: 'monthly' as const, priority: 0.7 },
-    { path: '/login', changeFrequency: 'yearly' as const, priority: 0.5 },
-    { path: '/signup', changeFrequency: 'yearly' as const, priority: 0.7 },
-    { path: '/onboarding', changeFrequency: 'monthly' as const, priority: 0.5 },
     { path: '/legal/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
     { path: '/legal/terms', changeFrequency: 'yearly' as const, priority: 0.3 },
   ];
@@ -82,13 +76,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   return [
-    // Homepage (no locale prefix) — highest priority
-    {
-      url: baseUrl,
-      lastModified: getLastModified('/'),
-      changeFrequency: 'weekly' as const,
-      priority: 1,
-    },
+    // Only locale-prefixed URLs (Google indexes these, not bare root)
+    // Root / redirects to /en so we list /en as canonical entry point
     ...publicUrls,
     ...solutionUrls,
     ...productUrls,

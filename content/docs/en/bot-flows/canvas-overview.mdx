@@ -1,0 +1,85 @@
+---
+title: "The Design Studio canvas"
+description: "Design Studio is a visual editor where you build bot flows by connecting blocks on a canvas. This article covers navigation, adding blocks, connecting them, and how auto-save works."
+section: "bot-flows"
+order: 2
+keywords: ["design studio", "canvas", "flow editor", "blocks", "nodes", "edges", "connections", "auto-save", "minimap", "palette"]
+related: ["bots-vs-flows", "template-syntax", "publishing-testing"]
+---
+
+# The Design Studio canvas
+
+Design Studio is a visual flow editor. You build your bot's logic by placing blocks on a canvas and connecting them with arrows. Each block represents one step the bot will take.
+
+Go to **Dashboard → Bots**, click a bot, then click **Edit in Design Studio** to open it.
+
+## Layout
+
+The editor has four areas:
+
+**Block palette (left sidebar)** — A list of all available block types. Scroll through it to see every block. Click a block in the palette to add it to the canvas.
+
+**Canvas (center)** — The main workspace where your flow lives. Every block appears here as a node. Arrows between nodes are the connections that define what happens next.
+
+**Properties panel (right sidebar)** — When you click a block on the canvas, its configuration fields appear here. This is where you type the message text, set the attribute name, choose the department, and so on.
+
+**Toolbar (top)** — Shows the save state, a button to open the AI flow builder, and a button to open the debugger.
+
+## Navigating the canvas
+
+- **Pan** — Click and drag on an empty area of the canvas
+- **Zoom** — Scroll the mouse wheel, or use the zoom controls in the bottom-left corner
+- **Minimap** — A small overview of your entire flow appears in the bottom-right corner. Click it to jump to a part of the canvas that is off screen
+- **Fit to view** — Click the fit button in the zoom controls to center the entire flow in the viewport
+
+## Adding a block
+
+Click any block in the left palette. The block appears on the canvas at a position calculated from the number of existing blocks. Drag it to the position you want.
+
+Every new flow starts with a **Start** block already on the canvas. The Start block cannot be deleted — it is the entry point for every conversation that triggers this bot.
+
+## Connecting blocks
+
+Every block has connection handles — small circles on its edges. Drag from an output handle on one block to an input handle on another to create a connection. The connection appears as an arrow.
+
+Most blocks have one output handle. Branching blocks like Condition, If Operating Hours, and If Online Agent have two output handles — one for each branch.
+
+An unconnected output handle means the flow stops at that block. If a visitor reaches a block with no outgoing connection, the bot stops responding. Always make sure every block has an output connected to the next step.
+
+## Editing a block
+
+Click any block on the canvas to select it. The properties panel opens on the right. Edit the fields there. Changes are reflected immediately in the canvas node preview.
+
+To deselect a block, click on an empty area of the canvas.
+
+## Deleting a block
+
+Select the block and click **Delete block** at the bottom of the properties panel. You cannot delete the Start block.
+
+Deleting a block also removes all connections to and from it. Reconnect the surrounding blocks manually after deletion.
+
+## Auto-save
+
+Design Studio saves your flow automatically. Every time you make a change, a 1.5-second debounce timer starts. When it expires, the flow saves to the backend. The toolbar shows the save state: saving, saved, or error.
+
+You do not need to click a save button. But if you close the tab immediately after making a change, the auto-save may not have completed. Wait for the **Saved** indicator before closing.
+
+## The AI flow builder
+
+Click the **AI** button in the toolbar to open the AI prompt bar. Type a plain-language description of what you want the bot to do — for example, "Ask the visitor their name, then check if they are an existing customer, and if yes route to the billing department". The AI generates a starting flow from your description.
+
+The generated flow is a starting point, not a finished product. Always review it and adjust the blocks before publishing.
+
+<Callout variant="warning" title="AI-generated flows need review">
+The AI flow builder can produce flows with missing connections or incorrect block types. Always check every block and every connection before assigning the bot to a project.
+</Callout>
+
+## The debugger
+
+Click **Debugger** in the toolbar to open the execution log panel. It shows a trace of the last bot execution — which blocks ran, in which order, what attributes were set, and where the flow stopped. Use it to diagnose why a bot is not behaving as expected.
+
+## Next steps
+
+- [Template syntax: {{ }} variables →](/docs/bot-flows/template-syntax)
+- [Bots and flows — the mental model →](/docs/bot-flows/bots-vs-flows)
+- [Publishing and testing →](/docs/bot-flows/publishing-testing)

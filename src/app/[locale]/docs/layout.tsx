@@ -30,8 +30,8 @@ export default async function DocsLayout({
   return (
     <div className="relative flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col z-40">
-        <div className="flex h-full flex-col border-r bg-background pt-16">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:start-0 lg:flex lg:w-64 lg:flex-col z-40">
+        <div className="flex h-full flex-col border-e bg-background pt-16">
           <div className="px-4 py-3 shrink-0">
             <DocsSearch pages={pages} locale={locale} />
           </div>
@@ -50,9 +50,9 @@ export default async function DocsLayout({
               <span className="sr-only">Open docs navigation</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side={locale === "ar" ? "right" : "left"} className="w-64 p-0">
             <div className="flex flex-col h-full">
-              <SheetHeader className="px-4 py-3 border-b text-left">
+              <SheetHeader className="px-4 py-3 border-b rtl:text-right ltr:text-left">
                 <SheetTitle className="font-semibold text-lg">{t("brandName")}</SheetTitle>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto">
@@ -66,7 +66,7 @@ export default async function DocsLayout({
       </div>
 
       {/* Main content */}
-      <main className="flex-1 lg:pl-64">
+      <main className="flex-1 lg:ps-64">
         <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8 lg:py-12 pt-16 lg:pt-8">
           {children}
         </div>

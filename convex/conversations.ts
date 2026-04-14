@@ -813,6 +813,7 @@ export const getConversations = query({
     args: {
         projectId: v.id("projects"),
         departmentId: v.optional(v.id("departments")),
+        _refresh: v.optional(v.number()), // Client-side polling trigger (not used in handler)
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -903,6 +904,43 @@ export const getConversations = query({
                 botId: c.botId ?? null,
             };
         });
+    },
+});
+
+// Count active conversations (excluding closed) for indicator
+export const countActiveConversations = query({
+    args: {
+        projectId: v.id("projects"),
+        departmentId: v.optional(v.id("departments")),
+        _refresh: v.optional(v.number()), // Client-side polling trigger (not used in handler)
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw authError();
+
+        let count = 0;
+        let cursor: string | null = null;
+
+        // Paginate through all active conversations to count them
+        while (true) {
+            const page = await ctx.db
+                .query("conversations")
+                .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+                .filter((q) => q.neq(q.field("status"), 1000))
+                .order("desc")
+                .paginate({ cursor, numItems: 100 } as const);
+
+            const filtered = args.departmentId
+                ? page.page.filter((c) => c.departmentId === args.departmentId)
+                : page.page;
+
+            count += filtered.length;
+
+            if (page.isDone) break;
+            cursor = page.continueCursor;
+        }
+
+        return { count };
     },
 });
 

@@ -1,0 +1,41 @@
+---
+title: What are unanswered queries?
+description: Learn how Yoosr tracks questions your bot could not answer, and why this matters for your knowledge base.
+section: Unanswered Queries
+order: 1
+keywords: [unanswered queries, knowledge base, bot, gaps, Ask KB, Not found, analytics]
+related:
+  - unanswered-queries/what-gets-logged
+  - unanswered-queries/acting-on-unanswered-queries
+  - knowledge-base/connecting-to-bot
+---
+
+# What are unanswered queries?
+
+An unanswered query is a question a visitor asked that your bot searched the knowledge base for but could not answer. Yoosr records each of these questions automatically and counts how often the same question appears. This gives you a prioritized list of the gaps in your knowledge base.
+
+## Where unanswered queries come from
+
+When a bot reaches an **Ask knowledge base** block in a flow, it searches your knowledge base for content relevant to the visitor's question. If no chunk passes the similarity threshold, the search returns no result and the bot follows the **Not found** output edge.
+
+At that point, Yoosr logs the visitor's question to the `unanswered_queries` table with three pieces of information:
+
+- **Query** — the exact text the visitor asked.
+- **Count** — how many times the same question has gone unanswered.
+- **Last asked** — the timestamp of the most recent occurrence.
+
+If the same question is asked again later and still goes unanswered, Yoosr increments the count rather than creating a duplicate entry.
+
+## Why this matters
+
+Without this report, you would have no systematic way to know what your bot cannot answer. Visitors who get no answer often leave or require a human agent. The unanswered queries list turns those failures into actionable improvement tasks.
+
+Queries that appear many times represent the highest-impact gaps — fixing those first improves the experience for the most visitors.
+
+## Where to find the report
+
+The unanswered queries table appears on the **Analytics** page in the dashboard, in the section titled **Unanswered Queries**. It lists all queries sorted by count (most frequent first), with the last-asked date beside each one.
+
+<Callout variant="info" title="Only Ask KB queries are tracked">
+Yoosr only records queries that passed through an Ask knowledge base block and returned no result. Questions answered by the bot through Reply blocks, AI Task, or AI Assistant blocks are not tracked here.
+</Callout>

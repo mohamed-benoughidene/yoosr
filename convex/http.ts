@@ -358,7 +358,17 @@ http.route({
             limit: 100,
         });
 
-        return new Response(JSON.stringify(messages ?? []), {
+        // Also fetch typing status for this conversation
+        const typingStatus = await ctx.runQuery(internal.messages.getTypingStatus, {
+            conversationId: conversationId as Id<"conversations">,
+        });
+
+        return new Response(JSON.stringify({
+            messages: messages ?? [],
+            isAgentTyping: typingStatus.isAgentTyping,
+            isVisitorTyping: typingStatus.isVisitorTyping,
+            typingSenderName: typingStatus.agentName,
+        }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
         });

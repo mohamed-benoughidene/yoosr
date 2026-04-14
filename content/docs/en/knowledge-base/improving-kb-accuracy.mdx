@@ -1,0 +1,72 @@
+---
+title: Improving knowledge base accuracy
+description: Practical steps to get better answers from your AI bot's knowledge base searches.
+section: Knowledge Base
+order: 5
+keywords: [knowledge base, accuracy, quality, answers, chunks, content, unanswered queries, FAQ]
+related:
+  - knowledge-base/how-semantic-search-works
+  - knowledge-base/adding-sources
+  - unanswered-queries/what-are-unanswered-queries
+---
+
+# Improving knowledge base accuracy
+
+The quality of answers your bot gives depends directly on the quality of the content you add. If the bot frequently falls through to the Not found path or gives vague answers, the problem is almost always in the source content — not in the search system itself.
+
+## Write content for questions, not for reading
+
+Web pages and documents are often written for readers browsing at their own pace. Bot queries are short, direct questions. These two styles do not always match well.
+
+**What helps:** Structure your content as question-and-answer pairs. Each question and its answer stay close together in the text. When the visitor asks a similar question, the chunk containing both the question and answer is more likely to surface.
+
+**Example:**
+
+Instead of:
+
+> Our return policy is outlined below. Customers who are unsatisfied with their purchase have several options available to them depending on the circumstances...
+
+Write:
+
+> **Can I return a product?**
+> Yes. You can return any product within 30 days of delivery for a full refund. Contact support@example.com to start the process.
+
+## Keep chunks focused
+
+Yoosr splits content into chunks of up to 500 characters. If a single paragraph covers many unrelated topics, the chunk matches poorly against any specific question.
+
+**What helps:** Use short paragraphs, each covering one idea. Add section headings — they give the embedding model structural context.
+
+## Avoid duplicate or contradictory content
+
+If you add two sources that contain conflicting information about the same topic — for example, two versions of a refund policy — the bot may retrieve the wrong one or mix both into a confusing answer.
+
+**What helps:** Before adding a new source, check whether an existing source already covers that topic. Remove outdated sources promptly and use the **Refresh** button to re-process updated ones.
+
+## Use the Unanswered queries report
+
+The Unanswered queries section in the dashboard logs every question the bot searched for but could not answer. This is the most direct signal for gaps in your knowledge base.
+
+Review this report regularly and add sources for the most frequent unanswered questions. You can convert an unanswered query directly into a new knowledge base entry from the Unanswered queries page.
+
+## Test with real visitor language
+
+Your sources may use formal or technical language while visitors use informal phrasing. Semantic search handles some of this gap, but it is not unlimited.
+
+**What helps:** Test your bot using the Test widget. Ask the same question in different ways — short, long, with typos, in Arabic and French if your audience uses those languages. If certain phrasings miss, add a short text source that uses that phrasing explicitly.
+
+## Use specific knowledge bases per topic
+
+A single knowledge base containing every document you have can dilute search results. When the bot searches, it compares the query against thousands of chunks, and the most relevant one may not rank highest.
+
+**What helps:** Create separate knowledge bases for distinct topics — one for product information, one for shipping and returns, one for billing. Connect each bot flow's Ask knowledge base block to the most appropriate one for that part of the conversation.
+
+## Refresh stale sources
+
+If a source URL or document has been updated since you added it, the knowledge base still contains the old version. The bot will give outdated answers.
+
+**What helps:** After updating content on your website or editing a document, select the **Refresh** icon (↻) next to the source in Yoosr. Yoosr re-fetches and re-processes the content, replacing the old chunks.
+
+<Callout variant="tip" title="Check source status after refreshing">
+After you refresh a source, wait for the status badge to return to **Ready** before testing. The old chunks remain available during processing, so there is no downtime.
+</Callout>

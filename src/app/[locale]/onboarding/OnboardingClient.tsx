@@ -61,7 +61,7 @@ function OnboardingContent() {
     }, [isUserLoaded, isOrgLoaded, isSignedIn, organization, projects, createProject, router])
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
+        <div className="flex min-h-screen items-center justify-center bg-muted/30">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
     )

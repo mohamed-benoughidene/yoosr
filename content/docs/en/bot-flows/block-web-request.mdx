@@ -1,0 +1,91 @@
+---
+title: "Block: Web Request"
+description: "The Web Request block calls an external HTTP API during a bot flow. It supports GET, POST, PUT, and DELETE, interpolates {{ }} variables into the URL and body, and stores the JSON response in an attribute."
+section: "bot-flows"
+order: 14
+keywords: ["web request", "HTTP", "API", "GET", "POST", "external API", "webhook", "fetch", "api_results", "integration"]
+related: ["template-syntax", "block-set-attribute", "block-condition", "block-ai-task"]
+---
+
+# Block: Web Request
+
+The Web Request block calls an external HTTP API during a bot flow. Use it to look up order status, check inventory, create a ticket, or fetch any data your bot needs from an external service.
+
+## What it does
+
+When the bot reaches a Web Request block, it:
+
+1. Builds the URL by interpolating `{{ }}` variables
+2. Sends the HTTP request with the configured method, headers, and body
+3. If the response is successful — stores the JSON response in the `api_results` attribute and moves to the next block
+4. If the response fails (non-2xx status or network error) — takes the failure path
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| HTTP method | Yes | GET, POST, PUT, or DELETE. Default: GET. |
+| URL | Yes | The endpoint to call. Supports `{{ }}` variables. |
+| Save response to variable | No | If set, the JSON response is also stored in this named attribute via a Set Attribute block that runs automatically after the request. |
+
+## Output handles
+
+The Web Request block has two output handles:
+
+**Success** — The request returned a 2xx response. The flow continues here.
+
+**Failure** — The request returned a non-2xx status, timed out, or threw a network error. Connect this to a fallback — for example, a Reply saying the lookup failed, or a HITL Handoff.
+
+## How to configure it
+
+1. Add a **Web Request** block to the canvas.
+2. Click it to open the properties panel.
+3. Select the HTTP method.
+4. Enter the URL — for example: `https://api.yourstore.com/orders/{{order_id}}`
+5. Optionally enter a variable name in **Save response to variable**.
+6. Connect the success and failure output handles.
+
+## Using variables in the URL
+
+Any `{{ }}` variable works in the URL field. This is how you pass visitor input to your API:
+
+```
+https://api.yourstore.com/orders/{{order_id}}
+https://api.yourstore.com/customers?email={{customer_email}}
+```
+
+## Accessing the response
+
+The JSON response from the API is stored in `api_results` as a JSON string. Access nested fields using dot notation in subsequent blocks:
+
+```
+{{api_results.status}}
+{{api_results.order.tracking_number}}
+{{api_results.user.name}}
+```
+
+If you set **Save response to variable**, for example `order_data`, the response is also stored under that name — which is cleaner than referencing `api_results` directly in long flows.
+
+## POST requests and request body
+
+The current version of the block sends POST requests with the body configured internally. To send a POST with a JSON body, the body field uses `{{ }}` interpolation on the entire body object — so values like `{{customer_email}}` inside the body are replaced before sending.
+
+<Callout variant="warning" title="Responses must be valid JSON">
+The Web Request block only handles JSON responses. If your API returns plain text, HTML, or XML, the block will fail silently and take the failure path. Make sure your endpoint returns `Content-Type: application/json`.
+</Callout>
+
+## Security note
+
+API keys and secrets should not be hardcoded in the URL or body field — anyone with access to Design Studio can see them. For authenticated endpoints, use a proxy service or a Yoosr webhook that adds the auth header server-side before forwarding the request.
+
+## Common mistakes
+
+- **No failure path connected** — If the API is down and no failure path is connected, the flow stops silently.
+- **Referencing `api_results` before the block runs** — Make sure blocks that read `{{api_results}}` come after the Web Request block in the flow.
+
+## Next steps
+
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Template syntax →](/docs/bot-flows/template-syntax)
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)

@@ -1,0 +1,73 @@
+---
+title: "Joining, assigning, and transferring"
+description: "Three ways to connect a conversation to the right agent: join it yourself, assign it to someone else, or transfer it to a different department."
+section: "monitor"
+order: 5
+keywords: ["join", "assign", "transfer", "department transfer", "agent transfer", "handoff", "take conversation"]
+related: ["monitor-overview", "conversation-statuses", "routing", "departments"]
+---
+
+# Joining, assigning, and transferring
+
+There are three ways to move a conversation to the right agent or team.
+
+## Joining a conversation
+
+**Join** means you take the conversation yourself. It is the fastest way to pick up an unassigned conversation from the queue.
+
+To join a conversation:
+
+1. Click the conversation in the list to open it in the middle panel.
+2. Click the **Join** button in the chat display header.
+
+When you join:
+- The conversation status changes from Unassigned to Assigned, with you as the assigned agent.
+- Your name appears in the right panel under Assigned to.
+- If you are the first agent to join, Yoosr records this as the first response time.
+- A system message appears in the chat thread confirming you joined.
+
+To leave a conversation you have joined, click the **Leave** button (the same button toggles). Leaving removes you from the participants list but does not unassign the conversation — another agent would need to take it over.
+
+<Callout variant="info" title="Join does not pause the bot">
+Joining a conversation does not automatically stop the bot from responding. If you want to take over from the bot, use the HITL Handoff block in the bot flow, or resolve the bot's turn manually from the action menu.
+</Callout>
+
+## Assigning to another agent
+
+If you want to route a conversation to a specific teammate rather than joining it yourself:
+
+1. Open the conversation.
+2. Click the three-dot menu (⋮) in the chat display header.
+3. Select **Assign to agent**.
+4. Search for or click the agent's name.
+
+When a conversation is assigned to another agent:
+- The conversation moves to their queue.
+- The assigned agent receives a notification.
+- A system message appears in the chat thread showing the transfer.
+- The conversation status stays Assigned.
+
+## Transferring to a department
+
+If a conversation needs to go to a different team entirely — for example, a billing question arriving in the general support queue — transfer it to the right department:
+
+1. Open the conversation.
+2. Click the three-dot menu (⋮) in the chat display header.
+3. Select **Transfer to department**.
+4. Search for or click the department name.
+
+When a department transfer happens:
+- The routing engine re-runs for the new department.
+- An available agent in that department is assigned automatically using the least-busy algorithm.
+- A system message appears in the thread showing the transfer.
+- If the department is set to pooled mode, the conversation goes to that department's unassigned queue instead of being auto-assigned.
+
+<Callout variant="tip" title="Pooled vs assigned departments">
+Some departments are configured to pool all conversations rather than auto-assign them. In pooled mode, transferring sends the conversation to the department queue — agents in that department pick it up manually. See [Departments →](/docs/agent-dashboard/departments) for more.
+</Callout>
+
+## Next steps
+
+- [How routing works →](/docs/routing/how-routing-works)
+- [Departments →](/docs/agent-dashboard/departments)
+- [Resolving a conversation →](/docs/agent-dashboard/resolving)

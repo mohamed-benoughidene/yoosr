@@ -1,0 +1,70 @@
+---
+title: "The Activities feed"
+description: "The Activities section shows a paginated log of every significant action taken in your project — who did what, to what, and when. It loads 25 entries at a time."
+section: "activities"
+order: 1
+keywords: ["activities", "activity log", "action log", "audit", "who did what", "team activity", "log"]
+related: ["activities-vs-analytics", "analytics-activity-log", "home"]
+---
+
+# The Activities feed
+
+The Activities section is a log of everything significant that has happened in your project. Every time an agent creates a bot, resolves a conversation, adds a label, or changes a department, a record appears here. It answers the question: who did what, and when?
+
+Go to **Dashboard → Activities** to open it.
+
+## What the table shows
+
+Each row in the activities table has four columns:
+
+**Date** — The exact date and a relative time stamp (for example, "3 hours ago"). Both are shown so you can quickly spot recent activity and also pinpoint when something happened on a specific date.
+
+**Actor** — The name of the agent who performed the action, or "System" if the action was performed automatically by Yoosr (for example, an auto-close from the inactivity cron).
+
+**Action** — A plain-language description of what was done.
+
+**Target** — What the action was performed on, shown as a coloured badge with the type (teammate, department, bot) and a truncated ID.
+
+## What gets logged
+
+The Activities feed records the following actions:
+
+| Action | What happened |
+|---|---|
+| Bot created | An agent created a new bot |
+| Bot updated | A bot's settings were changed |
+| Bot deleted | A bot was deleted |
+| Conversation resolved | An agent closed a conversation |
+| Conversation assigned | A conversation was assigned to an agent |
+| Conversation department changed | A conversation was transferred to a different department |
+| Label applied | A label was added to a conversation |
+| Label removed | A label was removed from a conversation |
+| Label created | A new label was added to the project dictionary |
+| Label updated | A label's name or color was changed |
+| Label deleted | A label was removed from the project dictionary |
+| Department created | A new department was created |
+| Department updated | A department's settings were changed |
+| Department deleted | A department was removed |
+| Member added to department | An agent was added to a department |
+| Member removed from department | An agent was removed from a department |
+| Canned response created | A new canned response was saved |
+| Canned response updated | A canned response was edited |
+| Canned response deleted | A canned response was removed |
+| Operating hours updated | The project's schedule was changed |
+
+## Loading more
+
+The table loads 25 entries at a time, newest first. Click **Load more** at the bottom of the table to fetch the next 25. Keep clicking to go further back in time.
+
+<Callout variant="info" title="Activity logs are retained for 90 days">
+The Activities feed only shows entries from the past 90 days. Older entries are permanently deleted by the weekly cleanup cron. If you need a permanent record of activity, export it before the 90-day window closes.
+</Callout>
+
+## Who can see Activities
+
+All agents in your organization can view the Activities feed. There is no admin-only restriction on reading this log. Only the Analytics section's audit view is scoped differently — see [Activities vs the Analytics audit log →](/docs/analytics/activities-vs-analytics) for the distinction.
+
+## Next steps
+
+- [Activities vs the Analytics audit log →](/docs/analytics/activities-vs-analytics)
+- [Analytics →](/docs/analytics)

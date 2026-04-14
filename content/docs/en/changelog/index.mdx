@@ -1,99 +1,18 @@
-export const meta = {
-  title: "Changelog",
-  description: "Release history and new features for the Yoosr platform.",
-  section: "changelog"
-}
+---
+title: "Changelog"
+description: "What's new in Yoosr — recent updates, feature releases, and improvements."
+section: "changelog"
+order: 1
+keywords: ["changelog", "release notes", "what's new", "updates", "features"]
+related: []
+---
 
 # Changelog
 
-Release history for the Yoosr platform.
+Stay up to date with the latest changes in Yoosr.
 
----
+## What's new
 
-## v2.4.0 — Latest
+New features, improvements, and bug fixes are documented here as they ship.
 
-**Released:** April 2026
-
-### New
-- **Multi-language widget support** — English, Arabic (RTL), and French with per-language text label customization
-- **Soft-delete across all tables** — 22 tables now use soft-delete patterns with a weekly cleanup cron job for data safety
-- **TTL-based data retention** — Conversations and messages auto-expire after 90 days (configurable)
-- **Web push notifications** — VAPID-based push notifications for agent alerts
-
-### Changed
-- Widget title separator standardized to pipe `|` (e.g., "Sign In | Yoosr")
-- Icon files migrated from SVG to PNG format for broader compatibility
-
----
-
-## v2.3.0
-
-**Released:** March 2026
-
-### New
-- **AI JSON parsing improvements** — Robust bracket-counting extractor with 14 test cases covering edge cases
-- **Build-time environment validation** — Zod schemas validate all required env vars at startup via `src/lib/env.ts`
-- **Convex backend test suite** — 30 backend test cases with separate Vitest configuration
-
-### Changed
-- `@types/papaparse` moved from runtime deps to devDependencies
-- Removed `X-XSS-Protection` header (deprecated, not recommended by modern browsers)
-
----
-
-## v2.2.0
-
-**Released:** February 2026
-
-### New
-- **Ownership enforcement** — `assertConversationOwnership()` on all 13 conversation functions for org-scoped data access
-- **Auth guard utilities** — Typed helpers in `convex/lib/auth.ts` for secure data access patterns
-- **Activity logging** — All significant actions logged to `activity_logs` table for audit trail
-
-### Security
-- `openRouterApiKey` encrypted via `encryptSecret()` (AES-GCM)
-- Webhook signature verification uses constant-time HMAC comparison
-
----
-
-## v2.1.0
-
-**Released:** January 2026
-
-### New
-- **WhatsApp Business integration** — Meta Cloud API webhook with HMAC-SHA256 verification
-- **Instagram DM support** — Business/Creator account messaging via Meta webhooks
-- **Messenger channel** — Facebook Page messenger integration
-
-### Changed
-- Shared `/webhooks/meta` endpoint routes all three Meta platforms (WhatsApp, Messenger, Instagram)
-
----
-
-## v2.0.0
-
-**Released:** November 2025
-
-### New
-- **Bot Flow Designer** — Visual graph editor using React Flow (`@xyflow/react`) for building conversation automations
-- **Knowledge Base with RAG** — Document upload, chunking, vector embeddings (2048-dim), and semantic search
-- **Multi-channel widget** — Support for Widget, Telegram, WhatsApp, Messenger, Instagram
-- **Agent Dashboard v2** — Redesigned conversation management, assignment, departments, labels, canned responses
-
-### Changed
-- `conversation_bot_state` table separated from `conversations` to prevent OCC (Optimistic Concurrency Control) write conflicts
-- Embedding model configured to `nvidia/llama-nemotron-embed-vl-1b-v2`
-
----
-
-## v1.0.0
-
-**Released:** August 2025
-
-### New
-- **Initial release**
-- Basic live chat widget with customizable colors
-- AI chatbot integration via OpenRouter
-- Conversation management dashboard
-- Clerk authentication with organization support
-- Multi-tenant data isolation via `orgId` and `projectId`
+Check back regularly to see what's changed.

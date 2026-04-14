@@ -1,0 +1,134 @@
+---
+title: "Widget not showing"
+description: "Step-by-step checklist for diagnosing why the Yoosr chat widget does not appear on your website — including script placement, project ID, ad blockers, and Content Security Policy."
+section: "troubleshooting"
+order: 2
+keywords: ["widget not showing", "widget not loading", "troubleshooting widget", "chat button missing", "ad blocker", "CSP", "Content-Security-Policy", "script blocked"]
+related: ["first-widget", "widget-customization", "widget-configuration"]
+---
+
+# Widget not showing
+
+If the Yoosr chat button does not appear on your website after installation, work through these checks in order. Each check is independent — you do not need to pass an earlier check before moving to the next one.
+
+## Check 1 — Snippet placement
+
+The Yoosr snippet must be placed just before the closing `</body>` tag, not inside `<head>`. Placing it in the `<head>` can cause the widget to load before the page is ready.
+
+Open your website's HTML source (right-click → View Page Source in your browser) and search for `yoosrSettings`. Confirm it appears near the end of the file, before `</body>`.
+
+**Correct placement:**
+
+```html
+    <!-- page content above -->
+    <script>
+      window.yoosrSettings = { projectId: "YOUR_PROJECT_ID" };
+    </script>
+    <script src="https://app.yoosr.com/widget.js" async></script>
+  </body>
+</html>
+```
+
+## Check 2 — Project ID
+
+The `projectId` in your snippet must exactly match the ID in **Settings → Widget Setup → Installation**. A single wrong character prevents the widget from loading its configuration.
+
+1. Go to **Settings → Widget Setup → Installation** and copy your Project ID.
+2. Compare it character-by-character to the value in your snippet.
+3. If they differ, paste the correct snippet from the dashboard.
+
+## Check 3 — Browser console errors
+
+Open your browser's developer tools (press `F12`), click the **Console** tab, and reload the page. Any red errors are the most direct clue to what is wrong.
+
+Common errors and their causes:
+
+| Console message | Likely cause |
+|----------------|--------------|
+| `Failed to load resource: net::ERR_BLOCKED_BY_CLIENT` | An ad blocker or browser extension is blocking the script |
+| `Refused to load script ... violates the following Content Security Policy` | Your website's CSP does not allow the Yoosr domain |
+| `yoosrSettings is not defined` | `window.yoosrSettings` script is placed after the widget.js script |
+| `projectId required` | The `projectId` field in `window.yoosrSettings` is missing or an empty string |
+
+## Check 4 — Ad blockers and browser extensions
+
+Ad blockers, privacy extensions (uBlock Origin, Brave Shields), and some VPNs block third-party chat scripts. The widget will not load for affected visitors.
+
+To test, open an incognito window with all extensions disabled and reload your website. If the widget appears, an extension is blocking it for regular visitors.
+
+<Callout variant="tip" title="This affects real visitors too">
+If an extension blocks the widget in your browser, it likely does the same for a significant portion of your visitors. Consider hosting the widget on your own subdomain to avoid block lists. Contact support for self-hosted widget options.
+</Callout>
+
+## Check 5 — Content Security Policy (CSP)
+
+If your website sets a `Content-Security-Policy` header, it must explicitly allow the Yoosr widget domain. Check your server configuration or hosting platform for a CSP header.
+
+Add the following domains to your CSP:
+
+```
+script-src 'self' https://app.yoosr.com;
+connect-src 'self' https://*.convex.cloud wss://*.convex.cloud;
+frame-src 'self' https://app.yoosr.com;
+```
+
+After updating the CSP, hard-reload the page (Ctrl+Shift+R or Cmd+Shift+R) to bypass the cache.
+
+## Check 6 — Single-page apps (React, Next.js, Vue)
+
+In single-page apps, the `<body>` tag is often controlled by a layout component, not an HTML file you can edit directly. The widget script must be included in that layout, not injected by a component that mounts later.
+
+**Next.js (App Router):**
+
+```tsx
+// app/layout.tsx
+import Script from "next/script";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Script id="yoosr-settings" strategy="beforeInteractive">
+          {`window.yoosrSettings = { projectId: "YOUR_PROJECT_ID" };`}
+        </Script>
+        <Script
+          src="https://app.yoosr.com/widget.js"
+          strategy="lazyOnload"
+        />
+      </body>
+    </html>
+  );
+}
+```
+
+**React (Vite / Create React App):**
+
+Add the snippet to `public/index.html` before `</body>`.
+
+## Check 7 — Project is inactive
+
+If the project's status is set to **inactive** or **archived** in **Settings → General**, the widget will not load any configuration and the button will not appear.
+
+Go to **Settings → General** and confirm the project status is **active**.
+
+## Check 8 — Test with a hard reload
+
+Browsers cache JavaScript aggressively. If you recently changed your snippet or CSP, do a hard reload before concluding the widget is broken:
+
+- Windows / Linux: `Ctrl + Shift + R`
+- macOS: `Cmd + Shift + R`
+
+## Still not working?
+
+If you have worked through all eight checks and the widget still does not appear, contact support with:
+
+1. The URL where the widget is installed
+2. A screenshot of your browser console (F12 → Console tab)
+3. Your Project ID (from **Settings → Widget Setup**)
+
+## Next steps
+
+- [Embed your first widget →](/docs/getting-started/first-widget)
+- [Widget customization →](/docs/channels/widget-customization)
+- [Widget visitor experience →](/docs/channels/widget-visitor-experience)

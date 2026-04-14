@@ -1,0 +1,105 @@
+---
+title: "Template syntax: {{ }} variables"
+description: "Most blocks in Design Studio support {{ }} variables — placeholders that are replaced with real values when the bot runs. This article covers every available variable and how the system works."
+section: "bot-flows"
+order: 3
+keywords: ["template syntax", "variables", "interpolation", "{{", "}}", "attributes", "lastUserText", "dynamic text", "placeholders"]
+related: ["canvas-overview", "block-set-attribute", "block-capture-reply", "block-condition"]
+---
+
+# Template syntax: {{ }} variables
+
+Most blocks in Design Studio support dynamic text using double curly braces — `{{variable_name}}`. When the bot runs, Yoosr replaces these placeholders with real values before sending the message or performing the action.
+
+## How it works
+
+When the bot reaches a block that contains `{{customer_name}}`, the engine looks up `customer_name` in the conversation's attribute store and replaces the placeholder with whatever value is there. If the attribute does not exist, the placeholder is replaced with an empty string — it disappears silently.
+
+This means `{{` and `}}` are reserved syntax. Do not use them in message text unless you intend them as variable references.
+
+## Built-in variables
+
+These variables are always available in every conversation. You do not need to set them — Yoosr populates them automatically.
+
+| Variable | What it contains |
+|---|---|
+| `{{lastUserText}}` | The most recent message the visitor sent |
+| `{{channel}}` | Where the conversation came from (`widget`, `telegram`, `whatsapp`, `messenger`, `instagram`) |
+| `{{language}}` | The visitor's browser language (e.g. `en`, `ar`, `fr`) |
+| `{{os}}` | The visitor's operating system |
+| `{{browser}}` | The visitor's browser |
+| `{{sourcePage}}` | The URL of the page where the visitor started chatting |
+| `{{ip}}` | The visitor's IP address |
+
+## Custom attributes
+
+Any attribute set by a **Set Attribute** block or a **Capture Reply** block is available as a variable immediately after that block runs.
+
+For example, if a Capture Reply block stores the visitor's input in `order_id`, every subsequent block in the flow can use `{{order_id}}`.
+
+Custom attributes set by an **AI Task** block or a **Web Request** block are also available. The AI Task block stores its output in the variable you name in the **Save output to variable** field. The Web Request block stores the API response in the variable you name in **Save response to variable**.
+
+## Nested variable access
+
+If an attribute contains a JSON object, you can access nested keys using dot notation:
+
+```
+{{api_results.user.name}}
+```
+
+This looks up `api_results`, then reads the `user` key, then reads `name`. If any step in the chain is missing, the result is an empty string.
+
+## Where you can use variables
+
+Variables work in any text field that the engine processes at runtime:
+
+- **Reply block** — Message text and button labels
+- **AI Task block** — System prompt and user input fields
+- **Ask Knowledge Base block** — Search query field and system prompt
+- **Web Request block** — URL, headers, and request body
+- **Set Attribute block** — The value field (not the key name)
+- **Condition block** — The comparison value field
+- **HITL Handoff block** — The handoff message
+- **Close block** — The closing message
+
+## Variable syntax rules
+
+- Variable names are **case-sensitive**: `{{Name}}` and `{{name}}` are different
+- Variable names can contain letters, numbers, underscores, and dots (for nested access)
+- Spaces are not allowed inside `{{ }}`: `{{my variable}}` will not work — use `{{my_variable}}`
+- If a variable name does not exist, the placeholder becomes an empty string with no error
+
+## Example: personalised reply
+
+A bot that captures a visitor's name and uses it later:
+
+```
+[Capture Reply] → stores input in: customer_name
+
+[Reply] → "Hi {{customer_name}}, thanks for reaching out!
+           How can I help you today?"
+```
+
+When the bot runs, `{{customer_name}}` is replaced with whatever the visitor typed.
+
+## Example: AI Task with visitor context
+
+```
+[AI Task]
+System prompt: "You are a support agent for Acme. The visitor's name is {{customer_name}}
+                and they came from {{sourcePage}}. Answer their question concisely."
+User input: {{lastUserText}}
+Save output to variable: ai_reply
+```
+
+The engine fills in `{{customer_name}}`, `{{sourcePage}}`, and `{{lastUserText}}` before sending the prompt to the AI model.
+
+<Callout variant="tip" title="Test with the debugger">
+After building a flow that uses variables, use the Design Studio debugger to trace execution and confirm variables are being set and read correctly before publishing.
+</Callout>
+
+## Next steps
+
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Block: Capture Reply →](/docs/bot-flows/block-capture-reply)
+- [Block: AI Task →](/docs/bot-flows/block-ai-task)

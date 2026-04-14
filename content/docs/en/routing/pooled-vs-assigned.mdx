@@ -1,0 +1,50 @@
+---
+title: Pooled vs. assigned conversations
+description: Learn the difference between a conversation that belongs to a specific agent and one that is open to the whole team.
+section: Routing
+order: 2
+keywords: [pooled, assigned, agent, participants, join, unassigned, Monitor, team, shared]
+related:
+  - routing/how-routing-works
+  - routing/unassigned-queue
+  - monitor/joining-assigning
+---
+
+# Pooled vs. assigned conversations
+
+In Yoosr, a conversation can be in one of two states from an agent's perspective: it either belongs to a specific agent (assigned), or it belongs to the team as a whole (pooled — sitting in the unassigned queue). Understanding the difference helps agents know which conversations require their attention.
+
+## Assigned conversations
+
+An assigned conversation has a named agent in the `assignedTo` field. This happens when:
+
+- The routing engine finds an available agent and selects them using the least-busy algorithm.
+- An agent uses **Assign to me** from the three-dot menu in Monitor.
+- An agent joins an unassigned conversation and becomes the first participant — the join automatically sets them as the assignee.
+- A teammate transfers the conversation to a specific agent.
+
+The assigned agent sees the conversation in their Monitor list. The conversation status is **Assigned** (200). Other agents can still see and join the conversation, but the primary responsibility is with the assigned agent.
+
+## Pooled (unassigned) conversations
+
+A pooled conversation has no assigned agent. Its status is **Unassigned** (100) and it appears in the Monitor list for all agents with access. Any agent can pick it up.
+
+Conversations become pooled when:
+
+- No agents are available at the time of routing — the bot handed off, or there was no bot, and no agent was free.
+- The visitor started a conversation outside operating hours.
+- The previous assigned agent resolved the conversation but a new message came in afterward, creating a fresh unassigned conversation.
+
+## The participants list
+
+Separate from assignment, any number of agents can be participants in a conversation. Participants receive messages and can reply, even if they are not the assigned agent. An agent becomes a participant by selecting **Join** in the conversation header.
+
+This makes it possible for a team lead to observe a conversation, or for two agents to collaborate on a complex issue, without formally reassigning it.
+
+## How assignment affects the visitor
+
+The visitor does not see agent assignment directly. From the widget, they see only the replies they receive. Assignment is an internal coordination mechanism for the team.
+
+## Choosing the right mode for your team
+
+For small teams, pooled conversations work well — agents claim what they can handle. For larger teams or teams with defined specializations, rely on department routing and agent transfer so conversations consistently reach the right person rather than whoever picks them up first.
