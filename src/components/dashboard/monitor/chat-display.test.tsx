@@ -37,14 +37,16 @@ vi.mock("@/components/ui/dropdown-menu", async () => {
     return React.createElement("div", { "data-testid": "dropdown-menu" }, children);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const DropdownMenuTrigger = ({ asChild, children, ...props }: any) => {
     return asChild
-      ? React.Children.only(children)
+      ? React.Children.only(children) as React.ReactElement
       : React.createElement("div", props, children);
   };
 
-  const DropdownMenuContent = React.forwardRef(
-    ({ children, className, ...props }: any, ref: React.Ref<HTMLDivElement>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const DropdownMenuContent = React.forwardRef<HTMLDivElement, any>(
+    ({ children, className, ...props }, ref) => {
       return React.createElement(
         "div",
         {
@@ -60,8 +62,9 @@ vi.mock("@/components/ui/dropdown-menu", async () => {
   );
   DropdownMenuContent.displayName = "DropdownMenuContent";
 
-  const DropdownMenuItem = React.forwardRef(
-    ({ children, disabled, onClick, className, ...props }: any, ref: React.Ref<HTMLDivElement>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const DropdownMenuItem = React.forwardRef<HTMLDivElement, any>(
+    ({ children, disabled, onClick, className, ...props }, ref) => {
       return React.createElement(
         "div",
         {
@@ -87,20 +90,21 @@ vi.mock("@/components/ui/dropdown-menu", async () => {
   };
 });
 
-// ── Mocks ────────────────────────────────────────────────────────────
-
-const mockUseMutation = vi.fn(() => vi.fn());
-const mockUseQuery = vi.fn(() => undefined);
-const mockUsePaginatedQuery = vi.fn(() => ({
-  results: [],
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+const mockUseMutation = vi.fn().mockImplementation((..._args: any[]) => vi.fn());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+const mockUseQuery = vi.fn().mockImplementation((..._args: any[]) => undefined);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+const mockUsePaginatedQuery = vi.fn().mockImplementation((..._args: any[]) => ({
+  results: [] as unknown[],
   status: "Exhausted",
   loadMore: vi.fn(),
 }));
 
 vi.mock("convex/react", () => ({
-  useMutation: (...args: unknown[]) => mockUseMutation(args),
-  useQuery: (...args: unknown[]) => mockUseQuery(args),
-  usePaginatedQuery: (...args: unknown[]) => mockUsePaginatedQuery(args),
+  useMutation: (...args: unknown[]) => mockUseMutation(...args),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
+  usePaginatedQuery: (...args: unknown[]) => mockUsePaginatedQuery(...args),
 }));
 
 vi.mock("@clerk/nextjs", () => ({

@@ -47,7 +47,7 @@ vi.mock("@/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className} data-testid="resizable-panel-group">{children}</div>
   ),
-  ResizablePanel: ({ children, className, defaultSize }: { children: React.ReactNode; className?: string; defaultSize?: number }) => (
+  ResizablePanel: ({ children, defaultSize }: { children: React.ReactNode; defaultSize?: number }) => (
     <div data-testid="resizable-panel" data-size={defaultSize}>{children}</div>
   ),
   ResizableHandle: ({ withHandle }: { withHandle?: boolean }) => (
@@ -60,7 +60,7 @@ vi.mock("react-resizable-panels", () => ({
   PanelGroup: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className} data-testid="resizable-panel-group">{children}</div>
   ),
-  Panel: ({ children, className, defaultSize }: { children: React.ReactNode; className?: string; defaultSize?: number }) => (
+  Panel: ({ children, defaultSize }: { children: React.ReactNode; defaultSize?: number }) => (
     <div data-testid="resizable-panel" data-size={defaultSize}>{children}</div>
   ),
   PanelResizeHandle: ({ withHandle }: { withHandle?: boolean; className?: string }) => (
@@ -293,12 +293,6 @@ describe("MonitorLayout conversation selection", () => {
 
     renderMonitorLayout();
 
-    // Debug: check what's actually rendered in the conversation list
-    // The list might be empty or showing the empty state
-    const emptyState = screen.queryByText("no conversations found");
-    const noResults = screen.queryByText("no results");
-    const visitorName = screen.queryByText("Test Visitor");
-    
     // For now, just verify the component renders without crashing
     // The actual conversation rendering may depend on child component mocks
     expect(screen.getByText("kpi active")).toBeTruthy();

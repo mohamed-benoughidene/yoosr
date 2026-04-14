@@ -20,6 +20,8 @@ import { Users, Clock, AlertTriangle, Bot } from "lucide-react"
 
 import { useTranslations } from "next-intl"
 
+const KpiSkeleton = () => <Skeleton className="h-5 w-8" />
+
 export default function MonitorLayout() {
     const tNav = useTranslations("nav")
     const t = useTranslations("monitor")
@@ -77,15 +79,21 @@ export default function MonitorLayout() {
         (c) => c.id === selectedConversationId
     ) ?? null
 
+    // Add state for current time to satisfy React purity
+    const [currentTime, setCurrentTime] = React.useState(() => Date.now())
+
+    React.useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 60000)
+        return () => clearInterval(interval)
+    }, [])
+
     // Derived KPIs for the command center header
     const unassignedCount = conversations?.filter(c => !c.assignedTo).length ?? 0
     const botActiveCount = conversations?.filter(c => c.botId).length ?? 0
     const slaOverdueCount = conversations?.filter(c =>
-        c.slaDeadline && !c.firstResponseAt && c.slaDeadline < Date.now()
+        c.slaDeadline && !c.firstResponseAt && c.slaDeadline < currentTime
     ).length ?? 0
     const hasMoreConversations = (totalActiveCount?.count ?? 0) > (conversations?.length ?? 0)
-
-    const KpiSkeleton = () => <Skeleton className="h-5 w-8" />
 
     return (
         <div className="h-[calc(100vh-5rem)] w-full">

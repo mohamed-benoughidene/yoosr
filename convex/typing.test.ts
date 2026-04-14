@@ -10,10 +10,9 @@
  * Security boundary tested:
  *  - Only valid event types accepted (agent_typing, bot_typing, visitor_typing)
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ConvexError } from "convex/values";
+import { describe, it, expect, vi } from "vitest";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
-import type { Id, Doc } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 
 // ── Test helpers ──────────────────────────────────────────────────────
 
@@ -50,9 +49,7 @@ function createMockQueryCtx(options?: {
   } as unknown as MockQueryCtx;
 }
 
-// ── TYPING_WINDOW_MS constant ────────────────────────────────────────
 
-const TYPING_WINDOW_MS = 5000;
 
 // ── recordTyping mutation tests ──────────────────────────────────────
 
@@ -66,8 +63,8 @@ describe("recordTyping", () => {
 
     await recordTyping({
       ...ctx,
-      auth: {} as any,
-    } as unknown as MutationCtx, {
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
+    } as unknown as QueryCtx, {
       projectId: PROJECT_ID,
       conversationId: CONVERSATION_ID,
       eventType: "visitor_typing",
@@ -90,8 +87,8 @@ describe("recordTyping", () => {
 
     await recordTyping({
       ...ctx,
-      auth: {} as any,
-    } as unknown as MutationCtx, {
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
+    } as unknown as QueryCtx, {
       projectId: PROJECT_ID,
       conversationId: CONVERSATION_ID,
       eventType: "agent_typing",
@@ -113,8 +110,8 @@ describe("recordTyping", () => {
 
     await recordTyping({
       ...ctx,
-      auth: {} as any,
-    } as unknown as MutationCtx, {
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
+    } as unknown as QueryCtx, {
       projectId: PROJECT_ID,
       conversationId: CONVERSATION_ID,
       eventType: "bot_typing",
@@ -148,7 +145,7 @@ describe("isVisitorTyping", () => {
 
     const result = await isVisitorTyping({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -175,7 +172,7 @@ describe("isVisitorTyping", () => {
 
     const result = await isVisitorTyping({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -191,7 +188,7 @@ describe("isVisitorTyping", () => {
 
     const result = await isVisitorTyping({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -200,16 +197,6 @@ describe("isVisitorTyping", () => {
   });
 
   it("returns false when typing event is expired (older than 5s)", async () => {
-    const now = Date.now();
-    const expiredEvent = {
-      _id: "event_003" as Id<"typing_events">,
-      _creationTime: now,
-      projectId: PROJECT_ID,
-      conversationId: CONVERSATION_ID,
-      eventType: "visitor_typing" as const,
-      senderName: "Test Visitor",
-      createdAt: now - 10000, // 10 seconds ago (expired)
-    };
 
     // The query filters by createdAt >= cutoff, so expired events won't be returned
     const queryFn = vi.fn().mockResolvedValue(null);
@@ -219,7 +206,7 @@ describe("isVisitorTyping", () => {
 
     const result = await isVisitorTyping({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -257,7 +244,7 @@ describe("getTypingStatus", () => {
 
     const result = await getTypingStatus({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -293,7 +280,7 @@ describe("getTypingStatus", () => {
 
     const result = await getTypingStatus({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -317,7 +304,7 @@ describe("getTypingStatus", () => {
 
     const result = await getTypingStatus({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
@@ -359,7 +346,7 @@ describe("getTypingStatus", () => {
 
     const result = await getTypingStatus({
       ...ctx,
-      auth: {} as any,
+      auth: { getUserIdentity: vi.fn().mockResolvedValue(null) },
     } as unknown as QueryCtx, {
       conversationId: CONVERSATION_ID,
     });
