@@ -23,9 +23,9 @@ const mockUseMutation = vi.fn().mockReturnValue(vi.fn());
 vi.mock("convex/react", () => ({
   ConvexProvider: ({ children }: { children: React.ReactNode }) => children,
   ConvexReactClient: vi.fn(),
-  useQuery: (_api: any, _args: any) => mockUseQuery(_api, _args),
-  usePaginatedQuery: (_api: any, _args: any, _opts: any) => mockUsePaginatedQuery(_api, _args, _opts),
-  useMutation: (_api: any) => mockUseMutation(_api),
+  useQuery: (_api: unknown, _args: unknown) => mockUseQuery(_api, _args),
+  usePaginatedQuery: (_api: unknown, _args: unknown, _opts: unknown) => mockUsePaginatedQuery(_api, _args, _opts),
+  useMutation: (_api: unknown) => mockUseMutation(_api),
 }));
 
 vi.mock("@/i18n/navigation", () => ({
@@ -61,7 +61,10 @@ vi.mock("@/lib/constants", () => ({
 
 // Mock next/image
 vi.mock("next/image", () => ({
-  default: (props: Record<string, unknown>) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img {...props} alt={props.alt || "test-image"} />
+  ),
 }));
 
 // Conversation object returned by conversations.get

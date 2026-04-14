@@ -1,5 +1,4 @@
-import { Languages, AlertCircle } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { Languages } from "lucide-react"
 
 interface ComingSoonBannerProps {
   locale: string

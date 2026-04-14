@@ -10,8 +10,7 @@
  *  - sendMessage requires auth (authError thrown without identity)
  *  - getMessages requires auth
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ConvexError } from "convex/values";
+import { describe, it, expect, vi } from "vitest";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Id, Doc } from "./_generated/dataModel";
 
@@ -47,7 +46,9 @@ function createMockMutationCtx(options?: {
     scheduler: {
       runAfter: options?.schedulerRunAfter ?? vi.fn().mockResolvedValue(undefined),
     },
-    auth: {} as any,
+    auth: {
+      getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }),
+    } as unknown as MutationCtx["auth"],
   } as unknown as MockMutationCtx;
 }
 
@@ -278,7 +279,10 @@ describe("sendMessage", () => {
 
     // Should not fire webhook for internal messages
     const webhookCalls = schedulerRunAfter.mock.calls.filter(
-      (call: any[]) => call[1] && typeof call[1] === "function" || (call[2] && call[2].event === "message.create")
+      (call: unknown[]) => {
+        const args = call as [number, unknown, { event?: string }];
+        return (args[1] && typeof args[1] === "function") || (args[2] && args[2].event === "message.create");
+      }
     );
     expect(webhookCalls).toHaveLength(0);
   });

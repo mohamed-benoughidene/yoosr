@@ -180,8 +180,9 @@ describe("CannedResponsePicker visual highlight", () => {
     renderCannedResponsePicker({ query: "" });
 
     const buttons = screen.getAllByRole("button");
-    expect(buttons[0].classList.contains("bg-accent")).toBe(true) ||
-    expect(buttons[0].classList.contains("text-accent-foreground")).toBe(true);
+    const hasHighlight = buttons[0].classList.contains("bg-accent") || 
+                        buttons[0].classList.contains("text-accent-foreground");
+    expect(hasHighlight).toBe(true);
   });
 
   it("updates highlight when navigating with ArrowDown", () => {

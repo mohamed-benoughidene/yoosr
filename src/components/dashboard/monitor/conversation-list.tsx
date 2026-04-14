@@ -1,4 +1,4 @@
-import { useReducer } from "react"
+import { useReducer, useState, useEffect } from "react"
 import { useOrganization } from "@clerk/nextjs"
 
 import { cn } from "@/lib/utils"
@@ -151,6 +151,15 @@ export function ConversationList({
     const locale = useLocale()
     const { activeProject } = useProject()
     const projectId = activeProject?._id
+    
+    // Add state to track current time for purity
+    const [currentTime, setCurrentTime] = useState(() => Date.now())
+
+    // Update time every minute to keep badges fresh
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 60000)
+        return () => clearInterval(interval)
+    }, [])
 
     const labels = useQuery(
         api.labels.listLabels,
@@ -555,7 +564,7 @@ export function ConversationList({
                                                     <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-200 border-none uppercase font-bold">{t("badge_low")}</Badge>
                                                 )}
                                                 {item.slaDeadline && !item.firstResponseAt && (() => {
-                                                    const timeRemaining = item.slaDeadline - Date.now();
+                                                    const timeRemaining = item.slaDeadline - currentTime;
                                                     if (timeRemaining <= 0) {
                                                         return <Badge className="h-4 px-1 text-[9px] bg-red-600 hover:bg-red-600 text-white border-none uppercase font-bold">{t("badge_overdue")}</Badge>;
                                                     }
@@ -573,12 +582,12 @@ export function ConversationList({
                                                 })()}
                                                 {/* Conversation duration badge */}
                                                 <Badge variant="outline" className="h-4 px-1 text-[9px] font-normal text-muted-foreground">
-                                                    {formatElapsed(Date.now() - item.createdAt)}
+                                                    {formatElapsed(currentTime - item.createdAt)}
                                                 </Badge>
                                                 {/* Waiting time badge (shows time since last agent response or since creation if no response) */}
                                                 {!item.firstResponseAt && (
                                                     <Badge className="h-4 px-1 text-[9px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200 dark:border-rose-800 font-normal">
-                                                        waiting {formatElapsed(Date.now() - item.createdAt)}
+                                                        waiting {formatElapsed(currentTime - item.createdAt)}
                                                     </Badge>
                                                 )}
                                             </div>

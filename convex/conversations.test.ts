@@ -13,8 +13,7 @@
  * Security boundary tested:
  *  - All mutations require auth (authError thrown without identity)
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ConvexError } from "convex/values";
+import { describe, it, expect, vi } from "vitest";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Id, Doc } from "./_generated/dataModel";
 
@@ -52,7 +51,9 @@ function createMockMutationCtx(options?: {
     scheduler: {
       runAfter: options?.schedulerRunAfter ?? vi.fn().mockResolvedValue(undefined),
     },
-    auth: {} as any,
+    auth: {
+      getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }),
+    } as unknown as MutationCtx["auth"],
     runMutation: options?.runMutation ?? vi.fn().mockResolvedValue(undefined),
   } as unknown as MockMutationCtx;
 }
@@ -107,10 +108,10 @@ function createMockConversation(overrides?: Record<string, unknown>) {
     firstResponseAt: undefined,
     slaDeadline: undefined,
     resolvedBy: undefined,
-    channel: "web",
-    attributes: { channel: "web", department: "General", location: "Unknown", language: "en", os: "Unknown", browser: "Unknown", sourcePage: "", ip: "" },
+    channel: "widget",
+    attributes: { channel: "widget", department: "General", location: "Unknown", language: "en", os: "Unknown", browser: "Unknown", sourcePage: "", ip: "" },
     ...overrides,
-  } as Doc<"conversations">;
+  } as unknown as Doc<"conversations">;
 }
 
 // ── resolve mutation tests ──────────────────────────────────────────
@@ -126,7 +127,8 @@ describe("resolve", () => {
 
     const { resolve } = await import("./conversations");
 
-    await resolve({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (resolve as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com", name: "Agent" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -147,7 +149,8 @@ describe("resolve", () => {
 
     const { resolve } = await import("./conversations");
 
-    await resolve({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (resolve as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -173,7 +176,8 @@ describe("resolve", () => {
 
     const { resolve } = await import("./conversations");
 
-    await resolve({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (resolve as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -203,7 +207,8 @@ describe("join", () => {
 
     const { join } = await import("./conversations");
 
-    await join({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (join as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -224,7 +229,8 @@ describe("join", () => {
 
     const { join } = await import("./conversations");
 
-    await join({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (join as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -246,7 +252,8 @@ describe("join", () => {
 
     const { join } = await import("./conversations");
 
-    await join({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (join as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -271,7 +278,8 @@ describe("leave", () => {
 
     const { leave } = await import("./conversations");
 
-    await leave({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (leave as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -291,7 +299,8 @@ describe("leave", () => {
 
     const { leave } = await import("./conversations");
 
-    await leave({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (leave as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID });
@@ -316,7 +325,8 @@ describe("updateConversationStatus", () => {
 
     const { updateConversationStatus } = await import("./conversations");
 
-    await updateConversationStatus({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (updateConversationStatus as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID, status: 200 });
@@ -336,7 +346,8 @@ describe("updateConversationStatus", () => {
 
     const { updateConversationStatus } = await import("./conversations");
 
-    await updateConversationStatus({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (updateConversationStatus as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID, status: 100, botPaused: false });
@@ -366,7 +377,8 @@ describe("transferToDepartment", () => {
 
     const { transferToDepartment } = await import("./conversations");
 
-    await transferToDepartment({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (transferToDepartment as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID, departmentId: "dept_1" as Id<"departments"> });
@@ -393,7 +405,8 @@ describe("transferToDepartment", () => {
 
     const { transferToDepartment } = await import("./conversations");
 
-    await transferToDepartment({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (transferToDepartment as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as MutationCtx, { id: CONVERSATION_ID, departmentId: "dept_1" as Id<"departments"> });
@@ -429,7 +442,8 @@ describe("getConversations", () => {
 
     const { getConversations } = await import("./conversations");
 
-    const result = await getConversations({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (getConversations as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as QueryCtx, { projectId: PROJECT_ID });
@@ -460,7 +474,8 @@ describe("getConversations", () => {
 
     const { getConversations } = await import("./conversations");
 
-    await getConversations({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (getConversations as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as QueryCtx, { projectId: PROJECT_ID });
@@ -488,13 +503,13 @@ describe("getConversations", () => {
 
     const { getConversations } = await import("./conversations");
 
-    const result = await getConversations({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (getConversations as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as QueryCtx, { projectId: PROJECT_ID, departmentId: "dept_1" as Id<"departments"> });
 
-    // Client-side filter should reduce to 1
-    const filtered = result.filter((c: any) => c.user.details.department === "dept_1" || true); // schema stores as attributes.department
+    // Just verify the query was called
     expect(collectFn).toHaveBeenCalled();
   });
 });
@@ -519,7 +534,8 @@ describe("countActiveConversations", () => {
 
     const { countActiveConversations } = await import("./conversations");
 
-    const result = await countActiveConversations({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (countActiveConversations as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as QueryCtx, { projectId: PROJECT_ID });
@@ -543,7 +559,8 @@ describe("countActiveConversations", () => {
 
     const { countActiveConversations } = await import("./conversations");
 
-    const result = await countActiveConversations({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (countActiveConversations as any).handler({
       ...ctx,
       auth: { getUserIdentity: vi.fn().mockResolvedValue({ subject: AGENT_ID, email: "agent@test.com" }) },
     } as unknown as QueryCtx, { projectId: PROJECT_ID });
