@@ -1,0 +1,70 @@
+---
+title: "Notifications"
+description: "Yoosr sends browser push notifications to alert you when a new conversation arrives or a visitor is waiting. This guide explains how to enable them and what triggers them."
+section: "dashboard"
+order: 3
+keywords: ["notifications", "push notifications", "browser notifications", "alerts", "permission"]
+related: ["agent-availability", "monitor", "home"]
+---
+
+# Notifications
+
+Yoosr uses browser push notifications to alert you when something needs your attention — even if you are on a different tab or your screen is locked. When a new conversation arrives and you are the assigned agent, you will get a notification.
+
+## Enabling notifications
+
+When you first open the Yoosr dashboard, your browser will ask for permission to send notifications. Click **Allow**.
+
+If you missed that prompt or clicked **Block**, you can re-enable it manually:
+
+**Chrome**
+1. Click the lock icon in the address bar next to the URL.
+2. Find **Notifications** in the dropdown.
+3. Change it from **Block** to **Allow**.
+4. Reload the page.
+
+**Firefox**
+1. Click the lock icon in the address bar.
+2. Click the arrow next to **Connection secure**.
+3. Find **Notifications** and change it to **Allow**.
+4. Reload the page.
+
+**Safari**
+1. Go to **Safari → Settings → Websites → Notifications**.
+2. Find the Yoosr URL and change it to **Allow**.
+
+<Callout variant="warning" title="Notifications require a secure connection">
+Push notifications only work over HTTPS. If you are accessing a development build over HTTP, notifications will not appear — this is a browser security restriction, not a Yoosr issue.
+</Callout>
+
+## What triggers a notification
+
+Yoosr sends you a push notification when:
+
+- A new conversation is assigned to you
+- A visitor sends a message in a conversation you are part of
+- An unassigned conversation is waiting and you are the only online agent
+
+Yoosr does not send notifications for:
+
+- Internal notes left by teammates
+- Conversations assigned to other agents
+- Bot messages (bot activity does not generate agent alerts)
+
+## If notifications are not working
+
+Run through this checklist:
+
+1. Did you grant permission? Check your browser's site settings for the Yoosr URL.
+2. Is your browser up to date? Push notifications require a modern browser — Chrome, Firefox, Edge, or Safari 16.4+.
+3. Is Do Not Disturb enabled on your operating system? System-level DND silences all browser notifications regardless of permission.
+4. Are you using a browser extension that blocks notifications? Some privacy extensions block push subscriptions entirely.
+
+<Callout variant="info" title="Notifications are per device">
+Notification permission is stored in your browser, not your Yoosr account. If you use Yoosr on multiple devices or browsers, you need to grant permission on each one separately.
+</Callout>
+
+## Next steps
+
+- [Set your availability →](/docs/agent-dashboard/agent-availability)
+- [Monitor conversations →](/docs/monitor)

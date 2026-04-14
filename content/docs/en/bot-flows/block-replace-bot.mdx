@@ -1,0 +1,66 @@
+---
+title: "Block: Replace Bot"
+description: "The Replace Bot block hands the conversation from the current bot to a different bot. The new bot starts from its own Start block, with all attributes preserved."
+section: "bot-flows"
+order: 15
+keywords: ["replace bot", "switch bot", "handoff bot", "bot slug", "bot transfer", "multi-bot"]
+related: ["bots-vs-flows", "block-hitl-handoff", "publishing-testing"]
+---
+
+# Block: Replace Bot
+
+The Replace Bot block switches the conversation from the current bot to a different bot. The new bot takes over from its Start block, with all attributes from the current conversation preserved.
+
+## What it does
+
+When the bot reaches a Replace Bot block, it:
+
+1. Looks up the target bot by its flow slug
+2. Replaces the current bot with the target bot
+3. Resets the node pointer to the beginning of the target bot's flow
+4. The new bot runs immediately from its Start block
+
+The conversation history, visitor info, and all attributes set during the current flow are preserved and available to the new bot.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Target bot slug | Yes | The slug identifier of the bot flow to switch to. |
+
+## What is a bot slug
+
+A bot slug is an identifier stored on the bot flow record in the database. It is used by the Replace Bot block to look up the target bot.
+
+<Callout variant="warning" title="Finding your bot slug">
+The bot slug is not currently displayed in the Design Studio UI. To find it, check the Convex dashboard for your project and look at the `bot_flows` table — the `slug` field on the flow record is what you enter here. This is a known gap in the UI that will be addressed in a future update.
+</Callout>
+
+## How to configure it
+
+1. Add a **Replace Bot** block to the canvas.
+2. Click it to open the properties panel.
+3. Enter the slug of the target bot flow in the **Target bot slug** field.
+4. The block has no output handle — it is always the final block in a branch.
+
+## When to use it
+
+**Modular bot architecture** — Build a general-purpose intake bot that collects the visitor's intent, then replaces itself with a specialist bot for billing, technical support, or sales depending on what the visitor needs.
+
+**Escalation between bots** — Have a simple FAQ bot that hands off to a more capable AI-powered bot when the question is too complex.
+
+**Language routing** — Detect the visitor's language from the `{{language}}` attribute and switch to a language-specific bot.
+
+## What happens if the slug is not found
+
+If the target slug does not match any bot flow, the Replace Bot block does nothing and the flow stops. The visitor receives no message. Always test the slug before publishing.
+
+## Attributes carry over
+
+All attributes set during the current flow are available in the new bot's flow immediately. If the current bot stored `customer_name` and `intent`, the new bot can use `{{customer_name}}` and `{{intent}}` from its first block.
+
+## Next steps
+
+- [Bots and flows — the mental model →](/docs/bot-flows/bots-vs-flows)
+- [Publishing and testing →](/docs/bot-flows/publishing-testing)

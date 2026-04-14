@@ -1,0 +1,90 @@
+---
+title: "Block: Set Attribute"
+description: "The Set Attribute block stores a value in the conversation's attribute store without waiting for visitor input. Use it to set flags, counters, computed values, or constants your flow needs later."
+section: "bot-flows"
+order: 6
+keywords: ["set attribute", "store value", "attribute", "variable", "constant", "flag", "computed value"]
+related: ["block-capture-reply", "block-condition", "template-syntax", "contact-profile"]
+---
+
+# Block: Set Attribute
+
+The Set Attribute block stores a value in the conversation's attribute store without waiting for visitor input. Unlike Capture Reply — which waits for the visitor to type something — Set Attribute sets the value immediately and the flow continues.
+
+## What it does
+
+When the bot reaches a Set Attribute block, it evaluates the value expression, stores the result under the attribute name you specified, and moves immediately to the next block. No message is sent to the visitor.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Attribute key | Yes | The name of the attribute to set. Use lowercase with underscores. |
+| Value | Yes | The value to store. Supports `{{ }}` variables and basic math. |
+
+## How to configure it
+
+1. Add a **Set Attribute** block to the canvas.
+2. Click it to open the properties panel.
+3. Type the attribute name in **Attribute key** — for example, `plan_type`.
+4. Type the value in **Value** — for example, `premium` or `{{api_results.plan}}`.
+5. Connect the output to the next block.
+
+## What the value field supports
+
+**Plain strings** — `premium`, `new_customer`, `en`
+
+**Numbers** — `42`, `0`, `3.14`
+
+**Variables** — `{{customer_name}}`, `{{api_results.status}}`
+
+**Basic math** — `{{count}} + 1`, `{{price}} * 2`, `10 - 3`
+The engine evaluates simple arithmetic with `+`, `-`, `*`, `/` on numeric values.
+
+**Nested variable access** — `{{api_results.user.plan}}` reads a nested field from a JSON response stored by a Web Request block.
+
+## Stored values appear in the contact panel
+
+Any attribute set by this block appears in the **Technical** section of the contact panel in Monitor and Chat. Agents can see these values in real time as the bot runs. See [Bot-set attributes →](/docs/contacts/bot-set-attributes) for more.
+
+## Use cases
+
+**Setting a flag after a step completes:**
+```
+Attribute key: onboarding_done
+Value: true
+```
+
+**Copying a variable under a cleaner name:**
+```
+Attribute key: customer_email
+Value: {{api_results.email}}
+```
+
+**Incrementing a counter:**
+```
+Attribute key: attempt_count
+Value: {{attempt_count}} + 1
+```
+
+**Setting a constant for use throughout the flow:**
+```
+Attribute key: support_email
+Value: support@yourcompany.com
+```
+
+<Callout variant="tip" title="Set Attribute runs silently">
+The block sends nothing to the visitor. If you want to tell the visitor what the bot just stored, add a Reply block after it.
+</Callout>
+
+## Common mistakes
+
+- **Spaces in the attribute key** — `customer name` will not work as a variable later. Use `customer_name` instead.
+- **Referencing a variable that does not exist yet** — If the value field uses `{{plan_type}}` but that attribute has not been set yet, the value stored will be an empty string.
+
+## Next steps
+
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Block: Capture Reply →](/docs/bot-flows/block-capture-reply)
+- [Template syntax →](/docs/bot-flows/template-syntax)

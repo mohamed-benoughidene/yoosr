@@ -1,0 +1,60 @@
+---
+title: How semantic search works
+description: Understand how Yoosr finds relevant answers in your knowledge base using vector embeddings.
+section: Knowledge Base
+order: 3
+keywords: [semantic search, vector, embedding, RAG, chunks, similarity, AI, OpenRouter]
+related:
+  - knowledge-base/adding-sources
+  - knowledge-base/improving-kb-accuracy
+---
+
+# How semantic search works
+
+When a bot uses the **Ask knowledge base** block, Yoosr does not search for matching keywords. It uses *semantic search* — a technique that matches meaning rather than exact words. This allows the bot to find the right answer even when the visitor uses different phrasing than the source content.
+
+## The pipeline in three steps
+
+### 1. Indexing your content
+
+When you add a source, Yoosr runs the indexing pipeline:
+
+1. **Extraction** — Yoosr extracts raw text from the source (fetching a URL, parsing a PDF, or reading pasted text).
+2. **Chunking** — The text is split into overlapping passages of up to 500 characters. Each chunk is small enough to represent a single idea.
+3. **Embedding** — Each chunk is sent to the `nvidia/llama-nemotron-embed-vl-1b-v2` model via OpenRouter. The model returns a 2048-dimensional vector — a list of numbers that encodes the meaning of that chunk.
+4. **Storing** — Yoosr stores each chunk and its vector in the `knowledge_base_chunks` table, indexed for fast similarity search.
+
+### 2. Searching at query time
+
+When a visitor asks a question and the bot reaches an **Ask knowledge base** block:
+
+1. Yoosr sends the visitor's question to the same embedding model.
+2. The model returns a vector for the question.
+3. Yoosr compares that vector against all stored chunk vectors in the knowledge base using cosine similarity.
+4. The top matching chunks are retrieved.
+
+### 3. Generating the answer
+
+Yoosr sends the retrieved chunks together with the visitor's question to the project's configured language model (the same model used by AI Task and AI Assistant blocks). The model reads the chunks and generates a natural-language answer grounded in your content.
+
+If no chunk passes the similarity threshold, the bot follows the **fallback path** you configured in the Ask knowledge base block — either sending a default message or routing to a human agent.
+
+## What this means for accuracy
+
+Because the search is based on meaning, a visitor asking "How do I return an item?" can match a chunk that says "Our refund policy allows customers to send back products within 30 days." The words do not overlap, but the meaning does.
+
+However, semantic search works best when your source content is clear, specific, and well-written. Vague content produces vague matches. See [Improving knowledge base accuracy](./improving-kb-accuracy) for practical guidance.
+
+## Technical details
+
+| Property | Value |
+|----------|-------|
+| Embedding model | `nvidia/llama-nemotron-embed-vl-1b-v2:free` |
+| Vector dimensions | 2048 |
+| Chunk size | Up to 500 characters |
+| Vector store | Convex vector index |
+| Similarity metric | Cosine similarity |
+
+<Callout variant="info" title="Token usage">
+Every embedding call and every answer generation call counts toward your OpenRouter token usage. Yoosr logs this in the token usage analytics table so you can monitor consumption over time.
+</Callout>

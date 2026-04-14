@@ -1,77 +1,68 @@
-export const meta = {
-  title: "Create a Project",
-  description: "Set up your first project in Yoosr and understand the key configuration options.",
-  section: "getting-started"
-}
+---
+title: "Create your first project"
+description: "A project holds your widget, bot, knowledge base, and channel settings for one website or brand. Here is how to create one."
+section: "getting-started"
+order: 2
+keywords: ["project", "create project", "workspace", "project id", "organization"]
+related: ["index", "first-widget", "key-concepts"]
+---
 
-# Create Your First Project
+# Create your first project
 
-A **project** in Yoosr represents a single support workspace. Each project has its own widget configuration, AI settings, knowledge bases, channels, and team members.
+A **project** is the configuration for one website or brand. It holds your widget settings, your bot, your knowledge base, your connected channels, and your team's conversation history. If you support two different websites, you create two projects — one for each.
 
-## Step-by-Step Guide
+## Before you start
 
-<Step number={1} title="Navigate to the Dashboard">
-After signing in to Yoosr, you'll land on your dashboard. If you don't have any projects yet, you'll see a prompt to create one.
-</Step>
+You need a Yoosr account and an organization. When you sign up, Yoosr creates an organization for you automatically using your company name. If you skipped that step, go to your account settings and create one before continuing.
 
-<Step number={2} title="Click "New Project">
-Look for the **"New Project"** button in your dashboard. Click it to open the project creation form.
-</Step>
+## How to create a project
 
-<Step number={3} title="Fill in Project Details">
-You'll need to provide:
+When you sign in for the first time, Yoosr detects that your organization has no project and creates one for you automatically using your organization name. You are then sent directly to the dashboard.
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Project Name** | A display name for your project | `My Store Support` |
-| **Description** *(optional)* | What this project is for | `Customer support for our e-commerce store` |
+If you want to create an additional project:
 
-Click **Create** to finish.
-</Step>
+1. Open the project switcher in the top-left of the sidebar.
+2. Click **New project**.
+3. Enter a name — for example, `Main Website` or `Support Portal`.
+4. Click **Create**.
 
-<Step number={4} title="Find Your Project ID">
-After creation, your project is assigned a unique ID (e.g., `proj_abc123xyz`). You'll need this ID to embed your widget.
+The new project appears in your project switcher immediately.
 
-You can find it in two places:
+## Find your Project ID
 
-1. **URL bar** — When viewing the project dashboard, the URL contains the project ID
-2. **Settings → Widget Setup** — The Project ID is displayed in the installation code
+Your Project ID is a unique identifier that looks like `proj_abc123xyz`. You need it to embed the widget on your website.
 
-<Callout variant="info" title="Keep it handy">
-You'll paste this Project ID into your website's widget installation code.
-</Callout>
-</Step>
+To find it:
 
-## Project Settings Overview
+1. Go to **Settings → Widget Setup**.
+2. Look at the installation code snippet — your Project ID is the value inside `projectId: "..."`.
 
-Once your project is created, you can configure it from the **Settings** page:
-
-| Setting | Description |
-|---------|-------------|
-| **Widget Setup** | Widget appearance, behavior, and installation code |
-| **AI Configuration** | LLM model selection, API keys, knowledge base |
-| **Channels** | Connect Telegram, WhatsApp, Messenger, Instagram |
-| **Webhooks** | Manage outbound webhook subscriptions |
-| **Team** | Invite and manage organization members |
-
-## Multi-Tenant Isolation
-
-Every project is scoped to your **Clerk organization** (`orgId`). This means:
-
-- Team members in your organization can access all projects
-- Data is isolated — projects cannot see each other's conversations
-- You can create multiple projects for different websites or brands
-
-<Callout variant="tip" title="One project per website">
-For clean data separation, create one project per website or brand you support.
+<Callout variant="info" title="Keep your Project ID handy">
+You will paste it into your website's code in the next step.
 </Callout>
 
-## Feature Flags
+## What a project contains
 
-Yoosr supports feature flags configured via the `FEATURE_FLAGS` environment variable. These are set at the platform level and apply across all projects. Contact support if you need access to beta features.
+Once created, a project has these sections you can configure:
 
-## Next Steps
+| Section | What you configure |
+|---------|-------------------|
+| **Widget Setup** | Appearance, colors, welcome message, pre-chat form |
+| **AI Settings** | Which language model to use, your OpenRouter API key |
+| **Knowledge Base** | Documents and articles the bot can search |
+| **Channels** | WhatsApp, Telegram, Messenger, Instagram connections |
+| **Departments** | Teams within your organization |
+| **Settings** | Labels, canned responses, operating hours, webhooks |
 
-Now that your project is set up, it's time to embed the widget on your website.
+## One project per website
 
-[Embed Your First Widget →](/docs/getting-started/first-widget)
+If you run multiple websites or brands, create a separate project for each. This keeps conversation data, bot settings, and widget configurations completely separate. Your teammates have access to all projects inside your organization.
+
+<Callout variant="tip" title="Multiple projects, one team">
+All teammates in your organization can see and work across all projects. You do not need to invite them separately for each one.
+</Callout>
+
+## Next steps
+
+- [Embed the widget on your website →](/docs/getting-started/first-widget)
+- [Invite your teammates →](/docs/getting-started/invite-team)

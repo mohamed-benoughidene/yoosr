@@ -1,83 +1,72 @@
-export const meta = {
-  title: "Departments",
-  description: "Create departments to group agents into teams and configure conversation routing rules.",
-  section: "agent-dashboard"
-}
+---
+title: Departments
+description: Create and manage departments to group agents and route conversations to the right team.
+section: Settings
+order: 1
+keywords: [departments, routing, agents, team, pooled, assigned, bot, tags]
+related:
+  - routing/how-routing-works
+  - routing/pooled-vs-assigned
+  - settings/operating-hours
+---
 
 # Departments
 
-Departments let you **organize your team** into groups (e.g., "Sales", "Technical Support", "Billing") and automatically route conversations to the right people.
+Departments let you group agents by function — for example, Sales, Support, or Billing — and route conversations to the right group automatically. Each department has its own routing mode, optional bot assignment, and metadata tags.
 
-## Creating a Department
-
-1. Go to **Settings → Departments**
-2. Click **New Department**
-3. Enter a **name** (e.g., `Technical Support`)
-4. Click **Create**
-
-## Assigning Agents
-
-After creating a department:
-
-1. Open the department's settings
-2. Under **Team Members**, click **Add Agent**
-3. Select agents from your organization
-4. Click **Save**
-
-Agents can belong to **multiple departments**.
-
-## Routing Rules
-
-Conversations are routed to departments based on rules you configure:
-
-| Rule Type | Description | Example |
-|-----------|-------------|---------|
-| **Channel** | Route by source channel | All WhatsApp messages → WhatsApp Team |
-| **Keyword** | Route by message keywords | Messages with "refund" → Billing Team |
-| **Default** | Fallback department | Everything else → General Support |
-
-### How Routing Works
-
-```
-New conversation arrives
-    ↓
-Check routing rules in order
-    ↓
-Match found? → Assign to department's queue
-    ↓
-No match → Default department
-    ↓
-Notify available agents in the department
-```
-
-<Callout variant="info" title="Rule order matters">
-Rules are evaluated top-to-bottom. Place specific rules (keyword matches) above general ones (channel routing).
+<Callout variant="info" title="Admin only">
+Only admins can create, edit, or delete departments.
 </Callout>
 
-## Department-Specific Bot Configuration
+## Create a department
 
-Each department can have its own:
+1. Go to **Settings → Departments**.
+2. Select **New Department**.
+3. Fill in the fields described below.
+4. Select **Save**.
 
-- **AI chatbot settings** — Different models or knowledge bases per team
-- **Bot flows** — Different automation graphs for different use cases
-- **Canned responses** — Team-specific reply templates
+## Department fields
 
-## Managing Departments
+### Name and description
 
-| Action | Description |
-|--------|-------------|
-| **Rename** | Change the department name |
-| **Add/Remove agents** | Update team membership |
-| **Edit routing rules** | Change how conversations are assigned |
-| **Delete** | Remove the department (conversations are not deleted) |
+The name appears in the Monitor filters and in the transfer dialog when agents route conversations between departments. Choose a name that is unambiguous to your whole team.
 
-<Callout variant="warning" title="Deleting departments">
-Deleting a department does not delete its conversations. Unrouted conversations will fall back to the default department.
-</Callout>
+The description is internal — it helps your team understand the purpose of the department.
 
-## Best Practices
+### Routing mode
 
-1. **Start with one department** — "General Support" — and split as your team grows
-2. **Use clear names** — "Billing" is better than "Team 2"
-3. **Set a default department** — Ensure no conversation goes unassigned
-4. **Review routing logs** — Check if conversations are being routed correctly in the Activity Log
+Choose how new conversations assigned to this department are distributed:
+
+| Mode | Behavior |
+|------|---------|
+| **Assigned** | The routing engine selects one agent using the least-busy algorithm. One agent is responsible. |
+| **Pooled** | The conversation is placed in the shared queue. Any agent in the department can claim it. |
+
+### Bot
+
+Optionally assign a bot to handle conversations in this department. When a conversation is routed to this department, the selected bot runs its flow first. If the bot reaches an HITL Handoff block, the conversation is passed to a human agent.
+
+If no bot is selected, the conversation goes directly to human agents.
+
+### Tags
+
+Tags are free-text metadata labels stored on the department record. They are used for internal routing logic and department metadata — for example, `language:arabic` or `capability:technical`. These are separate from conversation labels.
+
+Add a tag by typing in the tag field and pressing Enter. Remove a tag by selecting the × beside it.
+
+## Managing members
+
+Each department has a member list. To add a member:
+
+1. Select the department row to expand it, or select the edit icon.
+2. In the Members popover, select the agents you want to add.
+
+To remove a member, select the × beside their name.
+
+Members determine which agents receive notifications and are eligible for least-busy assignment within this department.
+
+## Edit and delete
+
+To edit a department, select the pencil icon on its row. All fields can be updated. Changes apply immediately to new conversations — existing conversations are not rerouted.
+
+To delete a department, select the trash icon. Deleting a department does not delete the conversations that were routed to it. Those conversations remain but lose the department reference.

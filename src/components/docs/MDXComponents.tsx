@@ -141,7 +141,7 @@ const td = ({ className, ...props }: React.HTMLAttributes<HTMLTableCellElement>)
 
 function CodeBlock({ children, className }: { children: string; className?: string }) {
   return (
-    <div className="relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
+    <div className="not-prose relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
       <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={children} />
       </div>
@@ -252,7 +252,7 @@ interface SnippetProps {
 
 export function Snippet({ code, lang = "text" }: SnippetProps) {
   return (
-    <div className="relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
+    <div className="not-prose relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
       <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={code} />
       </div>

@@ -1,89 +1,86 @@
-export const meta = {
-  title: "WhatsApp",
-  description: "Connect WhatsApp Business API to Yoosr via Meta for Developers for inbound and outbound messaging.",
-  section: "channels"
-}
+---
+title: WhatsApp
+description: Connect WhatsApp Business API to Yoosr so WhatsApp messages appear in your agent dashboard alongside all other channels.
+section: Channels & Apps
+order: 2
+keywords: [WhatsApp, WhatsApp Business, Meta, webhook, channel, integration, API]
+related:
+  - channels/messenger
+  - channels/instagram
+  - routing/how-routing-works
+---
 
-# WhatsApp Integration
+# WhatsApp
 
-Connect WhatsApp to Yoosr using the **WhatsApp Business Cloud API** through Meta for Developers. This enables you to receive and respond to WhatsApp messages from your agent dashboard.
+Connect WhatsApp to Yoosr using the WhatsApp Business Cloud API through Meta for Developers. Once connected, inbound WhatsApp messages create conversations in your dashboard and your agents can reply directly without leaving Yoosr.
 
 ## Prerequisites
 
-- A **Meta Developer** account ([developers.facebook.com](https://developers.facebook.com))
-- A **WhatsApp Business Account** (WABA) linked to your Meta Developer account
-- A **verified phone number** (can be a test number during development)
+Before you start, make sure you have:
 
-## Step 1: Create a Meta App
+- A Meta Developer account at [developers.facebook.com](https://developers.facebook.com)
+- A WhatsApp Business Account (WABA) linked to your Meta Developer account
+- A verified phone number — a test number from Meta works during development
 
-1. Go to [Meta for Developers](https://developers.facebook.com)
-2. Click **My Apps** → **Create App**
-3. Select **Business** as the app type
-4. Fill in the app name and contact email
-5. Add the **WhatsApp** product to your app
+## Step 1: Create a Meta app
 
-## Step 2: Get Credentials
+1. Go to [Meta for Developers](https://developers.facebook.com) and sign in.
+2. Select **My Apps** → **Create App**.
+3. Choose **Business** as the app type.
+4. Add the **WhatsApp** product to your app.
 
-In your Meta App dashboard, under **WhatsApp → API Setup**:
+## Step 2: Get your credentials
+
+In your Meta App, go to **WhatsApp → API Setup**. Collect these two values:
 
 | Credential | Where to find it |
 |------------|-----------------|
-| **Phone Number ID** | API Setup page, under "API credentials" |
-| **Temporary Access Token** | API Setup page, generate a token with `whatsapp_business_messaging` permission |
+| Phone Number ID | Listed under API credentials |
+| Temporary Access Token | Generate one with `whatsapp_business_messaging` permission |
+
+<Callout variant="warning" title="Temporary tokens expire">
+Temporary access tokens are short-lived. For a production deployment, create a System User in your Meta Business Manager and generate a long-lived token instead.
+</Callout>
 
 ## Step 3: Configure in Yoosr
 
-1. Go to **Settings → Channels** → **WhatsApp** → **Connect**
-2. Enter your **Phone Number ID**
-3. Enter your **Access Token**
-4. Yoosr generates a **Verify Token** for webhook verification
-5. Click **Save**
+1. In the Yoosr dashboard, go to **Settings → Channels**.
+2. Find **WhatsApp** and select **Connect**.
+3. Enter your **Phone Number ID** and **Access Token**.
+4. Yoosr generates a **Verify Token** automatically.
+5. Select **Save**.
 
-## Step 4: Configure the Webhook
+## Step 4: Set the webhook in Meta
 
-In your Meta App:
+1. In your Meta App, go to **WhatsApp → Configuration** → **Webhook** → **Edit**.
+2. Paste the **Callback URL** shown in Yoosr — it looks like `https://<your-convex-site>.convex.site/webhooks/meta`.
+3. Paste the **Verify Token** from Yoosr.
+4. Select **Verify and Save**.
+5. Subscribe to these webhook events: `messages`, `message_status`, `reads`.
 
-1. Go to **WhatsApp → Configuration**
-2. Under **Webhook**, click **Edit**
-3. Paste the **Callback URL** from Yoosr (e.g., `https://<your-convex-site>.convex.site/webhooks/meta`)
-4. Paste the **Verify Token** from Yoosr
-5. Click **Verify and Save**
-6. Subscribe to these webhook events:
-   - `messages`
-   - `message_status`
-   - `reads`
+## Step 5: Test the connection
 
-## Step 5: Test
+Use the test phone number in your Meta App to send a message to your business number. Within seconds a conversation appears in the Yoosr dashboard with the WhatsApp channel indicator. Reply from the dashboard — your reply arrives on WhatsApp.
 
-1. Use the test phone number in your Meta App to send a message to your business number
-2. A conversation should appear in your Yoosr dashboard
-3. Reply from the dashboard — the reply arrives on WhatsApp
-
-## How It Works
+## How it works
 
 | Step | What happens |
 |------|-------------|
-| User messages your number | Meta POSTs the message to your Yoosr webhook |
-| Yoosr receives it | Verifies `X-Hub-Signature-256` HMAC-SHA256 signature |
-| Deduplicates | By `messageId` to prevent duplicate conversations |
-| Creates conversation | Matches or creates contact + conversation records |
-| Agent replies | Yoosr POSTs to Meta's WhatsApp sendMessage API |
+| Visitor messages your number | Meta sends a POST to your Yoosr webhook |
+| Yoosr receives it | Verifies the `X-Hub-Signature-256` HMAC-SHA256 signature |
+| Deduplication | Yoosr checks the `messageId` to prevent duplicate records |
+| Conversation created | Contact and conversation records are created or matched |
+| Agent replies | Yoosr sends the reply to Meta's WhatsApp `sendMessage` API |
 
 ## Security
 
-- **HMAC-SHA256 verification**: Every webhook request is signed with `X-Hub-Signature-256` using your app secret (encrypted with AES-GCM)
-- **Constant-time comparison**: Signature verification uses timing-safe comparison to prevent timing attacks
-- **Always 200**: Yoosr returns `200 OK` per Meta requirements to prevent retries
+All webhook requests from Meta are signed with `X-Hub-Signature-256`. Yoosr verifies this signature using your stored app secret, which is encrypted with AES-GCM before being written to the database. Verification uses timing-safe comparison to prevent timing attacks. Yoosr always responds with `200 OK` per Meta's requirements to prevent retries.
 
 ## Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| Webhook verification fails | Ensure the Verify Token matches between Meta and Yoosr |
-| Messages not arriving | Check webhook subscription includes `messages` event |
-| `403 Forbidden` | The app secret doesn't match — re-enter it in Yoosr channel settings |
-| Can't send replies | Verify the access token has `whatsapp_business_messaging` permission and hasn't expired |
-
-<Callout variant="warning" title="Token expiration">
-Temporary access tokens expire. For production, use a **System User** with a long-lived access token. See Meta's documentation for details.
-</Callout>
+| Problem | Fix |
+|---------|-----|
+| Webhook verification fails | Check that the Verify Token in Meta matches the one Yoosr generated |
+| Messages not arriving | Confirm the webhook subscription includes the `messages` event |
+| `403 Forbidden` | The app secret is wrong — re-enter it in Yoosr channel settings |
+| Replies not sending | Verify the access token has `whatsapp_business_messaging` permission and has not expired |

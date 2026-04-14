@@ -1,0 +1,77 @@
+---
+title: "Block: Set Priority"
+description: "The Set Priority block sets the urgency level of the current conversation to Low, Normal, High, or Urgent. It affects sort order in Monitor and is visible in the contact info panel."
+section: "bot-flows"
+order: 20
+keywords: ["set priority", "priority", "urgency", "low", "normal", "high", "urgent", "conversation priority"]
+related: ["block-condition", "monitor-overview", "filters"]
+---
+
+# Block: Set Priority
+
+The Set Priority block sets the urgency level of the current conversation. It runs silently with no message to the visitor and the flow continues immediately to the next block.
+
+## What it does
+
+When the bot reaches a Set Priority block, it updates the conversation's priority field and moves to the next block. The priority change is visible immediately in Monitor.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Priority | Yes | The urgency level to set. Options: Low, Normal, High, Urgent. Default: Normal. |
+
+## Priority levels
+
+| Level | When to use |
+|---|---|
+| Low | Non-urgent enquiries that can wait |
+| Normal | Standard conversations — the default for most |
+| High | Issues that need attention soon |
+| Urgent | Critical issues requiring immediate response |
+
+## How to configure it
+
+1. Add a **Set Priority** block to the canvas.
+2. Click it to open the properties panel.
+3. Select the priority level from the dropdown.
+4. Connect the output to the next block.
+
+## Where priority appears
+
+After the block runs, the priority badge appears in the contact info panel under **Conversation Details**. Agents can also change the priority manually from the same panel.
+
+In Monitor, when conversations are sorted by **Priority**, urgent conversations appear first, then high, normal, and low.
+
+## Using priority in bot flows
+
+Set Priority is most useful when combined with a Condition block that detects a critical issue — for example, detecting that a visitor mentioned an outage or a payment failure and flagging the conversation so agents see it first.
+
+```
+[Capture Reply] → stores in: issue_description
+
+[AI Task]
+System prompt: "Classify as 'urgent' if the visitor mentions payment failure,
+               account locked, or data loss. Otherwise classify as 'normal'."
+Save output to: severity
+
+[Condition]
+Attribute to check: severity
+Operator: equals
+Compare value: urgent
+
+True path  → [Set Priority] Urgent
+             [HITL Handoff] "Escalating your issue now..."
+False path → [Ask Knowledge Base]
+```
+
+<Callout variant="tip" title="Priority is visible to agents immediately">
+The priority badge updates in real time in Monitor as soon as the block runs. Agents who are already looking at the conversation list will see it change without refreshing.
+</Callout>
+
+## Next steps
+
+- [Monitor filters →](/docs/monitor/filters)
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

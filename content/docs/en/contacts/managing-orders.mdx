@@ -1,0 +1,78 @@
+---
+title: Managing orders
+description: View, filter, update, import, and export orders in the Yoosr Orders module.
+section: Orders
+order: 2
+keywords: [orders, manage, status, filter, import, export, CSV, Excel, JSON, delete]
+related:
+  - orders/what-orders-are
+  - contacts/contact-profile
+---
+
+# Managing orders
+
+The Orders page gives your team a central view of all orders for the project. From here you can filter by status, update individual orders, import in bulk, and export your full order list.
+
+## Viewing orders
+
+Go to **Orders** in the left sidebar. The page shows a table of all orders with these columns: Contact Name, Phone, Product, Notes, Status, and Date Created.
+
+Use the **search bar** to find orders by contact name or product. Use the **status filter** to show only New, Confirmed, or Cancelled orders.
+
+## Updating an order status
+
+1. Find the order in the table.
+2. Select the three-dot menu (⋯) on that row.
+3. Choose **Mark as Confirmed** or **Mark as Cancelled**.
+
+The status badge updates immediately. The change is logged in the activity log with the agent's name and timestamp.
+
+## Deleting an order
+
+1. Select the three-dot menu (⋯) on the order row.
+2. Choose **Delete**.
+3. Confirm the deletion in the dialog.
+
+Deletion is permanent. Deleted orders cannot be recovered.
+
+## Importing orders in bulk
+
+To create multiple orders at once from a file:
+
+1. Select **Import Orders** at the top of the page.
+2. Upload a **CSV**, **Excel (.xlsx)**, or **JSON** file.
+3. Yoosr parses the file and shows a preview of how many orders are ready to import and how many rows were skipped.
+4. Select **Confirm Import** to create the orders.
+
+### Required columns
+
+Your file must include these two columns:
+
+| Column | Required |
+|--------|----------|
+| Contact Name | ✅ |
+| Product | ✅ |
+| Phone | No |
+| Notes | No |
+| Status | No — defaults to New if omitted |
+
+Rows missing Contact Name or Product are skipped. The import summary tells you how many rows were skipped and why.
+
+### Column name matching
+
+Column names in the file must match exactly (case-insensitive). For CSV files, use a header row. For JSON files, the file must be an array of objects.
+
+<Callout variant="warning" title="File size">
+Very large files may take a moment to parse. Yoosr processes the file in the browser before sending — keep files under a few thousand rows for best performance.
+</Callout>
+
+## Exporting orders
+
+To download your order list:
+
+1. Select **Export** at the top of the page.
+2. Choose a format: **Export as CSV**, **Export as Excel**, or **Export as JSON**.
+
+The export includes all orders currently visible — if you have a status filter active, only filtered orders are exported. To export everything, clear all filters first.
+
+The export file includes all fields: Contact Name, Phone, Product, Notes, Status, and Created At.

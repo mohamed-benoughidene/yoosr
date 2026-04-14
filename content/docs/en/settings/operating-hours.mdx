@@ -1,0 +1,78 @@
+---
+title: Operating hours
+description: Set the days and times your team is available so bots and routing behave correctly outside business hours.
+section: Settings
+order: 5
+keywords: [operating hours, schedule, timezone, hours, availability, If operating hours, bot, routing]
+related:
+  - bot-flows/block-if-operating-hours
+  - routing/unassigned-queue
+  - settings/departments
+---
+
+# Operating hours
+
+Operating hours tell Yoosr when your team is available. The schedule is used by the **If operating hours** block in Design Studio to branch bot flows based on whether it is currently a working hour. It also informs visitors when they can expect a response.
+
+<Callout variant="info" title="Admin only">
+Only admins can configure operating hours.
+</Callout>
+
+## Set your timezone
+
+Before configuring your schedule, set the correct timezone. All operating hours are evaluated relative to this timezone.
+
+1. Go to **Settings → Operating Hours**.
+2. Select your timezone from the **Timezone** dropdown.
+
+Choose the timezone where your support team is located. If your team spans multiple timezones, choose the timezone of the team that primarily handles conversations.
+
+## Configure your weekly schedule
+
+The schedule is a list of days, each with an on/off toggle and one or more time slots.
+
+### Enable a day
+
+Toggle the switch next to a day to mark it as a working day. Disabled days are treated as closed regardless of time.
+
+### Add time slots
+
+Each working day can have one or more time slots — for example, a morning shift and an afternoon shift with a break in between.
+
+1. Select **Add slot** under the day.
+2. Set the **Start** and **End** times using the time pickers.
+
+Time values are available in 30-minute increments. Slots for the same day must not overlap.
+
+To remove a slot, select the trash icon beside it.
+
+### Example schedule
+
+A typical Monday–Friday support team might look like:
+
+| Day | Open | Slots |
+|-----|------|-------|
+| Sunday | ✅ | 09:00 – 18:00 |
+| Monday | ✅ | 09:00 – 18:00 |
+| Tuesday | ✅ | 09:00 – 18:00 |
+| Wednesday | ✅ | 09:00 – 18:00 |
+| Thursday | ✅ | 09:00 – 18:00 |
+| Friday | ❌ | — |
+| Saturday | ❌ | — |
+
+## Save your schedule
+
+Select **Save** after making changes. The schedule takes effect immediately for new conversations.
+
+## How the schedule is used in bot flows
+
+The **If operating hours** block checks the current time against the saved schedule at the moment the block is reached in a conversation. It has two output edges:
+
+- **Open** — The current time falls within a configured slot on a working day.
+- **Closed** — The current time is outside all slots, or the day is marked as closed.
+
+Use the Closed edge to send an out-of-hours message and collect the visitor's contact details for a follow-up.
+
+## What happens without a configured schedule
+
+If no schedule is saved, the **If operating hours** block always follows the **Open** edge. Set up a schedule before publishing bot flows that use this block.

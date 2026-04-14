@@ -1,0 +1,62 @@
+---
+title: "Resolving, pending, and reopening"
+description: "How to close a conversation, set it to pending, and what happens when a visitor writes back after a conversation is closed."
+section: "monitor"
+order: 7
+keywords: ["resolve", "close", "pending", "reopen", "CSAT", "closed", "send as resolved", "send as open"]
+related: ["conversation-statuses", "monitor-overview", "joining-assigning"]
+---
+
+# Resolving, pending, and reopening
+
+## Resolving a conversation
+
+Resolving marks a conversation as finished. Use it when the visitor's issue is handled and no further action is needed.
+
+To resolve:
+
+1. Open the conversation in the Monitor.
+2. Click **Resolve** in the chat display header, or use the **Send as resolved** option in the send button dropdown to send your final message and resolve in one step.
+
+When a conversation is resolved:
+- Its status changes to Closed.
+- It disappears from the Monitor list and moves to History.
+- If CSAT is configured, the visitor receives a rating prompt in the widget.
+- The resolution is recorded in the activity log with your name and a timestamp.
+
+<Callout variant="tip" title="Send as resolved saves a step">
+Instead of sending your message and then clicking Resolve separately, click the arrow next to the Send button and choose **Send as resolved**. Your message sends and the conversation closes in one action.
+</Callout>
+
+## Pending
+
+Pending is a temporary state for conversations that are waiting on something — typically waiting for the visitor to reply, or waiting on an external process to complete.
+
+To set a conversation to pending, click the arrow next to the Send button and choose **Send as pending**. Your message sends and the conversation moves to a pending state.
+
+Pending conversations:
+- Stay in the Monitor list so your team can see them
+- Are visually distinguished from active conversations
+- Automatically return to Assigned status when the visitor sends a new message
+
+Pending is not the same as Closed. The visitor is still in an active conversation — they can reply and the conversation continues.
+
+## Sending as open
+
+If you have accidentally resolved a conversation or changed its status and want to return it to open, use **Send as open**. This sends your message and sets the status back to Unassigned (status 100), allowing the routing engine to re-assign it if needed.
+
+## Reopening after close
+
+If a visitor sends a new message after their conversation was closed, Yoosr automatically reopens it as a new Unassigned conversation. It appears at the top of the Monitor list for your team to pick up.
+
+The previous conversation history is preserved — agents can scroll up to see what was discussed before.
+
+<Callout variant="info" title="Closed conversations expire after 90 days">
+Yoosr keeps conversation data for 90 days. After that, closed conversations are permanently deleted. See [Data retention →](/docs/history/data-retention) for more.
+</Callout>
+
+## Next steps
+
+- [Conversation history →](/docs/history/conversation-history)
+- [CSAT scores →](/docs/analytics/csat)
+- [Conversation statuses →](/docs/monitor/conversation-statuses)

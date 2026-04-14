@@ -1,0 +1,49 @@
+---
+title: Acting on unanswered queries
+description: Turn unanswered queries into knowledge base entries to close gaps and improve your bot's answer rate.
+section: Unanswered Queries
+order: 2
+keywords: [unanswered queries, knowledge base, create entry, fix, improve, bot accuracy]
+related:
+  - unanswered-queries/what-are-unanswered-queries
+  - unanswered-queries/what-gets-logged
+  - knowledge-base/improving-kb-accuracy
+---
+
+# Acting on unanswered queries
+
+The unanswered queries list is most useful when you use it to close gaps. Yoosr lets you create a knowledge base entry directly from a query row without leaving the analytics page.
+
+## Create a knowledge base entry from a query
+
+1. Go to **Analytics** in the left sidebar.
+2. Scroll to the **Unanswered Queries** section.
+3. Find the query you want to address — start with the highest count.
+4. Select **Create KB Entry** next to that row.
+
+A dialog opens with the visitor's original question pre-filled.
+
+5. In the dialog, write the **answer** you want the bot to give when a visitor asks this question. Be specific and complete — the bot uses this text as a chunk when searching.
+6. Select the **knowledge base** you want to add this entry to from the dropdown.
+7. Select **Save to knowledge base**.
+
+Yoosr adds the content as a plain-text source in the selected knowledge base and triggers the embedding pipeline. Once processing completes and the status returns to **Ready**, the bot can use this entry to answer similar questions.
+
+<Callout variant="tip" title="Write the question alongside the answer">
+Structure the text you save as a question-and-answer pair — include the question at the top, then the answer. This improves chunk relevance for future semantic searches. For example:
+
+**Can I change my delivery address after placing an order?**
+Yes, you can update your delivery address within 2 hours of placing the order. Contact our support team via chat or email to request the change.
+</Callout>
+
+## Prioritize by count
+
+The count column tells you how many times visitors have asked a question the bot could not answer. Fixing the highest-count queries first gives you the biggest improvement to your bot's answer rate in the shortest time.
+
+Aim to work through your top 10 unanswered queries after the first week your bot is live, then revisit the list weekly after that.
+
+## After you add an entry
+
+Creating a KB entry does not remove the query from the unanswered list immediately. The query remains visible until the next time a visitor asks a similar question and the bot successfully finds an answer. At that point, the query stops accumulating a higher count.
+
+If a query continues to appear after you have added a KB entry, the answer you wrote may not be semantically close enough to the question visitors are actually asking. Try rewriting the entry with different phrasing or adding more detail. See [Improving knowledge base accuracy](../knowledge-base/improving-kb-accuracy) for guidance.

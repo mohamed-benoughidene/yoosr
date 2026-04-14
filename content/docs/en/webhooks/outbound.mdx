@@ -1,97 +1,115 @@
-export const meta = {
-  title: "Outbound Webhooks (RestHooks)",
-  description: "Configure outbound webhook subscriptions to receive real-time event notifications from Yoosr.",
-  section: "webhooks"
-}
+---
+title: "Outbound webhooks"
+description: "Subscribe to Yoosr events and receive signed POST requests on your server. Covers creating a subscription, managing it from the dashboard, delivery logs, and the retry schedule."
+section: "webhooks"
+order: 2
+keywords: ["outbound webhook", "RestHooks", "subscribe", "events", "delivery", "retry", "secret", "HMAC", "X-Yoosr-Signature"]
+related: ["webhook-events", "signature-verification", "webhooks-overview"]
+---
 
-# Outbound Webhooks (RestHooks)
+# Outbound webhooks
 
-RestHooks let your server receive **real-time notifications** when events happen in Yoosr — new messages, conversation status changes, agent assignments, and more.
+Yoosr uses a RestHooks pattern for outbound webhooks. You create a subscription that links a URL to one or more events. Yoosr delivers a signed HTTP POST to that URL every time a matching event occurs.
 
-## Creating a Subscription
+## How delivery works
 
-1. Go to **Dashboard → Settings → Webhooks**
-2. Click **New Webhook**
-3. Enter your **endpoint URL** (must be HTTPS)
-4. Select the **event types** you want to receive
-5. Click **Create**
+When a subscribed event fires:
 
-A **signing secret** is generated — save it securely. You'll need it to verify delivery signatures.
+1. Yoosr builds the JSON payload and signs it with HMAC-SHA256 using your subscription's secret.
+2. Yoosr sends a POST request to your URL with a 10-second timeout.
+3. If the response status is 2xx, the delivery is marked successful.
+4. If the response is any other status or times out, Yoosr retries.
 
-## Event Types
+Retries follow a fixed schedule:
 
-| Event | Triggered When |
-|-------|---------------|
-| `message.create` | Any message is sent (agent, visitor, bot) |
-| `conversation.opened` | A new conversation starts |
-| `conversation.closed` | A conversation is resolved |
-| `agent.assigned` | A conversation gets assigned to an agent |
-| `contact.created` | A new contact record is created |
+| Attempt | Delay after previous failure |
+|---------|------------------------------|
+| 1 (initial) | Immediate |
+| 2 | 1 minute |
+| 3 | 5 minutes |
 
-## Delivery Format
+After three failed attempts, Yoosr stops retrying and marks the delivery failed. Check the delivery log to see the error and status code for each attempt.
 
-Each delivery is an HTTP POST to your endpoint:
+<Callout variant="warning" title="Your endpoint must respond within 10 seconds">
+Yoosr sets a 10-second timeout on each delivery attempt. If your server takes longer to respond, the delivery is marked failed and a retry is scheduled. Acknowledge receipt immediately with a 200 OK, then process the payload asynchronously.
+</Callout>
 
-**Headers:**
+## Creating a subscription
+
+You need admin access to create webhook subscriptions.
+
+1. In your dashboard, go to **Settings → Webhooks**.
+2. Click **New webhook**.
+3. Enter the URL that Yoosr should POST to.
+4. Select the events you want to subscribe to. You can choose one or multiple.
+5. Click **Save**.
+
+Yoosr generates a cryptographically random 32-byte secret for each subscription. You use this secret to verify that incoming requests really came from Yoosr.
+
+<Callout variant="tip" title="Copy the secret immediately">
+The subscription secret is shown once when you create the subscription. Copy it to your secrets manager before leaving the page. You cannot retrieve it later — only recreate the subscription.
+</Callout>
+
+## Subscribing to multiple events
+
+You can subscribe to any combination of available events in a single subscription. Yoosr delivers all matching events to the same URL. If you need different URLs for different events, create separate subscriptions.
+
+Available events are listed in the [Webhook event reference →](/docs/webhooks/events)
+
+## Managing subscriptions
+
+From **Settings → Webhooks**, you can:
+
+- **Pause a subscription** — Toggle the subscription off. Yoosr stops delivering events. The subscription and its secret are preserved. Re-enable it at any time.
+- **Delete a subscription** — Removes the subscription permanently. Yoosr stops delivering events immediately. This action cannot be undone.
+
+## Delivery logs
+
+Every delivery attempt — successful or failed — is recorded. To view the log:
+
+1. Go to **Settings → Webhooks**.
+2. Click the subscription you want to inspect.
+3. Open the **Delivery log** tab.
+
+Each log entry shows the event name, the target URL, the attempt number, the HTTP status code Yoosr received, and the timestamp.
+
+<Callout variant="info" title="Log retention">
+Delivery log entries are retained for 30 days. Older entries are not accessible from the dashboard.
+</Callout>
+
+## Request format
+
+Every POST request Yoosr sends has this structure:
+
+**Headers**
+
 ```
 Content-Type: application/json
-X-Yoosr-Event: message.create
-X-Yoosr-Signature: sha256=<hex-hmac-sha256>
+X-Yoosr-Event: conversation.opened
+X-Yoosr-Signature: sha256=<hex-encoded HMAC-SHA256 of the raw body>
 ```
 
-**Body:**
+**Body**
+
 ```json
 {
-  "event": "message.create",
-  "projectId": "proj_xyz",
-  "timestamp": 1712345678000,
+  "event": "conversation.opened",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
   "data": {
-    "conversationId": "conv_abc123",
-    "messageId": "msg_xyz789",
-    "content": "Hello!",
-    "senderType": "visitor"
+    "conversationId": "jh7xyz456...",
+    "projectId": "jh7abc123..."
   }
 }
 ```
 
-The `data` object varies by event type. The `message.create` event includes message details; `conversation.opened` includes conversation and contact info.
+The `timestamp` field is a Unix timestamp in milliseconds (the value of `Date.now()` in JavaScript). The `data` object contains event-specific fields — see the [event reference →](/docs/webhooks/events) for the exact payload shape per event.
 
-## Retry Policy
+## Verifying the signature
 
-If your endpoint doesn't respond with a `2xx` status code:
+Always verify `X-Yoosr-Signature` before processing the payload. See [Signature verification →](/docs/webhooks/signature-verification) for step-by-step code examples in Node.js, Python, and PHP.
 
-| Attempt | Delay After Previous |
-|---------|---------------------|
-| 1 | Immediate |
-| 2 | 60 seconds |
-| 3 | 300 seconds (5 minutes) |
+## Next steps
 
-**Request timeout:** 10 seconds. If your endpoint takes longer, the delivery fails and retries.
-
-After all 3 attempts fail, the delivery is marked as **failed** and logged.
-
-## Delivery Logging
-
-Every delivery attempt is recorded in the `webhook_deliveries` table:
-
-| Field | Description |
-|-------|-------------|
-| `subscriptionId` | Which webhook subscription |
-| `projectId` | The project this belongs to |
-| `event` | Event type |
-| `url` | The delivery endpoint |
-| `attempt` | Attempt number (1–3) |
-| `success` | Whether it succeeded |
-| `statusCode` | HTTP response status |
-| `error` | Error message (if failed) |
-| `timestamp` | When the attempt was made |
-
-Review delivery logs in the dashboard to debug failed deliveries.
-
-## Best Practices
-
-1. **Respond with 2xx quickly** — Acknowledge receipt, then process asynchronously
-2. **Verify signatures** — Never trust webhook payloads without HMAC verification
-3. **Handle duplicates** — The same event may be delivered more than once (retries)
-4. **Log everything** — Store incoming webhooks for debugging and auditing
-5. **Monitor failures** — Check the webhook delivery logs regularly
+- [Webhook event reference →](/docs/webhooks/events)
+- [Signature verification →](/docs/webhooks/signature-verification)

@@ -1,0 +1,52 @@
+---
+title: CSAT
+description: Track customer satisfaction scores submitted by visitors after conversations close.
+section: Analytics
+order: 2
+keywords: [CSAT, customer satisfaction, rating, stars, score, feedback, comments, analytics]
+related:
+  - analytics/conversation-volume
+  - channels/widget-visitor-experience
+---
+
+# CSAT
+
+CSAT (Customer Satisfaction) measures how satisfied visitors are with their support experience. Visitors submit a star rating — optionally with a written comment — after a conversation is resolved. The Analytics page aggregates these ratings into a summary score and distribution.
+
+## How visitors submit ratings
+
+After a conversation is resolved (status 1000), the widget shows a rating prompt to the visitor. The visitor selects a rating from 1 to 5 stars. They can optionally add a text comment. Submitting the rating is voluntary — visitors who close the widget without rating are not prompted again.
+
+Ratings are stored in the `csat_ratings` table and associated with the closed conversation.
+
+## Finding the CSAT report
+
+Go to **Analytics** in the left sidebar. The CSAT section is on the analytics page, below the conversation volume chart. It respects the date range you select at the top of the page.
+
+## What the CSAT report shows
+
+### Average score
+
+The headline figure is the average rating across all submissions in the selected period, displayed on a 5-star scale. A score of 4.0 or above generally indicates strong satisfaction. Scores below 3.5 warrant investigation.
+
+### Total ratings
+
+The count of rating submissions in the period. A low count relative to conversation volume means most visitors are closing the widget without rating — this is normal behavior, but a very low rating rate can make the average statistically unreliable.
+
+### Distribution
+
+A breakdown of how many ratings fell into each star level (1 through 5), shown as a progress bar for each level. The distribution reveals whether dissatisfaction is concentrated (many 1-star ratings) or scattered (a spread across all levels).
+
+### Recent comments
+
+Below the distribution, the CSAT section lists recent written comments submitted alongside ratings. Each entry shows the star rating given and the comment text with a relative timestamp. Comments provide qualitative context that the numerical score cannot.
+
+## Using CSAT data
+
+A consistently low average score for a specific period can indicate a product issue, a staffing problem, or a bot flow that is frustrating visitors. Compare the CSAT score against the bot vs. agent split in the conversation volume chart — if bot-handled conversations score lower than agent-handled ones, your bot flows may need improvement.
+
+Read recent comments regularly. They surface specific complaints that the score alone does not explain.
+
+## What is not tracked
+
+CSAT only captures ratings submitted through the Yoosr widget. Conversations on Telegram, Messenger, WhatsApp, or Instagram do not currently show a rating prompt to visitors on those platforms.

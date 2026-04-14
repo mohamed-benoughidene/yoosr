@@ -1,0 +1,68 @@
+---
+title: "Block: Change Department"
+description: "The Change Department block reassigns a conversation to a different department and triggers the routing engine for that department. The bot stops after this block runs."
+section: "bot-flows"
+order: 16
+keywords: ["change department", "change dept", "department transfer", "routing", "department", "bot transfer department"]
+related: ["block-hitl-handoff", "block-if-online-agent", "departments", "routing"]
+---
+
+# Block: Change Department
+
+The Change Department block reassigns a conversation to a different department and triggers the routing engine to find an available agent in that department. The bot stops after this block runs.
+
+## What it does
+
+When the bot reaches a Change Department block, it:
+
+1. Assigns the conversation to the selected department
+2. Sets `botPaused: true` — the bot will not respond further
+3. Clears the bot assignment from the conversation
+4. Waits 2 seconds, then triggers the routing engine scoped to the new department
+5. Suspends — the flow does not continue past this block
+
+The routing engine then assigns the conversation to the least-busy available agent in that department, or places it in the department's unassigned queue if no agents are available.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Department | Yes | The department to route the conversation to. Selected from a dropdown of your project's departments. |
+
+## How to configure it
+
+1. Add a **Change Department** block to the canvas.
+2. Click it to open the properties panel.
+3. Select the target department from the dropdown.
+4. The block has no output handle — it is always the final block in a branch.
+
+If no departments appear in the dropdown, you need to create them first. Go to **Settings → Departments**.
+
+## How it differs from HITL Handoff
+
+Both blocks end the bot's involvement and route to a human agent, but they differ in scope:
+
+| | Change Department | HITL Handoff |
+|---|---|---|
+| Sends a message first | No | Yes — the handoff message |
+| Routes to | A specific department | General agent pool |
+| Bot paused after | Yes | Yes |
+
+Use **Change Department** when you know exactly which team should handle this — for example, routing billing questions to the Billing department. Use **HITL Handoff** when any available agent will do.
+
+## Pooled vs assigned departments
+
+If the target department is configured in **pooled mode**, the conversation goes into that department's queue and agents pick it up manually. If the department uses **assigned mode**, the routing engine automatically assigns it to the least-busy agent in that department.
+
+See [Departments →](/docs/agent-dashboard/departments) for how to configure department routing mode.
+
+<Callout variant="tip" title="Use with If Online Agent first">
+Before routing to a department, use an **If Online Agent** block to check whether agents are available. If the department is empty or all agents are offline, the conversation will sit unassigned until someone comes online.
+</Callout>
+
+## Next steps
+
+- [Departments →](/docs/agent-dashboard/departments)
+- [How routing works →](/docs/routing/how-routing-works)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

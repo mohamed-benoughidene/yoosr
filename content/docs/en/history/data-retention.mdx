@@ -1,0 +1,65 @@
+---
+title: "Data retention and the 90-day limit"
+description: "Yoosr keeps conversation and message data for 90 days. After that, it is soft-deleted and then permanently removed. This article explains exactly what happens and when."
+section: "history"
+order: 2
+keywords: ["data retention", "90 days", "TTL", "expiry", "deleted", "soft delete", "permanent deletion", "conversation history"]
+related: ["conversation-history", "resolving", "faq"]
+---
+
+# Data retention and the 90-day limit
+
+Yoosr keeps conversation and message data for **90 days** from the moment a conversation is created. After that, it is automatically removed. This applies to all conversations regardless of their status — open, assigned, or closed.
+
+## The two-stage deletion process
+
+Yoosr does not delete data instantly. It uses a two-stage process that gives a buffer before anything is permanently gone.
+
+**Stage 1 — Soft delete (day 90)**
+Every day at 3:00 AM, Yoosr checks for conversations older than 90 days. Any it finds are soft-deleted — they are marked as deleted and disappear from the dashboard immediately, but the data still exists in the database. Messages belonging to those conversations are soft-deleted at the same time.
+
+**Stage 2 — Permanent deletion (up to 30 days later)**
+Every Sunday at 6:00 AM, Yoosr permanently removes all soft-deleted records that have been in that state for more than 30 days. After this point, the data is gone and cannot be recovered.
+
+This means the full window from a conversation's creation to permanent deletion is up to **120 days** — 90 days active, then up to 30 more days soft-deleted before the Sunday cleanup runs.
+
+## What gets deleted
+
+When a conversation expires, both the conversation record and all of its messages are deleted. This includes:
+
+- All public messages between the visitor and agents
+- All internal notes left by agents
+- Bot messages and system messages
+- CSAT ratings linked to the conversation
+- Conversation events (join, resolve, transfer records)
+
+## What is not affected
+
+The 90-day limit applies to conversation and message data only. The following are retained on their own separate schedules:
+
+| Data type | Retention period |
+|---|---|
+| Activity logs | 90 days |
+| Token usage records | 90 days |
+| CSAT ratings | 180 days |
+| Webhook delivery logs | 30 days |
+| Contact records | Not affected by conversation TTL |
+
+Contact records — the visitor profiles in your Contacts section — are separate from conversations. A contact does not get deleted when their conversation expires.
+
+## Why conversations disappear from History
+
+If you notice a conversation is no longer visible in History, it has most likely passed the 90-day mark and been soft-deleted. Once soft-deleted it is no longer visible in the dashboard. There is no way to view or recover it.
+
+<Callout variant="warning" title="Export before 90 days if you need to keep records">
+If your business requires keeping conversation records beyond 90 days, export them to CSV from the History page before they expire. Go to History, filter by date, and click Export CSV. See [Conversation history →](/docs/history/conversation-history) for details.
+</Callout>
+
+## The 90-day clock starts at creation
+
+The expiry timer starts when a conversation is **created**, not when it is resolved. A conversation that took 60 days to resolve has only 30 days left in History before it is soft-deleted.
+
+## Next steps
+
+- [Export conversations to CSV →](/docs/history/conversation-history)
+- [CSAT data retention →](/docs/analytics/csat)

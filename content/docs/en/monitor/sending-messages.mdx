@@ -1,0 +1,91 @@
+---
+title: "Sending messages and notes"
+description: "How to write and send replies to visitors, leave internal notes for your team, use canned responses, send images, and resolve conversations from the Chat section."
+section: "chat"
+order: 2
+keywords: ["send message", "reply", "internal note", "canned response", "resolve", "public", "internal", "attach image", "keyboard shortcut"]
+related: ["chat-overview", "internal-notes", "canned-responses", "resolving"]
+---
+
+# Sending messages and notes
+
+The reply area sits at the bottom of the middle panel. Everything you send to a visitor — or leave as a note for your team — goes through here.
+
+## Public vs internal
+
+Before typing, check the **Public / Internal** toggle at the top of the reply area.
+
+**Public** — Your message goes to the visitor. They see it in the chat widget, or in their WhatsApp, Telegram, or Messenger app depending on the channel.
+
+**Internal** — Your message is a note for your team only. The visitor never sees it. Internal notes appear in the thread with a yellow background and an "Internal note" label.
+
+The toggle stays on whichever mode you last used. Always confirm which mode is active before sending.
+
+<Callout variant="warning" title="There is no undo">
+Sent messages cannot be recalled or deleted. Double-check you are in the right mode before clicking Send.
+</Callout>
+
+## Typing and sending
+
+Type in the text area and press **Enter** to send. To add a line break without sending, press **Shift + Enter**.
+
+When the message sends, the input clears immediately. If the send fails, your message is restored so you do not lose it.
+
+## Canned responses
+
+Canned responses are pre-written replies you insert with a shortcut. They only work in **Public** mode.
+
+To use one:
+
+1. Make sure the toggle is set to **Public**.
+2. Type `/` followed by the shortcut name — for example, `/refund`.
+3. A dropdown appears with matching responses.
+4. Use the arrow keys or click to select one.
+5. Press **Enter** to insert it into the reply area.
+6. Edit if needed, then send.
+
+The canned response is inserted at the cursor position, replacing everything from the `/` character to the end. If the response contains variables like `{{visitor_name}}`, they are replaced automatically with real values from the conversation before inserting.
+
+Variables replaced automatically in canned responses:
+
+| Variable | Replaced with |
+|---|---|
+| `{{visitor_name}}` | The visitor's name |
+| `{{agent_name}}` | Your full name |
+| `{{project_name}}` | The project name |
+| `{{user_email}}` | The visitor's email |
+| `{{ticket_id}}` | The conversation ID |
+
+See [Canned responses →](/docs/agent-dashboard/canned-responses) to create and manage your templates.
+
+## Attaching images
+
+Click the paperclip icon in the reply area to attach an image. Supported formats are standard image types (JPEG, PNG, GIF). The image uploads and appears in the conversation thread for both you and the visitor.
+
+## The action menu
+
+Click the three-dot menu (⋮) in the conversation header for additional actions:
+
+**Assign to me** — Takes ownership of the conversation if it is not already assigned to you. A system message appears in the thread confirming the assignment.
+
+**Transfer to agent** — Opens a search dialog to reassign the conversation to another agent in your organization.
+
+**Transfer to department** — Opens a search dialog to move the conversation to a different department, triggering the routing engine for that department.
+
+**Resolve** — Closes the conversation. Equivalent to clicking the Resolve button.
+
+## Resolving from Chat
+
+To resolve a conversation, click the **Resolve** button in the conversation header. The conversation closes and moves to History.
+
+If you want to send a final message and resolve in the same step, click the arrow next to the Send button and choose **Send as resolved**.
+
+<Callout variant="tip" title="Resolved conversations stay in the All tab">
+Resolved conversations appear in the **All** tab of your Chat list. They do not disappear until you switch to the Unread tab or search filters them out. This lets you check what you recently closed without going to History.
+</Callout>
+
+## Next steps
+
+- [Canned responses →](/docs/agent-dashboard/canned-responses)
+- [Internal notes explained →](/docs/monitor/internal-notes)
+- [Resolving conversations →](/docs/agent-dashboard/resolving)

@@ -1,0 +1,67 @@
+---
+title: Routing not assigning conversations
+description: Diagnose why new conversations are landing in the unassigned queue instead of being assigned to an agent.
+section: Troubleshooting
+order: 2
+keywords: [troubleshooting, routing, not assigning, unassigned, agent, availability, HITL, department, least-busy]
+related:
+  - routing/how-routing-works
+  - routing/unassigned-queue
+  - bot-flows/block-hitl-handoff
+---
+
+# Routing not assigning conversations
+
+If new conversations are landing in the unassigned queue when you expect them to go directly to an agent, work through the checks below. Routing follows a strict priority sequence — bot first, then available agents, then unassigned — so the cause is usually that one of the earlier steps is consuming the conversation unexpectedly, or that no agents qualify as available.
+
+## 1. Check whether a bot is active
+
+If the project has an active bot, the bot handles the conversation first. Agents are not notified until the bot reaches an HITL Handoff block or an agent joins manually.
+
+1. Go to **Bots** in the left sidebar.
+2. Check whether any bot shows **Active** status.
+3. If you want conversations to go directly to agents without bot involvement, set the bot to **Inactive**.
+
+## 2. Check whether the bot reaches the HITL Handoff block
+
+If a bot is active and conversations should eventually reach agents, verify that the bot flow is actually routing to the HITL Handoff block. If the flow ends or gets stuck before reaching the handoff block, the conversation stays with the bot and agents are never notified.
+
+1. Open the bot in Design Studio.
+2. Trace the flow path to confirm the HITL Handoff block is reachable.
+3. Use the test widget to simulate a conversation and observe which path the bot takes.
+
+## 3. Check agent availability
+
+The routing engine only assigns to agents who are marked as available. If no agents are available, every conversation lands in the unassigned queue — this is correct behavior, not a bug.
+
+Check whether your agents are logged in to the dashboard and marked as available. Agent availability is set in the dashboard header. An agent who is logged out or set to away does not receive new assignments.
+
+## 4. Check the department configuration
+
+If the bot's HITL Handoff block or the conversation's routing target is set to a specific department, the routing engine looks only for agents in that department. If the department has no members, or if all its members are unavailable, the conversation goes unassigned.
+
+1. Go to **Settings → Departments**.
+2. Open the relevant department.
+3. Verify that at least one agent is a member and is currently available.
+
+## 5. Check the routing mode on the department
+
+A department configured with **Pooled** routing mode places all conversations in the shared queue rather than assigning them to a specific agent. This is intentional — agents claim pooled conversations themselves from Monitor.
+
+If you want automatic one-to-one assignment, change the department's routing mode to **Assigned**.
+
+1. Go to **Settings → Departments**.
+2. Edit the department.
+3. Change **Routing mode** to **Assigned**.
+
+## 6. Verify the least-busy algorithm has data to work with
+
+The least-busy algorithm assigns conversations to the agent with the fewest currently assigned conversations. If multiple agents have identical load (including zero), the algorithm picks one. If the project has only one agent and that agent is at capacity, the conversation may be queued.
+
+This is expected behavior under high load. Add more agents or have existing agents resolve conversations to free up capacity.
+
+## 7. Check for a timing issue on first login
+
+There is a known timing issue where `org_id` may not be present in the Clerk JWT immediately after the first login of a session. If an agent logs in for the first time and the dashboard loads before the JWT is fully populated, the session may behave incorrectly.
+
+**Fix:** Sign out and sign back in. The second login initializes the full JWT correctly and routing behaves as expected.

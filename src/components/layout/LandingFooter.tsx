@@ -60,7 +60,6 @@ export function LandingFooter() {
               Product
             </h3>
             <nav className="flex flex-col gap-2.5">
-              {/* TODO: Re-enable docs link when ready
               <Link
                 href="/docs"
                 className="text-sm text-[var(--lp-text-muted)] hover:text-[var(--lp-gold)] transition-colors inline-flex items-center gap-1.5 group"
@@ -68,7 +67,6 @@ export function LandingFooter() {
                 {t("legal.docs")}
                 <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
               </Link>
-              */}
               <Link
                 href="/legal/terms"
                 className="text-sm text-[var(--lp-text-muted)] hover:text-[var(--lp-gold)] transition-colors inline-flex items-center gap-1.5 group"

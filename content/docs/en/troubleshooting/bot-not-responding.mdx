@@ -1,0 +1,78 @@
+---
+title: Bot not responding
+description: Diagnose and fix the most common reasons an active bot stops replying to visitors.
+section: Troubleshooting
+order: 1
+keywords: [troubleshooting, bot, not responding, silent, no reply, active, flow, OpenRouter, status]
+related:
+  - bot-flows/publishing-testing
+  - knowledge-base/adding-sources
+  - settings/ai-model-selection
+---
+
+# Bot not responding
+
+If visitors are sending messages but the bot never replies, work through the checks below in order. Each one is a distinct cause with a specific fix.
+
+## 1. Check that the bot is active
+
+A bot only runs if its status is **Active**. An inactive bot does not intercept any conversations.
+
+1. Go to **Bots** in the left sidebar.
+2. Find your bot in the list.
+3. Check the status badge. If it shows **Inactive**, select the bot and toggle it to Active.
+
+Only one bot can be active per project at a time. If you activate a second bot, the first one is paused automatically.
+
+## 2. Check that the bot flow is published
+
+A bot must have a published flow to execute. An unpublished draft does not run.
+
+1. Open the bot in Design Studio.
+2. Check the **Publish** button in the top toolbar. If it is enabled (not greyed out), the current flow has unsaved changes that have not been published.
+3. Select **Publish** to push the latest flow to production.
+
+## 3. Check whether an agent has paused the bot
+
+When a human agent sends a message in a conversation, Yoosr pauses the bot for that conversation automatically. The bot does not run again unless explicitly resumed.
+
+In Monitor, open the affected conversation and check the three-dot menu. If you see **Resume Bot**, the bot has been paused. Select it to resume.
+
+This is per-conversation — other conversations are not affected.
+
+## 4. Check the start node connection
+
+The bot flow must have a connected path from the Start node. If the Start node has no outgoing edge, the bot receives the message but takes no action.
+
+1. Open the bot in Design Studio.
+2. Verify that the Start node has at least one connected edge leading to a Reply or other block.
+
+## 5. Check the OpenRouter API key
+
+AI Task and AI Assistant blocks require a valid OpenRouter API key. If the key is missing, expired, or invalid, those blocks fail silently and the flow may halt.
+
+1. Go to **Settings → Integrations** (or the equivalent OpenRouter settings page in your project).
+2. Verify the API key is present and correct.
+3. Test it by visiting [openrouter.ai](https://openrouter.ai) and confirming your account is active and has available credits or a valid free tier.
+
+## 6. Check knowledge base source status
+
+If the bot flow uses an **Ask knowledge base** block and no sources are in **Ready** status, the block finds no results and follows the Not found edge — which may lead to a silent path if that edge is unconnected.
+
+1. Go to **Knowledge Base** and open the KB your bot uses.
+2. Check that at least one source shows **Ready** status.
+3. If sources show **Processing**, wait for them to complete. If they show **Error**, delete and re-add them.
+
+## 7. Check the Not found edge on Ask KB blocks
+
+If the Ask knowledge base block's **Not found** edge has no connection, the bot flow ends silently when no result is found. The visitor receives no reply.
+
+1. Open the bot flow in Design Studio.
+2. Select the Ask knowledge base block.
+3. Verify that both **Found** and **Not found** edges are connected to a downstream block.
+
+## 8. Test with the widget preview
+
+Use the **Test widget** in the dashboard to send a message and observe the bot's behavior in a controlled environment. This isolates the issue from channel-specific problems (Telegram webhook, Meta credentials, etc.).
+
+If the bot responds in the test widget but not on a live channel, the problem is in the channel integration rather than the bot flow itself.

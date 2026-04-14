@@ -1,0 +1,78 @@
+---
+title: Adding sources to a knowledge base
+description: Add URLs, PDF files, or plain text to your knowledge base so the bot can search them.
+section: Knowledge Base
+order: 2
+keywords: [knowledge base, sources, URL, PDF, text, upload, embedding, processing]
+related:
+  - knowledge-base/creating-a-kb
+  - knowledge-base/how-semantic-search-works
+---
+
+# Adding sources to a knowledge base
+
+A knowledge base source is any piece of content you add for the bot to search. Yoosr supports three source types: a web page URL, a PDF file, and plain text. After you add a source, Yoosr processes it in the background — extracting text, splitting it into chunks, and generating vector embeddings — before the bot can use it.
+
+## Open the Add content dialog
+
+1. In the left sidebar, select **Knowledge Base**.
+2. Select the knowledge base you want to add content to.
+3. Select **Add content**.
+
+The dialog opens with three tabs: **URL**, **File**, and **Text**.
+
+## Add a URL
+
+Use this option to pull content from a public web page — a help article, a product page, a blog post.
+
+1. Select the **URL** tab.
+2. Paste the full URL, including `https://`.
+3. Select **Add**.
+
+Yoosr fetches the page, extracts its text content, and processes it. The source appears in the list with a processing status badge while embedding is in progress.
+
+<Callout variant="warning" title="Private pages are not supported">
+Yoosr fetches URLs from the server. Pages behind a login wall, requiring cookies, or returning a 403 or 404 error cannot be scraped. Use the Text tab to paste content manually in those cases.
+</Callout>
+
+## Add a PDF file
+
+Use this option to upload a PDF document — a policy manual, a product catalogue, or a terms document.
+
+1. Select the **File** tab.
+2. Drag and drop a PDF onto the upload area, or select the area to open the file picker.
+3. Select **Upload**.
+
+Yoosr extracts the text from the PDF using `unpdf`, splits it into chunks, and generates embeddings.
+
+<Callout variant="info" title="Scanned PDFs">
+Only text-based PDFs are supported. If your PDF consists of scanned images without selectable text, the extraction returns empty content and the source will not answer bot questions. Convert scanned documents to text first, or use the Text tab to paste the content manually.
+</Callout>
+
+## Add plain text
+
+Use this option to enter content directly — a custom FAQ answer, a disclaimer, or any text that is not on a public URL.
+
+1. Select the **Text** tab.
+2. Type or paste your content into the text area.
+3. Select **Save**.
+
+## Understanding processing status
+
+Each source shows a status badge after it is added:
+
+| Status | Meaning |
+|--------|---------|
+| Processing | Yoosr is splitting and embedding the content. The bot cannot use this source yet. |
+| Ready | Processing is complete. The bot can search this source. |
+| Error | Processing failed. Check that the URL is publicly accessible or that the PDF contains selectable text. |
+
+Processing usually takes a few seconds for small sources and up to a minute for large PDFs.
+
+## Refreshing a source
+
+To re-process a source — for example, after a web page is updated — select the **Refresh** icon (↻) next to the source. Yoosr fetches the content again, replaces the old chunks, and regenerates the embeddings.
+
+## Removing a source
+
+Select the **Delete** icon (🗑) next to the source to remove it. Yoosr deletes the source and all its associated chunks from the vector index.

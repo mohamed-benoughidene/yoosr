@@ -1,0 +1,63 @@
+---
+title: How routing works
+description: Understand how Yoosr decides who handles each incoming conversation — bot, agent, or unassigned queue.
+section: Routing
+order: 1
+keywords: [routing, bot, agent, assignment, least-busy, unassigned, queue, HITL, handoff]
+related:
+  - routing/pooled-vs-assigned
+  - routing/unassigned-queue
+  - bot-flows/block-hitl-handoff
+---
+
+# How routing works
+
+Every time a visitor starts a conversation, Yoosr runs a routing decision automatically. The goal is to get the conversation to the right handler — a bot, a specific agent, or the shared unassigned queue — without any manual intervention.
+
+## The routing sequence
+
+Yoosr evaluates three options in order. It moves to the next option only if the previous one is not available.
+
+### 1. Bot (first priority)
+
+If the project has an active bot, Yoosr assigns it to the conversation first. The bot runs its flow and handles the visitor directly. A human agent is not notified.
+
+The bot remains in control until one of these things happens:
+
+- The bot flow reaches an **HITL Handoff** block, which pauses the bot and routes the conversation to a human agent.
+- An agent joins the conversation manually using the **Join** button in Monitor.
+- An agent sends a message to the conversation, which pauses the bot automatically.
+
+### 2. Available human agents (second priority)
+
+If there is no active bot, Yoosr looks for available human agents. It uses a least-busy algorithm — the agent who currently has the fewest assigned conversations receives the new one.
+
+When an agent is assigned, the conversation status changes from **Unassigned** (100) to **Assigned** (200), and the agent receives a notification.
+
+### 3. Unassigned queue (fallback)
+
+If no agents are available, the conversation lands in the unassigned queue with status **Unassigned** (100). It stays there until an agent picks it up manually from the Monitor. See [The unassigned queue](./unassigned-queue).
+
+## How the bot hands off to a human
+
+When a bot flow includes an **HITL Handoff** block, the block pauses the bot and triggers the routing engine again — but this time skipping the bot step and going directly to available agents. If no agents are available, the conversation joins the unassigned queue.
+
+The visitor sees a configurable handoff message while the assignment happens.
+
+## Status values
+
+| Status code | Name | Meaning |
+|-------------|------|---------|
+| 100 | Unassigned | No agent assigned yet |
+| 200 | Assigned | An agent is handling this conversation |
+| 1000 | Resolved | Conversation is closed |
+
+These status values control what appears in the Monitor conversation list and which filters surface a conversation.
+
+## Manual overrides
+
+Agents can always override automatic routing:
+
+- **Join** — Any agent can join an unassigned or assigned conversation using the Join button in Monitor. If no agent is assigned, joining automatically assigns the conversation to that agent.
+- **Transfer** — An assigned agent can transfer the conversation to a specific agent or department using the three-dot menu in Monitor.
+- **Assign to me** — An agent can assign any unassigned conversation to themselves from the three-dot menu.

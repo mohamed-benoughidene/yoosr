@@ -1,0 +1,71 @@
+---
+title: "Block: Reply"
+description: "The Reply block sends a text message to the visitor. It supports {{ }} variables, optional quick-reply buttons, and multiple message variations that the bot picks from randomly."
+section: "bot-flows"
+order: 4
+keywords: ["reply block", "send message", "bot message", "quick reply", "buttons", "message variations", "random reply"]
+related: ["template-syntax", "block-capture-reply", "canvas-overview"]
+---
+
+# Block: Reply
+
+The Reply block sends a text message to the visitor. It is the most commonly used block in any bot flow.
+
+## What it does
+
+When the bot reaches a Reply block, it sends the configured message to the visitor immediately and then moves to the next connected block. The message appears in the chat thread exactly as a regular bot message.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. Does not affect the message. |
+| Message | Yes | The text sent to the visitor. Supports `{{ }}` variables. |
+| Buttons | No | Up to 3 quick-reply buttons the visitor can tap. |
+
+## How to configure it
+
+1. Click the **Reply** block in the palette to add it to the canvas.
+2. Click the block to open the properties panel.
+3. Type your message in the message field.
+4. Optionally add buttons using the **Add** button next to the Buttons section.
+5. Connect the output handle to the next block.
+
+## Using variables in the message
+
+Any `{{ }}` variable works inside the message text. For example:
+
+```
+Hi {{customer_name}}, thanks for reaching out to {{project_name}}!
+How can I help you today?
+```
+
+If `customer_name` has not been set yet, the placeholder becomes an empty string. See [Template syntax →](/docs/bot-flows/template-syntax) for all available variables.
+
+## Quick-reply buttons
+
+Buttons appear as tappable options below the message in the chat widget. Each button has a label. When the visitor taps a button, the button's label is sent as their next message and the flow continues.
+
+Buttons work best with a **Capture Reply** block immediately after — the button tap is captured as the visitor's input.
+
+You can add up to 3 buttons per Reply block. To remove a button, click the trash icon next to it.
+
+## Message variations
+
+The Reply block supports multiple message variations. When you add more than one variation using the **Add variation** button, the bot picks one at random each time the block runs. This makes the bot feel less repetitive.
+
+All variations are shown as separate text areas in the properties panel. The canvas node preview shows all variations with a "Random from" label.
+
+<Callout variant="tip" title="Keep messages short">
+Visitors read on mobile. Aim for 2–3 sentences per Reply block. Use multiple Reply blocks in sequence if you need to say more.
+</Callout>
+
+## Common mistakes
+
+- **No output connection** — If the Reply block has no outgoing edge, the bot stops here and the visitor receives no further response. Always connect the output to the next block.
+- **Variables not yet set** — If you reference `{{customer_name}}` before a Capture Reply block has stored it, the placeholder will be empty. Make sure attribute-setting blocks run before the blocks that reference them.
+
+## Next steps
+
+- [Block: Capture Reply →](/docs/bot-flows/block-capture-reply)
+- [Template syntax →](/docs/bot-flows/template-syntax)

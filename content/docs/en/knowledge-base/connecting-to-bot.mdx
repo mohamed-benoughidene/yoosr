@@ -1,0 +1,82 @@
+---
+title: Connecting a knowledge base to a bot
+description: Add the Ask knowledge base block to your bot flow to let the bot search your content and answer visitor questions.
+section: Knowledge Base
+order: 4
+keywords: [knowledge base, bot, Ask KB, design studio, flow, RAG, connect]
+related:
+  - knowledge-base/creating-a-kb
+  - knowledge-base/adding-sources
+  - knowledge-base/how-semantic-search-works
+---
+
+# Connecting a knowledge base to a bot
+
+A knowledge base becomes useful when a bot can search it. You connect a knowledge base to a bot by adding an **Ask knowledge base** block in the Design Studio. The block handles the search and answer generation automatically.
+
+## Prerequisites
+
+Before you connect a knowledge base to a bot:
+
+- The knowledge base must exist and have at least one source in **Ready** status. A knowledge base with no processed sources returns no results.
+- The bot must be open in the Design Studio.
+
+## Add the Ask knowledge base block
+
+1. In the left sidebar, select **Bots**.
+2. Find the bot you want to edit and select **Open in Design Studio**.
+3. In the block panel on the left, find **Ask knowledge base** and drag it onto the canvas.
+4. Connect the block to the part of the flow where you want the bot to search. For example, connect it after a **Capture user reply** block that captures the visitor's question.
+
+## Configure the block
+
+Select the Ask knowledge base block to open its settings panel on the right.
+
+### Knowledge base
+
+Select the knowledge base to search from the dropdown. The list shows all knowledge bases for the current project.
+
+### Store result in
+
+Enter a variable name where the bot will save the answer text — for example, `kb_reply`. You can then use `{{kb_reply}}` in a **Reply** block to send the answer to the visitor.
+
+### Fallback path
+
+The block has two output edges: **Found** and **Not found**.
+
+- **Found** — The bot found a relevant answer above the similarity threshold. Connect this edge to a Reply block that sends `{{kb_reply}}`.
+- **Not found** — No match was found. Connect this edge to a fallback Reply block with a message like "I don't have an answer to that. Let me connect you with an agent." or an HITL Handoff block.
+
+<Callout variant="tip" title="Always connect both edges">
+If you leave the Not found edge unconnected, the bot flow ends silently when no match is found. Always connect it to a fallback so the visitor receives a response.
+</Callout>
+
+## Example flow pattern
+
+A common pattern for a question-answering bot:
+
+1. **Reply** — Greet the visitor and ask what they need help with.
+2. **Capture user reply** → store in `visitor_question`
+3. **Ask knowledge base** → search using `{{visitor_question}}`, store answer in `kb_reply`
+   - Found → **Reply** with `{{kb_reply}}`
+   - Not found → **HITL Handoff** to route to a human agent
+
+## Using the result in a Reply block
+
+After the Ask knowledge base block stores the answer in a variable, use template syntax to display it:
+
+```
+{{kb_reply}}
+```
+
+Paste this into the content field of any Reply block connected to the Found edge.
+
+## Testing the connection
+
+After publishing your bot:
+
+1. Open the **Test widget** from the dashboard sidebar.
+2. Ask a question that your knowledge base content covers.
+3. Verify that the bot replies with content from your source material.
+
+If the bot always falls through to the Not found path, check that your sources are in **Ready** status and that the question is genuinely covered by your content. See [Improving knowledge base accuracy](./improving-kb-accuracy).

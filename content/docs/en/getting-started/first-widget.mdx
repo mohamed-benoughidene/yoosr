@@ -1,116 +1,121 @@
-export const meta = {
-  title: "Your First Widget",
-  description: "Embed a live chat widget on your website in under 2 minutes using a single code snippet.",
-  section: "getting-started"
-}
+---
+title: "Embed your first widget"
+description: "Paste two lines of code on your website and a live chat button appears. This guide walks you through the exact steps."
+section: "getting-started"
+order: 3
+keywords: ["widget", "embed", "install", "live chat", "script", "website"]
+related: ["create-project", "widget-customization", "widget-configuration", "troubleshooting-widget"]
+---
 
-# Embed Your First Widget
+# Embed your first widget
 
-The Yoosr widget is a lightweight, embeddable chat interface that lives on your website. It loads asynchronously so it won't slow down your page, and it connects directly to your Yoosr project's conversation system.
+The Yoosr widget is a chat button that appears on your website. When a visitor clicks it, they can send messages directly to your team. The widget loads in the background — it will not slow down your page.
 
-## How It Works
+The entire installation is two lines of HTML.
 
-The widget works in two steps:
+## What you need
 
-1. You set a global configuration object (`window.yoosrSettings`) with your Project ID
-2. You load the widget script (`widget.js`) which reads that config and renders the chat button
+- Your **Project ID** (find it in **Settings → Widget Setup**)
+- Access to your website's HTML
 
-The entire integration is **two lines of code**.
+## Installation
 
-## Step-by-Step Guide
+### Step 1 — Copy your snippet
 
-<Step number={1} title="Open Widget Settings">
-In your Yoosr project dashboard, navigate to **Settings → Widget Setup**.
-</Step>
+In your Yoosr dashboard:
 
-<Step number={2} title="Copy the Installation Code">
-Switch to the **Installation** tab. You'll see a code snippet that looks like this:
+1. Go to **Settings → Widget Setup**.
+2. Click the **Installation** tab.
+3. Click **Copy** to copy your personal snippet.
+
+It looks like this:
 
 ```html
 <script>
-  window.yoosrSettings = { projectId: "proj_abc123xyz" };
+  window.yoosrSettings = { projectId: "YOUR_PROJECT_ID" };
 </script>
 <script src="https://app.yoosr.com/widget.js" async></script>
 ```
 
-Your actual Project ID will be pre-filled. Click the **Copy** button to copy the snippet.
-</Step>
+Your actual Project ID is pre-filled — you do not need to change anything.
 
-<Step number={3} title="Paste Before `</body>`">
-Open your website's HTML and paste the code **right before the closing `</body>` tag**.
+### Step 2 — Paste it on your website
+
+Open your website's HTML and paste the snippet just before the closing `</body>` tag:
 
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>My Website</title>
-</head>
-<body>
-  <!-- Your website content -->
+  <head>
+    <title>My Website</title>
+  </head>
+  <body>
 
-  <!-- Yoosr Widget — paste here -->
-  <script>
-    window.yoosrSettings = { projectId: "proj_abc123xyz" };
-  </script>
-  <script src="https://app.yoosr.com/widget.js" async></script>
-</body>
+    <!-- your page content -->
+
+    <!-- paste Yoosr widget here -->
+    <script>
+      window.yoosrSettings = { projectId: "YOUR_PROJECT_ID" };
+    </script>
+    <script src="https://app.yoosr.com/widget.js" async></script>
+  </body>
 </html>
 ```
 
-<Callout variant="warning" title="Important">
-The script must load **after** your page content. Placing it before `</body>` ensures the widget initializes correctly.
+<Callout variant="warning" title="Placement matters">
+The snippet must go before `</body>`, not inside `<head>`. Placing it in the head can cause the widget to load before your page is ready.
 </Callout>
-</Step>
 
-<Step number={4} title="Test the Widget">
+### Step 3 — Test it
+
 Open your website in a browser. You should see a circular chat button in the bottom-right corner.
 
-**What to check:**
+Check that:
 
-- The chat button is visible and clickable
+- The button is visible and clickable
 - Clicking it opens the chat window
-- The welcome message appears after the configured delay
-- You can send messages and they appear in your Yoosr dashboard
+- You can type a message and see it appear in your Yoosr dashboard under **Monitor**
 
-<Callout variant="tip" title="Use an incognito window">
-The widget tracks visitors via `localStorage`. Use an incognito window to simulate a new visitor session.
+<Callout variant="tip" title="Use an incognito window for testing">
+The widget remembers visitors using browser storage. Open an incognito window to simulate a brand-new visitor each time you test.
 </Callout>
-</Step>
 
-## Widget Behavior
+## What the widget does by default
 
-Once loaded, the widget will:
+Once installed, the widget behaves like this out of the box:
 
-| Behavior | Description |
-|----------|-------------|
-| **Launcher button** | Circular chat button, bottom-right (or left) of the viewport |
-| **Welcome message** | Appears after the configured delay (default: 3 seconds) |
-| **Pre-chat form** | If enabled, visitors fill in name/email/phone before chatting |
-| **Real-time messaging** | Messages sync instantly with the agent dashboard |
-| **File attachments** | Visitors can upload images and files |
-| **CSAT rating** | After a conversation closes, visitors can rate their experience |
+| Behavior | Default |
+|----------|---------|
+| Position | Bottom-right corner |
+| Welcome message | Appears after 3 seconds |
+| Pre-chat form | Disabled — visitors chat immediately |
+| Language | English |
+| Bot | None until you assign one |
 
-## Platform-Specific Installation
+## Using a website builder or CMS?
 
-The HTML snippet above works for any website. For framework-specific instructions (Next.js, React, Vue, WordPress, Shopify, etc.), see the [Widget Installation Guide](/docs/widget/installation).
+The snippet works on any HTML page. For specific platforms:
 
-## Troubleshooting
+- **WordPress** — Paste the snippet in your theme's `footer.php` before `</body>`, or use a plugin like Insert Headers and Footers.
+- **Shopify** — In your theme editor, open `theme.liquid` and paste before `</body>`.
+- **Webflow** — Go to Project Settings → Custom Code → Footer Code and paste there.
+- **Next.js / React** — Add the snippet inside a `useEffect` or use `next/script` with `strategy="beforeInteractive"`.
 
-**Widget not showing?**
-- Verify the script is placed before `</body>`
-- Check that your Project ID matches the one in Settings
-- Open browser DevTools → Console and look for errors
+For all other cases: if you can edit the HTML of your page, you can install the widget.
 
-**Widget shows but messages don't send?**
-- Verify your project has an active conversation system configured
-- Check network tab for failed API calls to the Convex backend
+## Widget not showing?
 
-**Widget styles look wrong?**
-- The widget uses its own scoped styles and won't conflict with your CSS
-- If you have aggressive CSS resets, they may affect the iframe — check the iframe directly
+Run through this checklist:
 
-## Next Steps
+1. Is the snippet placed before `</body>` (not in `<head>`)?
+2. Does the `projectId` in the snippet match the one in **Settings → Widget Setup**?
+3. Open your browser's DevTools (F12) → Console tab. Are there any red errors?
+4. Is an ad blocker or browser extension blocking third-party scripts? Test with extensions disabled.
 
-Now that your widget is live, you can customize its appearance and behavior.
+For more detailed troubleshooting, see [Widget not showing on my website →](/docs/troubleshooting/widget-not-showing).
 
-[Customize Your Widget →](/docs/widget/customization)
+## Next steps
+
+- [Customize widget appearance →](/docs/channels/widget-customization)
+- [Set up a bot →](/docs/bot-flows)
+- [Invite your team →](/docs/getting-started/invite-team)

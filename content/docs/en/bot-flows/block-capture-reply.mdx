@@ -1,0 +1,71 @@
+---
+title: "Block: Capture Reply"
+description: "The Capture Reply block pauses the bot and waits for the visitor to send a message. Whatever the visitor types is stored in a named attribute and available to later blocks as a variable."
+section: "bot-flows"
+order: 5
+keywords: ["capture reply", "capture user input", "wait for input", "store input", "attribute", "user input", "suspend"]
+related: ["block-reply", "block-set-attribute", "block-condition", "template-syntax"]
+---
+
+# Block: Capture Reply
+
+The Capture Reply block pauses the bot and waits for the visitor to send a message. Whatever the visitor types is stored as a named attribute that later blocks can reference using `{{ }}` syntax.
+
+## What it does
+
+When the bot reaches a Capture Reply block, execution suspends. The bot does nothing until the visitor sends their next message. When a message arrives, it is stored in the attribute you named, and the flow continues to the next block.
+
+This is the primary way to collect information from a visitor — their name, order number, question, or any other free-text input.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Save reply to | Yes | The attribute name where the visitor's input is stored. |
+
+## How to configure it
+
+1. Add a **Capture Reply** block to the canvas after the block that asks the visitor a question.
+2. Click the block to open the properties panel.
+3. Type the attribute name in the **Save reply to** field — for example, `customer_name` or `order_id`.
+4. Connect the output to the next block.
+
+## Using the captured value
+
+Once the visitor's input is stored, use it in any subsequent block with `{{attribute_name}}`. For example, if you set **Save reply to** as `customer_name`, the next Reply block can say:
+
+```
+Thanks, {{customer_name}}! Let me look that up for you.
+```
+
+## How suspension works
+
+When the bot reaches a Capture Reply block and there is no incoming message from the visitor yet, it returns `suspend: true` internally. The bot engine stops processing and waits. The next time the visitor sends a message, the engine picks up exactly where it left off — at the Capture Reply block — captures the input, and continues.
+
+This means the bot does not time out waiting for the visitor. The conversation stays suspended indefinitely until the visitor replies or the conversation expires.
+
+<Callout variant="info" title="Button taps count as replies">
+If the previous block was a Reply block with quick-reply buttons, the button the visitor taps is captured as their reply. The attribute will contain the button label text.
+</Callout>
+
+## Naming attributes
+
+Attribute names are case-sensitive and can only contain letters, numbers, and underscores. No spaces. Good names are descriptive and lowercase:
+
+- `customer_name` — the visitor's name
+- `order_id` — an order number they provided
+- `issue_type` — a category they selected
+
+Avoid generic names like `input` or `reply` — they are easy to accidentally overwrite in a later block.
+
+## Common mistakes
+
+- **No Reply block before it** — The visitor needs to know what to type. Always place a Reply block with a question immediately before the Capture Reply block.
+- **Same attribute name used twice** — If two Capture Reply blocks use the same attribute name, the second one overwrites the first. Use distinct names for each piece of information you collect.
+
+## Next steps
+
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Template syntax →](/docs/bot-flows/template-syntax)

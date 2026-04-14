@@ -1,0 +1,96 @@
+---
+title: "Block: AI Task"
+description: "The AI Task block sends a prompt to an AI model, waits for the response, and stores the result in a named attribute. It runs once and moves on — it does not hold a conversation."
+section: "bot-flows"
+order: 10
+keywords: ["AI task", "LLM", "prompt", "AI block", "OpenRouter", "chatgpt task", "ai output", "classify", "extract", "generate"]
+related: ["template-syntax", "block-set-attribute", "block-condition", "block-ask-kb"]
+---
+
+# Block: AI Task
+
+The AI Task block sends a prompt to an AI model, waits for the response, and stores the output in an attribute. It runs once and moves to the next block. Use it for one-shot AI operations — classifying visitor intent, extracting a value from text, generating a short response, summarising input.
+
+## What it does
+
+When the bot reaches an AI Task block, it:
+
+1. Builds the system prompt by interpolating `{{ }}` variables
+2. Builds the user input (defaults to `{{lastUserText}}`)
+3. Calls the AI model via OpenRouter
+4. Stores the response in the named output attribute
+5. Moves immediately to the next block
+
+No message is sent to the visitor. The AI's response is stored silently and the flow continues.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| System prompt | Yes | Instructions for the AI. Supports `{{ }}` variables. |
+| User input | No | The input sent as the user message. Defaults to `{{lastUserText}}`. |
+| Model | No | Override the AI model for this block. Leave blank to use the project default. |
+| Save output to variable | No | Attribute name to store the response. Default: `gpt_reply`. |
+
+## How to configure it
+
+1. Add an **AI Task** block to the canvas.
+2. Click it to open the properties panel.
+3. Write your system prompt. Be specific — the more precise the instruction, the more reliable the output.
+4. Leave **User input** as `{{lastUserText}}` unless you want to send something different.
+5. Set **Save output to variable** to a meaningful name — for example, `intent` or `summary`.
+6. Connect the output to the next block.
+
+## Using the output
+
+Once the block runs, the attribute you named is available to all subsequent blocks via `{{ }}`. For example:
+
+```
+[AI Task]
+System prompt: Classify the visitor's message into one of: billing, technical, general.
+               Reply with ONLY the category name, nothing else.
+User input: {{lastUserText}}
+Save output to: intent
+
+[Condition]
+Attribute to check: intent
+Operator: equals
+Compare value: billing
+```
+
+## JSON output
+
+If the AI returns a valid JSON object, the AI Task block automatically parses it and stores each top-level key as its own attribute. For example, if the AI returns:
+
+```json
+{"name": "Ahmed", "issue": "billing", "urgency": "high"}
+```
+
+Then `name`, `issue`, and `urgency` are all set as attributes automatically. The full JSON string is also stored in the named output variable.
+
+Instruct the AI to return JSON in your system prompt when you need structured output.
+
+## Model selection
+
+Leave the **Model** field blank to use the model configured in your project settings. Override it here only when a specific block needs a different model — for example, a faster model for simple classification and a more capable one for generation.
+
+## Token usage
+
+Every AI Task call uses tokens. These are logged to the Token Usage section of Analytics under the `ai_task` operation.
+
+<Callout variant="warning" title="AI Task does not hold a conversation">
+The AI Task block runs once with no conversation history. It only sees the system prompt and the user input you configure. If you need the AI to be aware of the full conversation, use the Ask Knowledge Base block instead — it passes the last 10 messages as history.
+</Callout>
+
+## Common mistakes
+
+- **Vague system prompt** — The vaguer the prompt, the more unpredictable the output. For classification tasks, always list the exact category options and tell the AI to return only one.
+- **Not connecting an output** — If the AI Task block has no outgoing edge, the flow stops after it runs.
+- **Referencing the output before it runs** — Make sure the block that uses `{{intent}}` comes after the AI Task block that sets it.
+
+## Next steps
+
+- [Block: Condition →](/docs/bot-flows/block-condition)
+- [Template syntax →](/docs/bot-flows/template-syntax)
+- [Block: Ask Knowledge Base →](/docs/bot-flows/block-ask-kb)

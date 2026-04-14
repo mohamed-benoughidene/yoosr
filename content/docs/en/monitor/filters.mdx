@@ -1,0 +1,52 @@
+---
+title: "Filtering conversations"
+description: "The Monitor conversation list has four filters and three sort options. Use them to find the conversations that need your attention and cut through noise when the queue is busy."
+section: "monitor"
+order: 4
+keywords: ["filter", "search", "label filter", "department filter", "agent filter", "status filter", "sort", "SLA", "priority"]
+related: ["monitor-overview", "conversation-statuses", "served-unserved", "labels"]
+---
+
+# Filtering conversations
+
+When the conversation list gets long, filters help you focus on what matters. The Monitor has a search bar, four filters, and three sort options. You can combine them freely.
+
+## Search
+
+The search bar at the top of the conversation list searches across visitor names, email addresses, and the last message content. It filters as you type — no need to press Enter.
+
+## Filters
+
+**Label** — Shows only conversations tagged with a specific label. Click the **Label** button to open a list of your project's labels. Click any label to filter by it. Click it again to clear. If your project has no labels yet, the list will be empty — go to Settings → Labels to create some first.
+
+**Department** — Shows only conversations that belong to a specific department. Click the **Department** button and select from your departments list. Selecting a department also changes which conversations the routing engine considers — only conversations in that department's scope are shown.
+
+**Agent** — Shows only conversations assigned to a specific agent or bot. The list includes all agents in your organization plus any bots assigned to the project.
+
+**Status** — Filters by conversation status: Unassigned, Assigned (Open), or Closed. Useful when you want to see only what is waiting (Unassigned) or only what is actively being handled (Assigned).
+
+## Combining filters
+
+All filters stack. If you select the **Billing** label and the **Support** department, you see only conversations that have both the Billing label and belong to the Support department. The search bar applies on top of whatever filters are active.
+
+To clear all filters at once, click **Clear all** if it appears, or click each active filter button again to deselect it.
+
+## Sort options
+
+Click the sort icon (the sliders icon) in the filter bar to change the sort order:
+
+**Newest first** — Default. Conversations ordered by the time of the last message, most recent at the top.
+
+**Priority** — Orders by conversation priority: Urgent → High → Normal → Low. Within the same priority level, conversations are ordered by most recent message.
+
+**SLA** — Orders by urgency of response needed. Unserved conversations (no human reply yet) appear first, ordered by how long the visitor has been waiting. Served conversations appear below. See [Served vs unserved →](/docs/routing/served-unserved) for more detail.
+
+<Callout variant="tip" title="Department filter changes routing scope">
+When a department is selected in the Monitor, it also scopes the conversations fetched from the server — not just the display. This means you are genuinely working within that department's queue, not just hiding other rows.
+</Callout>
+
+## Next steps
+
+- [Labels →](/docs/agent-dashboard/labels 
+- [Departments →](/docs/agent-dashboard/departments)
+- [Served vs unserved →](/docs/routing/served-unserved)

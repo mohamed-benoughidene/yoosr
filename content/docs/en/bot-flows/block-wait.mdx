@@ -1,0 +1,64 @@
+---
+title: "Block: Wait"
+description: "The Wait block pauses the bot for a number of seconds before moving to the next block. The delay runs server-side — closing the browser does not cancel it."
+section: "bot-flows"
+order: 12
+keywords: ["wait block", "delay", "pause", "timer", "sleep", "server-side delay"]
+related: ["block-reply", "canvas-overview", "template-syntax"]
+---
+
+# Block: Wait
+
+The Wait block pauses the bot for a configured number of seconds before proceeding to the next block. Use it to add a natural delay between messages, simulate typing, or space out a sequence of replies.
+
+## What it does
+
+When the bot reaches a Wait block, it schedules the next block to run after the configured delay using a server-side timer. The bot suspends, waits, then automatically continues — regardless of whether the visitor's browser is open.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| Delay (seconds) | Yes | How many seconds to wait. Default: 2. |
+
+## How to configure it
+
+1. Add a **Wait** block between two other blocks on the canvas.
+2. Click it to open the properties panel.
+3. Enter the delay in seconds.
+4. Connect the input from the previous block and the output to the next block.
+
+## The delay is server-side
+
+The timer runs on Yoosr's servers — not in the visitor's browser. This means:
+
+- Closing the chat window does not cancel the timer
+- The next block runs after the delay even if the visitor has navigated away
+- When the delay completes, the next message appears in the visitor's chat when they return
+
+This makes the Wait block useful for follow-up sequences — for example, sending an initial reply, waiting 30 seconds, then sending a follow-up question if the visitor has not responded yet.
+
+<Callout variant="info" title="Use short delays for typing simulation">
+A 1–3 second delay before a Reply block makes the bot feel more natural. Visitors see a brief pause before the message arrives, similar to a person typing. Avoid delays longer than 10 seconds for interactive flows — visitors may think the bot has stopped.
+</Callout>
+
+## Example: spaced message sequence
+
+```
+[Reply]  "Great, I'll look that up for you!"
+[Wait]   Delay: 2 seconds
+[Reply]  "Here's what I found: ..."
+```
+
+Without the Wait block, both messages would arrive nearly simultaneously and feel like a wall of text.
+
+## Common mistakes
+
+- **Very long delays in interactive flows** — A 60-second delay after asking the visitor a question will feel like the bot crashed. Use long delays only in background or follow-up sequences, not mid-conversation.
+- **No output connection** — The Wait block must have an output connected to the next block. Without it, the bot stops after the delay with no further action.
+
+## Next steps
+
+- [Block: Reply →](/docs/bot-flows/block-reply)
+- [Block: Clear Transcript →](/docs/bot-flows/block-clear-transcript)

@@ -1,0 +1,67 @@
+---
+title: AI model selection
+description: Choose which language model your project uses for bot AI blocks, knowledge base answers, and auto-tagging.
+section: Settings
+order: 6
+keywords: [AI model, LLM, OpenRouter, Gemini, Llama, Mistral, defaultModel, model selection, project settings]
+related:
+  - bot-flows/block-ai-task
+  - bot-flows/block-ai-assistant
+  - knowledge-base/how-semantic-search-works
+  - settings/labels-ai-tagging
+---
+
+# AI model selection
+
+Each Yoosr project has a **default model** — the language model used for all AI operations in that project. This includes the AI Task block, the AI Assistant block, knowledge base answer generation, and AI auto-tagging. You select the model once in Project Settings, and every AI operation in the project uses it automatically.
+
+## Available models
+
+| Model | Provider | Notes |
+|-------|----------|-------|
+| Gemini 2.0 Flash | Google | Fast, strong Arabic support, 1M token context |
+| Llama 4 Scout | Meta | Multilingual, well-suited to chat workflows |
+| Llama 4 Maverick | Meta | Highest quality, multimodal |
+| Mistral Small 3.1 | Mistral | Reliable, balanced performance |
+| Mistral 7B | Mistral | Lightweight, fastest responses |
+
+All models are accessed through OpenRouter using free-tier credits. No separate API key is required by default.
+
+<Callout variant="info" title="DeepSeek is not available">
+DeepSeek models are intentionally excluded from Yoosr due to data privacy concerns that are not acceptable for a customer support platform handling real visitor data.
+</Callout>
+
+## Set the default model
+
+1. Go to **Settings → Project Settings**.
+2. Find the **AI Model** section.
+3. Select a model from the dropdown.
+4. Save your changes.
+
+The selected model becomes the `defaultModel` for the project. It is stored on the project record in Convex and read by the bot engine at execution time — not at the time you configure it.
+
+## Which operations use this model
+
+| Operation | Uses default model |
+|-----------|-------------------|
+| AI Task block | ✅ |
+| AI Assistant block | ✅ |
+| Knowledge base answer generation | ✅ |
+| AI auto-tagging on conversation close | ✅ |
+| Knowledge base embeddings | ❌ — always uses `nvidia/llama-nemotron-embed-vl-1b-v2` |
+
+Embeddings always use the dedicated embedding model regardless of which default model is selected. This ensures embedding vectors remain consistent across all chunks in the knowledge base — changing the default model does not re-embed existing content.
+
+## Choosing a model for your use case
+
+**Arabic-first projects:** Gemini 2.0 Flash has the strongest Arabic language support among the available models and handles mixed Arabic–French–English conversations well.
+
+**High-volume projects on the free tier:** Mistral 7B is the lightest model and produces the fastest responses, which reduces latency for visitors and lowers token consumption.
+
+**Complex reasoning or multi-step bot flows:** Llama 4 Maverick produces the highest quality output and handles nuanced instructions in AI Task and AI Assistant blocks most reliably.
+
+**General-purpose:** Mistral Small 3.1 is a solid default for mixed workloads where neither speed nor quality is an extreme priority.
+
+## Overriding the model per bot block
+
+Individual AI Task and AI Assistant blocks can optionally specify a model that overrides the project default. This is configured per block in Design Studio. Use this when one part of your flow requires a more capable model while the rest can use a lighter one.

@@ -1,0 +1,59 @@
+---
+title: The unassigned queue
+description: How to find and claim conversations that have not yet been assigned to an agent.
+section: Routing
+order: 3
+keywords: [unassigned queue, unassigned, Monitor, claim, assign to me, status 100, pooled, served, unserved]
+related:
+  - routing/how-routing-works
+  - routing/pooled-vs-assigned
+  - monitor/served-unserved
+  - monitor/joining-assigning
+---
+
+# The unassigned queue
+
+The unassigned queue is not a separate page — it is a view state within Monitor. It contains every conversation with status **Unassigned** (100): conversations where no agent has been assigned yet, either because no agents were available at routing time or because the visitor arrived outside operating hours.
+
+## Finding unassigned conversations in Monitor
+
+In the Monitor conversation list, unassigned conversations show the **Unserved** indicator — a colored badge that signals no agent has joined or responded. You can filter to see only unassigned conversations:
+
+1. Open **Monitor** from the left sidebar.
+2. Select the **Status** filter and choose **Unassigned**.
+
+The list narrows to show only conversations waiting for an agent.
+
+## Claiming a conversation
+
+To take ownership of an unassigned conversation:
+
+**Option 1 — Assign to me**
+1. Select the conversation in Monitor.
+2. Open the three-dot menu (⋯) in the chat header.
+3. Select **Assign to me**.
+
+The conversation status changes to **Assigned** (200), your name appears as the assigned agent, and the conversation moves out of the unassigned queue.
+
+**Option 2 — Join**
+1. Select the conversation in Monitor.
+2. Select the **Join** button in the conversation header.
+
+Joining adds you to the participants list. If no agent is already assigned, joining also automatically assigns the conversation to you.
+
+## Why conversations end up in the queue
+
+A conversation lands in the unassigned queue when the routing engine runs and finds no available agent. Common causes:
+
+- All agents are currently at capacity.
+- No agents are logged in or marked as available.
+- The HITL Handoff block ran during off-hours when no agents are present.
+- The project has no active bot and no agents were available when the visitor started the conversation.
+
+## Keeping the queue clear
+
+An unassigned conversation means a visitor is waiting with no one actively helping them. Monitor the **Unserved** count on the Monitor page and aim to claim conversations quickly during active hours. For after-hours coverage, connect your bot flows to the **If operating hours** block so visitors know when to expect a response rather than waiting silently.
+
+<Callout variant="tip" title="Use the Unserved filter during busy periods">
+During high-volume periods, filter Monitor by Unserved to see exactly which visitors have not yet been helped. This prevents conversations from being missed when the list is long.
+</Callout>

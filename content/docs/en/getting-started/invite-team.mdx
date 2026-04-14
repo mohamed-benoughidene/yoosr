@@ -1,0 +1,52 @@
+---
+title: "Invite your team"
+description: "Add teammates to your Yoosr organization so they can handle conversations, manage bots, and access the dashboard."
+section: "getting-started"
+order: 4
+keywords: ["invite", "team", "teammates", "organization", "members", "admin", "roles"]
+related: ["create-project", "departments", "agent-availability"]
+---
+
+# Invite your team
+
+You invite teammates through your Clerk organization, not from within the Yoosr dashboard. Once a teammate accepts the invitation and joins your organization, their account is automatically available in Yoosr.
+
+## How to invite
+
+1. Go to your Clerk organization management page. You can reach it from the account menu in the top-right corner of the Yoosr dashboard — click your avatar, then **Manage organization**.
+2. Click **Invite members**.
+3. Enter the email address of the person you want to invite.
+4. Choose their role: **Admin** or **Member**.
+5. Click **Send invitation**.
+
+The teammate receives an email. Once they accept and sign in, they appear in your project's team list.
+
+## Roles
+
+| Role | What they can do |
+|------|-----------------|
+| Admin | Full access — create and delete projects, manage webhook subscriptions, invite teammates, configure settings |
+| Member | Handle conversations, send messages, use the agent dashboard — cannot change project settings or create webhooks |
+
+<Callout variant="info" title="Role is set at the organization level">
+Roles are managed in Clerk, not in Yoosr. If you need to change a teammate's role after invitation, do it from the Clerk organization management page.
+</Callout>
+
+## What happens after accepting
+
+Once a teammate accepts and signs in:
+
+- They appear in the **Routing** section as an available agent
+- Their availability status defaults to **available**
+- They can be assigned to conversations manually or by the routing engine
+- Admins can assign them to departments
+
+## Removing a teammate
+
+Remove a teammate from the Clerk organization management page. Removing them revokes their access to all Yoosr projects in that organization immediately.
+
+## Next steps
+
+- [Departments →](/docs/agent-dashboard/departments)
+- [Agent availability →](/docs/agent-dashboard/agent-availability)
+- [How routing works →](/docs/routing/how-routing-works)

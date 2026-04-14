@@ -1,0 +1,48 @@
+---
+title: "Served vs unserved conversations"
+description: "The conversation list in Monitor distinguishes between conversations that have received a human reply and those that have not. Understanding this helps you prioritize your queue."
+section: "monitor"
+order: 3
+keywords: ["served", "unserved", "unassigned", "queue", "waiting", "priority", "first response"]
+related: ["monitor-overview", "conversation-statuses", "filters", "joining-assigning"]
+---
+
+# Served vs unserved conversations
+
+Not all open conversations need the same level of urgency. Yoosr distinguishes between conversations that a human agent has already responded to and those that have not received a human reply yet.
+
+## Unserved conversations
+
+An **unserved** conversation is one where the visitor has sent a message but no human agent has replied yet. The visitor is waiting. These are the conversations at the top of your priority list.
+
+Unserved conversations show the **Unassigned** amber badge in the list. They may have been responded to by a bot, but a bot reply does not count as served — only a message from a human agent marks a conversation as served.
+
+## Served conversations
+
+A **served** conversation is one where at least one human agent has replied. The visitor has heard from a real person. The conversation is still open — it has not been resolved — but the immediate urgency is lower.
+
+Served conversations show the green **Open** badge alongside the assigned agent's name.
+
+## Why this distinction matters
+
+When your queue is busy, you need to know at a glance which visitors have been waiting the longest without a human response. Sorting by SLA in the Monitor puts unserved conversations at the top and moves served conversations toward the bottom, so your team always tackles the most urgent ones first.
+
+## Sorting by SLA
+
+In the conversation list filter area, you can change the sort order to **SLA**. When sorted by SLA:
+
+1. Unserved conversations appear first, ordered by how long they have been waiting
+2. Served conversations appear below, in order of their SLA deadline if one is set
+3. Conversations with no SLA deadline appear last
+
+This sort order resets when you refresh — it is a session preference, not a saved setting.
+
+<Callout variant="tip" title="Check the queue before going offline">
+Before marking yourself as unavailable, scan for unserved conversations in your queue. Any that are assigned to you will stay assigned while you are offline — the visitor will keep waiting.
+</Callout>
+
+## Next steps
+
+- [Filtering conversations →](/docs/monitor/filters)
+- [Joining and assigning →](/docs/agent-dashboard/joining-assigning)
+- [Agent availability →](/docs/agent-dashboard/agent-availability)

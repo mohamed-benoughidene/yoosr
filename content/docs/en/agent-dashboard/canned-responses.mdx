@@ -1,89 +1,70 @@
-export const meta = {
-  title: "Canned Responses",
-  description: "Create and manage pre-written reply templates with shortcuts for faster agent responses.",
-  section: "agent-dashboard"
-}
+---
+title: Canned responses
+description: Create pre-written reply templates that agents can insert with a slash trigger for faster, consistent responses.
+section: Settings
+order: 4
+keywords: [canned responses, shortcuts, templates, slash, trigger, reply, agents]
+related:
+  - monitor/sending-messages
+  - settings/departments
+---
 
-# Canned Responses
+# Canned responses
 
-Canned responses are **pre-written reply templates** that agents can insert with a keyboard shortcut. They save time on common questions and ensure consistent messaging.
+Canned responses are pre-written message templates that agents insert into the reply box with a `/` trigger. They reduce the time spent typing common answers and help the team communicate consistently.
 
-## Creating a Canned Response
-
-1. Go to **Settings → Canned Responses**
-2. Click **New Response**
-3. Fill in:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Title** | Internal name for the response | `Refund Policy` |
-| **Shortcut** | Short trigger word (no spaces) | `refund` |
-| **Content** | The reply text | `Our refund policy allows returns within 30 days...` |
-| **Department** *(optional)* | Restrict to a specific department | `Billing` |
-
-4. Click **Save**
-
-## Using Canned Responses
-
-In any conversation's reply box:
-
-1. Type `/` followed by the shortcut
-2. A dropdown shows matching responses
-3. Press **Enter** to insert the response
-4. Edit if needed, then **Send**
-
-Example:
-```
-/refund
-  ↓ Inserts ↓
-Our refund policy allows returns within 30 days of purchase.
-Please provide your order number and we'll process it right away.
-```
-
-<Callout variant="tip" title="Keep shortcuts mnemonic">
-Use intuitive shortcuts: `refund` for refunds, `shipping` for shipping info, `hours` for business hours.
+<Callout variant="info" title="Admin only">
+Only admins can create, edit, and delete canned responses.
 </Callout>
 
-## Variables & Placeholders
+## Create a canned response
 
-Include placeholders in your canned responses that agents fill in manually:
+1. Go to **Settings → Canned Responses**.
+2. Select **New Response**.
+3. Fill in the fields:
+
+| Field | Description |
+|-------|-------------|
+| **Title** | Internal name shown in the picker. Use something descriptive — for example, "Refund policy". |
+| **Shortcut** | The trigger word agents type after `/`. Must be a single word with no spaces — for example, `refund`. |
+| **Content** | The full reply text. Can include line breaks and placeholders. |
+
+4. Select **Save**.
+
+## Using a canned response
+
+In any conversation reply box in Monitor or Chat:
+
+1. Type `/` followed by the shortcut — for example, `/refund`.
+2. A picker appears showing matching responses.
+3. Select the response or press **Enter** to insert it.
+4. Edit the text if needed, then send.
+
+The picker filters results as you type after the `/`, so you can type `/ref` to see all responses whose shortcut starts with "ref".
+
+## Using placeholders
+
+Canned responses support manual placeholders — text that agents replace before sending. Use square brackets to mark them:
 
 ```
-Hi [NAME],
+Hi [CUSTOMER NAME],
 
-Your order #[ORDER_NUMBER] has shipped!
-Tracking: [TRACKING_LINK]
+Your order #[ORDER NUMBER] has been dispatched.
+Tracking reference: [TRACKING NUMBER]
 
 Expected delivery: [DATE]
 ```
 
-Agents replace the bracketed text before sending.
+Yoosr does not auto-fill these — the agent replaces them manually before sending. This keeps templates flexible without introducing complex variable syntax.
 
-## Organizing with Departments
+## Edit and delete
 
-Assign canned responses to specific departments so agents only see relevant templates:
+To edit a canned response, select the pencil icon on its row in the table. You can update any field. Changes apply immediately.
 
-| Department | Canned Responses |
-|------------|-----------------|
-| **Billing** | Refund policy, invoice request, payment methods |
-| **Technical** | Troubleshooting steps, system requirements |
-| **General** | Greeting, sign-off, business hours |
+To delete a canned response, select the trash icon. Deletion removes the response from the list — it does not affect messages already sent using it.
 
-Responses without a department assignment are available to **all agents**.
+## Tips for an effective canned response library
 
-## Managing Canned Responses
+Keep shortcuts short and easy to remember. Agents type these under pressure, so `refund` is better than `refundpolicy2024`.
 
-| Action | Description |
-|--------|-------------|
-| **Edit** | Update the content, shortcut, or department |
-| **Duplicate** | Create a variation of an existing response |
-| **Delete** | Remove a response no longer needed |
-| **Search** | Filter by title or content |
-
-## Best Practices
-
-1. **Keep them concise** — Short responses are easier to edit and send
-2. **Update regularly** — Outdated information erodes trust
-3. **Use formatting** — Line breaks, lists, and links make responses scannable
-4. **Audit usage** — Check which responses are used most and retire unused ones
-5. **Personalize tone** — Agents should be encouraged to adapt canned responses, not copy-paste blindly
+Review the library quarterly. Remove responses that are no longer accurate, update those that reference outdated information, and add new ones for questions that recur frequently.

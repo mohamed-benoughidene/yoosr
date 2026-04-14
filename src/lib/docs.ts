@@ -52,8 +52,24 @@ function parseMdx(
   if (yamlMatch) {
     const meta: Record<string, string> = {}
     yamlMatch[1].split("\n").forEach((line) => {
-      const [key, ...rest] = line.split(":")
-      if (key && rest.length) meta[key.trim()] = rest.join(":").trim()
+      const colonIdx = line.indexOf(":")
+      if (colonIdx === -1) return
+      const key = line.slice(0, colonIdx).trim()
+      let value = line.slice(colonIdx + 1).trim()
+
+      // Parse arrays
+      if (value.startsWith("[") && value.endsWith("]")) {
+        try {
+          value = JSON.parse(value) as unknown as string
+        } catch { /* keep as string */ }
+      }
+
+      // Remove surrounding quotes
+      if (typeof value === "string" && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))) {
+        value = value.slice(1, -1)
+      }
+
+      if (key && value) meta[key] = value as string
     })
     return { meta, body: yamlMatch[2] }
   }

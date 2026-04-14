@@ -1,0 +1,53 @@
+---
+title: "Conversation statuses"
+description: "Every conversation in Yoosr has a status that tells you where it sits in the support workflow. There are three statuses: Unassigned, Assigned, and Closed."
+section: "monitor"
+order: 2
+keywords: ["status", "unassigned", "assigned", "closed", "resolved", "open", "pending", "conversation status"]
+related: ["monitor-overview", "joining-assigning", "resolving", "routing"]
+---
+
+# Conversation statuses
+
+Every conversation in Yoosr has a status. The status tells the system — and your team — what state the conversation is in and what should happen next. There are three statuses.
+
+## Unassigned (open, no agent)
+
+A conversation is **Unassigned** when it has arrived but no agent has taken it yet. This is the default state for every new conversation. In the Monitor conversation list, unassigned conversations show an amber **Unassigned** badge.
+
+These are the conversations that need attention first. The routing engine tries to assign them automatically based on agent availability, but if no agent is online, they wait here until someone picks them up.
+
+## Assigned (open, agent handling it)
+
+A conversation is **Assigned** when an agent has joined it. It has a specific person responsible for it. In the list, assigned conversations show a green **Open** badge alongside the agent's name.
+
+Being assigned does not mean the conversation is finished — it means it is actively being handled. The visitor can still send messages. The agent is expected to reply.
+
+When an agent joins a conversation, Yoosr automatically changes the status from Unassigned to Assigned and records who took it.
+
+## Closed (resolved)
+
+A conversation is **Closed** when an agent marks it as resolved. It disappears from the Monitor list and moves to History. The visitor receives a closure message and a CSAT rating prompt if that is configured.
+
+A closed conversation can be reopened if the visitor sends a new message — it comes back into the Monitor as Unassigned.
+
+## How status changes happen
+
+| What happens | Status before | Status after |
+|---|---|---|
+| New conversation arrives | — | Unassigned |
+| Agent joins the conversation | Unassigned | Assigned |
+| Agent resolves the conversation | Assigned | Closed |
+| Visitor messages again after close | Closed | Unassigned |
+| Bot triggers HITL Handoff block | Any | Unassigned |
+| Agent transfers to another agent | Assigned | Assigned (new agent) |
+
+## What about pending?
+
+You may see a **Send as pending** option in the reply area. Pending is a temporary state that means the conversation is waiting on something external — for example, waiting for a customer to reply. Pending conversations stay in the Monitor but are visually distinguished so agents know they are not actively waiting for a response right now. Pending is not a final state — the conversation goes back to assigned when the next message arrives.
+
+## Next steps
+
+- [Resolving a conversation →](/docs/agent-dashboard/resolving)
+- [How routing works →](/docs/routing/how-routing-works)
+- [Conversation history →](/docs/history/conversation-history)

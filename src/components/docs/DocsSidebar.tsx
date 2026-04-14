@@ -22,7 +22,7 @@ export function DocsSidebar({ locale, className }: DocsSidebarProps) {
   const nav = getDocsNav(locale)
 
   return (
-    <nav className={cn("space-y-6 py-4 pr-4", className)}>
+    <nav className={cn("space-y-6 py-4 pe-4", className)}>
       {nav.map((section) => (
         <DocsNavSection key={section.title} section={section} pathname={pathname} />
       ))}

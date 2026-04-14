@@ -1,0 +1,59 @@
+---
+title: "Agent availability"
+description: "The availability toggle in the dashboard header controls whether Yoosr routes new conversations to you. When you go offline, you stop receiving assignments until you turn it back on."
+section: "dashboard"
+order: 2
+keywords: ["availability", "online", "offline", "toggle", "routing", "presence", "heartbeat"]
+related: ["home", "routing", "monitor"]
+---
+
+# Agent availability
+
+The availability toggle sits in the top-right corner of the dashboard header. It is a switch labeled **Available**. When it is on (green), Yoosr considers you active and can route new conversations to you. When it is off (gray), you are excluded from routing.
+
+## How to change your availability
+
+Click the **Available** switch in the header to toggle between online and offline. The change takes effect immediately — there is no confirmation step.
+
+When you turn availability **on**:
+- You re-enter the routing pool
+- Yoosr immediately checks if any unassigned conversations in your organization can be routed to you
+
+When you turn availability **off**:
+- You leave the routing pool
+- Conversations already assigned to you stay assigned — they do not get reassigned automatically
+- New conversations will not be routed to you until you turn availability back on
+
+## What happens when you close the tab
+
+You do not need to manually turn yourself offline when you finish work. The dashboard sends a heartbeat to Yoosr every 30 seconds while it is open. If Yoosr stops receiving heartbeats for 90 seconds — because you closed the tab, lost internet, or shut your laptop — it automatically marks you as offline.
+
+This means your availability status stays accurate even if you forget to toggle it before leaving.
+
+<Callout variant="info" title="Heartbeat requires an open tab">
+The auto-offline only triggers if the dashboard tab is closed or loses connectivity. If you leave the tab open in the background, the heartbeat continues and you stay marked as available.
+</Callout>
+
+## How availability affects routing
+
+Availability is one of three things the routing engine checks when deciding who to assign a new conversation to:
+
+1. Is there a bot assigned to this project? If yes, the bot handles it first.
+2. If the bot triggers a handoff (or there is no bot), Yoosr looks for online agents.
+3. Among online agents, the one with the fewest active conversations gets the assignment — this is the least-busy algorithm.
+
+If no agents are online when a new conversation arrives, it goes to the unassigned queue and waits until someone comes online.
+
+<Callout variant="warning" title="Going offline does not close your conversations">
+Turning off availability only stops new assignments. Conversations already in your queue remain yours. Visitors in those conversations can still send messages, and you will still see them in Monitor.
+</Callout>
+
+## The online teammates count
+
+The **Online teammates** card on the dashboard home page shows how many agents in your organization are currently available. If that number is zero and new conversations are coming in, they will all pile up in the unassigned queue. This is the first thing to check when visitors are waiting and nobody is responding.
+
+## Next steps
+
+- [How routing works →](/docs/routing/how-routing-works)
+- [The unassigned queue →](/docs/routing/unassigned-queue)
+- [Monitor →](/docs/monitor)

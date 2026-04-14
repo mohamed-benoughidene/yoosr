@@ -1,0 +1,59 @@
+---
+title: Conversation volume
+description: Understand how many conversations your project handled over a period, broken down by bot and agent.
+section: Analytics
+order: 1
+keywords: [analytics, conversation volume, bot, agent, daily, chart, date range, stats]
+related:
+  - analytics/csat
+  - analytics/token-usage
+  - routing/how-routing-works
+---
+
+# Conversation volume
+
+The conversation volume report shows how many conversations your project handled over a selected date range, and how that volume is split between bot-handled and agent-handled conversations. It is the starting point for understanding support load and automation coverage.
+
+## Finding the report
+
+Go to **Analytics** in the left sidebar. The conversation volume chart and summary stats appear at the top of the page.
+
+## Setting a date range
+
+Use the **date range picker** at the top of the analytics page to filter all charts and stats to a specific period. Select a start date and an end date. All data on the page updates to reflect the selected range.
+
+## Summary stats row
+
+Above the chart, a row of stat cards gives totals for the selected period:
+
+| Card | What it shows |
+|------|--------------|
+| Total conversations | All conversations created in the period |
+| Bot handled | Conversations where a bot ran and closed or handed off the conversation |
+| Agent handled | Conversations where a human agent sent at least one message |
+| Open | Conversations still unresolved at the end of the period |
+| Closed | Conversations resolved during the period |
+
+## The volume chart
+
+The bar chart shows daily conversation counts for the selected period. Each bar is split into two segments:
+
+- **Bot** — conversations the bot handled without agent involvement
+- **Agent** — conversations where a human agent participated
+
+Hovering over a bar shows the exact counts for that day.
+
+## What the bot vs. agent split tells you
+
+A high bot percentage means your automation is handling a large share of incoming volume without requiring agent time. A low bot percentage means most conversations are reaching human agents — which may indicate your bot flows need improvement, or that your conversation types are complex enough to require human judgment.
+
+Use this split alongside the CSAT report to check whether automated responses correlate with lower satisfaction scores.
+
+## Usage quotas
+
+Below the main stats, the page also shows usage quota progress bars for the current billing period:
+
+- **Tokens consumed** — total LLM tokens used across all AI operations
+- **Conversations count** — total conversations created against the project plan limit
+
+These quotas reset at the start of each billing period and are independent of the date range you select for the charts.

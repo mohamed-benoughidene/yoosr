@@ -1,0 +1,87 @@
+---
+title: "Publishing and testing a bot"
+description: "A bot only runs on conversations when its status is set to Active. This article covers how to activate a bot, how the routing engine picks it up, and how to test it before visitors use it."
+section: "bot-flows"
+order: 22
+keywords: ["publish bot", "activate bot", "test bot", "test widget", "bot status", "active", "draft", "bot not responding"]
+related: ["bots-vs-flows", "canvas-overview", "routing", "troubleshooting-bot"]
+---
+
+# Publishing and testing a bot
+
+Building a flow in Design Studio does not make a bot run automatically. You need to activate it. This article covers the activation step, how the routing engine picks up an active bot, and how to test your flow before visitors use it.
+
+## Bot statuses
+
+Every bot has one of three statuses:
+
+**Draft** — The bot exists and has a flow, but it will not handle any conversations. This is the default when you create a new bot.
+
+**Active** — The bot is live. When a new conversation arrives for its project, the routing engine assigns this bot first and runs its flow.
+
+**Archived** — The bot is inactive and hidden from most views. Use this to retire old bots without deleting them.
+
+## How to activate a bot
+
+1. Go to **Dashboard → Bots**.
+2. Find the bot you want to activate.
+3. Click the three-dot menu (⋮) on the bot card.
+4. Click **Activate**.
+
+The bot status changes to Active immediately. From this point, new conversations on that project will run this bot's flow.
+
+To deactivate it again, open the same menu and click **Deactivate**. The bot goes back to Draft and stops handling new conversations. Conversations that are already in progress with the bot continue until they resolve or hand off.
+
+<Callout variant="warning" title="Only one active bot per project">
+The routing engine picks the first active bot it finds for a project. If you have multiple bots in the same project, only one should be active at a time. Activating a second one does not disable the first — both will be in the pool and the routing engine picks whichever it finds first, which may not be predictable.
+</Callout>
+
+## How the routing engine picks up a bot
+
+When a new conversation arrives, the routing engine runs this check in order:
+
+1. Is there an active bot for this project? If yes — assign it and run its flow from the Start block.
+2. If no active bot — look for available human agents and apply the least-busy algorithm.
+3. If no agents available — place the conversation in the unassigned queue.
+
+The bot runs before any human agent involvement. If the bot's flow ends with a HITL Handoff or Change Department block, the conversation then enters the agent queue.
+
+## Testing your bot before going live
+
+Do not activate a bot on your live project to test it. Use the **Test Widget** page instead.
+
+Go to **Dashboard → Test Widget**. This page shows a live preview of your project's widget inside a phone frame, connected to your real Convex backend. You can:
+
+- Send messages and see how the bot responds in real time
+- Watch the full flow execute including AI Task, Ask Knowledge Base, and Condition branches
+- See all bot messages and agent messages exactly as a visitor would
+- Reset the visitor session to start a fresh conversation using the **Reset Visitor Session** button — this clears the `yoosr_visitor_id` from browser storage so the next message starts a new conversation
+
+The Test Widget page also shows your embed code snippet so you can copy it directly.
+
+<Callout variant="tip" title="Use the debugger alongside the test widget">
+While testing, open the bot in Design Studio and toggle the Debugger panel. As you send messages in the test widget, the debugger shows which blocks ran, what attributes were set, and where the flow went. This is the fastest way to trace unexpected behavior.
+</Callout>
+
+## Testing checklist before activating
+
+Before activating a bot on your live project, go through this:
+
+- Every block has an outgoing connection (no dead ends)
+- Both branches of every Condition, If Operating Hours, and If Online Agent block are connected
+- The Start block connects to the first block in the flow
+- Any HITL Handoff or Close block has a meaningful message configured
+- Variables referenced in Reply blocks are set by earlier blocks in the flow
+- The Ask Knowledge Base block has a no-match branch connected
+- The flow has been tested end-to-end in the Test Widget page at least once
+
+## What happens when you edit an active bot
+
+Changes you make in Design Studio are saved automatically with a 1.5-second debounce. If the bot is active, those changes take effect on the next new conversation — not on conversations that are already in progress. Conversations mid-flow use the flow version that was active when they started.
+
+## Next steps
+
+- [Bots and flows — the mental model →](/docs/bot-flows/bots-vs-flows)
+- [The Design Studio canvas →](/docs/bot-flows/canvas-overview)
+- [How routing works →](/docs/routing/how-routing-works)
+- [Bot not responding →](/docs/troubleshooting/bot-not-responding)

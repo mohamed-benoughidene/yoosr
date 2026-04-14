@@ -1,0 +1,61 @@
+---
+title: Token usage
+description: Monitor how many LLM tokens your project consumes, broken down by model.
+section: Analytics
+order: 3
+keywords: [token usage, LLM, OpenRouter, model, analytics, AI, quota, costs]
+related:
+  - analytics/conversation-volume
+  - settings/ai-model-selection
+  - knowledge-base/how-semantic-search-works
+---
+
+# Token usage
+
+The token usage report shows how many language model tokens your project has consumed in a given period, split by the model that processed each request. This helps you understand the cost of your AI operations and identify which models are being used most.
+
+## What counts as token usage
+
+A token is a unit of text processed by a language model. Every call to a language model in Yoosr logs the tokens consumed to the `token_usage` table. This includes:
+
+- AI Task block executions
+- AI Assistant block executions
+- Knowledge base answer generation (the answer step, not the embedding step)
+- AI auto-tagging on conversation close
+
+Embedding calls — generating vectors for knowledge base chunks — do not appear in this report because the embedding model is not a generative LLM and its usage is tracked separately.
+
+## Finding the report
+
+Go to **Analytics** in the left sidebar. The token usage section is on the analytics page and respects the date range picker at the top.
+
+## What the report shows
+
+### Total tokens
+
+The aggregate token count across all models for the selected period.
+
+### Breakdown by model
+
+A table or list showing how many tokens each model consumed. If your project uses only one default model, there is one row. If individual bot blocks override the default model, you see multiple rows — one per model that was called.
+
+The model names match the identifiers from OpenRouter — for example, `google/gemini-2.0-flash-exp:free` or `meta-llama/llama-4-scout:free`.
+
+### Usage quota progress
+
+The analytics page also shows a **tokens consumed** progress bar in the usage quotas section. This bar reflects total token consumption for the current billing period, not just the selected date range. It indicates how close the project is to its plan limit.
+
+## Interpreting the numbers
+
+Token counts are useful for two purposes:
+
+**Capacity planning** — If token usage is growing month over month, you may be approaching free-tier limits. Monitor the trend before hitting the quota so you can adjust bot flow complexity or consider a paid OpenRouter plan.
+
+**Identifying inefficiency** — If one model is consuming far more tokens than expected, review the AI Task or AI Assistant blocks using that model. Long system prompts, high `maxTurns` settings in AI Assistant blocks, or very long conversation histories all increase token consumption per call.
+
+## Reducing token usage
+
+- Shorten system prompts in AI Task and AI Assistant blocks — every token in the prompt is sent with every call.
+- Lower the `maxTurns` setting on AI Assistant blocks if you do not need multi-turn conversations everywhere.
+- Use a lighter model (Mistral 7B) for simple tasks and reserve heavier models for complex reasoning.
+- Review how many conversations per day reach AI blocks — if many conversations reach AI blocks unnecessarily, your routing logic may need adjustment.

@@ -1,64 +1,80 @@
-export const meta = {
-  title: "Messenger",
-  description: "Connect Facebook Messenger to Yoosr so Facebook Page messages appear in your agent dashboard.",
-  section: "channels"
-}
+---
+title: Messenger
+description: Connect Facebook Messenger to Yoosr so messages sent to your Facebook Page appear in your agent dashboard.
+section: Channels & Apps
+order: 3
+keywords: [Messenger, Facebook, Facebook Page, Meta, webhook, channel, integration]
+related:
+  - channels/whatsapp
+  - channels/instagram
+  - routing/how-routing-works
+---
 
-# Messenger Integration
+# Messenger
 
-Connect your Facebook Page to Yoosr so Messenger conversations appear alongside all your other channels.
+Connect your Facebook Page to Yoosr so Messenger conversations appear alongside all your other channels in the agent dashboard.
 
-## Step 1: Create a Meta App
+## Prerequisites
 
-1. Go to [Meta for Developers](https://developers.facebook.com)
-2. Click **My Apps** → **Create App**
-3. Select **Business** as the app type
-4. Add the **Messenger** product to your app
+Before you start, make sure you have:
 
-## Step 2: Connect Your Facebook Page
+- A Meta Developer account at [developers.facebook.com](https://developers.facebook.com)
+- A Facebook Page you administer
+- The page linked to your Meta Developer app
 
-1. In your Meta App, go to **Messenger → Settings**
-2. Under **Access Tokens**, select your Facebook Page
-3. Grant the required permissions:
-   - `pages_messaging`
-   - `pages_manage_metadata`
-4. Copy the **Page Access Token**
+## Step 1: Create a Meta app
+
+1. Go to [Meta for Developers](https://developers.facebook.com) and sign in.
+2. Select **My Apps** → **Create App**.
+3. Choose **Business** as the app type.
+4. Add the **Messenger** product to your app.
+
+## Step 2: Connect your Facebook Page and get credentials
+
+1. In your Meta App, go to **Messenger → Settings**.
+2. Under **Access Tokens**, select your Facebook Page.
+3. Grant the required permissions: `pages_messaging` and `pages_manage_metadata`.
+4. Copy the **Page Access Token** and note your **Page ID** (visible in the Page settings on Facebook).
+5. Find your **App Secret** under **App Settings → Basic** in your Meta App.
 
 ## Step 3: Configure in Yoosr
 
-1. Go to **Settings → Channels** → **Messenger** → **Connect**
-2. Enter your **Page ID**
-3. Enter your **Page Access Token**
-4. Enter your **App Secret** (from Meta App → Settings → Basic)
-5. Yoosr generates a **Verify Token**
-6. Click **Save**
+1. In the Yoosr dashboard, go to **Settings → Channels**.
+2. Find **Messenger** and select **Connect**.
+3. Enter your **Page ID**, **Page Access Token**, and **App Secret**.
+4. Yoosr generates a **Verify Token** automatically.
+5. Select **Save**.
 
-## Step 4: Configure the Webhook
+## Step 4: Set the webhook in Meta
 
-In your Meta App:
+1. In your Meta App, go to **Messenger → Settings** → **Webhooks** → **Add Callback URL**.
+2. Paste the **Callback URL** from Yoosr — it is the same endpoint used for WhatsApp: `https://<your-convex-site>.convex.site/webhooks/meta`.
+3. Paste the **Verify Token** from Yoosr.
+4. Select **Verify and Save**.
+5. Subscribe to: `messages`, `messaging_postbacks`, `message_deliveries`, `message_reads`.
 
-1. Go to **Messenger → Settings** → **Webhooks**
-2. Click **Add Callback URL**
-3. Paste the **Callback URL** from Yoosr (same as WhatsApp: `https://<your-convex-site>.convex.site/webhooks/meta`)
-4. Paste the **Verify Token** from Yoosr
-5. Click **Verify and Save**
-6. Subscribe to: `messages`, `messaging_postbacks`, `message_deliveries`, `message_reads`
+## Step 5: Test the connection
 
-## Step 5: Test
+Go to your Facebook Page and select **Message**. Send a test message. A conversation appears in Yoosr with the Messenger channel indicator. Reply from Yoosr — your reply appears in the Messenger thread.
 
-1. Go to your Facebook Page and click **Message**
-2. Send a test message
-3. A conversation appears in Yoosr with the Messenger channel indicator
-4. Reply from Yoosr — it appears in Messenger
+## How Yoosr tells Messenger and WhatsApp apart
 
-## How It Works
+Messenger and WhatsApp share the same webhook endpoint (`/webhooks/meta`). Yoosr reads the `object` field in the webhook payload to identify the source:
 
-Messenger and WhatsApp share the same webhook endpoint (`/webhooks/meta`). Yoosr distinguishes them by the `object` field in the webhook payload:
-
-- `page` → Messenger
-- `whatsapp_business_account` → WhatsApp
-- `instagram` → Instagram
+| `object` value | Channel |
+|---------------|---------|
+| `page` | Messenger |
+| `whatsapp_business_account` | WhatsApp |
+| `instagram` | Instagram |
 
 ## Security
 
-Same HMAC-SHA256 signature verification as WhatsApp. The app secret is used to verify the `X-Hub-Signature-256` header on every request.
+Yoosr verifies every incoming webhook request using HMAC-SHA256 signature verification against the `X-Hub-Signature-256` header, using your stored App Secret. The App Secret is encrypted with AES-GCM before being written to the database. Yoosr always responds with `200 OK` to prevent Meta from retrying requests.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Messages not arriving | Check that the webhook subscription includes the `messages` event |
+| `403 Forbidden` | App secret or access token mismatch — re-enter your credentials in Yoosr |
+| Page not appearing in token list | Ensure you have admin access to the Facebook Page and it is linked to the Meta App |

@@ -1,0 +1,137 @@
+---
+title: "Signature verification"
+description: "How to verify the X-Yoosr-Signature header on incoming outbound webhook requests to confirm the payload is authentic and has not been tampered with."
+section: "webhooks"
+order: 4
+keywords: ["signature verification", "HMAC", "SHA-256", "X-Yoosr-Signature", "webhook secret", "security", "Node.js", "Python", "PHP"]
+related: ["outbound-webhooks", "webhook-events", "webhooks-overview"]
+---
+
+# Signature verification
+
+Every outbound webhook request from Yoosr includes an `X-Yoosr-Signature` header. This header lets you verify that the request actually came from Yoosr and that the payload was not altered in transit.
+
+Always verify the signature before processing the payload. Skipping verification makes your endpoint vulnerable to receiving forged requests.
+
+## How the signature works
+
+When Yoosr delivers a webhook, it:
+
+1. Serializes the full request body to a JSON string.
+2. Computes an HMAC-SHA256 of that string using your subscription's secret as the key.
+3. Encodes the result as a lowercase hexadecimal string.
+4. Sets the header value to `sha256=<hex-encoded-hmac>`.
+
+To verify, you perform the same computation on the raw body you received and compare the result to the header value. If they match, the request is authentic.
+
+<Callout variant="danger" title="Use the raw body, not a parsed object">
+Parse the body after verification, not before. If you parse the JSON first and re-serialize it, whitespace differences will cause the HMAC to not match. Read the raw bytes from the request stream and pass them directly to the HMAC function.
+</Callout>
+
+## Node.js (built-in `crypto`)
+
+```js
+const crypto = require("crypto");
+
+function verifyYoosrSignature(rawBody, secret, signatureHeader) {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  const received = signatureHeader.replace("sha256=", "");
+
+  // Use timingSafeEqual to prevent timing attacks
+  const expectedBuf = Buffer.from(expected, "hex");
+  const receivedBuf = Buffer.from(received, "hex");
+
+  if (expectedBuf.length !== receivedBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+}
+
+// Express example
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const signatureHeader = req.headers["x-yoosr-signature"];
+  const secret = process.env.YOOSR_WEBHOOK_SECRET;
+
+  if (!verifyYoosrSignature(req.body, secret, signatureHeader)) {
+    return res.status(401).send("Invalid signature");
+  }
+
+  const payload = JSON.parse(req.body);
+  // Handle payload.event here
+  res.sendStatus(200);
+});
+```
+
+<Callout variant="tip" title="Use express.raw() not express.json()">
+Mount `express.raw({ type: 'application/json' })` on the webhook route so Express gives you the raw buffer. If you use `express.json()` instead, the body is already parsed and you lose the original byte sequence.
+</Callout>
+
+## Python (with Flask)
+
+```python
+import hashlib
+import hmac
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+YOOSR_WEBHOOK_SECRET = "your_subscription_secret"
+
+def verify_signature(raw_body: bytes, secret: str, signature_header: str) -> bool:
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+    received = signature_header.replace("sha256=", "")
+    return hmac.compare_digest(expected, received)
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    sig = request.headers.get("X-Yoosr-Signature", "")
+    if not verify_signature(request.get_data(), YOOSR_WEBHOOK_SECRET, sig):
+        abort(401)
+
+    payload = request.get_json()
+    # Handle payload["event"] here
+    return "", 200
+```
+
+## PHP
+
+```php
+<?php
+function verifyYoosrSignature(string $rawBody, string $secret, string $signatureHeader): bool {
+    $expected = 'sha256=' . hash_hmac('sha256', $rawBody, $secret);
+    return hash_equals($expected, $signatureHeader);
+}
+
+$rawBody = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_YOOSR_SIGNATURE'] ?? '';
+$secret = getenv('YOOSR_WEBHOOK_SECRET');
+
+if (!verifyYoosrSignature($rawBody, $secret, $signature)) {
+    http_response_code(401);
+    exit('Invalid signature');
+}
+
+$payload = json_decode($rawBody, true);
+// Handle $payload['event'] here
+http_response_code(200);
+```
+
+## What to return
+
+Your endpoint must return an HTTP 2xx response to acknowledge receipt. Yoosr marks the delivery successful on any 2xx status. If you return anything else, Yoosr schedules a retry.
+
+Return a response as soon as you have verified the signature. Process the payload asynchronously — for example, push it to a queue — to avoid a 10-second timeout from Yoosr.
+
+## Subscription secret rotation
+
+If you suspect your secret has been compromised, delete the webhook subscription and create a new one. Yoosr generates a new secret for every new subscription. Update your server's environment variable with the new secret before the old subscription is deleted to avoid downtime.
+
+## Next steps
+
+- [Outbound webhooks →](/docs/webhooks/outbound)
+- [Webhook event reference →](/docs/webhooks/events)

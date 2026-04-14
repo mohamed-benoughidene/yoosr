@@ -1,0 +1,80 @@
+---
+title: "Block: Ask Knowledge Base"
+description: "The Ask Knowledge Base block searches your project's knowledge base using the visitor's message, generates an AI answer from matching content, and continues the conversation for up to a configured number of turns."
+section: "bot-flows"
+order: 9
+keywords: ["ask knowledge base", "KB", "semantic search", "RAG", "knowledge base block", "unanswered queries", "no match"]
+related: ["template-syntax", "block-hitl-handoff", "knowledge-base", "unanswered-queries"]
+---
+
+# Block: Ask Knowledge Base
+
+The Ask Knowledge Base block searches your project's knowledge base using the visitor's message as the query, generates an AI answer from the matching content, and sends that answer to the visitor. The conversation stays inside this block for multiple turns until the visitor's question is answered or the maximum turn limit is reached.
+
+## What it does
+
+When the bot reaches this block, it:
+
+1. Waits for the visitor to send a message
+2. Runs a semantic search against your project's knowledge base using that message
+3. If matching content is found — generates an AI answer using that content as context and sends it to the visitor
+4. If no matching content is found — takes the **no match** branch without sending any message
+5. Repeats steps 1–4 until the maximum turn limit is reached, then exits via the **done** branch
+
+The conversation stays in the Ask Knowledge Base block across multiple turns. The visitor can ask follow-up questions and the block keeps searching and answering.
+
+## Fields
+
+| Field | Required | Description |
+|---|---|---|
+| Label | No | Internal name shown on the canvas node. |
+| System prompt | No | Instructions for the AI on how to answer. Defaults to a generic support assistant prompt. |
+| Max turns | Yes | How many visitor messages to handle before exiting. Default: 5. |
+| Search query | No | Override the search query. Defaults to `{{lastUserText}}`. Leave blank in most cases. |
+| Save result to | No | Attribute name to store the AI's answer. Default: `kb_reply`. |
+
+## Output handles
+
+The Ask Knowledge Base block has two output handles:
+
+**No match (false)** — The visitor asked something but no relevant content was found in the knowledge base. Connect this to a fallback — for example, a HITL Handoff or a Reply saying "I couldn't find an answer."
+
+**Done (true)** — The block reached the max turn limit and exited. Connect this to whatever comes next in your flow.
+
+## How to configure it
+
+1. Add an **Ask Knowledge Base** block to the canvas.
+2. Click it to open the properties panel.
+3. Write a system prompt — for example: `You are a support assistant for Acme. Answer only based on the provided context. Be concise and friendly.`
+4. Set **Max turns** to how many exchanges you want to allow (1–10). Start with 3–5 for most flows.
+5. Leave **Search query** blank — the block defaults to `{{lastUserText}}`.
+6. Connect the **No match** handle to a fallback block.
+7. Connect the **Done** handle to what happens after the KB session ends.
+
+## Knowledge base must be configured first
+
+This block only works if your project has a knowledge base with at least one source in **Ready** status. If no knowledge base is configured, the block will always take the no-match branch.
+
+See [Creating a knowledge base →](/docs/knowledge-base/creating-a-kb) to set one up.
+
+## Unanswered queries logging
+
+When the visitor sends a message and the search returns no matching content, Yoosr logs that query to the **Unanswered Queries** list in Analytics. Over time this builds a ranked list of the questions your knowledge base cannot answer — use it to identify gaps and add content. See [Unanswered queries →](/docs/troubleshooting/what-are-unanswered-queries) for more.
+
+## Context sent to the AI
+
+The block sends up to 3,000 characters of matched knowledge base content to the AI as context, along with the last 10 messages from the conversation history. This gives the AI enough context to answer follow-up questions correctly without referencing information from outside your knowledge base.
+
+<Callout variant="tip" title="Keep sources concise">
+The AI uses the first 3,000 characters of matched content. Long, dense documents reduce answer quality. Break large documents into focused articles for better results.
+</Callout>
+
+## Token usage
+
+Every Ask Knowledge Base turn calls the AI model and uses tokens. These are logged to the Token Usage section of Analytics under the `ask_kb` operation.
+
+## Next steps
+
+- [Creating a knowledge base →](/docs/knowledge-base/creating-a-kb)
+- [Unanswered queries →](/docs/troubleshooting/what-are-unanswered-queries)
+- [Block: HITL Handoff →](/docs/bot-flows/block-hitl-handoff)

@@ -1,0 +1,141 @@
+---
+title: "Webhook event reference"
+description: "Complete list of events Yoosr fires to outbound webhook subscriptions, including the exact JSON payload shape for each event."
+section: "webhooks"
+order: 3
+keywords: ["webhook events", "event reference", "conversation.opened", "conversation.closed", "message.create", "agent.assigned", "contact.created", "payload", "JSON"]
+related: ["outbound-webhooks", "signature-verification", "webhooks-overview"]
+---
+
+# Webhook event reference
+
+This page lists every event that Yoosr fires to outbound webhook subscriptions. Each entry shows the event name, the action that triggers it, and the exact JSON shape of the `data` field inside the payload.
+
+The outer payload wrapper is identical for every event:
+
+```json
+{
+  "event": "<event-name>",
+  "projectId": "<project-id>",
+  "timestamp": 1713200400000,
+  "data": { ... }
+}
+```
+
+The `timestamp` is a Unix timestamp in milliseconds. The `data` object differs per event — see each section below.
+
+---
+
+## conversation.opened
+
+**Fires when:** A new conversation is created. This includes conversations started from the web widget, bot-initiated flows, and conversations opened by agents from the dashboard.
+
+```json
+{
+  "event": "conversation.opened",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
+  "data": {
+    "conversationId": "jh7xyz456...",
+    "projectId": "jh7abc123..."
+  }
+}
+```
+
+---
+
+## conversation.closed
+
+**Fires when:** A conversation is resolved. This can be triggered by an agent clicking **Resolve**, by a bot flow reaching a Close block, or by the auto-close cron when a conversation has been inactive longer than the configured `autoCloseMinutes` threshold.
+
+```json
+{
+  "event": "conversation.closed",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
+  "data": {
+    "conversationId": "jh7xyz456...",
+    "projectId": "jh7abc123..."
+  }
+}
+```
+
+---
+
+## message.create
+
+**Fires when:** A message is sent in a conversation. This fires for visitor messages, agent messages, and bot messages. It fires once per message, including the initial message a visitor sends when they start a new conversation.
+
+```json
+{
+  "event": "message.create",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
+  "data": {
+    "messageId": "jh7msg789...",
+    "conversationId": "jh7xyz456...",
+    "content": "Hello, I need help with my order.",
+    "senderType": "visitor"
+  }
+}
+```
+
+`senderType` is one of `"visitor"`, `"agent"`, or `"bot"`.
+
+---
+
+## agent.assigned
+
+**Fires when:** An agent is assigned to a conversation. This fires when an agent is auto-assigned by the routing engine, manually assigned by another agent, or when an agent joins a conversation and is auto-assigned because the conversation is unassigned.
+
+```json
+{
+  "event": "agent.assigned",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
+  "data": {
+    "conversationId": "jh7xyz456...",
+    "projectId": "jh7abc123...",
+    "assignedTo": "user_2abc..."
+  }
+}
+```
+
+`assignedTo` is the Clerk user ID of the assigned agent.
+
+---
+
+## contact.created
+
+**Fires when:** A new contact record is created in the Contacts table. This happens when a visitor submits the pre-chat form with an email address or phone number that does not already exist as a contact in the project.
+
+```json
+{
+  "event": "contact.created",
+  "projectId": "jh7abc123...",
+  "timestamp": 1713200400000,
+  "data": {
+    "contactId": "jh7cnt321...",
+    "projectId": "jh7abc123..."
+  }
+}
+```
+
+---
+
+## Event firing rules
+
+**`conversation.closed` fires once per close action.** If a conversation is closed, then reopened by a new message from the visitor, and then closed again, the event fires each time the conversation transitions to a closed state.
+
+**`message.create` does not fire for system messages.** System messages — such as the automatic "Conversation resolved" notice — do not trigger this event. Only user-generated and bot-generated content messages fire the event.
+
+**`agent.assigned` fires on every re-assignment.** If conversation ownership transfers from one agent to another, the event fires again with the new `assignedTo` value.
+
+<Callout variant="info" title="Events are delivered asynchronously">
+Yoosr schedules event delivery with zero delay via the Convex scheduler. Under normal conditions, delivery happens within a few seconds of the triggering action. High load may add a short queue delay.
+</Callout>
+
+## Next steps
+
+- [Outbound webhooks →](/docs/webhooks/outbound)
+- [Signature verification →](/docs/webhooks/signature-verification)

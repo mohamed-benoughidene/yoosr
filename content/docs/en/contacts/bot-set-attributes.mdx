@@ -1,0 +1,69 @@
+---
+title: "Bot-set attributes in the contact panel"
+description: "When a bot flow uses the Set Attribute block, the values it captures are stored on the conversation and appear in the Technical section of the contact panel."
+section: "contacts"
+order: 2
+keywords: ["attributes", "set attribute", "bot attributes", "custom attributes", "conversation attributes", "capture", "variables"]
+related: ["contact-profile", "block-set-attribute", "block-capture-user-reply", "template-syntax"]
+---
+
+# Bot-set attributes in the contact panel
+
+When a bot flow runs a **Set Attribute** block or a **Capture Reply** block, the values it stores become part of the conversation's attributes. These attributes are visible in the **Technical** section of the contact panel in Monitor and Chat.
+
+## What are conversation attributes
+
+Conversation attributes are a key-value store attached to each conversation. The bot engine reads and writes them as the flow runs. They are also used as variables — anything stored as an attribute can be referenced later in the same flow using `{{attribute_name}}`.
+
+For example, if a bot captures a visitor's order number using a Capture Reply block and stores it as `order_number`, that value is:
+
+- Available to subsequent blocks in the flow as `{{order_number}}`
+- Visible to agents in the Technical section of the contact panel
+
+## Where to find them
+
+Open any conversation in Monitor or Chat. In the right panel, expand the **Technical** section. Below the automatically captured fields (browser, OS, language, source page, IP), you will see any custom attributes the bot has set for this conversation.
+
+## What gets stored automatically
+
+Even before a bot sets any custom attributes, Yoosr stores several values automatically when a conversation starts:
+
+| Attribute | Value |
+|---|---|
+| `channel` | Where the conversation came from (widget, telegram, whatsapp, etc.) |
+| `language` | The visitor's browser language |
+| `os` | The visitor's operating system |
+| `browser` | The visitor's browser |
+| `sourcePage` | The URL of the page they were on when they started chatting |
+| `ip` | Their IP address |
+
+## What your bot can set
+
+Using the Set Attribute block or Capture Reply block in your bot flow, you can store any value. Common examples:
+
+- `customer_name` — captured from a Capture Reply block
+- `order_id` — entered by the visitor and stored for lookup
+- `intent` — set by an AI Task block after classifying the visitor's request
+- `plan_type` — returned from a Web Request block after querying your API
+- `api_results` — the raw JSON response from a Web Request block
+
+<Callout variant="info" title="Attributes live for the conversation lifetime">
+Attributes are scoped to a single conversation. When the conversation closes and eventually expires (after 90 days), the attributes expire with it. They do not carry over to the next conversation the same visitor starts.
+</Callout>
+
+## Internal attributes
+
+The bot engine uses some attributes internally for its own tracking. You may see these in the Technical section — they start with double underscores:
+
+| Attribute | Purpose |
+|---|---|
+| `__kbTurns` | Tracks how many turns the Ask Knowledge Base block has taken |
+| `__kbDone` | Marks whether the KB search cycle is complete |
+
+These are set automatically by the engine. Do not reference them in your own bot flows — they may change without notice.
+
+## Next steps
+
+- [Block: Set Attribute →](/docs/bot-flows/block-set-attribute)
+- [Block: Capture Reply →](/docs/bot-flows/block-capture-reply)
+- [Template syntax: {{ }} variables →](/docs/bot-flows/template-syntax)
