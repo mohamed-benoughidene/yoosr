@@ -51,7 +51,17 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <>
       {/* Yoosr Widget — Live Demo (iframe-isolated, no CSP issues) */}
-      <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || ""} />
+      {/* <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || ""} /> */}
+
+      {/* Alternative Snippet:
+      import Script from 'next/script'
+      <>
+        <Script id="yoosr-init" strategy="afterInteractive">
+          {`window.yoosrSettings = { projectId: "${process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || "kh77h13a0m3xm77gw5mntkayts84p194"}" };`}
+        </Script>
+        <Script src="http://localhost:3000/loader.js" strategy="afterInteractive" />
+      </>
+      */}
 
       <section id="home">
         <Hero />
