@@ -195,7 +195,8 @@ export default function WidgetChat() {
     // Connection timeout state
     const [connectionTimeout, setConnectionTimeout] = useState(false)
     const [isRetrying, setIsRetrying] = useState(false)
-    const [isOffline, setIsOffline] = useState(!navigator.onLine)
+    // Initialize as false (will be updated after hydration)
+    const [isOffline, setIsOffline] = useState(false)
 
     // Use refs to avoid stale closures in timeout callback
     const loadingRef = useRef(false)
@@ -210,8 +211,11 @@ export default function WidgetChat() {
         conversationIdRef.current = conversationId
     }, [conversationId])
 
-    // Online/offline detection
+    // Online/offline detection - check after hydration
     useEffect(() => {
+        // Set initial state after hydration
+        setIsOffline(!navigator.onLine)
+
         const handleOnline = () => setIsOffline(false)
         const handleOffline = () => setIsOffline(true)
 
@@ -977,7 +981,7 @@ export default function WidgetChat() {
                     <Skeleton className="w-16 h-10 rounded-md" style={{ backgroundColor: widgetColor, opacity: 0.3 }} />
                 </div>
             ) : (
-                <div className="border-t px-3 py-2 flex gap-2 items-center">
+                <div className="border-t px-3 py-2 flex gap-2 items-center min-w-0">
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -988,7 +992,7 @@ export default function WidgetChat() {
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={loading || isUploading}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 shrink-0"
                     title={t("attachFile")}
                 >
                     {isUploading ? (
@@ -1000,7 +1004,7 @@ export default function WidgetChat() {
                 <input
                     ref={inputRef}
                     type="text"
-                    className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
+                    className="flex-1 min-w-0 border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300"
                     placeholder={conversationStatus === CONVERSATION_STATUS.CLOSED ? t("conversationResolved") : t("inputPlaceholder")}
                     value={input}
                     onChange={(e) => dispatch({ type: "SET_INPUT", payload: e.target.value })}
@@ -1011,15 +1015,12 @@ export default function WidgetChat() {
                     onClick={handleSend}
                     disabled={loading || !input.trim() || conversationStatus === CONVERSATION_STATUS.CLOSED || isUploading}
                     style={{ backgroundColor: widgetColor }}
-                    className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    className="text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0 whitespace-nowrap"
                 >
                     {isSendingMessage ? (
-                        <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span className="sr-only">{t("sending") || "Sending..."}</span>
-                        </>
+                        <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                        t("send")
+                        <span className="inline-block">{t("send")}</span>
                     )}
                 </button>
             </div>

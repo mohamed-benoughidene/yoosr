@@ -242,6 +242,7 @@ export const getMessages = query({
                     id: m._id,
                     content: m.content,
                     senderType: m.senderType, // "visitor" | "agent" | "bot"
+                    senderId: m.senderId,
                     createdAt: m._creationTime,
                     isInternal: isInternal,
                 };
@@ -401,7 +402,34 @@ export const getTypingStatus = internalQuery({
         const now = Date.now();
         const cutoff = now - TYPING_WINDOW_MS;
 
-        // Find the most recent typing event for this conversation
+        const typingEvents = await ctx.db
+            .query("typing_events")
+            .withIndex("by_conversationId_createdAt", (q) =>
+                q.eq("conversationId", args.conversationId).gte("createdAt", cutoff)
+            )
+            .order("desc")
+            .collect();
+
+        const agentTyping = typingEvents.find(e => e.eventType === "agent_typing");
+        const visitorTyping = typingEvents.find(e => e.eventType === "visitor_typing");
+
+        return {
+            isAgentTyping: !!agentTyping,
+            agentName: agentTyping?.senderName ?? "",
+            isVisitorTyping: !!visitorTyping,
+        };
+    },
+});
+
+// Public: check if visitor is typing (for agent dashboard)
+export const isVisitorTyping = query({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const now = Date.now();
+        const cutoff = now - TYPING_WINDOW_MS;
+
         const typingEvent = await ctx.db
             .query("typing_events")
             .withIndex("by_conversationId_createdAt", (q) =>
@@ -410,14 +438,7 @@ export const getTypingStatus = internalQuery({
             .order("desc")
             .first();
 
-        if (!typingEvent) {
-            return { isTyping: false, senderName: "" };
-        }
-
-        return {
-            isTyping: true,
-            senderName: typingEvent.senderName ?? "",
-        };
+        return typingEvent?.eventType === "visitor_typing";
     },
 });
 
@@ -426,7 +447,7 @@ export const recordTyping = mutation({
     args: {
         projectId: v.id("projects"),
         conversationId: v.id("conversations"),
-        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing")),
+        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing"), v.literal("visitor_typing")),
         agentId: v.optional(v.string()),
         senderName: v.optional(v.string()),
     },

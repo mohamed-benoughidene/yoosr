@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Conversation } from "./conversation-list"
-import { Send, MoreVertical, Paperclip, Smile, LogIn, LogOut, MessageCircle, ChevronDown, ChevronLeft, Info } from "lucide-react"
+import { Send, MoreVertical, Paperclip, LogIn, LogOut, MessageCircle, ChevronDown, ChevronLeft, Info } from "lucide-react"
 import { CONVERSATION_STATUS } from "@/lib/constants"
 import {
     DropdownMenu,
@@ -28,6 +28,7 @@ import { useProject } from "@/context/ProjectContext"
 import { useUser, useOrganization } from "@clerk/nextjs"
 import { CannedResponsePicker } from "./canned-response-picker"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 
 interface ChatDisplayProps {
     conversation: Conversation | null
@@ -121,6 +122,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                     });
                 } catch (metaErr) {
                     console.error("Failed to relay to Meta:", metaErr);
+                    toast.error("Failed to send message to Meta — the message was saved internally but may not reach the customer.");
                 }
             }
 
@@ -136,11 +138,13 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                     });
                 } catch (telegramErr) {
                     console.error("Failed to relay to Telegram:", telegramErr);
+                    toast.error("Failed to send message to Telegram — the message was saved internally but may not reach the customer.");
                 }
             }
         } catch (error) {
             console.error("Failed to send message:", error);
-            // In a real app, restore input value and show toast
+            setInputValue(content); // restore input on failure
+            toast.error("Failed to send message — please try again.");
         }
     }
 
@@ -490,7 +494,7 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
             </Dialog>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-background">
                 <div className="flex flex-col gap-6">
                     {status === "LoadingFirstPage" ? (
                         <div className="flex flex-col gap-4 max-w-lg">
@@ -541,10 +545,14 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                                     )
                                 } else {
                                     // Agent or bot message
+                                    const msgWithSender = msg as typeof msg & { senderId?: string };
+                                    const agentAvatar = msgWithSender.senderType === "agent" && msgWithSender.senderId
+                                        ? projectMembers.find(m => m.userId === msgWithSender.senderId)?.profile.avatarUrl
+                                        : undefined;
                                     return (
                                         <div key={msg._id} className="flex items-end gap-3 flex-row-reverse">
                                             <Avatar className={cn("h-8 w-8 border", isInternal ? "bg-yellow-100 dark:bg-yellow-900" : "bg-blue-100 dark:bg-blue-900")}>
-                                                <AvatarImage src={msg.senderType === "agent" ? "https://github.com/shadcn.png" : undefined} />
+                                                <AvatarImage src={agentAvatar} />
                                                 <AvatarFallback className={isInternal ? "text-yellow-900 dark:text-yellow-100" : "text-blue-900 dark:text-blue-100"}>
                                                     {msg.senderType === "bot" ? "BOT" : "AG"}
                                                 </AvatarFallback>
@@ -577,21 +585,15 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
 
             {/* Footer / Input Area */}
             <div className="border-t bg-background p-4">
-                <div className="mb-3 flex items-center justify-between">
-                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-[200px]">
-                        <TabsList className="h-8 w-full grid grid-cols-2">
+                <div className="relative rounded-lg border border-border bg-card">
+                    {/* Tabs - full width grid like widget settings */}
+                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-full px-3 pt-3">
+                        <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="public" className="text-xs">Public</TabsTrigger>
                             <TabsTrigger value="internal" className="text-xs">Internal</TabsTrigger>
                         </TabsList>
                     </Tabs>
-                </div>
 
-                <div className={cn(
-                    "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
-                    messageMode === "internal" 
-                        ? "bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800 focus-within:ring-yellow-300 dark:focus-within:ring-yellow-700" 
-                        : "bg-card focus-within:ring-ring"
-                )}>
                     {showPicker && cannedResponses && (
                         <CannedResponsePicker
                             key={pickerQuery}
@@ -607,16 +609,13 @@ export function ChatDisplay({ conversation, onBack, onOpenContact }: ChatDisplay
                         onKeyDown={handleKeyDown}
                         disabled={conversation.status === CONVERSATION_STATUS.CLOSED}
                         placeholder={conversation.status === CONVERSATION_STATUS.CLOSED ? "This conversation is resolved" : (messageMode === "internal" ? "Add an internal note..." : "Type your message...")}
-                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/70 dark:placeholder:text-yellow-300/70", conversation.status === CONVERSATION_STATUS.CLOSED && "cursor-not-allowed opacity-50")}
+                        className={cn("min-h-[80px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 focus:ring-offset-0 ring-0 ring-offset-0", messageMode === "internal" && "placeholder:text-yellow-700/70 dark:placeholder:text-yellow-300/70", conversation.status === CONVERSATION_STATUS.CLOSED && "cursor-not-allowed opacity-50")}
                     />
 
                     <div className="flex items-center justify-between p-2">
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === CONVERSATION_STATUS.CLOSED}>
                                 <Paperclip className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" disabled={conversation.status === CONVERSATION_STATUS.CLOSED}>
-                                <Smile className="h-4 w-4" />
                             </Button>
                         </div>
                         <div className="flex items-center gap-2">

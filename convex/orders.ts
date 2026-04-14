@@ -92,6 +92,33 @@ export const listOrdersPaginated = query({
     },
 });
 
+export const listOrdersByConversation = query({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() as ClerkIdentity | null;
+        if (!identity) {
+            throw authError();
+        }
+
+        const orders = await ctx.db
+            .query("orders")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .take(50);
+
+        // Verify org access via the first order's projectId (all orders in a convo belong to same project)
+        if (orders.length > 0) {
+            const project = await ctx.db.get(orders[0].projectId);
+            if (!project || project.orgId !== identity.org_id) {
+                throw forbiddenError();
+            }
+        }
+
+        return orders.sort((a, b) => b.createdAt - a.createdAt);
+    },
+});
+
 export const updateOrderStatus = mutation({
     args: {
         orderId: v.id("orders"),

@@ -45,8 +45,8 @@ type ViewportSize = "mobile" | "tablet" | "desktop";
 // - Z-index: 999999 (avoids conflicts with modals/navbars)
 
 const IFRAME_Z_INDEX = 999999;
-const OFFSET_DESKTOP = 20;
-const OFFSET_TABLET = 16;
+const OFFSET_DESKTOP = 8;
+const OFFSET_TABLET = 8;
 const LAUNCHER_SIZE = 56;
 const UNREAD_BADGE_SIZE = 20;
 const TOAST_DURATION_MS = 4000;

@@ -399,7 +399,7 @@ export default defineSchema({
     typing_events: defineTable({
         projectId: v.id("projects"),
         conversationId: v.id("conversations"),
-        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing")),
+        eventType: v.union(v.literal("agent_typing"), v.literal("bot_typing"), v.literal("visitor_typing")),
         agentId: v.optional(v.string()), // Clerk user ID of the typing agent
         senderName: v.optional(v.string()), // Display name of the typing person
         createdAt: v.number(), // Date.now() — widget checks if within last 5s

@@ -725,6 +725,10 @@
     "unserved": "Non servi",
     "served": "Servi",
     "active": "Actif",
+    "kpi_active": "Actif",
+    "kpi_unassigned": "Non assigné",
+    "kpi_sla_breach": "Rupture SLA",
+    "kpi_bot_active": "Bot actif",
     "no_conversations_found": "Aucune conversation trouvée.",
     "no_conversations_yet": "Aucune conversation pour l'instant",
     "select_conversation": "Sélectionnez une conversation pour commencer",
@@ -816,7 +820,8 @@
       "agentConnected": "Vous êtes maintenant connecté avec un agent.",
       "inactiveClosed": "Cette conversation a été automatiquement fermée en raison d'inactivité.",
       "agentJoined": "Un agent a rejoint la conversation."
-    }
+    },
+    "visitor_typing_indicator": "Le visiteur est en train d'écrire..."
   },
   "requests": {
     "title": "Demandes",

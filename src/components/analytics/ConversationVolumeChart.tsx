@@ -65,12 +65,12 @@ export function ConversationVolumeChart({ data, isLoading }: Props) {
                             <Bar
                                 dataKey="bot"
                                 name={t("bot_handled")}
-                                fill="#3b82f6"
+                                fill="hsl(var(--chart-2))"
                             />
                             <Bar
                                 dataKey="agent"
                                 name={t("agent_handled")}
-                                fill="#22c55e"
+                                fill="hsl(var(--chart-8))"
                             />
                         </BarChart>
                     </ResponsiveContainer>

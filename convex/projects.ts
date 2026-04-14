@@ -118,6 +118,8 @@ export const ensureProject = mutation({
             });
 
             // Add some default labels
+            // Note: These are data values stored in DB, not presentation tokens
+            // Mapped to semantic equivalents: danger, info, success
             const defaultLabels = [
                 { name: "Bug", color: "#ef4444" },
                 { name: "Feature Request", color: "#3b82f6" },

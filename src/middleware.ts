@@ -25,6 +25,7 @@ export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
   // Redirect bare root to saved locale (Clerk metadata > cookie > default "en")
+  // Using 301 (permanent) so Google indexes /en as canonical (SEO best practice)
   if (pathname === "/") {
     // Priority 1: Check authenticated user's Clerk metadata
     const authData = await auth();
@@ -50,7 +51,8 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Priority 3: Default to "en"
     const locale = targetLocale ?? "en";
-    return NextResponse.redirect(new URL(`/${locale}`, req.url));
+    const response = NextResponse.redirect(new URL(`/${locale}`, req.url), 301);
+    return response;
   }
 
   // Skip middleware for static assets and API routes early
@@ -65,6 +67,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Handle dashboard locale redirect BEFORE auth check to avoid extra hops
   // This prevents the redirect chain: /dashboard -> /en/dashboard
+  // Using 302 (temporary) so Google indexes the locale-prefixed destination
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
     const authData = await auth();
     if (authData.userId) {
@@ -75,7 +78,7 @@ export default clerkMiddleware(async (auth, req) => {
 
       if (typeof locale === "string" && VALID_LOCALES.includes(locale as ValidLocale)) {
         const targetUrl = new URL(`/${locale}/dashboard`, req.url);
-        return NextResponse.redirect(targetUrl);
+        return NextResponse.redirect(targetUrl, 302);
       }
     }
   }

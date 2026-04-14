@@ -365,8 +365,9 @@ http.route({
 
         return new Response(JSON.stringify({
             messages: messages ?? [],
-            isAgentTyping: typingStatus.isTyping,
-            typingSenderName: typingStatus.senderName,
+            isAgentTyping: typingStatus.isAgentTyping,
+            isVisitorTyping: typingStatus.isVisitorTyping,
+            typingSenderName: typingStatus.agentName,
         }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },

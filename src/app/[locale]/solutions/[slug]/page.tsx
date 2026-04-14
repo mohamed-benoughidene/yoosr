@@ -5,7 +5,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb"
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
     const formattedSlug = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.co"
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yoosr.io"
     const desc = `See how Yoosr helps ${slug.replace(/-/g, ' ')} businesses manage customer support.`
     const ogUrl = `${baseUrl}/og/image?title=${encodeURIComponent(`${formattedSlug} Solutions`)}&description=${encodeURIComponent(desc)}`
     return {

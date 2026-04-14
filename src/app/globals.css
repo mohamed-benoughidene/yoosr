@@ -93,6 +93,31 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  --chart-6: oklch(0.65 0.24 300); /* violet */
+  --chart-7: oklch(0.60 0.25 350); /* pink */
+  --chart-8: oklch(0.70 0.20 175); /* teal */
+  --chart-9: oklch(0.75 0.18 75);  /* amber */
+  --chart-10: oklch(0.55 0.22 260); /* indigo */
+
+  /* Flow Editor Node Type Colors */
+  --flow-node-success: oklch(0.72 0.21 150);    /* green - start, code_action */
+  --flow-node-info: oklch(0.65 0.18 250);        /* blue - reply */
+  --flow-node-warning: oklch(0.78 0.20 85);      /* amber - condition, operating_hours */
+  --flow-node-danger: oklch(0.65 0.25 25);       /* red - close, clear_transcript */
+  --flow-node-purple: oklch(0.60 0.24 300);      /* violet - setAttribute, ask_kb, capture_user_reply */
+  --flow-node-cyan: oklch(0.70 0.16 210);        /* cyan - webRequest, change_department */
+  --flow-node-pink: oklch(0.65 0.25 350);        /* pink - aiTask, replace_bot, applyLabel */
+  --flow-node-orange: oklch(0.70 0.22 45);       /* orange - hitlHandoff, setPriority */
+  --flow-node-slate: oklch(0.55 0.06 250);       /* slate - wait */
+  --flow-node-default: oklch(0.60 0.08 260);     /* slate-gray - default fallback */
+
+  /* Status & Utility Colors */
+  --status-success: oklch(0.72 0.21 150);
+  --status-info: oklch(0.65 0.18 250);
+  --status-warning: oklch(0.78 0.20 85);
+  --status-danger: oklch(0.65 0.25 25);
+  --status-muted: oklch(0.55 0.06 260);
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.21 0.006 285.885);
@@ -169,6 +194,31 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --chart-6: oklch(0.55 0.22 300);  /* violet - darker for dark mode */
+  --chart-7: oklch(0.55 0.23 350);  /* pink - darker for dark mode */
+  --chart-8: oklch(0.60 0.18 175);  /* teal - darker for dark mode */
+  --chart-9: oklch(0.68 0.16 75);   /* amber - darker for dark mode */
+  --chart-10: oklch(0.50 0.20 260); /* indigo - darker for dark mode */
+
+  /* Flow Editor Node Type Colors - Dark Mode */
+  --flow-node-success: oklch(0.62 0.19 150);
+  --flow-node-info: oklch(0.58 0.16 250);
+  --flow-node-warning: oklch(0.70 0.18 85);
+  --flow-node-danger: oklch(0.58 0.22 25);
+  --flow-node-purple: oklch(0.55 0.22 300);
+  --flow-node-cyan: oklch(0.62 0.14 210);
+  --flow-node-pink: oklch(0.58 0.22 350);
+  --flow-node-orange: oklch(0.62 0.20 45);
+  --flow-node-slate: oklch(0.50 0.05 260);
+  --flow-node-default: oklch(0.55 0.06 260);
+
+  /* Status & Utility Colors - Dark Mode */
+  --status-success: oklch(0.62 0.19 150);
+  --status-info: oklch(0.58 0.16 250);
+  --status-warning: oklch(0.70 0.18 85);
+  --status-danger: oklch(0.58 0.22 25);
+  --status-muted: oklch(0.50 0.05 260);
+
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -299,6 +349,31 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-chart-9: var(--chart-9);
+  --color-chart-10: var(--chart-10);
+
+  /* Flow Editor Node Type Colors */
+  --color-flow-node-success: var(--flow-node-success);
+  --color-flow-node-info: var(--flow-node-info);
+  --color-flow-node-warning: var(--flow-node-warning);
+  --color-flow-node-danger: var(--flow-node-danger);
+  --color-flow-node-purple: var(--flow-node-purple);
+  --color-flow-node-cyan: var(--flow-node-cyan);
+  --color-flow-node-pink: var(--flow-node-pink);
+  --color-flow-node-orange: var(--flow-node-orange);
+  --color-flow-node-slate: var(--flow-node-slate);
+  --color-flow-node-default: var(--flow-node-default);
+
+  /* Status & Utility Colors */
+  --color-status-success: var(--status-success);
+  --color-status-info: var(--status-info);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+  --color-status-muted: var(--status-muted);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

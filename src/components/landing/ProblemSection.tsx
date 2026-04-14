@@ -25,7 +25,7 @@ export function ProblemSection() {
           <div
             className="flex-1 p-8 md:p-12 flex flex-col justify-center"
             style={{
-              background: "rgba(20, 22, 28, 0.95)",
+              background: "var(--lp-bg-deep)",
             }}
           >
             <ScrollReveal>
@@ -35,7 +35,7 @@ export function ProblemSection() {
 
               <h2
                 className="lp-headline mt-4"
-                style={{ color: "rgba(255,255,255,0.95)" }}
+                style={{ color: "var(--lp-text)" }}
               >
                 {t("headline")}
               </h2>
@@ -47,15 +47,15 @@ export function ProblemSection() {
                   <div
                     className="rounded-xl px-5 py-3"
                     style={{
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "var(--lp-surface)",
+                      border: "1px solid var(--lp-border)",
                     }}
                   >
                     <p
                       className="font-normal text-[15px] leading-snug"
                       style={{
                         fontFamily: "'Inter', sans-serif",
-                        color: "rgba(255,255,255,0.85)",
+                        color: "var(--lp-text-secondary)",
                       }}
                     >
                       {point}
@@ -70,7 +70,7 @@ export function ProblemSection() {
                 className="font-normal text-base italic mt-6 leading-relaxed"
                 style={{
                   fontFamily: "'Inter', sans-serif",
-                  color: "rgba(255,255,255,0.7)",
+                  color: "var(--lp-text-muted)",
                 }}
               >
                 {t("transition")}

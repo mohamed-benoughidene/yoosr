@@ -174,8 +174,8 @@ describe("WidgetLoader", () => {
 
       const container = document.querySelector(".yoosr-widget-launcher-container");
       expect(container).toBeTruthy();
-      expect((container as HTMLElement).style.bottom).toBe("20px");
-      expect((container as HTMLElement).style.right).toBe("20px");
+      expect((container as HTMLElement).style.bottom).toBe("8px");
+      expect((container as HTMLElement).style.right).toBe("8px");
     });
 
     it("should position the launcher bottom-left when specified", () => {
@@ -183,8 +183,8 @@ describe("WidgetLoader", () => {
 
       const container = document.querySelector(".yoosr-widget-launcher-container");
       expect(container).toBeTruthy();
-      expect((container as HTMLElement).style.bottom).toBe("20px");
-      expect((container as HTMLElement).style.left).toBe("20px");
+      expect((container as HTMLElement).style.bottom).toBe("8px");
+      expect((container as HTMLElement).style.left).toBe("8px");
     });
 
     it("should position the launcher at tablet offset on smaller viewports", () => {
@@ -198,8 +198,8 @@ describe("WidgetLoader", () => {
 
       const container = document.querySelector(".yoosr-widget-launcher-container");
       expect(container).toBeTruthy();
-      expect((container as HTMLElement).style.bottom).toBe("16px");
-      expect((container as HTMLElement).style.right).toBe("16px");
+      expect((container as HTMLElement).style.bottom).toBe("8px");
+      expect((container as HTMLElement).style.right).toBe("8px");
     });
   });
 
@@ -527,9 +527,9 @@ describe("WidgetLoader", () => {
       const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
       expect(wrapper.style.width).toBe("calc(100vw - 32px)");
       expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
-      // Chat window sits above launcher: 56 + 16 + 4 = 76px
-      expect(wrapper.style.bottom).toBe("76px");
-      expect(wrapper.style.right).toBe("76px");
+      // Chat window sits above launcher: 56 + 8 + 4 = 68px
+      expect(wrapper.style.bottom).toBe("68px");
+      expect(wrapper.style.right).toBe("68px");
     });
 
     it("should apply desktop styles when viewport is > 768px", () => {
@@ -542,9 +542,9 @@ describe("WidgetLoader", () => {
       expect(wrapper.style.width).toBe("380px");
       expect(wrapper.style.height).toBe("520px");
       expect(wrapper.style.maxHeight).toBe("calc(100vh - 140px)");
-      // Chat window sits above launcher: 56 + 20 + 4 = 80px
-      expect(wrapper.style.bottom).toBe("80px");
-      expect(wrapper.style.right).toBe("80px");
+      // Chat window sits above launcher: 56 + 8 + 4 = 68px
+      expect(wrapper.style.bottom).toBe("68px");
+      expect(wrapper.style.right).toBe("68px");
     });
 
     it("should maintain open/close transitions with dynamic styles", () => {
@@ -607,9 +607,9 @@ describe("WidgetLoader", () => {
       fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
 
       const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
-      // Chat window bottom = launcherSize(56) + offset(20) + gap(4) = 80px
-      expect(wrapper.style.bottom).toBe("80px");
-      expect(wrapper.style.right).toBe("80px");
+      // Chat window bottom = launcherSize(56) + offset(8) + gap(4) = 68px
+      expect(wrapper.style.bottom).toBe("68px");
+      expect(wrapper.style.right).toBe("68px");
     });
 
     it("should offset chat window above launcher on tablet", () => {
@@ -625,9 +625,9 @@ describe("WidgetLoader", () => {
       fireEvent.click(screen.getByRole("button", { name: "Open chat" }));
 
       const wrapper = screen.getByTitle("Yoosr Chat Widget").parentElement as HTMLElement;
-      // Chat window bottom = launcherSize(56) + tabletOffset(16) + gap(4) = 76px
-      expect(wrapper.style.bottom).toBe("76px");
-      expect(wrapper.style.right).toBe("76px");
+      // Chat window bottom = launcherSize(56) + tabletOffset(8) + gap(4) = 68px
+      expect(wrapper.style.bottom).toBe("68px");
+      expect(wrapper.style.right).toBe("68px");
     });
 
     it("should position chat window at bottom 0 on mobile when open", () => {

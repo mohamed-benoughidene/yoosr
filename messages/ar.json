@@ -725,6 +725,10 @@
     "unserved": "غير مخدوم",
     "served": "مخدوم",
     "active": "نشط",
+    "kpi_active": "نشط",
+    "kpi_unassigned": "غير معين",
+    "kpi_sla_breach": "تجاوز SLA",
+    "kpi_bot_active": "بوت نشط",
     "no_conversations_found": "لم يتم العثور على محادثات.",
     "no_conversations_yet": "لا توجد محادثات بعد",
     "select_conversation": "اختر محادثة للبدء",
@@ -813,7 +817,8 @@
       "agentConnected": "أنت الآن متصل بأحد الوكلاء.",
       "inactiveClosed": "تم إغلاق هذه المحادثة تلقائياً بسبب عدم النشاط.",
       "agentJoined": "انضم أحد الوكلاء إلى المحادثة."
-    }
+    },
+    "visitor_typing_indicator": "الزائر يكتب الآن..."
   },
   "requests": {
     "title": "الطلبات",

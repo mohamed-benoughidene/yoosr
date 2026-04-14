@@ -6,6 +6,8 @@ export const seedDemoData = internalMutation({
   args: { projectId: v.id("projects") },
   handler: async (ctx, { projectId }) => {
 
+    // Note: Label colors are data values stored in DB, not presentation tokens
+    // Mapped to semantic equivalents: warning, info, danger, success
     for (const label of [
       { name: "Billing", color: "#f59e0b" },
       { name: "Technical", color: "#3b82f6" },

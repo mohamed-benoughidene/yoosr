@@ -623,13 +623,13 @@ export default function WidgetSetupPage() {
                                 </div>
 
                                 <div className="relative group">
-                                    <pre className="p-4 rounded-lg bg-[#09090b] text-zinc-100 text-xs overflow-x-auto whitespace-pre font-mono border border-zinc-800/80 ring-1 ring-white/5 shadow-2xl scrollbar-thin scrollbar-thumb-zinc-700">
+                                    <pre className="p-4 rounded-lg bg-card text-card-foreground text-xs overflow-x-auto whitespace-pre font-mono border border-border shadow-2xl">
                                         <code className="block lining-nums tabular-nums leading-relaxed">{getSnippet(selectedPlatform)}</code>
                                     </pre>
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="absolute top-2 right-2 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/80 transition-all duration-200"
+                                        className="absolute top-2 right-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                                         onClick={() => copyToClipboard(getSnippet(selectedPlatform), 'generic')}
                                     >
                                         {copiedSnippet ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Paperclip, Send, Smile, Loader2, CheckCircle, MoreVertical, ChevronLeft, Info } from "lucide-react"
+import { Paperclip, Send, Loader2, CheckCircle, MoreVertical, ChevronLeft, Info, CircleDot } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -118,6 +118,12 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
         { initialNumItems: 30 }
     )
 
+    // Check if visitor is typing
+    const visitorIsTyping = useQuery(
+        api.messages.isVisitorTyping,
+        conversationId ? { conversationId } : "skip"
+    ) ?? false
+
     const cannedResponses = useQuery(
         api.cannedResponses.listCannedResponses,
         conversation?.projectId ? { projectId: conversation.projectId } : "skip"
@@ -183,6 +189,25 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [conversationId])
+
+    // Scroll-based message loading — auto-load older messages when user scrolls to top
+    const loadMoreRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        const sentinel = loadMoreRef.current
+        if (!sentinel || status === "Exhausted" || status === "LoadingFirstPage") return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore(30)
+                }
+            },
+            { root: scrollRef.current, rootMargin: "100px 0px 0px 0px" }
+        )
+
+        observer.observe(sentinel)
+        return () => observer.disconnect()
+    }, [status, loadMore, conversationId])
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || !conversationId || !user || !conversation) return
@@ -395,7 +420,16 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                     <div className="overflow-hidden">
                         <div className="font-semibold truncate">{conversation?.visitorName || tVisitor("name_fallback")}</div>
                         <div className="text-xs text-muted-foreground truncate">
-                            {isResolved ? t("status_resolved") : t("status_online")}
+                            {isResolved ? (
+                                t("status_resolved")
+                            ) : visitorIsTyping ? (
+                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                    <CircleDot className="h-3 w-3 animate-pulse" />
+                                    {t("visitor_typing_indicator")}
+                                </span>
+                            ) : (
+                                t("status_online")
+                            )}
                         </div>
                     </div>
                 </div>
@@ -542,7 +576,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             </Dialog>
 
             {/* Messages */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4" ref={scrollRef}>
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-background" ref={scrollRef}>
                 {status === "LoadingFirstPage" ? (
                     <div className="flex justify-center p-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -553,13 +587,17 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                     </div>
                 ) : (
                     <>
-                        {status !== "Exhausted" && (
-                            <button
-                                onClick={() => loadMore(30)}
-                                className="mx-auto block w-fit text-xs text-muted-foreground hover:underline my-2"
-                            >
-                                {t("load_older_messages")}
-                            </button>
+                        {/* IntersectionObserver sentinel for auto-loading older messages */}
+                        <div
+                            ref={loadMoreRef}
+                            data-testid="load-more-sentinel"
+                            className="h-1 w-full"
+                            aria-hidden="true"
+                        />
+                        {status !== "Exhausted" && status === "LoadingMore" && (
+                            <div className="flex justify-center p-2">
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
                         )}
                         {[...messages].reverse().map((msg) => (
                             <div
@@ -644,21 +682,16 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t">
-                <div className="mb-3 flex items-center justify-between">
-                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-[200px]">
-                        <TabsList className="h-8 w-full grid grid-cols-2">
+            <div className="p-4 border-t bg-background">
+                <div className="relative rounded-lg border border-border bg-card">
+                    {/* Tabs - full width grid like widget settings */}
+                    <Tabs value={messageMode} onValueChange={(v) => setMessageMode(v as "public" | "internal")} className="w-full px-3 pt-3">
+                        <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="public" className="text-xs">{t("mode_public")}</TabsTrigger>
                             <TabsTrigger value="internal" className="text-xs">{t("mode_internal")}</TabsTrigger>
                         </TabsList>
                     </Tabs>
-                </div>
-                <div className={cn(
-                    "relative rounded-lg border shadow-sm focus-within:ring-1 transition-colors",
-                    messageMode === "internal" 
-                        ? "bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800 focus-within:ring-yellow-300 dark:focus-within:ring-yellow-700" 
-                        : "bg-card focus-within:ring-ring"
-                )}>
+
                     {showPicker && cannedResponses && (
                         <CannedResponsePicker
                             key={pickerQuery}
@@ -674,13 +707,10 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                         onKeyDown={handleKeyDown}
                         disabled={isResolved}
                         placeholder={isResolved ? t("resolved_placeholder") : (messageMode === "internal" ? t("internal_note_placeholder") : t("type_message_placeholder"))}
-                        className={cn("min-h-[100px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0", messageMode === "internal" && "placeholder:text-yellow-700/50", isResolved && "cursor-not-allowed opacity-50")}
+                        className={cn("min-h-[100px] w-full resize-none border-0 bg-transparent p-3 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-0 focus:ring-offset-0 ring-0 ring-offset-0", messageMode === "internal" && "placeholder:text-yellow-700/50", isResolved && "cursor-not-allowed opacity-50")}
                     />
                     <div className="flex items-center justify-between p-2">
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" disabled={isResolved}>
-                                <Smile className="h-4 w-4" />
-                            </Button>
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -693,7 +723,7 @@ function ChatAreaContent({ conversationId: propConversationId, onBack, onOpenCon
                                         await sendMessage({
                                             conversationId,
                                             projectId: conversation.projectId,
-                                            content: `📎 ${file.name}`,
+                                            content: `[Attachment] ${file.name}`,
                                             isInternal: messageMode === "internal",
                                         })
                                     } catch (error) {

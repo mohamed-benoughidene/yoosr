@@ -330,47 +330,39 @@ export function FlowEditor({
                     <MiniMap
                         position="bottom-right"
                         className="!rounded-lg !border !shadow-sm"
-                        maskColor="rgba(0, 0, 0, 0.08)"
+                        maskColor="color-mix(in srgb, var(--foreground) 8%, transparent)"
                         nodeColor={(node) => {
                             switch (node.type) {
                                 case "start":
-                                    return "#10b981";
+                                case "code_action":
+                                    return "hsl(var(--flow-node-success))";
                                 case "reply":
-                                    return "#3b82f6";
+                                    return "hsl(var(--flow-node-info))";
                                 case "setAttribute":
-                                    return "#8b5cf6";
-                                case "condition":
-                                    return "#f59e0b";
-                                case "webRequest":
-                                    return "#06b6d4";
-                                case "aiTask":
-                                    return "#ec4899";
-                                case "hitlHandoff":
-                                    return "#f97316";
-                                case "close":
-                                case "clear_transcript":
-                                    return "#ef4444";
-                                case "wait":
-                                    return "#64748b";
                                 case "ask_kb":
-                                    return "#6366f1";
+                                case "capture_user_reply":
+                                    return "hsl(var(--flow-node-purple))";
+                                case "condition":
                                 case "if_operating_hours":
                                 case "if_online_agent":
-                                    return "#f59e0b";
-                                case "replace_bot":
-                                    return "#ec4899";
-                                case "applyLabel":
-                                    return "#ec4899";
-                                case "capture_user_reply":
-                                    return "#a855f7";
+                                    return "hsl(var(--flow-node-warning))";
+                                case "webRequest":
                                 case "change_department":
-                                    return "#06b6d4";
-                                case "code_action":
-                                    return "#10b981";
+                                    return "hsl(var(--flow-node-cyan))";
+                                case "aiTask":
+                                case "replace_bot":
+                                case "applyLabel":
+                                    return "hsl(var(--flow-node-pink))";
+                                case "hitlHandoff":
                                 case "setPriority":
-                                    return "#ea580c";
+                                    return "hsl(var(--flow-node-orange))";
+                                case "close":
+                                case "clear_transcript":
+                                    return "hsl(var(--flow-node-danger))";
+                                case "wait":
+                                    return "hsl(var(--flow-node-slate))";
                                 default:
-                                    return "#94a3b8";
+                                    return "hsl(var(--flow-node-default))";
                             }
                         }}
                     />

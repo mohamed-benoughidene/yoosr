@@ -7,72 +7,43 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: [
+          '/en/',
+          '/ar/',
+          '/fr/',
+        ],
         disallow: [
-          '/api/',
-          '/_next/',
-          '/static/',
-          '/admin/',
-          '/convex/',
-          // Block authenticated areas from public indexing
-          '/dashboard/',
-          '/design-studio/',
-          '/onboarding/',
-          '/test-widget/',
+          '/', // Block bare root (redirect source — wastes crawl budget)
+          '/_next/data/', // Block internal Next.js JSON files (crawl budget)
+          '/dashboard',
+          '/design-studio',
+          '/api',
+          '/widget',
+          '/login',
+          '/signup',
+          '/onboarding',
         ],
       },
-      // Allow specific bots more access
       {
         userAgent: 'Googlebot',
         allow: [
-          '/',
           '/en/',
           '/ar/',
           '/fr/',
-          '/en/pricing',
-          '/ar/pricing',
-          '/fr/pricing',
         ],
         disallow: [
-          '/api/',
-          '/_next/',
-          '/dashboard/',
-          '/design-studio/',
-        ],
-      },
-      // Block AI crawlers from sensitive areas but allow main pages
-      {
-        userAgent: 'GPTBot',
-        allow: [
-          '/',
-          '/en/',
-          '/ar/',
-          '/fr/',
-          '/llms.txt',
-        ],
-        disallow: [
-          '/api/',
-          '/dashboard/',
-          '/design-studio/',
-          '/widget/',
-        ],
-      },
-      {
-        userAgent: 'ChatGPT-User',
-        allow: [
-          '/',
-          '/en/',
-          '/ar/',
-          '/fr/',
-          '/llms.txt',
-        ],
-        disallow: [
-          '/api/',
-          '/dashboard/',
+          '/', // Block bare root (redirect source — wastes crawl budget)
+          '/_next/data/', // Block internal Next.js JSON files (crawl budget)
+          '/dashboard',
+          '/design-studio',
+          '/api',
+          '/widget',
+          '/login',
+          '/signup',
+          '/onboarding',
         ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
   };
 }

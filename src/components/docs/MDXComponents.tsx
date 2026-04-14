@@ -141,16 +141,16 @@ const td = ({ className, ...props }: React.HTMLAttributes<HTMLTableCellElement>)
 
 function CodeBlock({ children, className }: { children: string; className?: string }) {
   return (
-    <div className="relative group my-6 rounded-lg border border-zinc-800 bg-[#09090b] overflow-hidden">
+    <div className="relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
       <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={children} />
       </div>
       {className && (
-        <div className="px-4 py-2 flex items-center pr-12 border-b border-zinc-800">
-          <span className="text-xs text-zinc-500 font-mono">{className.replace("language-", "")}</span>
+        <div className="px-4 py-2 flex items-center pr-12 border-b border-border">
+          <span className="text-xs text-muted-foreground font-mono">{className.replace("language-", "")}</span>
         </div>
       )}
-      <pre className="p-4 overflow-x-auto text-sm text-zinc-100">
+      <pre className="p-4 overflow-x-auto text-sm text-card-foreground">
         <code className={className}>{children}</code>
       </pre>
     </div>
@@ -252,14 +252,14 @@ interface SnippetProps {
 
 export function Snippet({ code, lang = "text" }: SnippetProps) {
   return (
-    <div className="relative group my-6 rounded-lg border border-zinc-800 bg-[#09090b] overflow-hidden">
+    <div className="relative group my-6 rounded-lg border border-border bg-card overflow-hidden">
       <div className="absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={code} />
       </div>
-      <div className="px-4 py-2 flex items-center pr-12 border-b border-zinc-800">
-        <span className="text-xs text-zinc-500 font-mono">{lang}</span>
+      <div className="px-4 py-2 flex items-center pr-12 border-b border-border">
+        <span className="text-xs text-muted-foreground font-mono">{lang}</span>
       </div>
-      <pre className="p-4 overflow-x-auto text-sm text-zinc-100">
+      <pre className="p-4 overflow-x-auto text-sm text-card-foreground">
         <code className={`language-${lang}`}>{code}</code>
       </pre>
     </div>
