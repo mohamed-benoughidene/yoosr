@@ -3,7 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, checkProjectOwnership } from "./utils";
 import { authError, notFoundError } from "./errors";
-import { softDelete } from "./lib/softDelete";
+import { softDelete, filterActive } from "./lib/softDelete";
 
 // List bots for a project
 export const list = query({
@@ -15,6 +15,10 @@ export const list = query({
         return await ctx.db
             .query("bots")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.and(
+                filterActive(q),
+                q.neq(q.field("status"), "deleting")
+            ))
             .take(100);
     },
 });
@@ -27,7 +31,7 @@ export const get = query({
         if (!identity) return null;
 
         const bot = await ctx.db.get(args.id);
-        if (bot === null) return null;
+        if (bot === null || bot.deletedAt !== undefined) return null;
 
         const project = await checkProjectOwnership(ctx, bot.projectId, identity as unknown as { org_id: string });
         if (project === null) return null;
@@ -89,11 +93,12 @@ export const update = mutation({
         const bot = await ctx.db.get(args.id);
         if (!bot) throw notFoundError("Bot");
 
-        const { ...updates } = args;
-        const cleanUpdates: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(updates)) {
-            if (value !== undefined) cleanUpdates[key] = value;
-        }
+        const cleanUpdates: any = {};
+        if (args.name !== undefined) cleanUpdates.name = args.name;
+        if (args.description !== undefined) cleanUpdates.description = args.description;
+        if (args.status !== undefined) cleanUpdates.status = args.status;
+        if (args.configuration !== undefined) cleanUpdates.configuration = args.configuration;
+
         await ctx.db.patch(args.id, cleanUpdates);
 
         await ctx.runMutation(internal.activityLogs.logActivityInternal, {

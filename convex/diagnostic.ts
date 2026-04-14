@@ -41,3 +41,9 @@ export const getBotFlow = internalQuery({
         return flows.length > 0 ? { nodes: flows[0].nodes, edges: flows[0].edges } : null;
     }
 });
+export const getBots = internalQuery({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.db.query("bots").collect();
+    }
+});

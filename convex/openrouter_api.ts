@@ -105,6 +105,8 @@ export const testOpenRouterKey = action({
                 headers: {
                     Authorization: `Bearer ${decryptedKey}`,
                     "Content-Type": "application/json",
+                    "HTTP-Referer": "https://yoosr.ai", // Recommended by OpenRouter
+                    "X-Title": "Yoosr", // Recommended by OpenRouter
                 },
                 body: JSON.stringify({
                     model: model,
@@ -113,11 +115,24 @@ export const testOpenRouterKey = action({
                 }),
             });
 
-            if (!response.ok) {
-                return { ok: false, error: `${response.status}: ${response.statusText}` };
+            const responseText = await response.text();
+            let data: any;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                // If not JSON, but not OK, return status
+                if (!response.ok) {
+                    return { ok: false, error: `API Error ${response.status}: ${response.statusText}` };
+                }
+                return { ok: false, error: "Received invalid JSON response from OpenRouter" };
             }
 
-            const data: { choices?: { message?: { content?: string } }[] } = await response.json();
+            if (!response.ok) {
+                // OpenRouter returns errors in { error: { message: "..." } } or { error: "..." }
+                const errorMessage = data?.error?.message || data?.error || `${response.status}: ${response.statusText}`;
+                return { ok: false, error: String(errorMessage) };
+            }
+
             const content: string | undefined = data.choices?.[0]?.message?.content;
 
             return { ok: true, model: model, message: content };
