@@ -116,7 +116,10 @@ export const testOpenRouterKey = action({
             });
 
             const responseText = await response.text();
-            let data: Record<string, unknown>;
+            let data: {
+                error?: { message?: string } | string;
+                choices?: Array<{ message?: { content?: string } }>;
+            };
             try {
                 data = JSON.parse(responseText);
             } catch {
@@ -129,7 +132,7 @@ export const testOpenRouterKey = action({
 
             if (!response.ok) {
                 // OpenRouter returns errors in { error: { message: "..." } } or { error: "..." }
-                const errorMessage = data?.error?.message || data?.error || `${response.status}: ${response.statusText}`;
+                const errorMessage = (typeof data?.error === 'object' ? data?.error?.message : data?.error) || `${response.status}: ${response.statusText}`;
                 return { ok: false, error: String(errorMessage) };
             }
 
