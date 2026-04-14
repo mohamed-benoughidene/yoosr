@@ -93,7 +93,7 @@ export const update = mutation({
         const bot = await ctx.db.get(args.id);
         if (!bot) throw notFoundError("Bot");
 
-        const cleanUpdates: any = {};
+        const cleanUpdates: Record<string, unknown> = {};
         if (args.name !== undefined) cleanUpdates.name = args.name;
         if (args.description !== undefined) cleanUpdates.description = args.description;
         if (args.status !== undefined) cleanUpdates.status = args.status;

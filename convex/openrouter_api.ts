@@ -116,10 +116,10 @@ export const testOpenRouterKey = action({
             });
 
             const responseText = await response.text();
-            let data: any;
+            let data: Record<string, unknown>;
             try {
                 data = JSON.parse(responseText);
-            } catch (e) {
+            } catch {
                 // If not JSON, but not OK, return status
                 if (!response.ok) {
                     return { ok: false, error: `API Error ${response.status}: ${response.statusText}` };

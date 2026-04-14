@@ -3,7 +3,7 @@ import { SocialProofBar } from "@/components/landing/SocialProofBar"
 import { ProblemSection } from "@/components/landing/ProblemSection"
 import { ScrollReveal } from "@/components/landing/ScrollReveal"
 import dynamic from "next/dynamic"
-import { WidgetLoader } from "@/components/widget/WidgetLoader"
+
 
 const FeaturesGrid = dynamic(() => import("@/components/landing/FeaturesGrid").then(m => ({ default: m.FeaturesGrid })))
 const DesignStudioSection = dynamic(() => import("@/components/landing/DesignStudioSection").then(m => ({ default: m.DesignStudioSection })))

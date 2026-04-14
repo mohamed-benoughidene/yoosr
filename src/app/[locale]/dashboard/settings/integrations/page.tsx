@@ -116,11 +116,57 @@ export default function IntegrationsPage() {
     })
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
+    const upsertIntegration = useMutation(api.integrations.upsert)
+    const saveChannelIntegration = useAction(api.integrations.saveChannelIntegration)
+    const registerWebhook = useAction(api.integrations.registerTelegramWebhook)
+
+    const savedMap: Record<string, { credentials?: Record<string, string>; enabled?: boolean }> = {}
+        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, string>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
+
+
+    const openConfig = (integration: IntegrationDef) => {
+        if (integration.locked) return
+        setActiveConfig(integration)
+        const saved = savedMap[integration.id]
+        if (saved) { 
+            setFormValues(saved.credentials || {}); 
+            setFormEnabled(saved.enabled || false) 
+            
+            if (integration.id === "whatsapp") {
+                setWhatsappState({
+                    phoneNumberId: saved.credentials?.phone_number_id || "",
+                    accessToken: "",
+                    verifyToken: saved.credentials?.verify_token || "",
+                    appSecret: "",
+                    enabled: saved.enabled || false,
+                    hasExistingToken: !!saved.credentials?.access_token,
+                })
+            }
+        }
+        else { 
+            const d: Record<string, string> = {}; 
+            integration.fields.forEach(f => d[f.key] = ""); 
+            setFormValues(d); 
+            setFormEnabled(false) 
+            
+            if (integration.id === "whatsapp") {
+                setWhatsappState({
+                    phoneNumberId: "",
+                    accessToken: "",
+                    verifyToken: "",
+                    appSecret: "",
+                    enabled: false,
+                    hasExistingToken: false,
+                })
+            }
+        }
+    }
 
     useEffect(() => {
         if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
             const saved = (integrations ?? []).find((r: { provider?: string; credentials?: Record<string, string> }) => r.provider === "whatsapp")
-            setWhatsappState(saved ? {
+            
+            const nextState = saved ? {
                 phoneNumberId: saved.credentials?.phone_number_id || "",
                 accessToken: "",
                 verifyToken: saved.credentials?.verify_token || "",
@@ -134,23 +180,15 @@ export default function IntegrationsPage() {
                 appSecret: "",
                 enabled: false,
                 hasExistingToken: false,
-            })
+            };
+
+            // Use an asynchronous update to avoid cascading render warning
+            const timeoutId = setTimeout(() => {
+                setWhatsappState(nextState);
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
     }, [activeConfig, integrations])
-    const upsertIntegration = useMutation(api.integrations.upsert)
-    const saveChannelIntegration = useAction(api.integrations.saveChannelIntegration)
-    const registerWebhook = useAction(api.integrations.registerTelegramWebhook)
-
-    const savedMap: Record<string, { credentials?: Record<string, string>; enabled?: boolean }> = {}
-        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, string>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
-
-    const openConfig = (integration: IntegrationDef) => {
-        if (integration.locked) return
-        setActiveConfig(integration)
-        const saved = savedMap[integration.id]
-        if (saved) { setFormValues(saved.credentials || {}); setFormEnabled(saved.enabled || false) }
-        else { const d: Record<string, string> = {}; integration.fields.forEach(f => d[f.key] = ""); setFormValues(d); setFormEnabled(false) }
-    }
 
     const handleSave = async () => {
         if (!activeProject || !activeConfig) return
