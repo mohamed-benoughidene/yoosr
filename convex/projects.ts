@@ -29,6 +29,7 @@ export const list = query({
         const orgProjects = await ctx.db
             .query("projects")
             .withIndex("by_orgId", (q) => q.eq("orgId", identity.org_id!))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(50);
 
         // Include the role from the token so the frontend knows their permissions
@@ -47,7 +48,7 @@ export const get = query({
         if (!identity || !identity.org_id) return null;
 
         const project = await ctx.db.get(args.id);
-        if (!project || project.orgId !== identity.org_id) {
+        if (!project || project.orgId !== identity.org_id || project.deletedAt !== undefined) {
             return null;
         }
 
@@ -68,6 +69,7 @@ export const getByOrgId = query({
         const project = await ctx.db
             .query("projects")
             .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .first();
 
         // Since this uses the org ID explicitly, ensure it matches the user's active org
@@ -174,7 +176,7 @@ export const update = mutation({
         description: v.optional(v.string()),
         status: v.optional(v.string()),
         widgetConfig: v.optional(v.any()),
-        defaultModel: v.optional(v.string()),
+
         slaHours: v.optional(v.number()),
     },
     handler: async (ctx, args) => {

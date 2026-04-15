@@ -16,6 +16,7 @@ export const list = query({
         return await ctx.db
             .query("knowledge_bases")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
     },
 });
@@ -28,7 +29,7 @@ export const get = query({
         if (!identity) return null;
 
         const kb = await ctx.db.get(args.id);
-        if (!kb) return null;
+        if (!kb || kb.deletedAt !== undefined) return null;
 
         const check = await checkProjectOwnership(ctx, kb.projectId, identity as unknown as { org_id: string });
         if (!check) return null;
@@ -47,7 +48,10 @@ export const getOrCreateDefault = mutation({
         const existing = await ctx.db
             .query("knowledge_bases")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
-            .filter((q) => q.eq(q.field("isDefault"), true))
+            .filter((q) => q.and(
+                q.eq(q.field("isDefault"), true),
+                q.eq(q.field("deletedAt"), undefined)
+            ))
             .first();
 
         if (existing) return existing;
@@ -90,6 +94,7 @@ export const listSources = query({
         return await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
     },
 });
@@ -109,6 +114,7 @@ export const listSourcesPaginated = query({
         return await ctx.db
             .query("knowledge_base_sources")
             .withIndex("by_kbId", (q) => q.eq("kbId", args.kbId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .paginate(args.paginationOpts);
     },
 });

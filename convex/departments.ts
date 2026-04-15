@@ -21,6 +21,7 @@ export const listDepartments = query({
         const departments = await ctx.db
             .query("departments")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
 
         return departments.map(dept => ({
@@ -44,6 +45,7 @@ export const getMyDepartments = query({
         const departments = await ctx.db
             .query("departments")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
 
         return departments.filter(d => d.memberIds?.includes(userId));

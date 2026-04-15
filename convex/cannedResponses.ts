@@ -19,6 +19,7 @@ export const listCannedResponses = query({
         return await ctx.db
             .query("canned_responses")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(200);
     },
 });

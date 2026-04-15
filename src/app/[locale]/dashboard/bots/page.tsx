@@ -147,6 +147,7 @@ export default function BotsPage() {
                             <Bot className="mr-2 h-4 w-4" />
                             {t("filter_agents")}
                         </Button>
+                        {/* 
                         <Button
                             variant={filter === 'automation' ? "secondary" : "ghost"}
                             className="w-full justify-start"
@@ -155,6 +156,7 @@ export default function BotsPage() {
                             <Zap className="mr-2 h-4 w-4" />
                             {t("filter_automations")}
                         </Button>
+                        */}
                     </div>
                 </div>
             </div>
@@ -200,6 +202,7 @@ export default function BotsPage() {
                                             <CardDescription>{t("new_ai_agent_desc")}</CardDescription>
                                         </CardHeader>
                                     </Card>
+                                    {/* 
                                     <Card className="w-64 cursor-pointer hover:border-primary transition-colors" onClick={() => handleCreateBot(t("default_automation_name"), '', 'automation')}>
                                         <CardHeader>
                                             <Zap className="h-8 w-8 text-orange-500 mb-2" />
@@ -207,6 +210,7 @@ export default function BotsPage() {
                                             <CardDescription>{t("new_automation_desc")}</CardDescription>
                                         </CardHeader>
                                     </Card>
+                                    */}
                                 </div>
                             )}
                         </div>

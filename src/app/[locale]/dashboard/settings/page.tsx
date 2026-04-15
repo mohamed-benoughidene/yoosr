@@ -46,19 +46,8 @@ function SettingsContent() {
     const t = useTranslations("settings.project")
     const { activeProject } = useProject()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _isAdmin = activeProject?.userRole === "org:admin"
     const [loading, setLoading] = useState(false)
-    const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel ?? "openrouter/free")
     const [slaHours, setSlaHours] = useState(activeProject?.slaHours ? String(activeProject.slaHours) : "")
-
-    const modelOptions = [
-        { id: "openrouter/free", name: "OpenRouter Free", description: t("openrouter_free_desc") }
-    ]
-
-
-
-
-
     const updateProject = useMutation(api.projects.update)
     const updateWidgetLocale = useMutation(api.projects.updateWidgetLocale)
     const clearWidgetLocale = useMutation(api.projects.clearWidgetLocale)
@@ -87,7 +76,6 @@ function SettingsContent() {
         try {
             await updateProject({
                 id: activeProject._id,
-                defaultModel,
             })
             toast.success(t("settings_updated"))
         } catch {
@@ -171,27 +159,7 @@ function SettingsContent() {
                         </CardHeader>
                         <CardContent className="space-y-4">
 
-                            <div className="space-y-2">
-                                <Label htmlFor="model-select">{t("default_model")}</Label>
-                                <Select value={defaultModel} onValueChange={setDefaultModel}>
-                                    <SelectTrigger id="model-select" className="w-full">
-                                        <SelectValue placeholder={t("select_model_placeholder")} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>{t("model_preference")}</SelectLabel>
-                                            {modelOptions.map((m) => (
-                                                <SelectItem key={m.id} value={m.id} className="cursor-pointer">
-                                                    {m.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    {modelOptions.find(m => m.id === defaultModel)?.description || t("openrouter_free_desc")}
-                                </p>
-                            </div>
+
 
                             <Separator />
 

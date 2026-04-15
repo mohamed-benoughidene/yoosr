@@ -52,7 +52,7 @@ function NodePropertiesPanelContent({
         const text = dataObj?.text as string | undefined;
         return textVariations || (text ? [text] : [""]);
     });
-    const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
+
 
     const update = useCallback(
         (key: string, value: unknown) => {
@@ -348,15 +348,7 @@ function NodePropertiesPanelContent({
                                 placeholder="{{lastUserText}}"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">{t("properties.model")}</Label>
-                            <Input
-                                value={data.model || ""}
-                                onChange={(e) => update("model", e.target.value)}
-                                className="h-8 text-sm font-mono"
-                                placeholder={fallbackModel}
-                            />
-                        </div>
+
                         <div className="space-y-1.5">
                             <Label className="text-xs">
                                 {t("properties.saveOutputToVariable")}

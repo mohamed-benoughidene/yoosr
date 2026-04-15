@@ -21,6 +21,7 @@ export const listLabels = query({
         return await ctx.db
             .query("labels")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(200); // TODO: replace with paginated aggregation
     },
 });

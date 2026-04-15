@@ -3,8 +3,6 @@ import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { callAITask, callAIAssistant, type ChatMessage } from "./openrouter";
-import { decryptSecret } from "./lib/crypto";
-import { requireEnv } from "./lib/env";
 import { logger } from "./lib/logger";
 
 type ActionResult = {
@@ -90,15 +88,7 @@ async function executeAction(
             try {
                 const _aiTaskConv = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
                 const projectInfo = _aiTaskConv ? await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: _aiTaskConv.projectId }) : undefined;
-                const projectDefaultModel = projectInfo?.defaultModel;
-                let projectApiKey: string | undefined;
-                if (projectInfo?.openRouterApiKey) {
-                    const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
-                    if (encryptionKey) {
-                        projectApiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
-                    }
-                }
-                const llmResult = await callAITask(systemPrompt, userInput, action.model as string | undefined, projectDefaultModel, projectApiKey);
+                const llmResult = await callAITask(systemPrompt, userInput, action.model as string | undefined, projectInfo?.defaultModel);
                 // Log token usage
                 if (_aiTaskConv) {
                     try {
@@ -139,23 +129,34 @@ async function executeAction(
 
             // Turn counter: stored as attributes.__kbTurns in the conversation bot state attributes bag.
             // Read it on entry. Default to 0 if absent.
+            const kbDone = (attributes?.__kbDone as boolean) ?? false;
             const kbTurns = (attributes?.__kbTurns as number) ?? 0;
+
+            // 0. If KB is done (already answered in previous turns): return truePath.
+            if (kbDone) {
+                return {
+                    newAttributes: { ...attributes, __kbDone: false, __kbTurns: 0 },
+                    nextNodeId: action.truePath as string | null
+                };
+            }
 
             // 1. If incomingMessage is absent or empty: return { suspend: true }.
             if (!incomingMessage || incomingMessage.trim() === "") {
                 return { suspend: true };
             }
 
-            // 2. Run KB search with incomingMessage as query.
+            // 2. Run KB search. Use custom query from node if provided, otherwise fallback to incomingMessage.
             const kbConversation = await ctx.runQuery(internal.bot.getConversationState, { id: conversationId });
             if (!kbConversation) return { suspend: true };
+
+            const searchQuery = interpolate((action.query as string) || incomingMessage, attributes);
 
             let kbResults: Array<{ text: string; [key: string]: unknown }> = [];
             try {
                 // Using existing searchSimilarChunks action as the KB search pipeline.
                 const rawResults = await ctx.runAction(internal.knowledge.searchSimilarChunks, {
                     projectId: kbConversation.projectId,
-                    query: incomingMessage,
+                    query: searchQuery,
                 });
                 kbResults = rawResults as Array<{ text: string; [key: string]: unknown }>;
             } catch (e: unknown) {
@@ -187,20 +188,11 @@ async function executeAction(
 
             // d. Call callAIAssistant with history and project settings
             const projectInfo = await ctx.runQuery(internal.bot.getProjectDefaultModel, { projectId: kbConversation.projectId });
-            let apiKey: string | undefined;
-            if (projectInfo?.openRouterApiKey) {
-                const encryptionKey = requireEnv("ENCRYPTION_KEY", process.env.ENCRYPTION_KEY);
-                if (encryptionKey) {
-                    apiKey = await decryptSecret(projectInfo.openRouterApiKey, encryptionKey);
-                }
-            }
-
             const result = await callAIAssistant(
                 systemPrompt,
                 history,
                 action.model as string | undefined,
-                projectInfo?.defaultModel,
-                apiKey
+                projectInfo?.defaultModel
             );
 
             // e. Send reply via createBotMessage
@@ -456,7 +448,10 @@ export const executeNextBlock = internalAction({
 
         const actions = Array.isArray(currentNode.actions) ? currentNode.actions as ActionDoc[] : [];
 
-        for (const action of actions) {
+        const stepInNode = conversation.botStepCount || 0;
+
+        for (let i = stepInNode; i < actions.length; i++) {
+            const action = actions[i];
             const result = await executeAction(ctx, action, attributes, args.incomingMessage, args.conversationId, conversation.projectId, conversation.channel || "widget");
 
             if (result.newAttributes) {
@@ -467,6 +462,7 @@ export const executeNextBlock = internalAction({
             }
             if (result.nextNodeId) {
                 nextNodeId = result.nextNodeId;
+                break; // Branch taken, stop node execution
             }
             if (result.newBotId) {
                 newBotId = result.newBotId;
@@ -483,7 +479,7 @@ export const executeNextBlock = internalAction({
                     currentNodeId: result.scheduleNextBlockAfter ? nextNodeId : currentNode._id,
                     attributes,
                     botId: newBotId,
-                    botStepCount: result.scheduleNextBlockAfter ? nextStepCount : 0,
+                    botStepCount: result.scheduleNextBlockAfter ? nextStepCount : i, // Stay on this action if waiting for input
                 });
 
                 if (result.scheduleNextBlockAfter) {
@@ -733,7 +729,6 @@ export const getProjectDefaultModel = internalQuery({
         const project = await ctx.db.get(args.projectId);
         return {
             defaultModel: project?.defaultModel,
-            openRouterApiKey: project?.openRouterApiKey,
         };
     }
 });

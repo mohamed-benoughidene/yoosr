@@ -35,6 +35,13 @@ const LLM_RETRY_BASE_DELAY_MS = parseInt(
     10
 );
 
+/**
+ * The default AI model to use for all tasks.
+ * Overiddable via DEFAULT_AI_MODEL environment variable.
+ */
+const DEFAULT_AI_MODEL = process.env.DEFAULT_AI_MODEL || "google/gemma-4-26b-a4b-it";
+
+
 function getClient(customApiKey?: string): OpenAI {
     const apiKey = customApiKey || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -108,7 +115,7 @@ export async function callAITask(
     apiKey?: string
 ): Promise<LLMResult> {
     const client = getClient(apiKey);
-    const resolvedModel = model || projectDefaultModel || "openrouter/free";
+    const resolvedModel = DEFAULT_AI_MODEL;
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
@@ -142,7 +149,7 @@ export async function callAIAssistant(
     apiKey?: string
 ): Promise<LLMResult> {
     const client = getClient(apiKey);
-    const resolvedModel = model || projectDefaultModel || "openrouter/free";
+    const resolvedModel = DEFAULT_AI_MODEL;
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         ...conversationHistory,

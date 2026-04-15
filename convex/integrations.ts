@@ -17,6 +17,7 @@ export const list = query({
         return await ctx.db
             .query("integrations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
     },
 });
@@ -135,6 +136,7 @@ export const listForProject = internalQuery({
         return await ctx.db
             .query("integrations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(100);
     },
 });

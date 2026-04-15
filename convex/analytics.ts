@@ -321,17 +321,22 @@ export const getUnansweredQueries = query({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        let results = await ctx.db
+        // Efficiently fetch unanswered queries for the project — we take up to 200 items initially
+        // to have a better chance of matching the date range within the top-frequent items.
+        // If we strictly needed perfect date sorting, we'd need a [projectId, lastAskedAt] index.
+        const results = await ctx.db
             .query("unanswered_queries")
             .withIndex("by_projectId_count", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .order("desc")
-            .take(args.limit ?? 20);
+            .take(200);
 
+        let filtered = results;
         if (args.from !== undefined && args.to !== undefined) {
-            results = results.filter(row => row.lastAskedAt >= args.from! && row.lastAskedAt <= args.to!);
+            filtered = results.filter(row => row.lastAskedAt >= args.from! && row.lastAskedAt <= args.to!);
         }
 
-        return results.slice(0, args.limit ?? 20);
+        return filtered.slice(0, args.limit ?? 20);
     },
 });
 
@@ -645,6 +650,7 @@ export const logUnansweredQuery = internalMutation({
             await ctx.db.patch(existing._id, {
                 count: existing.count + 1,
                 lastAskedAt: Date.now(),
+                deletedAt: undefined, // Restore if it was soft-deleted (e.g. dismissed before)
             });
         } else {
             await ctx.db.insert("unanswered_queries", {

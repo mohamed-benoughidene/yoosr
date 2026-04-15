@@ -58,12 +58,11 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <button
                             type="button"
                             className={cn(
-                                "cursor-pointer rounded-lg border-2 p-4 hover:border-primary transition-all w-full text-left",
-                                type === 'chatbot' ? "border-primary bg-primary/5" : "border-muted"
+                                "cursor-pointer rounded-lg border-2 p-4 border-primary bg-primary/5 transition-all w-full text-left"
                             )}
                             onClick={() => setType('chatbot')}
                         >
@@ -73,6 +72,7 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
                                 LLM-powered chatbot for customer support.
                             </p>
                         </button>
+                        {/* 
                         <button
                             type="button"
                             className={cn(
@@ -87,6 +87,7 @@ export function CreateBotDialog({ onCreate }: { onCreate: (name: string, descrip
                                 Rule-based workflow for specific tasks.
                             </p>
                         </button>
+                        */}
                     </div>
 
                     <div className="grid gap-2">

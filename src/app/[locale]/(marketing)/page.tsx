@@ -50,8 +50,12 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     unstable_setRequestLocale(locale);
   return (
     <>
-      {/* Yoosr Widget — Live Demo (iframe-isolated, no CSP issues) */}
-      <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || ""} />
+      {/* 
+        Yoosr Widget — Live Demo (iframe-isolated, no CSP issues)
+        To enable the live demo widget on the landing page, uncomment the loader below.
+        The projectId should point to a valid project ID in your Convex database.
+      */}
+      {/* <WidgetLoader projectId={process.env.NEXT_PUBLIC_WIDGET_PROJECT_ID || ""} /> */}
 
       <section id="home">
         <Hero />

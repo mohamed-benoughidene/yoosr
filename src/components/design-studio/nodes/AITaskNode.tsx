@@ -8,8 +8,7 @@ import { useTranslations } from "next-intl";
 export function AITaskNode({ data, selected }: NodeProps) {
     const t = useTranslations("designStudio");
     const nodeData = data as Record<string, string>;
-    const { activeProject } = useProject();
-    const fallbackModel = activeProject?.defaultModel || "mistralai/mistral-small-3.1-24b-instruct:free";
+
 
     return (
         <div
@@ -50,9 +49,7 @@ export function AITaskNode({ data, selected }: NodeProps) {
                         {t("nodes.clickToAddPrompt")}
                     </p>
                 )}
-                <p className="text-[10px] text-muted-foreground truncate opacity-70">
-                    {nodeData.model || fallbackModel}
-                </p>
+
             </div>
 
             <div className="flex justify-between px-4 py-3 text-[10px] uppercase font-bold text-muted-foreground border-t">

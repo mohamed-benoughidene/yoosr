@@ -46,7 +46,6 @@ export interface AITaskNodeData {
     prompt: string;
     systemPrompt?: string;
     userInput?: string;
-    model?: string;
     outputVariable?: string;
     [key: string]: unknown;
 }
@@ -166,7 +165,7 @@ export const BLOCK_TYPES: BlockTypeInfo[] = [
         description: "Execute an LLM prompt",
         icon: "Sparkles",
         color: "text-pink-500",
-        defaultData: { prompt: "", systemPrompt: "", model: "", outputVariable: "gpt_reply" },
+        defaultData: { prompt: "", systemPrompt: "", outputVariable: "gpt_reply" },
     },
     {
         type: "hitlHandoff",

@@ -7,7 +7,7 @@
  */
 export const EMBEDDING_CONFIG = {
     /** OpenRouter model ID for generating embeddings */
-    model: process.env.EMBEDDING_MODEL || "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+    model: process.env.EMBEDDING_MODEL || "intfloat/multilingual-e5-large",
     /** Vector dimensions — must match the model's output */
-    dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || "2048", 10),
+    dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS || "1024", 10),
 } as const;

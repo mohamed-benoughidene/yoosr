@@ -38,7 +38,7 @@ export async function assertConversationOwnership(
   }
 
   const conversation = await ctx.db.get(conversationId);
-  if (!conversation) {
+  if (!conversation || conversation.deletedAt !== undefined) {
     throw new ConvexError("Conversation not found");
   }
 
@@ -71,7 +71,7 @@ export async function checkConversationOwnership(
   if (!identity) return null;
 
   const conversation = await ctx.db.get(conversationId);
-  if (!conversation) return null;
+  if (!conversation || conversation.deletedAt !== undefined) return null;
 
   const project = await ctx.db.get(conversation.projectId);
   if (!project) return null;

@@ -16,6 +16,7 @@ export const list = query({
         return await ctx.db
             .query("contacts")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(500); // TODO: replace with paginated aggregation
     },
 });
@@ -30,6 +31,7 @@ export const findByConversation = query({
         const contact = await ctx.db
             .query("contacts")
             .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .first();
 
         if (!contact) return null;
@@ -76,6 +78,7 @@ export const create = mutation({
                 .withIndex("by_projectId_email", (q) =>
                     q.eq("projectId", args.projectId).eq("email", args.email)
                 )
+                .filter((q) => q.eq(q.field("deletedAt"), undefined))
                 .first();
             if (existingEmail) {
                 throw userError("A contact with this email already exists");
@@ -89,6 +92,7 @@ export const create = mutation({
                 .withIndex("by_projectId_phone", (q) =>
                     q.eq("projectId", args.projectId).eq("phone", args.phone)
                 )
+                .filter((q) => q.eq(q.field("deletedAt"), undefined))
                 .first();
             if (existingPhone) {
                 throw userError("A contact with this phone number already exists");

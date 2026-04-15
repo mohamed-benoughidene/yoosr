@@ -8,14 +8,18 @@ import { EMBEDDING_CONFIG } from "./lib/embeddings";
 export const getChunkInternal = internalQuery({
     args: { id: v.id("knowledge_base_chunks") },
     handler: async (ctx, args) => {
-        return await ctx.db.get(args.id);
+        const chunk = await ctx.db.get(args.id);
+        if (!chunk || chunk.deletedAt !== undefined) return null;
+        return chunk;
     },
 });
 
 export const getSourceInternal = internalQuery({
     args: { id: v.id("knowledge_base_sources") },
     handler: async (ctx, args) => {
-        return await ctx.db.get(args.id);
+        const source = await ctx.db.get(args.id);
+        if (!source || source.deletedAt !== undefined) return null;
+        return source;
     },
 });
 
@@ -228,6 +232,10 @@ export const searchSimilarChunks = internalAction({
     handler: async (ctx, args): Promise<unknown[]> => {
         if (!process.env.OPENROUTER_API_KEY) {
             console.error("Missing OPENROUTER_API_KEY");
+            await ctx.runMutation(internal.analytics.logUnansweredQuery, {
+                projectId: args.projectId,
+                query: args.query,
+            });
             return [];
         }
 
@@ -249,11 +257,19 @@ export const searchSimilarChunks = internalAction({
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error("OpenRouter API error", errorMessage);
+            await ctx.runMutation(internal.analytics.logUnansweredQuery, {
+                projectId: args.projectId,
+                query: args.query,
+            });
             return [];
         }
 
         if (!Array.isArray(embedding) || embedding.length === 0) {
             console.error("OpenRouter API returned an unrecognized format", embedding);
+            await ctx.runMutation(internal.analytics.logUnansweredQuery, {
+                projectId: args.projectId,
+                query: args.query,
+            });
             return [];
         }
 

@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { Sparkles, Lock, ChevronRight, ArrowLeft, Save, MessageCircle, Send, Loader2, Phone } from "lucide-react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "../../../../../../convex/_generated/api"
-import { OpenRouterCard } from "@/components/settings/OpenRouterCard"
+
 
 interface IntegrationField {
     key: string
@@ -100,18 +100,12 @@ export default function IntegrationsPage() {
     ]
 
     const { activeProject } = useProject()
-    const [activeConfig, setActiveConfig] = useState<IntegrationDef | "openrouter" | null>(null)
+    const [activeConfig, setActiveConfig] = useState<IntegrationDef | null>(null)
     const [formValues, setFormValues] = useState<Record<string, string>>({})
     const [formEnabled, setFormEnabled] = useState(false)
     const [saving, setSaving] = useState(false)
 
-    // OpenRouter Specific States
-    const [openRouterKey, setOpenRouterKey] = useState("")
-    const [savingOr, setSavingOr] = useState(false)
-    const [testingOr, setTestingOr] = useState(false)
-    const [testResult, setTestResult] = useState<{ ok: boolean, model?: string, message?: string, error?: string } | null>(null)
-    const [defaultModel, setDefaultModel] = useState(activeProject?.defaultModel || "")
-    const [savingModel, setSavingModel] = useState(false)
+
     
     // WhatsApp Specific States
     const [whatsappState, setWhatsappState] = useState({
@@ -125,13 +119,7 @@ export default function IntegrationsPage() {
 
     const updateProject = useMutation(api.projects.update)
 
-    useEffect(() => {
-        if (activeProject?.defaultModel) {
-            setDefaultModel(activeProject.defaultModel)
-        } else {
-            setDefaultModel("")
-        }
-    }, [activeProject?._id, activeProject?.defaultModel])
+
 
     const integrations = useQuery(api.integrations.list, activeProject ? { projectId: activeProject._id } : "skip")
 
@@ -158,18 +146,11 @@ export default function IntegrationsPage() {
     const upsertIntegration = useMutation(api.integrations.upsert)
     const saveChannelIntegration = useAction(api.integrations.saveChannelIntegration)
     const registerWebhook = useAction(api.integrations.registerTelegramWebhook)
-
-    // OpenRouter Backend hooks
-    const openRouterStatus = useQuery(api.openrouter_api.getOpenRouterKeyStatus)
-    const hasKey = openRouterStatus?.hasKey ?? false
-    const maskedKey = openRouterStatus?.maskedKey
-
-    const saveOpenRouter = useMutation(api.openrouter_api.saveOpenRouterKey)
-    const clearOpenRouter = useMutation(api.openrouter_api.clearOpenRouterKey)
-    const testOpenRouter = useAction(api.openrouter_api.testOpenRouterKey)
-
+    
     const savedMap: Record<string, { credentials?: Record<string, string>; enabled?: boolean }> = {}
-        ; (integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, string>; enabled?: boolean }) => { if (row.provider) savedMap[row.provider] = row })
+    ;(integrations ?? []).forEach((row: { provider?: string; credentials?: Record<string, string>; enabled?: boolean }) => {
+        if (row.provider) savedMap[row.provider] = row
+    })
 
     const openConfig = (integration: IntegrationDef) => {
         if (integration.locked) return
@@ -180,7 +161,7 @@ export default function IntegrationsPage() {
     }
 
     const handleSave = async () => {
-        if (!activeProject || !activeConfig || activeConfig === "openrouter") return
+        if (!activeProject || !activeConfig) return
         setSaving(true)
         try {
             if (activeConfig.id === "whatsapp") {
@@ -222,190 +203,6 @@ export default function IntegrationsPage() {
         setSaving(false)
     }
 
-    const handleSaveOpenRouter = async () => {
-        if (!openRouterKey) return
-        setSavingOr(true)
-        try {
-            await saveOpenRouter({ key: openRouterKey })
-            setOpenRouterKey("")
-            setTestResult(null)
-            toast.success(t("openrouter_saved"))
-        } catch (e: unknown) {
-            const errorMessage = e instanceof Error ? e.message : t("openrouter_save_failed");
-            toast.error(errorMessage)
-        } finally {
-            setSavingOr(false)
-        }
-    }
-
-    const handleTestOpenRouter = async () => {
-        setTestingOr(true)
-        setTestResult(null)
-        try {
-            const res = await testOpenRouter()
-            setTestResult(res)
-        } catch (e: unknown) {
-            const errorMessage = e instanceof Error ? e.message : t("test_key_failed");
-            setTestResult({ ok: false, error: errorMessage })
-        } finally {
-            setTestingOr(false)
-        }
-    }
-
-    const handleClearOpenRouter = async () => {
-        try {
-            await clearOpenRouter()
-            setTestResult(null)
-            toast.success(t("openrouter_removed"))
-        } catch (e: unknown) {
-            const errorMessage = e instanceof Error ? e.message : t("openrouter_remove_failed");
-            toast.error(errorMessage)
-        }
-    }
-
-    const handleSaveModel = async () => {
-        if (!activeProject) return
-        setSavingModel(true)
-        try {
-            await updateProject({
-                id: activeProject._id,
-                defaultModel: defaultModel || undefined,
-            })
-            toast.success(t("model_updated"))
-        } catch {
-            toast.error(t("model_update_failed"))
-        } finally {
-            setSavingModel(false)
-        }
-    }
-
-    // Custom OpenRouter Detail View
-    if (activeConfig === "openrouter") {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => { setActiveConfig(null); setTestResult(null); }} className="h-8 w-8">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div>
-                        <h3 className="text-lg font-medium flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-sm bg-pink-100 text-pink-700">🔀</span>
-                            OpenRouter
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{t("openrouter_desc")}</p>
-                    </div>
-                </div>
-                <Separator />
-                
-                {!hasKey ? (
-                    <Card className="p-5 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="or_key">{t("api_key")}</Label>
-                            <Input 
-                                id="or_key" 
-                                type="password" 
-                                placeholder="sk-or-..." 
-                                value={openRouterKey}
-                                onChange={e => setOpenRouterKey(e.target.value)}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                {t("key_desc")}
-                            </p>
-                        </div>
-                        <Button onClick={handleSaveOpenRouter} disabled={savingOr || !openRouterKey}>
-                            {savingOr ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {savingOr ? t("saving") : t("save")}
-                        </Button>
-                    </Card>
-                ) : (
-                    <Card className="p-5 space-y-4">
-                        <div className="space-y-2">
-                            <Label>{t("api_key")}</Label>
-                            <Input readOnly value={maskedKey} className="text-muted-foreground bg-muted/50" />
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Button onClick={handleTestOpenRouter} disabled={testingOr} variant="secondary">
-                                {testingOr && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {t("test")}
-                            </Button>
-                            <Button onClick={handleClearOpenRouter} variant="destructive">
-                                {t("remove")}
-                            </Button>
-                        </div>
-                        {testResult && (
-                            <div className="mt-4">
-                                {testResult.ok ? (
-                                    <div className="rounded-lg border border-green-200 bg-green-50/50 p-4 space-y-3 dark:border-green-900/50 dark:bg-green-900/10">
-                                        <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-md dark:bg-green-900/30 dark:text-green-400">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-2" />
-                                                {t("connected")}
-                                            </span>
-                                        </div>
-                                        {testResult.model && (
-                                            <p className="text-sm font-medium text-green-900 dark:text-green-300">
-                                                {t("model")}: {testResult.model}
-                                            </p>
-                                        )}
-                                        {testResult.message && (
-                                            <blockquote className="border-l-2 border-green-300 pl-3 text-sm text-green-800/80 italic dark:border-green-700 dark:text-green-400/80">
-                                                {testResult.message}
-                                            </blockquote>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 space-y-3 dark:border-red-900/50 dark:bg-red-900/10">
-                                        <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center text-xs font-medium text-red-700 bg-red-100 px-2 py-1 rounded-md dark:bg-red-900/30 dark:text-red-400">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2" />
-                                                {t("error")}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-red-800 dark:text-red-300">
-                                            {testResult.error}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </Card>
-                )}
-
-                <Card className="p-5 space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="default_model">{t("default_model")}</Label>
-                        <Input 
-                            id="default_model" 
-                            placeholder="e.g. openai/gpt-4o, stepfun/step-3.5-flash:free" 
-                            value={defaultModel}
-                            onChange={e => setDefaultModel(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            {t("default_model_desc")}
-                        </p>
-                    </div>
-                    <Button 
-                        onClick={handleSaveModel} 
-                        disabled={savingModel} 
-                        variant="outline"
-                        className="w-fit"
-                    >
-                        {savingModel ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {t("saving")}
-                            </>
-                        ) : (
-                            <>
-                                <Save className="mr-2 h-4 w-4" />
-                                {t("save_model")}
-                            </>
-                        )}
-                    </Button>
-                </Card>
-            </div>
-        )
-    }
 
     // WhatsApp Specific Detail View
     if (activeConfig && (activeConfig as IntegrationDef).id === "whatsapp") {
@@ -587,12 +384,7 @@ export default function IntegrationsPage() {
         <div className="space-y-6">
             <div><h3 className="text-lg font-medium">{t("title")}</h3><p className="text-sm text-muted-foreground">{t("description")}</p></div>
             <Separator />
-            <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2"><Sparkles className="h-4 w-4" />{t("ai_providers")}</h4>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <OpenRouterCard />
-                </div>
-            </div>
+
             <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2"><MessageCircle className="h-4 w-4" />{t("channels")}</h4>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{channels.map(renderCard)}</div>

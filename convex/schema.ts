@@ -67,14 +67,7 @@ export default defineSchema({
             })),
         })), // JSON config for widget appearance
         widgetLocale: v.optional(v.union(v.literal("en"), v.literal("ar"), v.literal("fr"))),
-        defaultModel: v.optional(v.string()), // Automatically fallback to this AI model
-        /**
-         * Encrypted OpenRouter API key.
-         * Written via `encryptSecret()` (convex/openrouter_api.ts) using AES-256-GCM.
-         * Decrypted via `decryptSecret()` (convex/lib/crypto.ts) before LLM calls in bot.ts.
-         * ⚠️ Convex has no `v.custom()` — runtime encryption validation happens in mutation handlers.
-         */
-        openRouterApiKey: v.optional(v.string()),
+        defaultModel: v.optional(v.string()), // Kept for future reference
         slaHours: v.optional(v.number()),
         // Soft-delete
         deletedAt: v.optional(v.number()),
@@ -111,7 +104,7 @@ export default defineSchema({
         // Actively used fields: participants, tags, attributes (see routing.ts, conversations.ts, tags.ts, bot.ts)
         participants: v.optional(v.array(v.string())),
         tags: v.optional(v.array(v.string())),
-        attributes: v.optional(v.record(v.string(), v.string())), // Bot attribute storage — flexible key-value bag
+        attributes: v.optional(v.record(v.string(), v.union(v.string(), v.number(), v.boolean()))), // Bot attribute storage — flexible key-value bag
         // Deprecated legacy fields — kept for backward compatibility with existing data
         leadId: v.optional(v.string()),
         firstText: v.optional(v.string()),
@@ -146,7 +139,7 @@ export default defineSchema({
             action: v.string(),
             timestamp: v.number(),
         }))),
-        attributes: v.optional(v.record(v.string(), v.string())), // Bot attribute storage — flexible key-value bag
+        attributes: v.optional(v.record(v.string(), v.union(v.string(), v.number(), v.boolean()))), // Bot attribute storage — flexible key-value bag
     }).index("by_conversationId", ["conversationId"]),
 
     // Messages within conversations
@@ -375,7 +368,7 @@ export default defineSchema({
         deletedAt: v.optional(v.number()),
     }).vectorIndex("by_embedding", {
         vectorField: "embedding",
-        dimensions: 2048, // Dimensions for nvidia/llama-nemotron-embed-vl-1b-v2
+        dimensions: 1024, // Dimensions for intfloat/multilingual-e5-large
         filterFields: ["sourceId", "projectId"],
     }),
 
